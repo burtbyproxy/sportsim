@@ -1,4 +1,6 @@
-class Consumable extends Possession {
+import Possession from '../possession.js';
+
+export default class Consumable extends Possession {
 
 	constructor(name, effects) {
 		super(name);

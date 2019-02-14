@@ -1,4 +1,6 @@
-class Entity extends LiveRecord {
+import LiveRecord from './liverecord.js';
+
+export default class Entity extends LiveRecord {
 
 	constructor(id, name) {
 		super("entities");

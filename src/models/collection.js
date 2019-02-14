@@ -1,4 +1,4 @@
-class Collection {
+export default class Collection {
 
 	constructor(list) {
 		this._list = list || [];

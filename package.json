@@ -1,0 +1,48 @@
+{
+  "name": "sportsim",
+  "version": "0.0.1",
+  "description": "Take the Portland art world by storm in the early turn of the Millenium.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev_sim": "cross-env WEBPACK_ENV=dev webpack --config webpack.config.js --mode=development",
+    "pack_sim": "cross-env WEBPACK_ENV=build webpack --config webpack.config.js --mode=production"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/steve_ddnet/sportsim.git"
+  },
+  "author": "Steve",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/steve_ddnet/sportsim/issues"
+  },
+  "homepage": "https://gitlab.com/steve_ddnet/sportsim#readme",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "vue": "^2.6.6",
+    "vue-router": "^3.0.2"
+  },
+  "devDependencies": {
+    "autoprefixer": "^9.1.3",
+    "css-loader": "^2.1.0",
+    "cross-env": "1.0.6",
+    "extract-loader": "^2.0.1",
+    "file-loader": "^2.0.0",
+    "node-sass": "^4.11.0",
+    "optimize-css-assets-webpack-plugin": "^5.0.1",
+    "postcss-cli": "^6.0.0",
+    "postcss-loader": "^3.0.0",
+    "precss": "^4.0.0",
+    "sass-loader": "^7.1.0",
+    "terser-webpack-plugin": "^1.2.2",
+    "vue-loader": "^15.6.2",
+    "vue-style-loader": "^4.1.2",
+    "vue-template-compiler": "^2.6.3",
+    "webpack": "^4.27.1",
+    "webpack-cli": "^3.1.2"
+  }
+}

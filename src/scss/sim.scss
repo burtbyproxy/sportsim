@@ -1,0 +1,87 @@
+$headerHeight: 1.6rem;
+$footerHeight: 1.6rem;
+$sidebarWidth: 12.8rem;
+
+@mixin light {
+	background-color: #f9f9fa;
+	color: #323333;
+}
+
+@mixin dark {
+	background-color: #323333;
+	color: #f9f9fa;
+}
+
+html {
+	font-size: 10px;
+}
+
+body {
+	@include light;
+	font-size: 1.4rem;
+	line-height: 1.4;
+	margin: 0;
+	padding: 0;
+}
+
+#app {
+	position: relative;
+	padding: $headerHeight $footerHeight $footerHeight $sidebarWidth;
+}
+
+#header {
+	@include dark;
+	position: fixed;
+	top: 0; right: 0; left: 0;
+	height: $headerHeight;
+	font-size: 1.2rem;
+	#main-menu .menu {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		li {
+			float: left;
+		}
+	}
+}
+
+#status {
+	@include dark;
+	position: fixed;
+	right: 0; bottom: 0; left: 0;
+	height: $footerHeight;
+	font-size: 1.2rem;
+}
+
+#sidebar {
+	position: fixed;
+	top: $headerHeight; bottom: $footerHeight; left: 0;
+	width: $sidebarWidth;
+	background: #f4f4f3;
+}
+
+#sim {
+	font-size: 2.4rem;
+	padding: 1.2rem;
+}
+
+ul.menu, ul.inline {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	li {
+		float: left;
+		margin-left: 1rem;
+		&:first-child {
+			margin-left: 0;
+		}
+		a {
+			display: block;
+			padding: 0 .8rem;
+		}
+	}
+}
+
+fieldset {
+	border: 0;
+}

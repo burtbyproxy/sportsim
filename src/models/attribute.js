@@ -1,4 +1,4 @@
-class Attribute {
+export default class Attribute {
 
 	constructor(value, min, max) {
 		this.value = value || 0;

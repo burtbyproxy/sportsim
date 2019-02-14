@@ -1,4 +1,6 @@
-class Human extends Entity {
+import Entity from '../entity.js';
+
+export default class Human extends Entity {
 	
 	constructor(id, name, gender, birthday, height, weight) {
 		
