@@ -1,0 +1,119 @@
+{
+
+	"subclasses": {
+
+		"bar": {
+			"notes": "",
+			"settings": {
+				"variant": "variant_id"
+			},
+			"variants": [
+				{
+					"id": "exotic",
+					"notes": ""
+				},
+				{
+					"id": "lounge",
+					"notes": ""
+				},
+				{
+					"id": "tavern",
+					"notes": ""
+				}
+			]
+		},
+
+		"home": {
+			"notes": "",
+			"settings": {}
+		},
+
+		"park": {
+			"notes": "",
+			"structures": [
+				{
+					"id": "structure_id",
+					"subclass": "structure_subclass",
+					"display": "Display Name (override)",
+					"description": "Paragraph describing structure. (override)",
+					"coords": [
+						[ 0, 0, 0 ],
+						[ 0, 0, 0 ]
+					]
+				}
+			],
+			"settings": {}
+		},
+
+		"restaurant": {
+			"notes": "",
+			"settings": {
+				"cuisine": ["cuisine_ids"],
+				"variant": "variant_id"
+			},
+			"cuisines": [
+				{
+					"id": "mexican",
+					"notes": ""
+				},
+				{
+					"id": "american",
+					"notes": ""
+				}
+			],
+			"variants": [
+				{
+					"id": "delivery",
+					"notes": ""
+				},
+				{
+					"id": "fast_food",
+					"notes": ""
+				},
+				{
+					"id": "fast_food",
+					"notes": ""
+				}
+			]
+		},
+
+		"fuel": {
+			"notes": ""
+		},
+
+		"market": {
+			"notes": ""
+		},
+
+		"pawn": {
+			"notes": ""
+		},
+
+		"liqour": {
+			"notes": ""
+		},
+
+		"office": {
+			"variants": [
+				"bail_bonds": {
+					"notes": ""
+				},
+				"clinic": {
+					"notes": ""
+				},
+				"dentist": {
+					"notes": ""
+				},
+				"detective": {
+					"notes": ""
+				},
+				"lawyer": {
+					"notes": ""
+				}
+			]
+
+		}
+
+	}
+
+}

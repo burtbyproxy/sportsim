@@ -1,0 +1,12 @@
+{
+	"entity|location|possession": {
+		"id": "alpha_num",
+		"subclass": "alpha_num",
+		"display": "In-game display name.",
+		"description": "Brief in-game description can use {{ settings.k }} handlebars.",
+		"settings": {
+			"k": "v"
+		},
+		"coords": [ 0, 0, 0 ]
+	}
+}

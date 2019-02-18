@@ -30,12 +30,14 @@
 
 	export default {
 
-		name: 'GameMenu',
+		name: 'MenuGame',
 
 		methods: {
 			
 			newGame: function() {
 				console.debug('starting new game...');
+				this.$router.push('/map')
+
 			},
 
 			showSubMenu: function(target) {

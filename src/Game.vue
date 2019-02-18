@@ -3,16 +3,11 @@
 
 <script>
 
-//	import TheNavbar from './components/navbar/TheNavbar.vue'
-
 	export default {
-		name: 'App',
-		components: {
-//			TheNavbar
-		},
+		name: 'Game',
 		data: function() {
 			return {
-			}
+			};
 		},
 		methods: {
 			setBodyClass(className, newState) {

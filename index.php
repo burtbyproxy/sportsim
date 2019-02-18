@@ -1,11 +1,11 @@
 <html>
 	<head>
 		<title>SportSim</title>
-		<link href="./dist/sim.min.css" rel="stylesheet" type="text/css"></link>
+		<link href="/dist/sim.min.css" rel="stylesheet" type="text/css"></link>
 	</head>
 	<body>
-		<div id="app">
-			<div class="app-wrap">
+		<div id="game">
+			<div :id="$route.name" class="app-wrap">
 				<header id="header">
 					<nav id="main-menu" class="menu-wrap">
 						<ul class="menu">
@@ -16,14 +16,8 @@
 						</ul>
 					</nav>
 				</header>
-				<aside id="sidebar">
-					<nav id="context-menu">
-						<ul class="menu">
-							<li class="menu-item">No menu items</li>
-						</ul>
-					</nav>
-				</aside>
-				<main id="sim">
+				<the-sidebar></the-sidebar>
+				<main id="view">
 					<router-view>
 						<!-- the simulation takes place here -->
 					</router-view>
@@ -39,6 +33,6 @@
 				</footer>
 			</div>
 		</div>
-		<script src="./dist/sim.min.js" defer></script>
+		<script src="/dist/sim.min.js" defer></script>
 	</body>
 </html>

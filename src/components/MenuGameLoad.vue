@@ -35,7 +35,7 @@
 
 	export default {
 
-		name: 'GameMenuLoad',
+		name: 'MenuGameLoad',
 
 		data: function() {
 			return {

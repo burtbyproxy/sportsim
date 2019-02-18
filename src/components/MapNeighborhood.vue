@@ -1,9 +1,9 @@
 <template>
-	<figure class="map-wrap location">
+	<figure class="map-wrap neighborhood">
 		<div class="img"
-			@click="zoomIn('basement')" 
+			@click="zoomIn('moms_house')" 
 			style="
-				background-image: url('/assets/img/map-location_bg.jpg');
+				background-image: url('/assets/img/map-neighborhood_bg.jpg');
 				background-size: cover;
 				background-repeat: no-repeat;
 				background-position: center center;">
@@ -18,18 +18,17 @@
 
 <script>
 	export default {
-		name: 'MapLocation',
+		name: 'MapNeighborhood',
 		props: [
 			'region_id',
-			'neighborhood_id',
-			'location_id'
+			'neighborhood_id'
 		],
 		methods: {
-			zoomIn: function(interior_id) {
-				this.$router.push('/map/'+this.region_id+'/'+this.neighborhood_id+'/'+this.location_id+'/'+interior_id);
+			zoomIn: function(location_id) {
+				this.$router.push('/map/'+this.region_id+'/'+this.neighborhood_id+'/'+location_id);
 			},
 			zoomOut: function() {
-				this.$router.push('/map/'+this.region_id+'/'+this.neighborhood_id);
+				this.$router.push('/map/'+this.region_id);
 			}
 		}
 	}

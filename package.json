@@ -8,8 +8,8 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev_sim": "cross-env WEBPACK_ENV=dev webpack --config webpack.config.js --mode=development",
-    "pack_sim": "cross-env WEBPACK_ENV=build webpack --config webpack.config.js --mode=production"
+    "dev_game": "cross-env WEBPACK_ENV=dev webpack --config webpack.config.js --mode=development",
+    "pack_game": "cross-env WEBPACK_ENV=build webpack --config webpack.config.js --mode=production"
   },
   "repository": {
     "type": "git",
@@ -24,7 +24,8 @@
   "dependencies": {
     "axios": "^0.18.0",
     "vue": "^2.6.6",
-    "vue-router": "^3.0.2"
+    "vue-router": "^3.0.2",
+    "vuex": "^3.1.0"
   },
   "devDependencies": {
     "autoprefixer": "^9.1.3",

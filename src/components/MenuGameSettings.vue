@@ -40,7 +40,7 @@
 
 	export default {
 
-		name: 'GameMenuSettings',
+		name: 'MenuGameSettings',
 
 		data: function() {
 			return {

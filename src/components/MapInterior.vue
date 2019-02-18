@@ -1,9 +1,8 @@
 <template>
-	<figure class="map-wrap location">
+	<figure class="map-wrap interior">
 		<div class="img"
-			@click="zoomIn('basement')" 
 			style="
-				background-image: url('/assets/img/map-location_bg.jpg');
+				background-image: url('/assets/img/map-interior_bg.jpg');
 				background-size: cover;
 				background-repeat: no-repeat;
 				background-position: center center;">
@@ -18,18 +17,16 @@
 
 <script>
 	export default {
-		name: 'MapLocation',
+		name: 'MapInterior',
 		props: [
 			'region_id',
 			'neighborhood_id',
-			'location_id'
+			'location_id',
+			'interior_id'
 		],
 		methods: {
-			zoomIn: function(interior_id) {
-				this.$router.push('/map/'+this.region_id+'/'+this.neighborhood_id+'/'+this.location_id+'/'+interior_id);
-			},
 			zoomOut: function() {
-				this.$router.push('/map/'+this.region_id+'/'+this.neighborhood_id);
+				this.$router.push('/map/'+this.region_id+'/'+this.neighorhood_id+'/'+this.location_id);
 			}
 		}
 	}

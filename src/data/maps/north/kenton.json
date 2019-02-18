@@ -1,0 +1,173 @@
+[
+	
+	{
+		"id": "moms_house",
+		"type": "home",
+		"variant": "house",
+		"display": "Mom's House",
+		"description": "This is where your mom and step-father live. She is always kind enough to let you crash in the basement when you have nowhere else to go, but the accommodations are minimal and their neurotic cat with irritable bowels believes the basement is his territory and whenever you are around he marks it with diarrhea.",
+		"settings": null,
+		"coords": null
+	},
+
+	{
+		"id": "blue_parrot",
+		"type": "bar",
+		"variant": "tavern",
+		"display": "The Blue Parrot",
+		"description": "This trashy bar is just up the street from your mom's house, and features some of the cheapest Pabst in town as well as a semi popular karaoke night. Sure the sound system sucks, and the song selection is shit, but you can literally buy a cassette recording of your horrendous performance for five bucks.",
+		"settings": null,
+		"coords": null
+	},
+
+	{
+		"id": "mocks_crest",
+		"type": "bar",
+		"variant": "tavern",
+		"display": "Mock's Crest Tavern",
+		"description": "This tavern is right up the street from your mom's place, and directly across from the Blue Parrot. The place is always pretty crowded because even though the drinks cost a bit more they are strong as fuck and nobody gives two shits how many you have.",
+		"settings": null,
+		"coords": null
+	},
+
+	{
+		"id": "columbia_park",
+		"type": "park",
+		"variant": "community",
+		"display": "Columbia Park",
+		"description": "Huge tree-lined park a block from your mom's place that has a lot of suspicious behavior at night. If you have to go there after dark, make sure you are at least a little wasted first--otherwise someone might think you're a cop.",
+		"settings": null,
+		"coords": null
+	},
+
+	{
+		"id": "mouse_trap",
+		"type": "bar",
+		"variant": "tavern",
+		"display": "The Mouse Trap",
+		"description": "A real shithole of a bar that has been known to shut down whenever the only bartender being in jail. There are like five pool tables which is way too many considering you have never seen more than two other people in there at a time.",
+		"settings": null,
+		"coords": null
+	},
+
+	{
+		"id": "arbys",
+		"type": "restaurant",
+		"variant": "fast",
+		"display": "Arby's",
+		"description": "What can you say about Arby's? The cheesy curly fries are obviously delicious, but this particular location tends to have a pretty skeezy crowd and a perpetual slimy film on the tables. Not even sure if there is a bathroom.",
+		"settings": null,
+		"coords": null
+	},
+
+	{
+		"id": "toads_express",
+		"type": "fuel",
+		"variant": "convenience",
+		"display": "Toad's Express",
+		"description": "Really just a cheap cigarette shop that happens to have an Astro gas station attached to lure people in. There is bulletproof glass protecting the clerk inside, and on weekends they usually have an armed guard as well. In this part of Portland, selling discounted cartons of cigarettes apparently turns you into Fort Fucking Knox.",
+		"settings": null,
+		"coords": null
+	},
+
+	{
+		"id": "ainsworth_plaid",
+		"type": "market",
+		"variant": "convenience",
+		"display": "Plaid Pantry",
+		"description": "This Plaid is exactly the same as every other Plaid. In fact, the only thing that might set it apart is how non-descript it is. Great place to head over to when you've been kicked out of all the others, because they will literally pay you no mind.",
+		"settings": null,
+		"coords": null
+	},
+
+	{
+		"id": "denver_711",
+		"type": "market",
+		"variant": "convenience",
+		"display": "7-11",
+		"description": "",
+		"settings": null,
+		"coords": null
+	},
+
+	{
+		"id": "greeley_711",
+		"type": "market",
+		"variant": "convenience",
+		"display": "7-11",
+		"description": "This location is pretty nice. It's clean, well-stocked, and perpetually staffed by a minimum of two very friendly Africans. There are also usually way more cars parked in the lot than there are people inside.",
+		"settings": null,
+		"coords": null
+	},
+
+	{
+		"id": "greeley_plaid",
+		"type": "market",
+		"variant": "convenience",
+		"display": "Plaid Pantry",
+		"description": "",
+		"settings": null,
+		"coords": null
+	},
+
+	{
+		"id": "glitters",
+		"type": "market",
+		"variant": "pawn",
+		"display": "All That Glitters",
+		"description": "It's just your run of the mill pawn shop run by a couple of rayon-loving Egyptian immigrants. They won't pay much, but will buy pretty much anything you've got. The main distinctive feature of this place is the permanently stationed blonde mannequin out front spinning a sign that reads 'Grate Deals'.",
+		"settings": null,
+		"coords": null
+	},
+
+	{
+		"id": "dancin_bare",
+		"type": "bar",
+		"variant": "exotic",
+		"display": "The Dancin' Bare",
+		"description": "Particularly trashy stip club that features very cheap steak bites, the world's only zig-zag shaped pool table, and an amateur night once a week where patrons are notorious for throwing spare change onto the stage.",
+		"settings": null,
+		"coords": null
+	},
+
+	{
+		"id": "liquor",
+		"type": "market",
+		"variant": "liquor",
+		"display": "Kenton Liquor Store",
+		"description": "",
+		"settings": null,
+		"coords": null
+	},
+
+	{
+		"id": "lombard_dental",
+		"type": "clinic",
+		"variant": "dental",
+		"display": "Lombard Dental",
+		"description": "",
+		"settings": null,
+		"coords": null
+	},
+
+	{
+		"id": "chief_joseph",
+		"type": "school",
+		"variant": "elementary",
+		"display": "Chief Joseph Elementary",
+		"description": "",
+		"settings": null,
+		"coords": null
+	},
+
+	{
+		"id": "abundant_life",
+		"type": "church",
+		"variant": "christian",
+		"display": "Abundant Life Church",
+		"description": "",
+		"settings": null,
+		"coords": null
+	}
+
+]
