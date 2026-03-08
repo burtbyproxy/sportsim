@@ -12,8 +12,8 @@
         :key="action.id"
         class="action-item"
         :class="{ 'action-item--disabled': !action.available }"
-        :disabled="!action.available"
-        :title="action.available ? '' : disabledReason(action)"
+        :disabled="!action.available || isResolving"
+        :title="action.available ? formatTimeCost(action.timeCost) : disabledReason(action)"
         @click="executeAction(action)"
       >
         {{ action.label }}
@@ -26,62 +26,48 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { useGameStore } from '../../stores/game.js'
+import { meetsRequirements } from '../../engine/actions.js'
 
 const game = useGameStore()
+const gameLoop = inject('gameLoop')
+
+/** Prevent double-clicks during resolution */
+const isResolving = ref(false)
 
 const actions = computed(() => game.availableActions)
 
-/** Sort by weight descending, disabled actions at bottom */
+/** Sort: available first by weight desc, then disabled by weight desc */
 const sortedActions = computed(() => {
-  return [...actions.value].sort((a, b) => {
-    if (a.available === b.available) {
-      return (b.weight ?? 0) - (a.weight ?? 0)
-    }
-    return a.available ? -1 : 1
-  })
+  const available = actions.value
+    .filter((a) => a.available)
+    .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
+  const disabled = actions.value
+    .filter((a) => !a.available)
+    .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
+  return [...available, ...disabled]
 })
 
-function executeAction(action) {
-  if (!action.available) return
-  // Emit to parent or dispatch — action resolution is Bones' territory.
-  // For now, advance time by action cost and emit.
-  game.advanceTime(action.timeCost ?? 1)
-  // Future: game.resolveAction(action.id)
+async function executeAction(action) {
+  if (!action.available || isResolving.value || !gameLoop) return
+  isResolving.value = true
+  try {
+    gameLoop.resolvePlayerAction(action)
+  } finally {
+    isResolving.value = false
+  }
 }
 
 function disabledReason(action) {
-  if (!action.requirements) return 'not available'
-  const reqs = action.requirements
-  const status = game.player?.status ?? {}
-  const stats = game.player?.stats ?? {}
-  const parts = []
-
-  if (reqs.minStats) {
-    for (const [stat, min] of Object.entries(reqs.minStats)) {
-      if ((stats[stat]?.base ?? 0) < min) {
-        parts.push(`needs ${stat} ${min}`)
-      }
-    }
-  }
-  if (reqs.minSobriety !== null && status.sobriety < reqs.minSobriety) {
-    parts.push(`too drunk`)
-  }
-  if (reqs.maxSobriety !== null && status.sobriety > reqs.maxSobriety) {
-    parts.push(`need to be drunk`)
-  }
-  if (reqs.minHour !== null && game.time.hour < reqs.minHour) {
-    parts.push(`not open yet`)
-  }
-  if (reqs.maxHour !== null && game.time.hour >= reqs.maxHour) {
-    parts.push(`closed`)
-  }
-
-  return parts.length > 0 ? parts.join(', ') : 'not available'
+  if (!game.player) return 'not available'
+  const { meets, reason } = meetsRequirements(game.player, action, game.time)
+  if (!meets && reason) return reason
+  return 'not available'
 }
 
 function formatTimeCost(ticks) {
+  if (!ticks) return ''
   const minutes = ticks * 15
   if (minutes < 60) return `${minutes}m`
   const hours = Math.floor(minutes / 60)
@@ -156,5 +142,6 @@ function formatTimeCost(ticks) {
   font-size: 11px;
   color: #555548;
   margin-left: 4px;
+  flex-shrink: 0;
 }
 </style>

@@ -96,42 +96,91 @@ export function checkArchetypeThresholds(player, archetypeDefinitions, previousl
 }
 
 /**
- * Calculates natural stat decay over time.
- * Hunger and energy decrease with time; sobriety slowly returns to baseline.
- * Returns status changes to apply (does NOT mutate state).
+ * Decay configuration — tuned for a ~24-hour game day.
+ * 1 tick = 15 minutes of game time.
+ * Actions cost 1-4 ticks; walking costs 1-3 ticks.
  *
- * Decay rates per tick (1 tick = 15 minutes game time):
- *   hunger:   -1 (always hungry)
- *   energy:   -0.5 (slow drain)
- *   sobriety: +2 (sobering up)
+ * Targets:
+ *   hunger:   -1/tick    → noticeably hungry after 2-3h (~8-12 ticks), starving after 6h (~24 ticks)
+ *   energy:   -0.5/tick  → exhausted after a full active day (~96 ticks of activity)
+ *   sobriety: +1/tick toward baseline 80 (drunk wears off in ~2-3h / 8-12 ticks)
+ *   mood:     -0.25/tick toward baseline 40 (slow drift; events/actions are main mood drivers)
+ */
+export const DECAY_CONFIG = {
+  hunger: {
+    ratePerTick: -1,
+    min: 0,
+    max: 100,
+  },
+  energy: {
+    ratePerTick: -0.5,
+    min: 0,
+    max: 100,
+  },
+  sobriety: {
+    ratePerTick: 1,       // recovery rate toward baseline
+    baseline: 80,         // natural ceiling when not drinking
+    min: 0,
+    max: 100,
+  },
+  mood: {
+    ratePerTick: -0.25,   // drift per tick toward baseline
+    baseline: 40,         // baseline melancholy — Portland 2001
+    min: 0,
+    max: 100,
+  },
+}
+
+/**
+ * Calculates natural stat decay over time.
+ * Returns status changes to apply (does NOT mutate state).
  *
  * @param {Object} player
  * @param {number} ticksElapsed
+ * @param {Object} [config=DECAY_CONFIG] - override decay config if needed
  * @returns {Object<string, number>} - status deltas to apply
  */
-export function getStatDecayEffects(player, ticksElapsed) {
+export function getStatDecayEffects(player, ticksElapsed, config = DECAY_CONFIG) {
   if (!ticksElapsed || ticksElapsed <= 0) return {}
 
   const status = player.status || {}
-
   const changes = {}
 
-  // Hunger decreases over time
-  const hungerDelta = -1 * ticksElapsed
-  const newHunger = Math.max(0, (status.hunger ?? 50) + hungerDelta)
-  changes.hunger = newHunger - (status.hunger ?? 50)
+  // Hunger — simple linear decay
+  const hungerCfg = config.hunger
+  const currentHunger = status.hunger ?? 50
+  const newHunger = Math.min(hungerCfg.max, Math.max(hungerCfg.min, currentHunger + hungerCfg.ratePerTick * ticksElapsed))
+  const hungerDelta = parseFloat((newHunger - currentHunger).toFixed(2))
+  if (hungerDelta !== 0) changes.hunger = hungerDelta
 
-  // Energy decreases over time (slower)
-  const energyDelta = -0.5 * ticksElapsed
-  const newEnergy = Math.max(0, (status.energy ?? 80) + energyDelta)
-  changes.energy = parseFloat((newEnergy - (status.energy ?? 80)).toFixed(2))
+  // Energy — simple linear decay
+  const energyCfg = config.energy
+  const currentEnergy = status.energy ?? 80
+  const newEnergy = Math.min(energyCfg.max, Math.max(energyCfg.min, currentEnergy + energyCfg.ratePerTick * ticksElapsed))
+  const energyDelta = parseFloat((newEnergy - currentEnergy).toFixed(2))
+  if (energyDelta !== 0) changes.energy = energyDelta
 
-  // Sobriety slowly returns to baseline (100) if not at max
-  const currentSobriety = status.sobriety ?? 100
-  if (currentSobriety < 100) {
-    const sobrietyDelta = 2 * ticksElapsed
-    const newSobriety = Math.min(100, currentSobriety + sobrietyDelta)
-    changes.sobriety = parseFloat((newSobriety - currentSobriety).toFixed(2))
+  // Sobriety — recovers toward baseline (80), not 100
+  const sobrietyCfg = config.sobriety
+  const currentSobriety = status.sobriety ?? sobrietyCfg.baseline
+  if (currentSobriety < sobrietyCfg.baseline) {
+    const newSobriety = Math.min(sobrietyCfg.baseline, currentSobriety + sobrietyCfg.ratePerTick * ticksElapsed)
+    const sobrietyDelta = parseFloat((newSobriety - currentSobriety).toFixed(2))
+    if (sobrietyDelta !== 0) changes.sobriety = sobrietyDelta
+  }
+
+  // Mood — drifts toward baseline (40)
+  const moodCfg = config.mood
+  const currentMood = status.mood ?? moodCfg.baseline
+  if (currentMood !== moodCfg.baseline) {
+    // Drift toward baseline regardless of direction
+    const direction = currentMood > moodCfg.baseline ? -1 : 1
+    const driftAmount = Math.abs(moodCfg.ratePerTick) * ticksElapsed
+    const newMood = currentMood > moodCfg.baseline
+      ? Math.max(moodCfg.baseline, currentMood - driftAmount)
+      : Math.min(moodCfg.baseline, currentMood + driftAmount)
+    const moodDelta = parseFloat((newMood - currentMood).toFixed(2))
+    if (moodDelta !== 0) changes.mood = moodDelta
   }
 
   return changes

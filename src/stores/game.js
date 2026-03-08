@@ -98,11 +98,14 @@ export const useGameStore = defineStore('game', {
 
     /**
      * Apply status changes to the player.
+     * Money is excluded — use adjustMoney for that.
+     * All other status values clamp 0-100.
      * @param {Object<string, number>} changes
      */
     applyStatusChanges(changes) {
       if (!this.player) return
       for (const [key, delta] of Object.entries(changes)) {
+        if (key === 'money') continue // use adjustMoney
         if (key in this.player.status) {
           this.player.status[key] = Math.max(
             0,
@@ -110,6 +113,15 @@ export const useGameStore = defineStore('game', {
           )
         }
       }
+    },
+
+    /**
+     * Adjust player money by delta. Can go negative. No clamping.
+     * @param {number} delta
+     */
+    adjustMoney(delta) {
+      if (!this.player) return
+      this.player.status.money += delta
     },
 
     /**

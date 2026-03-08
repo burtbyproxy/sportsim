@@ -1,6 +1,6 @@
 <template>
   <div class="location-view">
-    <!-- Location description via narrative renderer — NarrativeLog handles display -->
+    <!-- Location description is enqueued on enter — NarrativeLog handles display -->
 
     <!-- Exits -->
     <div v-if="exits.length > 0" class="location-exits">
@@ -10,8 +10,8 @@
           v-for="exit in exits"
           :key="exit.locationId"
           class="exit-link"
-          :disabled="exit.locked"
-          :title="exit.locked ? exit.lockedReason : ''"
+          :disabled="!canTravel(exit)"
+          :title="travelBlockReason(exit)"
           @click="travel(exit)"
         >
           {{ exit.label }}
@@ -37,41 +37,75 @@
 import { computed, inject, watch, onMounted } from 'vue'
 import { useGameStore } from '../../stores/game.js'
 import { generateLocationNarrative } from '../../composables/useNarrative.js'
-import { getAvailableActions } from '../../engine/actions.js'
 
 const game = useGameStore()
 const narrative = inject('narrative')
+const gameLoop = inject('gameLoop')
 
 const location = computed(() => game.currentLocation)
 const exits = computed(() => location.value?.exits ?? [])
 const npcsPresent = computed(() => game.npcsAtCurrentLocation)
 
-/**
- * Enqueue a narrative description for the current location,
- * then update the available action list.
- */
+function canTravel(exit) {
+  if (!exit) return false
+  // Check destination exists (is registered)
+  if (!game.locations[exit.locationId]) return false
+  // Check location availability based on current time
+  const dest = game.locations[exit.locationId]
+  if (dest.availability) {
+    const { openHour, closeHour } = dest.availability
+    const h = game.time.hour
+    // Handle bars that close at 2am (closeHour < openHour means crosses midnight)
+    if (closeHour < openHour) {
+      if (h < openHour && h >= closeHour) return false
+    } else {
+      if (h < openHour || h >= closeHour) return false
+    }
+  }
+  // Honor exit requirements if any
+  if (exit.requirements) return false // TODO: full requirement check
+  return true
+}
+
+function travelBlockReason(exit) {
+  if (!game.locations[exit.locationId]) return 'unknown destination'
+  const dest = game.locations[exit.locationId]
+  if (dest.availability) {
+    const { openHour, closeHour } = dest.availability
+    const h = game.time.hour
+    const closed =
+      closeHour < openHour
+        ? h < openHour && h >= closeHour
+        : h < openHour || h >= closeHour
+    if (closed) return dest.availability.closedMessage || 'closed'
+  }
+  return ''
+}
+
 function onLocationEntered() {
   if (!location.value || !game.player) return
 
-  // Clear log on location change (fresh context)
+  // Clear log and enqueue new description
   if (narrative) {
     narrative.clearLog()
     const narrativeText = generateLocationNarrative(location.value, game.player, game.time)
     narrative.enqueue(narrativeText)
   }
 
-  // Populate action menu — no action registry yet, placeholder empty array
-  // Bones/Spock will provide an action registry. For now set empty.
-  game.setAvailableActions([])
+  // Refresh available actions via game loop
+  if (gameLoop) {
+    gameLoop.onLocationEntered()
+  }
 }
 
 onMounted(onLocationEntered)
-
 watch(() => game.currentLocationId, onLocationEntered)
 
 function travel(exit) {
-  if (exit.locked) return
-  game.moveTo(exit.locationId, exit.travelTime ?? 0)
+  if (!canTravel(exit)) return
+  if (gameLoop) {
+    gameLoop.travel(exit.locationId, exit.travelTime ?? 1)
+  }
 }
 
 function formatTravelTime(ticks) {

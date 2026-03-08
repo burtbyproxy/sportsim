@@ -24,10 +24,12 @@
 </template>
 
 <script setup>
-import { ref, provide, onMounted, watch } from 'vue'
+import { ref, provide, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '../../stores/game.js'
 import { useNarrative } from '../../composables/useNarrative.js'
+import { useGameLoop } from '../../composables/useGameLoop.js'
+import { kentonActionRegistry } from '../../data/actions/kenton.js'
 import GameHeader from './GameHeader.vue'
 import GameFooter from './GameFooter.vue'
 import LocationView from '../game/LocationView.vue'
@@ -44,6 +46,9 @@ if (!game.isRunning) {
 
 const narrative = useNarrative()
 provide('narrative', narrative)
+
+const gameLoop = useGameLoop(kentonActionRegistry)
+provide('gameLoop', gameLoop)
 
 /** Tracks the entry currently being animated (for live display) */
 const activeEntry = ref(null)

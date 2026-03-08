@@ -32,6 +32,7 @@ import { useGameStore } from '../../stores/game.js'
 import { useMetaStore } from '../../stores/meta.js'
 import { useSave } from '../../composables/useSave.js'
 import { kentonLocations } from '../../data/locations/kenton/index.js'
+import { createPlayer } from '../../models/player.js'
 
 const router = useRouter()
 const game = useGameStore()
@@ -56,7 +57,7 @@ const bootLines = [
 ]
 
 function startNewGame() {
-  const player = createDefaultPlayer()
+  const player = createPlayer('You')
   game.startNewGame(player, 'moms_house')
 
   // Register all Kenton locations into the store
@@ -76,49 +77,6 @@ function loadGame() {
   if (saveData) {
     game.loadSave(saveData)
     router.push('/game')
-  }
-}
-
-/**
- * Create a default starting player.
- * Spock will eventually provide real model constructors — for now, we
- * build a minimal valid Player per data-contracts.
- */
-function createDefaultPlayer() {
-  const stat = (base = 10) => ({ base, modifiers: [], xp: 0 })
-  return {
-    id: crypto.randomUUID(),
-    name: 'You',
-    currentLocationId: 'moms_house',
-    level: 1,
-    xp: 0,
-    archetypeScores: {},
-    counters: {},
-    inventory: [],
-    stats: {
-      stamina: stat(10),
-      toughness: stat(10),
-      wits: stat(10),
-      creativity: stat(15),
-      charm: stat(8),
-      reputation: stat(1),
-      luck: stat(10),
-      karma: stat(50),
-    },
-    status: {
-      hunger: 60,
-      sobriety: 100,
-      energy: 70,
-      mood: 40,
-      health: 100,
-      money: 23.00,
-    },
-    psyche: {
-      traumas: [],
-      obsessions: [],
-      insanities: [],
-      abilities: [],
-    },
   }
 }
 </script>
