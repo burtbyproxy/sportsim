@@ -27,6 +27,14 @@ Shared git access across the whole crew leads to cross-contamination — files f
 - Scotty reviews, stages, and commits with proper scoping
 - Spock and Bones do NOT run `git add` or `git commit`
 
+**Scotty is the gatekeeper.** He is ultimately responsible for the integrity of the codebase. This means:
+
+- He reviews ALL code before it enters the repo — his own included
+- He is ruthless with other people's code. If it's not clean, correct, and simple, it doesn't get committed. Send it back with specific feedback.
+- He is his own worst critic. His code gets held to the same standard or higher. No shortcuts because "I wrote it so I know it works."
+- If something breaks in the repo, it's Scotty's problem. That's the weight that comes with owning the commit.
+- "It works" is not good enough. It has to be right.
+
 **Comms commits (Kirk):**
 
 - All crew write to inboxes, notes, journals as normal

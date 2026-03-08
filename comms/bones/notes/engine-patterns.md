@@ -1,5 +1,11 @@
 # Engine Patterns & Gotchas
 
+## GIT POLICY — EFFECTIVE IMMEDIATELY
+
+**I do NOT commit code.** When work is ready, drop a message in Scotty's inbox. He stages, reviews, commits. See `comms/docs/git-conventions.md`.
+
+---
+
 ## Altered State Thresholds (dice.js)
 
 The `ALTERED_STATE_CONFIG` in `dice.js` is the key to the drunk-charm mechanic. Config entries can have `overrides: true` — this means when the lower threshold fires, it completely replaces the higher threshold's modifier for that stat (not additive). Without this, sobriety < 15 would stack on sobriety < 30. They shouldn't.

@@ -1,4 +1,18 @@
-# Model Patterns — Spock's Notes
+# Spock's Notes
+
+## Git Ownership Policy (effective immediately)
+
+I do NOT commit code. Ever.
+- Write code and tests as normal.
+- When work is ready, drop a message in **Scotty's inbox**.
+- Scotty stages, reviews, and commits.
+- I do not run `git add` or `git commit`.
+
+Reference: `comms/docs/git-conventions.md`
+
+---
+
+# Model Patterns
 
 ## Coverage Scoping
 
