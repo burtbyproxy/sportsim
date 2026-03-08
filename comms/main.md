@@ -19,8 +19,9 @@ Define your team in the table below. Each member has a codename, one or more rol
 | Codename | Roles | Directory |
 |---|---|---|
 | Kirk | Architect, Product | `comms/kirk/` |
-| Scotty | Backend, Frontend, Data / Migration | `comms/scotty/` |
-| Spock | QA, Overflow, Reviewer | `comms/spock/` |
+| Scotty | Backend, Frontend, Data / Migration, Overflow | `comms/scotty/` |
+| Spock | QA, Reviewer | `comms/spock/` |
+| Bones | Overflow, Performance | `comms/bones/` |
 
 See `comms/docs/roles.md` for the full list of available roles and their descriptions.
 
