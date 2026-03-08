@@ -148,6 +148,7 @@ When the user is ending a session:
 - NEVER modify files inside another team member's `active/` or `archive/`
 - You MAY read another team member's `active/` to see what they're working on
 - The ONLY way to communicate with another team member is by dropping a `.md` file in their `inbox/`
+- **Architect exception:** The Architect may read any team member's `inbox/`, `active/`, and `journal/` at any time. Full visibility is required to lead, rebalance workload, and resolve conflicts. The Architect still communicates through inboxes — reading is not permission to silently act.
 - **Overflow exception:** If a team member has the Overflow role, they may pull tasks from other team members' inboxes when idle (move to their own active). Inbox is fair game. Active is sacred. Nobody else gets this privilege.
 - `comms/docs/` is shared ground — everyone reads, the Architect maintains
 
