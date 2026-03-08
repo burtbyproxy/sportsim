@@ -1,0 +1,55 @@
+// === Color Palette ===
+$color-bg: #0a0a0a;
+$color-bg-surface: #111111;
+$color-bg-elevated: #1a1a1a;
+
+$color-text-primary: #c8c8a8;       // aged paper / warm white
+$color-text-secondary: #888878;     // dim, secondary info
+$color-text-muted: #555548;         // barely visible
+
+$color-accent: #7aad5a;             // phosphor green
+$color-accent-dim: #3d5a2e;
+$color-accent-bright: #a8d888;
+
+$color-amber: #d4a843;              // amber variant
+$color-amber-dim: #6b5420;
+
+$color-danger: #c04040;
+$color-warning: #b8882a;
+
+$color-highlight-bg: #2a2a1a;       // text highlight background
+$color-highlight-text: #e8e8b0;
+
+$color-border: #2a2a2a;
+$color-border-subtle: #1a1a1a;
+
+// === Typography ===
+$font-mono: 'Courier New', Courier, monospace;
+$font-ui: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+$font-size-base: 16px;
+$font-size-sm: 13px;
+$font-size-lg: 19px;
+$font-size-xl: 24px;
+
+$line-height-narrative: 1.7;
+$line-height-ui: 1.4;
+
+// === Layout ===
+$header-height: 48px;
+$footer-height: 32px;
+
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 40px;
+
+// === Animation ===
+$speed-instant: 0ms;
+$speed-fast: 20ms;       // ms per character
+$speed-normal: 40ms;
+$speed-slow: 80ms;
+$speed-crawl: 150ms;
+
+$transition-ui: 150ms ease;

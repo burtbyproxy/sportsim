@@ -1,0 +1,117 @@
+@use 'variables' as *;
+
+// === Status Bar Stats ===
+
+.stat-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.stat-bar {
+  height: 3px;
+  background: $color-border;
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.stat-bar__fill {
+  height: 100%;
+  background: $color-accent;
+  transition: width 300ms ease;
+
+  &.stat-bar__fill--warning {
+    background: $color-warning;
+  }
+
+  &.stat-bar__fill--danger {
+    background: $color-danger;
+  }
+}
+
+// === Title Screen ===
+
+.title-screen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  height: 100vh;
+  padding: $spacing-xl;
+  background: $color-bg;
+  font-family: $font-mono;
+}
+
+.title-screen__boot {
+  color: $color-text-muted;
+  font-size: $font-size-sm;
+  margin-bottom: $spacing-xl;
+  line-height: $line-height-narrative;
+}
+
+.title-screen__title {
+  font-size: $font-size-xl;
+  color: $color-accent;
+  margin-bottom: $spacing-xs;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.title-screen__subtitle {
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+  margin-bottom: $spacing-xl;
+}
+
+.title-screen__menu {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.title-menu-item {
+  font-family: $font-mono;
+  font-size: $font-size-base;
+  color: $color-accent;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+
+  &::before {
+    content: '> ';
+    color: $color-text-muted;
+  }
+
+  &:hover {
+    color: $color-accent-bright;
+    &::before {
+      color: $color-accent-dim;
+    }
+  }
+
+  &:disabled {
+    color: $color-text-muted;
+    cursor: not-allowed;
+    &::before {
+      color: $color-border;
+    }
+  }
+}
+
+// === NPC List ===
+
+.npc-list {
+  margin-top: $spacing-md;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.npc-entry {
+  margin-bottom: $spacing-xs;
+  &::before {
+    content: '— ';
+    color: $color-text-muted;
+  }
+}

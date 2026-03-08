@@ -1,0 +1,89 @@
+@use 'variables' as *;
+
+// === Base Layout ===
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background-color: $color-bg;
+  color: $color-text-primary;
+  font-family: $font-mono;
+  font-size: $font-size-base;
+  line-height: $line-height-narrative;
+}
+
+// === Game Shell ===
+
+.game-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.game-header {
+  flex: 0 0 $header-height;
+  height: $header-height;
+  background: $color-bg-surface;
+  border-bottom: 1px solid $color-border;
+  display: flex;
+  align-items: center;
+  padding: 0 $spacing-md;
+  z-index: 10;
+}
+
+.game-main {
+  flex: 1 1 auto;
+  display: flex;
+  overflow: hidden;
+}
+
+.narrative-column {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: $spacing-lg;
+}
+
+.action-column {
+  flex: 0 0 240px;
+  border-left: 1px solid $color-border;
+  overflow-y: auto;
+  padding: $spacing-md;
+}
+
+.game-footer {
+  flex: 0 0 $footer-height;
+  height: $footer-height;
+  background: $color-bg-surface;
+  border-top: 1px solid $color-border;
+  display: flex;
+  align-items: center;
+  padding: 0 $spacing-md;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+// === Scrollbar ===
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: $color-bg;
+}
+::-webkit-scrollbar-thumb {
+  background: $color-border;
+}

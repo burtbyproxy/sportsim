@@ -1,0 +1,117 @@
+@use 'variables' as *;
+
+// === Narrative Text ===
+
+.narrative-text {
+  font-family: $font-mono;
+  font-size: $font-size-base;
+  line-height: $line-height-narrative;
+  color: $color-text-primary;
+}
+
+.narrative-entry {
+  margin-bottom: $spacing-lg;
+  padding-bottom: $spacing-lg;
+  border-bottom: 1px solid $color-border-subtle;
+
+  &:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+}
+
+// === Token Styles ===
+
+.token-normal {
+  // default
+}
+
+.token-bold {
+  font-weight: bold;
+  color: $color-text-primary;
+}
+
+.token-italic {
+  font-style: italic;
+  color: $color-text-secondary;
+}
+
+.token-highlight {
+  background-color: $color-highlight-bg;
+  color: $color-highlight-text;
+  padding: 0 2px;
+}
+
+.token-whisper {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  opacity: 0.7;
+}
+
+.token-shout {
+  font-size: $font-size-lg;
+  font-weight: bold;
+  color: $color-accent-bright;
+  letter-spacing: 1px;
+}
+
+// === UI Elements ===
+
+.ui-label {
+  font-family: $font-ui;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.ui-value {
+  font-family: $font-mono;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+}
+
+.action-item {
+  font-family: $font-mono;
+  font-size: $font-size-sm;
+  color: $color-accent;
+  cursor: pointer;
+  padding: $spacing-xs $spacing-sm;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  transition: border-color $transition-ui, background-color $transition-ui;
+
+  &:hover {
+    border-color: $color-accent-dim;
+    background-color: $color-bg-elevated;
+  }
+
+  &:focus {
+    outline: 1px solid $color-accent;
+  }
+
+  &.action-item--disabled {
+    color: $color-text-muted;
+    cursor: not-allowed;
+
+    &:hover {
+      border-color: transparent;
+      background: none;
+    }
+  }
+}
+
+.exit-link {
+  color: $color-amber;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+
+  &:hover {
+    color: $color-amber-dim;
+  }
+}
