@@ -311,7 +311,7 @@ The Architect does not commit code. They write plans.
 
 **What it is:** A satirical, text-adventure-style browser game set in Portland, Oregon in 2001. You play a broke, talentless artist starting in your mom's basement in the Kenton neighborhood of North Portland. The "sport" is navigating Portland's turn-of-the-millennium art scene.
 
-**Status:** Early prototype from 2019, being revived. Only 3 commits exist. The map zoom mechanic is the only wired-up feature. Many components are empty stubs. Tech stack decisions are pending — the Architect (Kirk) and Commander will determine direction.
+**Status:** Early prototype from 2019, being revived. Only 3 commits exist. The map zoom mechanic is the only wired-up feature. Many components are empty stubs. Tech stack decisions are pending — the Architect (Kirk) and Admiral will determine direction.
 
 **Current tech stack (may change):**
 - Frontend: Vue.js 2, Vue Router, Vuex (unused), Webpack 4, SCSS
