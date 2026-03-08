@@ -31,6 +31,7 @@ import { useRouter } from 'vue-router'
 import { useGameStore } from '../../stores/game.js'
 import { useMetaStore } from '../../stores/meta.js'
 import { useSave } from '../../composables/useSave.js'
+import { kentonLocations } from '../../data/locations/kenton/index.js'
 
 const router = useRouter()
 const game = useGameStore()
@@ -57,6 +58,12 @@ const bootLines = [
 function startNewGame() {
   const player = createDefaultPlayer()
   game.startNewGame(player, 'moms_house')
+
+  // Register all Kenton locations into the store
+  for (const location of Object.values(kentonLocations)) {
+    game.registerLocation({ ...location })
+  }
+
   router.push('/game')
 }
 

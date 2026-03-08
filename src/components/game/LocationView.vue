@@ -1,7 +1,6 @@
 <template>
   <div class="location-view">
-    <!-- Location description via narrative renderer -->
-    <!-- Description is enqueued on mount / location change — NarrativeLog handles display -->
+    <!-- Location description via narrative renderer — NarrativeLog handles display -->
 
     <!-- Exits -->
     <div v-if="exits.length > 0" class="location-exits">
@@ -37,6 +36,8 @@
 <script setup>
 import { computed, inject, watch, onMounted } from 'vue'
 import { useGameStore } from '../../stores/game.js'
+import { generateLocationNarrative } from '../../composables/useNarrative.js'
+import { getAvailableActions } from '../../engine/actions.js'
 
 const game = useGameStore()
 const narrative = inject('narrative')
@@ -46,41 +47,27 @@ const exits = computed(() => location.value?.exits ?? [])
 const npcsPresent = computed(() => game.npcsAtCurrentLocation)
 
 /**
- * Determine description key based on current context.
+ * Enqueue a narrative description for the current location,
+ * then update the available action list.
  */
-function descriptionKey() {
-  const loc = location.value
-  if (!loc) return 'default'
+function onLocationEntered() {
+  if (!location.value || !game.player) return
 
-  const { period } = game.time
-  const { sobriety, energy, hunger } = game.player?.status ?? {}
-  const visits = loc.visitCount ?? 0
+  // Clear log on location change (fresh context)
+  if (narrative) {
+    narrative.clearLog()
+    const narrativeText = generateLocationNarrative(location.value, game.player, game.time)
+    narrative.enqueue(narrativeText)
+  }
 
-  if (sobriety !== undefined && sobriety <= 30) return 'drunk'
-  if (energy !== undefined && energy <= 20) return 'exhausted'
-  if (hunger !== undefined && hunger <= 20) return 'starving'
-  if (period === 'night' || period === 'late_night') return 'night'
-  if (visits > 1 && loc.descriptions?.repeat) return 'repeat'
-  return 'default'
+  // Populate action menu — no action registry yet, placeholder empty array
+  // Bones/Spock will provide an action registry. For now set empty.
+  game.setAvailableActions([])
 }
 
-function enqueueDescription() {
-  if (!location.value) return
-  const key = descriptionKey()
-  const text = location.value.descriptions?.[key] ?? location.value.descriptions?.default
-  if (!text || !narrative) return
+onMounted(onLocationEntered)
 
-  narrative.enqueue({
-    tokens: [{ text, style: 'normal', speed: 'normal', pauseAfter: 0, effect: 'none', color: null }],
-  })
-}
-
-onMounted(enqueueDescription)
-
-// Re-enqueue when location changes
-watch(() => game.currentLocationId, () => {
-  enqueueDescription()
-})
+watch(() => game.currentLocationId, onLocationEntered)
 
 function travel(exit) {
   if (exit.locked) return
@@ -132,7 +119,7 @@ function formatTravelTime(ticks) {
   text-decoration-style: dotted;
 
   &:hover:not(:disabled) {
-    color: #6b5420;
+    color: #a87e28;
   }
 
   &:disabled {
