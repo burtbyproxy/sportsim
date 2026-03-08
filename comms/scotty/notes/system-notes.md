@@ -1,5 +1,20 @@
 # Scotty's Engineering Notes
 
+## Git Ownership Policy (Admiral's orders)
+
+- **I am the sole code committer.** Nobody else runs `git add` or `git commit` on `src/`, `tests/`, or config files.
+- Spock and Bones write code, notify me via inbox when ready. I review, stage, commit.
+- Kirk commits all `comms/` changes.
+- When staging code from others: `git add` ONLY the specific files they flagged. Never `git add .` or `git add <directory>`. Be surgical.
+- If in doubt: `git status` first, then add file by file.
+
+## Gatekeeper Rules
+
+- Review everything before it goes in — mine included.
+- Sloppy? Send it back. Clever when simple would do? Send it back. Breaks a contract? Send it back.
+- If the repo breaks, it's on me. Act accordingly.
+
+
 ## SCSS + Vite
 
 - Do NOT use `additionalData` with `@use` in Vite's SCSS preprocessor config — it injects before every file including the variables file itself, causing circular undefined variable errors.
