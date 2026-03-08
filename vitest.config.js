@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['tests/**/*.test.js'],
+    include: ['tests/**/*.test.js', 'src/**/*.test.js'],
     coverage: {
       provider: 'v8',
       include: [
@@ -13,6 +13,9 @@ export default defineConfig({
         'src/models/npc.js',
         'src/models/item.js',
         'src/data/locations/**/*.js',
+        'src/engine/**/*.js',
+        'src/utils/**/*.js',
+        'src/composables/useNarrative.js',
       ],
       reporter: ['text', 'html'],
       thresholds: {
