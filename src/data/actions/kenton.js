@@ -418,7 +418,7 @@ export const kentonActions = {
     },
     criticalSuccess: {
       narrative: toNarrativeText("There's a folded twenty in the drain. Wet. You don't think about how it got there. Twenty dollars is twenty dollars."),
-      statusChanges: {},
+      statusChanges: null,
       statChanges: null,
       moneyChange: 20,
       itemsGained: null,
@@ -471,7 +471,7 @@ export const kentonActions = {
     check: null,
     success: {
       narrative: toNarrativeText("Two dollars for a tallboy Olympia. You're not proud of this. You're not ashamed either. You're just cold and this is what's available."),
-      statusChanges: {},
+      statusChanges: null,
       statChanges: null,
       moneyChange: -2,
       itemsGained: [{
