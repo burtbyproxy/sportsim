@@ -61,6 +61,15 @@ Per tick (1 tick = 15 min game time):
 Sobriety above 80: engine does NOT pull it down. Drinking is what lowers it.
 DECAY_CONFIG is exported and can be overridden for tests.
 
+## Critical Failure + Success Interaction (dice.js / actions.js)
+
+Natural 1 triggers criticalFailure outcome in `_selectOutcome()` BEFORE the success check.
+If player's stat modifier + natural 1 clears the DC, `diceResult.success` is still true,
+but the criticalFailure outcome is returned. This is intended behavior.
+
+Do NOT write tests that assert `result.success === false` on natural 1 alone.
+Assert `result.diceResult.criticalFailure === true` and check the outcome instead.
+
 ## Integration Test Patterns
 
 - Round-trip test pattern: mutate -> JSON.stringify -> JSON.parse -> re-test functions
