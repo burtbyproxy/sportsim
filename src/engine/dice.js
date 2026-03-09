@@ -132,6 +132,11 @@ export function calculateModifier(player, statName) {
 /**
  * Calculates altered state modifier contribution for a given stat.
  * Internal helper.
+ *
+ * For each status key (sobriety, energy, etc.), iterates thresholds once.
+ * If any override threshold matches, it wins outright and replaces all non-override matches.
+ * Otherwise, the last matching non-override threshold applies.
+ *
  * @param {Object} player
  * @param {string} statName
  * @returns {number}
@@ -144,17 +149,10 @@ function _calculateAlteredStateModifier(player, statName) {
     const statusValue = status[statusKey]
     if (statusValue === undefined) continue
 
-    // Sort thresholds so overrides (more specific / lower thresholds) run last
-    const sorted = [...thresholds].sort((a, b) => {
-      if (a.overrides && !b.overrides) return 1
-      if (!a.overrides && b.overrides) return -1
-      return 0
-    })
+    let overrideValue = null  // set if an override threshold matches
+    let lastNonOverride = 0   // last matching non-override value
 
-    let appliedOverride = false
-    let baseContribution = 0
-
-    for (const threshold of sorted) {
+    for (const threshold of thresholds) {
       const matches =
         (threshold.below !== undefined && statusValue < threshold.below) ||
         (threshold.above !== undefined && statusValue > threshold.above)
@@ -165,28 +163,13 @@ function _calculateAlteredStateModifier(player, statName) {
       if (mod === undefined) continue
 
       if (threshold.overrides) {
-        appliedOverride = true
-        baseContribution = mod.value
+        overrideValue = mod.value
       } else {
-        baseContribution = mod.value
+        lastNonOverride = mod.value
       }
     }
 
-    if (!appliedOverride) {
-      // Re-check: apply the last matching non-override threshold
-      let last = 0
-      for (const threshold of sorted.filter((t) => !t.overrides)) {
-        const matches =
-          (threshold.below !== undefined && statusValue < threshold.below) ||
-          (threshold.above !== undefined && statusValue > threshold.above)
-        if (!matches) continue
-        const mod = threshold.modifiers.find((m) => m.stat === statName)
-        if (mod !== undefined) last = mod.value
-      }
-      total += last
-    } else {
-      total += baseContribution
-    }
+    total += overrideValue !== null ? overrideValue : lastNonOverride
   }
 
   return total
