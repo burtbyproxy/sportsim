@@ -1,47 +1,37 @@
-# Scotty Standup
+# Scotty Standup — Phase 3 Complete
 
 **From:** Scotty
-**Date:** Session update
 
 ---
 
-## Done This Session
+## Phase 3 is done. All commits are in.
 
-### Inbox processed
-- Kirk: content comes from Uhura (ack'd — loader already built)
-- Kirk: itemsGained ruling — Option A, IDs, item registry (done)
-- Bones: Phase 3 simulation engine ready — reviewed, clean, ready to commit after Spock approves
-- Spock: Phase 3 review — two blocking issues (both fixed)
+### Commits this session (in order):
 
-### Fixes (Spock's blocking review issues)
-- `itemsGained` in `resolvePlayerAction()` — now looks up item IDs via `game.getItem()` registry
-- `canTravel` / `travelBlockReason` in `LocationView.vue` — now delegates to `isOpen()` from model, single source of truth
+1. `[engine]` Bones' three-tier simulation engine — schedule, character-registry, simulation
+2. `[model]` Spock's unified Character model — replaces NPC, 46 + 8 tests
+3. `[build]` Phase 3 code — content loader, characters migration, simulation worker wired, item registry, character selection UI, canTravel fix, ActionMenu filter
+4. `[build]` TitleScreen + GameScreen migrated to content loader — all game content flows through `src/data/loader.js`
+5. `[cleanup]` Legacy JS data files deleted — `src/data/actions/kenton.js`, `src/data/locations/kenton/index.js`, `src/models/npc.js`. Tests updated to load from `content/` via fs.
 
-### New work committed to code (awaiting Spock approval)
-- `src/data/loader.js` — content loader, `import.meta.glob` on all `content/` dirs
-- `src/stores/game.js` — `npcs`→`characters` rename, item registry (`items`, `registerItem`, `getItem`), backward-compatible save loading
-- `src/workers/simulation.worker.js` — calls Bones' `simulateTick()`, returns `characters` shape
-- `src/workers/simulation-api.js` — updated signatures
-- `src/composables/useGameLoop.js` — async tick, sim wired, character status decay applied, item registry lookup
-- `src/composables/useSave.js` — saves `characters` key
-- `src/components/layout/GameScreen.vue` — provides `selectedCharacterId`
-- `src/components/game/LocationView.vue` — clickable characters, deselect on location change, `isOpen()` fix
-- `src/components/game/ActionMenu.vue` — filters by selected character, awaits resolvePlayerAction
-- `vite.config.js` — `environmentMatchGlobs` for content-validation node env
-- `tests/content-validation.test.js` — `@vitest-environment node` comment added
+**487/487 tests passing. Build clean.**
 
-Build clean. 416/416 tests green. Code sent to Spock (v2 review request).
+---
 
-## Waiting On
+## Phase 3 acceptance criteria — status
 
-- Spock review approval → then I commit in two commits (Bones' engine, then everything else)
-- Uhura's content files → loader picks them up automatically, no code changes needed
-- TitleScreen migration to loader → blocked until Uhura delivers `content/maps/kenton/` JSON
+1. ✅ Content loader reads all JSON from `content/` and feeds it to the engine
+2. ✅ TitleScreen uses loader instead of direct JS imports
+3. ✅ Simulation worker runs Bones' engine on every tick
+4. ✅ Characters appear at locations based on simulation results
+5. ✅ Character interactions show in action menu when character is selected
+6. ✅ Store uses unified Character terminology (`npcs` → `characters`, deprecated aliases in place)
+7. ✅ Legacy dead code removed
+8. ✅ Spock reviewed all code before commit
+9. ✅ Save/load works with character state
 
-## Still To Do (Phase 3)
+---
 
-1. Spock approval → commit
-2. TitleScreen migration to loader (blocked on Uhura)
-3. `kenton.js` action data `itemsGained` inline objects → after Uhura writes `content/items/`, Kirk/Uhura migrate action content
+## Ready for Phase 4 orders.
 
 — Scotty

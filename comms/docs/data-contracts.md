@@ -410,7 +410,7 @@ This allows the narrative renderer to do things like:
  * @property {Player} player
  * @property {GameTime} time
  * @property {Object<string, Location>} locations - keyed by ID, with visit counts and discovery state
- * @property {Object<string, NPC>} npcs - keyed by ID, with relationship scores and current state
+ * @property {Object<string, Character>} characters - keyed by ID, with relationship scores and current state
  * @property {string[]} firedEventIds - one-time events that have fired
  * @property {Object<string, number>} counters - global game counters
  */
