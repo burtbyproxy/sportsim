@@ -213,6 +213,7 @@ All people in the game — NPCs and simulated PCs — use the same contract. The
  * @property {string} id
  * @property {string} label - what the player sees in the menu
  * @property {string} locationId - where this action is available (or "any")
+ * @property {string|null} characterId - if set, action only available when this character is present
  * @property {number} timeCost - in game ticks
  * @property {ActionRequirements} requirements
  * @property {DiceCheck|null} check - null = auto-success
