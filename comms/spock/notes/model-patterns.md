@@ -50,6 +50,24 @@ packages that need post-install.
   If a shared utility module appears, move it there. Until then, keep it local.
 - adjustStatus() delegates money to adjustMoney() to centralize no-clamp logic.
 
+## Stat Decay Contract (from DECAY_CONFIG in stats.js)
+
+Per tick (1 tick = 15 min game time):
+- hunger:   -1/tick, min 0
+- energy:   -0.5/tick, min 0
+- sobriety: +1/tick toward baseline **80** (NOT 100). Only moves when below 80.
+- mood:     ±0.25/tick toward baseline **40**. Moves from either direction.
+
+Sobriety above 80: engine does NOT pull it down. Drinking is what lowers it.
+DECAY_CONFIG is exported and can be overridden for tests.
+
+## Integration Test Patterns
+
+- Round-trip test pattern: mutate -> JSON.stringify -> JSON.parse -> re-test functions
+- Use `seededRandom(n)` for deterministic dice tests
+- Test `toBeUndefined()` on decay change keys that should be absent (e.g. sobriety when already at baseline)
+- Integration tests go in `tests/integration/` — separate from unit tests
+
 ## Kenton Location Data
 
 - All 17 locations confirmed: exits only reference other Kenton location IDs
