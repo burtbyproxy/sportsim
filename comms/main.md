@@ -21,7 +21,7 @@ Define your team in the table below. Each member has a codename, one or more rol
 | Kirk     | Architect, Product                            | `comms/kirk/`   |
 | Scotty   | Backend, Frontend, Data / Migration, Overflow | `comms/scotty/` |
 | Spock    | QA, Reviewer                                  | `comms/spock/`  |
-| Bones    | Overflow, Performance                         | `comms/bones/`  |
+| Bones    | Diagnostics, Performance, Overflow            | `comms/bones/`  |
 | Uhura    | Content, Narrative                            | `comms/uhura/`  |
 
 See `comms/docs/roles.md` for the full list of available roles and their descriptions.
@@ -307,19 +307,17 @@ Every task should be small enough to commit on its own. If a task feels too big,
 
 ## Git & Commits
 
-Each team member commits their own work within their domain. Commit messages must be clear, scoped, and meaningful.
+Two people commit. See `comms/docs/git-conventions.md` for the full policy.
 
-Format:
+| Domain                          | Committer |
+| ------------------------------- | --------- |
+| Code (`src/`, `tests/`, config) | Scotty    |
+| Comms (`comms/`, `content/`)    | Kirk      |
 
-```
-[domain] short summary
-
-Longer description if needed. Reference relevant comms tasks.
-```
-
-Domains: `[backend]`, `[frontend]`, `[data]`, `[test]`, `[docs]`, `[infra]`, `[meta]`, `[build]`
+Commit messages use `[domain] short summary` format. Domains: `[backend]`, `[frontend]`, `[data]`, `[test]`, `[docs]`, `[infra]`, `[meta]`, `[build]`, `[engine]`, `[model]`, `[cleanup]`
 
 The Architect does not commit code. They write plans.
+Scotty is the codebase gatekeeper — all code reviewed by Spock before commit.
 
 ---
 
@@ -327,37 +325,49 @@ The Architect does not commit code. They write plans.
 
 **What it is:** A satirical, text-adventure-style browser game set in Portland, Oregon in 2001. You play a broke, talentless artist starting in your mom's basement in the Kenton neighborhood of North Portland. The "sport" is navigating Portland's turn-of-the-millennium art scene.
 
-**Status:** Early prototype from 2019, being revived. Only 3 commits exist. The map zoom mechanic is the only wired-up feature. Many components are empty stubs. Tech stack decisions are pending — the Architect (Kirk) and Admiral will determine direction.
+**Status:** Playable prototype. Player can walk around Kenton, interact with characters, do actions, watch stats change, save and load. Three phases complete. 487 tests green.
 
-**Current tech stack (may change):**
+**Tech stack:**
 
-- Frontend: Vue.js 2, Vue Router, Vuex (unused), Webpack 4, SCSS
-- Backend: PHP with Slim Framework 3, Medoo ORM
-- Database: MySQL
-- Server: Apache with mod_rewrite
+- Frontend: Vue 3 (Composition API), Vue Router 4, Pinia, Vite 5
+- Styling: SCSS (dark terminal aesthetic)
+- Testing: Vitest (487 tests, 80%+ coverage)
+- Worker: Web Worker with Comlink (character simulation)
+- Backend: None (client-only, localStorage persistence)
 
 **Repo structure:**
 
 ```
-src/                  <- Vue.js source
-  components/         <- Vue components (many are empty stubs)
-  models/             <- JS class hierarchy for game entities
-  services/           <- API client (Axios)
-  data/               <- JSON game data (locations, templates, maps)
+src/                  <- Vue 3 application source
+  components/         <- Vue components (layout + game)
+  composables/        <- useNarrative, useSave, useGameLoop
+  engine/             <- Pure JS engines (dice, actions, events, stats, simulation, clock, unlocks)
+  models/             <- Pure JS models (player, character, location, item)
+  stores/             <- Pinia stores (game, meta)
+  data/               <- Content loader
+  workers/            <- Simulation web worker (Comlink)
+  router/             <- Vue Router 4
   scss/               <- Stylesheets
-dist/                 <- Webpack build output
+content/              <- Game content (JSON, owned by Uhura)
+  maps/               <- Neighborhoods (locations, actions, events per map)
+    kenton/           <- 17 locations, actions, events
+  characters/         <- All characters (fixed/routine/full simulation tiers)
+  items/              <- Consumables, junk, key items
+comms/                <- Team communication protocol
+  docs/               <- Shared architecture docs
+  kirk/               <- Architect
+  scotty/             <- Engineer
+  spock/              <- QA
+  bones/              <- Diagnostics
+  uhura/              <- Content
+dist/                 <- Vite build output
 assets/img/           <- Map background images (5 zoom levels)
-api.php               <- Slim REST API
-console.php           <- Admin CRUD panel
-index.php             <- SPA shell
 ```
 
-**Game model hierarchy:**
+**Game model:** Pure JS factory functions. Player, Character (unified — replaces NPC), Location, Item. All serialize to JSON for localStorage saves.
 
-- `LiveRecord` (base) -> `Entity`, `Location`, `Possession`, `Artwork`, `Structure`
-- `Human` extends `Entity` — 12 RPG stats across physical/mental/spiritual categories
-- `Consumable` extends `Possession` — items with effects
+**Character simulation:** Three tiers — `fixed` (cheapest, schedule-based), `routine` (multi-stop schedules with transit), `full` (status-driven decisions, stat decay). All characters in one pool, simulation depth per-character.
 
-**Map system:** 5-level spatial hierarchy: World -> Region -> Neighborhood -> Location -> Interior. Only Kenton neighborhood has real data (17 locations).
+**Map system:** Neighborhood-based. Only Kenton has data (17 locations, 10 characters). Future neighborhoods: Downtown, Jantzen Beach, Irvington, Chinatown, Hawthorne, 82nd, etc.
 
 **Tone:** Extremely irreverent, dark humor, autobiographical. This is not a serious game. It's a love letter to early-2000s Portland written by someone who lived it.

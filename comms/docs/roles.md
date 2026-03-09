@@ -151,6 +151,24 @@ Code review, standards enforcement, quality gates.
 
 ---
 
+## Diagnostics
+
+System health, bug triage, code quality audits, first responder.
+
+**Responsibilities:**
+
+- Monitor codebase health — test coverage gaps, code smells, stale references, dead code
+- Bug triage — first responder when something breaks, diagnose root cause, fix or route to the right person
+- Health checks — verify systems are working correctly after major changes
+- Code quality audits — flag patterns that will cause problems later
+- Dependency health — outdated packages, security advisories, version conflicts
+
+**Does NOT:** Build core systems or own architecture-level modules. Diagnoses and fixes, doesn't design.
+
+**Note:** Often combined with Performance and Overflow. The doctor who keeps the ship running, not the engineer who builds it.
+
+---
+
 ## DevOps / Infra
 
 Docker, CI/CD, deployment, monitoring, environment configuration.

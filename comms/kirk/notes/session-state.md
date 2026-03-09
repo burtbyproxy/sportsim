@@ -9,7 +9,7 @@
 - Kirk: Architect, Product. Commits comms.
 - Scotty: Backend, Frontend, Overflow. Commits code. Gatekeeper — reviews all code including his own.
 - Spock: QA, Reviewer. Reviews before Scotty commits. Validates content JSON.
-- Bones: Overflow, Performance. Simulation engine.
+- Bones: Diagnostics, Performance, Overflow. Health checks, bug triage, profiling. Does NOT build core engines.
 - Uhura: Content, Narrative. Owns `content/`. Workshops with Admiral on creative.
 
 ## Key architecture
