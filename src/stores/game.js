@@ -19,14 +19,17 @@ export const useGameStore = defineStore('game', {
     /** @type {Object<string, import('../../comms/docs/data-contracts.js').Location>} */
     locations: {},
 
-    /** @type {Object<string, import('../../comms/docs/data-contracts.js').NPC>} */
-    npcs: {},
+    /** @type {Object<string, import('../../comms/docs/data-contracts.js').Character>} */
+    characters: {},
 
     /** IDs of one-time events that have fired this run */
     firedEventIds: [],
 
     /** General-purpose counters */
     counters: {},
+
+    /** @type {Object<string, import('../../comms/docs/data-contracts.js').Item>} */
+    items: {},
 
     /** Actions currently available at this location */
     availableActions: [],
@@ -41,10 +44,18 @@ export const useGameStore = defineStore('game', {
       return state.locations[state.currentLocationId] ?? null
     },
 
+    charactersAtCurrentLocation: (state) => {
+      if (!state.currentLocationId) return []
+      return Object.values(state.characters).filter(
+        (c) => c.currentLocationId === state.currentLocationId
+      )
+    },
+
+    /** @deprecated use charactersAtCurrentLocation */
     npcsAtCurrentLocation: (state) => {
       if (!state.currentLocationId) return []
-      return Object.values(state.npcs).filter(
-        (npc) => npc.currentLocationId === state.currentLocationId
+      return Object.values(state.characters).filter(
+        (c) => c.currentLocationId === state.currentLocationId
       )
     },
 
@@ -68,8 +79,10 @@ export const useGameStore = defineStore('game', {
       this.time = createClock()
       this.firedEventIds = []
       this.counters = {}
+      this.characters = {}
       this.availableActions = []
       this.isRunning = true
+      // Note: items registry persists across game reset — item definitions don't change per-run
     },
 
     /**
@@ -90,6 +103,9 @@ export const useGameStore = defineStore('game', {
         this.advanceTime(travelTicks)
       }
       this.currentLocationId = locationId
+      if (this.player) {
+        this.player.currentLocationId = locationId
+      }
       if (this.locations[locationId]) {
         this.locations[locationId].visitCount =
           (this.locations[locationId].visitCount ?? 0) + 1
@@ -176,22 +192,50 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
-     * Register an NPC in state.
-     * @param {Object} npc
+     * Register a character in state.
+     * @param {Object} character
      */
+    registerCharacter(character) {
+      this.characters[character.id] = character
+    },
+
+    /** @deprecated use registerCharacter */
     registerNpc(npc) {
-      this.npcs[npc.id] = npc
+      this.characters[npc.id] = npc
     },
 
     /**
-     * Update NPC location (from simulation worker output).
-     * @param {string} npcId
+     * Register an item definition in the item registry.
+     * Called at game init from loadItems() output.
+     * @param {Object} item
+     */
+    registerItem(item) {
+      this.items[item.id] = item
+    },
+
+    /**
+     * Look up an item definition by ID.
+     * @param {string} itemId
+     * @returns {Object|null}
+     */
+    getItem(itemId) {
+      return this.items[itemId] ?? null
+    },
+
+    /**
+     * Update character location (from simulation worker output).
+     * @param {string} characterId
      * @param {string} locationId
      */
-    setNpcLocation(npcId, locationId) {
-      if (this.npcs[npcId]) {
-        this.npcs[npcId].currentLocationId = locationId
+    setCharacterLocation(characterId, locationId) {
+      if (this.characters[characterId]) {
+        this.characters[characterId].currentLocationId = locationId
       }
+    },
+
+    /** @deprecated use setCharacterLocation */
+    setNpcLocation(characterId, locationId) {
+      this.setCharacterLocation(characterId, locationId)
     },
 
     /**
@@ -203,17 +247,21 @@ export const useGameStore = defineStore('game', {
       this.time = save.time
       this.currentLocationId = save.player.currentLocationId
       this.locations = save.locations
-      this.npcs = save.npcs
+      // Support both old saves (npcs key) and new saves (characters key)
+      this.characters = save.characters ?? save.npcs ?? {}
       this.firedEventIds = save.firedEventIds
       this.counters = save.counters
       this.isRunning = true
+      // Note: items registry (this.items) is NOT restored from save —
+      // it is populated at init via loadItems() and persists across resets.
+      // The init flow (TitleScreen.vue) must call loadItems() before or after loadSave().
     },
 
     resetGame() {
       this.player = null
       this.currentLocationId = null
       this.locations = {}
-      this.npcs = {}
+      this.characters = {}
       this.firedEventIds = []
       this.counters = {}
       this.availableActions = []

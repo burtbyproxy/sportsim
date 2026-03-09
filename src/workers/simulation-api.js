@@ -1,12 +1,10 @@
 /**
- * Simulation API — Comlink wrapper.
- *
- * Main thread imports this. Provides a wrapped proxy to the simulation
- * worker. Call sim.tick(gameTime) from the main thread.
+ * Simulation API — Comlink wrapper for the main thread.
  *
  * Usage:
  *   import { sim } from './workers/simulation-api.js'
- *   const result = await sim.tick(gameTime)
+ *   const result = await sim.tick(gameTime, characters)
+ *   // result: { characters: [{id, locationId, statusChanges?}], events: [] }
  */
 import { wrap } from 'comlink'
 
@@ -25,15 +23,20 @@ function getWorker() {
 
 export const sim = {
   /**
+   * Run one simulation tick.
    * @param {import('../engine/clock.js').GameTime} gameTime
-   * @returns {Promise<{npcs: Array, events: Array}>}
+   * @param {Object[]} characters - Character objects from game store
+   * @returns {Promise<{
+   *   characters: Array<{id: string, locationId: string|null, statusChanges?: Object}>,
+   *   events: Array
+   * }>}
    */
-  tick(gameTime) {
-    return getWorker().tick(gameTime)
+  tick(gameTime, characters = []) {
+    return getWorker().tick(gameTime, characters)
   },
 
   /**
-   * Terminate the worker (call on app teardown).
+   * Terminate the worker (call on app teardown if needed).
    */
   terminate() {
     if (_worker) {

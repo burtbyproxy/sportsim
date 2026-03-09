@@ -20,6 +20,7 @@ import { resolveAction, getAvailableActions } from '../engine/actions.js'
 import { getStatDecayEffects } from '../engine/stats.js'
 import { tickModifiers, addItem, removeItem, feedObsession, updateArchetypeScore, incrementCounter } from '../models/player.js'
 import { generateActionNarrative } from './useNarrative.js'
+import { sim } from '../workers/simulation-api.js'
 
 /**
  * @param {Object} actionRegistry - array of Action objects to evaluate against
@@ -32,10 +33,13 @@ export function useGameLoop(actionRegistry = []) {
    * Advance game time by N ticks, applying decay and expiring modifiers.
    * Optionally move to a new location first.
    *
+   * Async because the simulation worker call returns a Promise.
+   *
    * @param {number} ticks
    * @param {string|null} toLocationId - if set, move to this location after tick
+   * @returns {Promise<void>}
    */
-  function tick(ticks = 1, toLocationId = null) {
+  async function tick(ticks = 1, toLocationId = null) {
     if (!game.player) return
 
     // 1. Advance clock
@@ -50,21 +54,41 @@ export function useGameLoop(actionRegistry = []) {
     // 3. Expire modifiers — tickModifiers mutates player in place
     tickModifiers(game.player)
 
-    // 4. Check random/triggered events (stub — full implementation Phase 3)
+    // 4. Run simulation worker — move characters, apply full-sim status decay
+    // We await so character positions update before action refresh,
+    // but a worker failure must not crash the game loop.
+    try {
+      const charactersArray = Object.values(game.characters)
+      if (charactersArray.length > 0) {
+        const simResult = await sim.tick(game.time, charactersArray)
+        for (const update of simResult.characters) {
+          game.setCharacterLocation(update.id, update.locationId)
+          // Apply status changes for full-sim characters (stat decay, etc.)
+          if (update.statusChanges && game.characters[update.id]) {
+            const char = game.characters[update.id]
+            for (const [key, delta] of Object.entries(update.statusChanges)) {
+              if (char.status && key in char.status) {
+                char.status[key] = Math.max(0, Math.min(100, char.status[key] + delta))
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      // Worker failure is non-fatal — log and continue
+      console.warn('[useGameLoop] simulation worker tick failed:', err)
+    }
+
+    // 5. Check random/triggered events (stub — full implementation Phase 4)
     // Events must fire AFTER decay so altered-state thresholds from decay are visible
     // _checkEvents()
 
-    // 5. Move if requested
+    // 6. Move if requested
     if (toLocationId) {
-      game.currentLocationId = toLocationId
-      const loc = game.locations[toLocationId]
-      if (loc) {
-        loc.visitCount = (loc.visitCount ?? 0) + 1
-        game.player.currentLocationId = toLocationId
-      }
+      game.moveTo(toLocationId)
     }
 
-    // 6. Re-evaluate available actions
+    // 7. Re-evaluate available actions
     _refreshActions()
   }
 
@@ -72,9 +96,10 @@ export function useGameLoop(actionRegistry = []) {
    * Travel to a location — advances time by travel cost, then moves.
    * @param {string} locationId
    * @param {number} travelTicks
+   * @returns {Promise<void>}
    */
-  function travel(locationId, travelTicks = 0) {
-    tick(travelTicks > 0 ? travelTicks : 1, locationId)
+  async function travel(locationId, travelTicks = 0) {
+    await tick(travelTicks > 0 ? travelTicks : 1, locationId)
   }
 
   /**
@@ -83,11 +108,11 @@ export function useGameLoop(actionRegistry = []) {
    *
    * @param {Object} action - Action definition
    */
-  function resolvePlayerAction(action) {
+  async function resolvePlayerAction(action) {
     if (!game.player) return
 
-    const npcs = game.npcsAtCurrentLocation
-    const result = resolveAction(game.player, action, game.time, npcs)
+    const characters = game.charactersAtCurrentLocation
+    const result = resolveAction(game.player, action, game.time, characters)
 
     // Feed outcome narrative to renderer
     if (narrative) {
@@ -120,10 +145,16 @@ export function useGameLoop(actionRegistry = []) {
       game.adjustMoney(outcome.moneyChange)
     }
 
-    // Grant items
+    // Grant items — itemsGained is string[] (item IDs per contract)
+    // Look up each ID in the item registry before passing to addItem
     if (outcome.itemsGained?.length > 0) {
-      for (const item of outcome.itemsGained) {
-        addItem(game.player, item)
+      for (const itemId of outcome.itemsGained) {
+        const itemDef = game.getItem(itemId)
+        if (itemDef) {
+          addItem(game.player, itemDef)
+        } else {
+          console.warn(`[useGameLoop] itemsGained: unknown item ID '${itemId}'`)
+        }
       }
     }
 
@@ -170,7 +201,7 @@ export function useGameLoop(actionRegistry = []) {
     }
 
     // Advance time by action cost
-    tick(action.timeCost ?? 1)
+    await tick(action.timeCost ?? 1)
   }
 
   /**

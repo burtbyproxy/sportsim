@@ -50,6 +50,12 @@ provide('narrative', narrative)
 const gameLoop = useGameLoop(kentonActionRegistry)
 provide('gameLoop', gameLoop)
 
+// Selected character — set by LocationView when player clicks a character,
+// read by ActionMenu to filter to that character's interaction actions.
+// null = no character selected, show location actions only.
+const selectedCharacterId = ref(null)
+provide('selectedCharacterId', selectedCharacterId)
+
 /** Tracks the entry currently being animated (for live display) */
 const activeEntry = ref(null)
 

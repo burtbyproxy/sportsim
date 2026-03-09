@@ -23,5 +23,9 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    environmentMatchGlobs: [
+      // Content validation uses Node.js fs — must run in node environment
+      ['tests/content-validation.test.js', 'node'],
+    ],
   },
 })

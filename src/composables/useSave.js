@@ -30,7 +30,7 @@ export function useSave() {
       player: game.player,
       time: game.time,
       locations: game.locations,
-      npcs: game.npcs,
+      characters: game.characters,
       firedEventIds: game.firedEventIds,
       counters: game.counters,
     }

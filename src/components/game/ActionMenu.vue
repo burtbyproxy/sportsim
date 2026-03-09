@@ -1,9 +1,13 @@
 <template>
   <div class="action-menu">
-    <div class="action-menu__label ui-label">actions</div>
+    <div class="action-menu__label ui-label">
+      <span v-if="selectedCharacter">{{ selectedCharacter.name }}</span>
+      <span v-else>actions</span>
+    </div>
 
-    <div v-if="actions.length === 0" class="action-menu__empty">
-      nothing to do here
+    <div v-if="filteredActions.length === 0" class="action-menu__empty">
+      <span v-if="selectedCharacter">nothing to say to {{ selectedCharacter.name }}</span>
+      <span v-else>nothing to do here</span>
     </div>
 
     <div v-else class="action-menu__list">
@@ -32,18 +36,38 @@ import { meetsRequirements } from '../../engine/actions.js'
 
 const game = useGameStore()
 const gameLoop = inject('gameLoop')
+const selectedCharacterId = inject('selectedCharacterId', null)
 
 /** Prevent double-clicks during resolution */
 const isResolving = ref(false)
 
-const actions = computed(() => game.availableActions)
+/** The selected character object (or null) */
+const selectedCharacter = computed(() => {
+  const id = selectedCharacterId?.value
+  if (!id) return null
+  return game.characters[id] ?? null
+})
+
+/**
+ * Filter available actions by selected character.
+ * - Character selected: show only actions with matching characterId
+ * - No character selected: show only location/general actions (no characterId)
+ */
+const filteredActions = computed(() => {
+  const all = game.availableActions
+  const charId = selectedCharacterId?.value ?? null
+  if (charId) {
+    return all.filter((a) => a.characterId === charId)
+  }
+  return all.filter((a) => !a.characterId)
+})
 
 /** Sort: available first by weight desc, then disabled by weight desc */
 const sortedActions = computed(() => {
-  const available = actions.value
+  const available = filteredActions.value
     .filter((a) => a.available)
     .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
-  const disabled = actions.value
+  const disabled = filteredActions.value
     .filter((a) => !a.available)
     .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
   return [...available, ...disabled]
@@ -53,7 +77,7 @@ async function executeAction(action) {
   if (!action.available || isResolving.value || !gameLoop) return
   isResolving.value = true
   try {
-    gameLoop.resolvePlayerAction(action)
+    await gameLoop.resolvePlayerAction(action)
   } finally {
     isResolving.value = false
   }

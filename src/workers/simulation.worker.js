@@ -1,23 +1,34 @@
 /**
  * Simulation Worker
  *
- * Runs in a Web Worker thread. Accepts game time ticks and returns
- * NPC movement and event results. Real simulation logic comes from
- * Bones in Phase 3. This is a stub.
+ * Runs in a Web Worker thread. Receives game state each tick, runs Bones'
+ * three-tier simulation engine, returns character updates.
+ *
+ * Tier routing is handled inside simulateTick() — this worker just calls it.
+ *
+ * Message in:  tick(gameTime, characters)
+ * Message out: { characters: CharacterUpdate[], events: [] }
+ *
+ * CharacterUpdate: { id: string, locationId: string|null, statusChanges?: Object }
  */
 import { expose } from 'comlink'
+import { simulateTick } from '../engine/simulation.js'
 
 const simulation = {
   /**
    * Process a tick of the simulation.
+   * Routes each character through fixed / routine / full tier logic.
+   *
    * @param {import('../engine/clock.js').GameTime} gameTime
-   * @returns {{ npcs: Array, events: Array }}
+   * @param {Object[]} characters - Character objects from game state
+   * @returns {{ characters: Array<{id: string, locationId: string|null, statusChanges?: Object}>, events: Array }}
    */
-  tick(gameTime) {
-    // Stub: return empty results until Bones wires in real simulation
+  tick(gameTime, characters = []) {
+    const updates = simulateTick(characters, gameTime)
+
     return {
-      npcs: [],
-      events: [],
+      characters: updates,
+      events: [], // Phase 4: event generation moves here
     }
   },
 }

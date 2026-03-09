@@ -22,13 +22,18 @@
       </div>
     </div>
 
-    <!-- NPCs present -->
-    <div v-if="npcsPresent.length > 0" class="npc-list">
-      <div
-        v-for="npc in npcsPresent"
-        :key="npc.id"
-        class="npc-entry"
-      >{{ npc.name }}</div>
+    <!-- Characters present -->
+    <div v-if="charactersPresent.length > 0" class="character-list">
+      <button
+        v-for="character in charactersPresent"
+        :key="character.id"
+        class="character-entry"
+        :class="{ 'character-entry--selected': selectedCharacterId === character.id }"
+        @click="selectCharacter(character.id)"
+      >
+        <span class="character-name">{{ character.name }}</span>
+        <span v-if="character.habit" class="character-habit">{{ character.habit }}</span>
+      </button>
     </div>
   </div>
 </template>
@@ -37,53 +42,49 @@
 import { computed, inject, watch, onMounted } from 'vue'
 import { useGameStore } from '../../stores/game.js'
 import { generateLocationNarrative } from '../../composables/useNarrative.js'
+import { isOpen } from '../../models/location.js'
 
 const game = useGameStore()
 const narrative = inject('narrative')
 const gameLoop = inject('gameLoop')
+const selectedCharacterId = inject('selectedCharacterId', null)
 
 const location = computed(() => game.currentLocation)
 const exits = computed(() => location.value?.exits ?? [])
-const npcsPresent = computed(() => game.npcsAtCurrentLocation)
+const charactersPresent = computed(() => game.charactersAtCurrentLocation)
+
+function selectCharacter(characterId) {
+  if (!selectedCharacterId) return
+  // Toggle: clicking the same character deselects
+  selectedCharacterId.value = selectedCharacterId.value === characterId ? null : characterId
+}
 
 function canTravel(exit) {
   if (!exit) return false
   // Check destination exists (is registered)
-  if (!game.locations[exit.locationId]) return false
-  // Check location availability based on current time
   const dest = game.locations[exit.locationId]
-  if (dest.availability) {
-    const { openHour, closeHour } = dest.availability
-    const h = game.time.hour
-    // Handle bars that close at 2am (closeHour < openHour means crosses midnight)
-    if (closeHour < openHour) {
-      if (h < openHour && h >= closeHour) return false
-    } else {
-      if (h < openHour || h >= closeHour) return false
-    }
-  }
+  if (!dest) return false
+  // Delegate availability check to the model — single source of truth
+  if (!isOpen(dest, game.time.hour)) return false
   // Honor exit requirements if any
   if (exit.requirements) return false // TODO: full requirement check
   return true
 }
 
 function travelBlockReason(exit) {
-  if (!game.locations[exit.locationId]) return 'unknown destination'
   const dest = game.locations[exit.locationId]
-  if (dest.availability) {
-    const { openHour, closeHour } = dest.availability
-    const h = game.time.hour
-    const closed =
-      closeHour < openHour
-        ? h < openHour && h >= closeHour
-        : h < openHour || h >= closeHour
-    if (closed) return dest.availability.closedMessage || 'closed'
+  if (!dest) return 'unknown destination'
+  if (!isOpen(dest, game.time.hour)) {
+    return dest.availability?.closedMessage || 'closed'
   }
   return ''
 }
 
 function onLocationEntered() {
   if (!location.value || !game.player) return
+
+  // Clear character selection on location change
+  if (selectedCharacterId) selectedCharacterId.value = null
 
   // Clear log and enqueue new description
   if (narrative) {
@@ -169,18 +170,51 @@ function formatTravelTime(ticks) {
   margin-left: 4px;
 }
 
-.npc-list {
+.character-list {
   margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.npc-entry {
-  font-size: 13px;
-  color: #888878;
-  margin-bottom: 2px;
+.character-entry {
+  display: block;
+  text-align: left;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  padding: 4px 6px;
+  font-family: 'Courier New', monospace;
+  transition: border-color 150ms ease, background-color 150ms ease;
 
   &::before {
     content: '— ';
     color: #555548;
+    font-size: 13px;
   }
+
+  &:hover {
+    border-color: #3a3a34;
+    background-color: #111110;
+  }
+
+  &--selected {
+    border-color: #555548;
+    background-color: #141412;
+  }
+}
+
+.character-name {
+  font-size: 13px;
+  color: #aaa99a;
+}
+
+.character-habit {
+  display: block;
+  font-size: 12px;
+  color: #666658;
+  padding-left: 16px;
+  font-style: italic;
 }
 </style>
