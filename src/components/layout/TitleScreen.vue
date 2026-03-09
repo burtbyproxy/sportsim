@@ -31,8 +31,9 @@ import { useRouter } from 'vue-router'
 import { useGameStore } from '../../stores/game.js'
 import { useMetaStore } from '../../stores/meta.js'
 import { useSave } from '../../composables/useSave.js'
-import { kentonLocations } from '../../data/locations/kenton/index.js'
+import { loadLocations, loadCharacters, loadItems } from '../../data/loader.js'
 import { createPlayer } from '../../models/player.js'
+import { createCharacter } from '../../models/character.js'
 
 const router = useRouter()
 const game = useGameStore()
@@ -40,6 +41,12 @@ const meta = useMetaStore()
 const save = useSave()
 
 const hasSave = ref(false)
+
+// Load item registry once at startup — persists across game resets
+const allItems = loadItems()
+for (const item of Object.values(allItems)) {
+  game.registerItem(item)
+}
 
 onMounted(() => {
   meta.load()
@@ -60,9 +67,16 @@ function startNewGame() {
   const player = createPlayer('You')
   game.startNewGame(player, 'moms_house')
 
-  // Register all Kenton locations into the store
-  for (const location of Object.values(kentonLocations)) {
+  // Register all Kenton locations from content/
+  const locations = loadLocations('kenton')
+  for (const location of Object.values(locations)) {
     game.registerLocation({ ...location })
+  }
+
+  // Register all characters from content/
+  const characters = loadCharacters()
+  for (const charData of Object.values(characters)) {
+    game.registerCharacter(createCharacter(charData))
   }
 
   router.push('/game')

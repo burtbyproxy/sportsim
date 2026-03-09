@@ -29,7 +29,7 @@ import { useRouter } from 'vue-router'
 import { useGameStore } from '../../stores/game.js'
 import { useNarrative } from '../../composables/useNarrative.js'
 import { useGameLoop } from '../../composables/useGameLoop.js'
-import { kentonActionRegistry } from '../../data/actions/kenton.js'
+import { loadActions } from '../../data/loader.js'
 import GameHeader from './GameHeader.vue'
 import GameFooter from './GameFooter.vue'
 import LocationView from '../game/LocationView.vue'
@@ -44,10 +44,13 @@ if (!game.isRunning) {
   router.replace('/')
 }
 
+// Load action registry from content/ — array of Action objects
+const actionRegistry = Object.values(loadActions('kenton'))
+
 const narrative = useNarrative()
 provide('narrative', narrative)
 
-const gameLoop = useGameLoop(kentonActionRegistry)
+const gameLoop = useGameLoop(actionRegistry)
 provide('gameLoop', gameLoop)
 
 // Selected character — set by LocationView when player clicks a character,
