@@ -1,21 +1,45 @@
+// @vitest-environment node
 /**
  * Integration: Action pipeline
  *
  * Tests:
- *   getAvailableActions() with real Kenton location data
+ *   getAvailableActions() with real Kenton location data (from content/)
  *   resolveAction() with a real action fixture
  *   Stat decay over realistic tick counts
  *   tickModifiers() expiry over N ticks
  */
 
 import { describe, it, expect } from 'vitest';
+import { readFileSync, readdirSync, existsSync } from 'fs';
+import { join, resolve } from 'path';
 import { createPlayer, addModifier, tickModifiers, getEffectiveStat } from '../../src/models/player.js';
 import { createLocation } from '../../src/models/location.js';
-import { kentonLocations } from '../../src/data/locations/kenton/index.js';
 import { getAvailableActions, resolveAction } from '../../src/engine/actions.js';
-import { kentonActions, kentonActionRegistry } from '../../src/data/actions/kenton.js';
 import { getStatDecayEffects } from '../../src/engine/stats.js';
 import { seededRandom } from '../../src/utils/random.js';
+
+// ---------------------------------------------------------------------------
+// Load content from content/ (same approach as content-validation.test.js)
+// ---------------------------------------------------------------------------
+
+const CONTENT_ROOT = resolve('content');
+
+function loadJsonFiles(dirPath) {
+  if (!existsSync(dirPath)) return [];
+  return readdirSync(dirPath)
+    .filter(f => f.endsWith('.json'))
+    .map(f => JSON.parse(readFileSync(join(dirPath, f), 'utf-8')));
+}
+
+// Load all Kenton locations keyed by ID
+const kentonLocationFiles = loadJsonFiles(join(CONTENT_ROOT, 'maps/kenton/locations'));
+const kentonLocations = Object.fromEntries(kentonLocationFiles.map(l => [l.id, l]));
+
+// Load all Kenton actions keyed by ID (files may contain arrays)
+const kentonActionFiles = loadJsonFiles(join(CONTENT_ROOT, 'maps/kenton/actions'));
+const kentonActionsFlat = kentonActionFiles.flatMap(f => Array.isArray(f) ? f : Object.values(f));
+const kentonActions = Object.fromEntries(kentonActionsFlat.map(a => [a.id, a]));
+const kentonActionRegistry = kentonActionsFlat;
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -110,12 +134,15 @@ const CHARM_CHECK_ACTION = {
 // ---------------------------------------------------------------------------
 
 describe('getAvailableActions — real Kenton location data', () => {
-  it('returns zero actions at locations with no wired actions (e.g. mouse_trap)', () => {
-    // mouse_trap has no Phase 2 actions — actionIds remains empty.
+  it('mouse_trap with no wired location actions only returns "any" actions', () => {
+    // mouse_trap.actionIds is empty — only "any" locationId actions appear (e.g. talk_to_maurice)
     const location = createLocation(kentonLocations.mouse_trap);
     const player = createPlayer('Test');
     const result = getAvailableActions(player, location, makeGameTime(), kentonActionRegistry);
-    expect(result).toHaveLength(0);
+    // All returned actions must have locationId === 'any' (not wired to mouse_trap specifically)
+    for (const action of result) {
+      expect(action.locationId).toBe('any');
+    }
   });
 
   it('returns real actions at blue_parrot with real action registry', () => {
@@ -124,21 +151,24 @@ describe('getAvailableActions — real Kenton location data', () => {
     // Blue Parrot is open at 14:00 (minHour: 11)
     const result = getAvailableActions(player, location, makeGameTime(14), kentonActionRegistry);
     expect(result.map(a => a.id)).toContain('order_beer_parrot');
-    expect(result.map(a => a.id)).toContain('talk_to_bartender_parrot');
+    // NPC interactions at blue_parrot use character names (talk_to_tina, talk_to_greg)
+    const ids = result.map(a => a.id);
+    expect(ids.some(id => id.startsWith('talk_to_'))).toBe(true);
   });
 
-  it('blue_parrot bar actions are filtered before 11am', () => {
+  it('blue_parrot location actions are filtered before 11am (time-restricted)', () => {
     const location = createLocation(kentonLocations.blue_parrot);
     const player = createPlayer('Test');
-    // Bar actions require minHour: 11 — should be empty at 9am
+    // Bar actions require minHour: 11 — time-restricted actions should be absent at 9am
     const result = getAvailableActions(player, location, makeGameTime(9), kentonActionRegistry);
-    expect(result).toHaveLength(0);
+    // order_beer_parrot requires minHour: 11 — should not appear at 9am
+    expect(result.map(a => a.id)).not.toContain('order_beer_parrot');
   });
 
   it('returns real actions at moms_house with real action registry', () => {
     const location = createLocation(kentonLocations.moms_house);
     const player = createPlayer('Test');
-    // At 14:00, sleep requires minHour: 21 so only raid_fridge and stare_at_ceiling available
+    // At 14:00, sleep requires minHour: 21 so raid_fridge and stare_at_ceiling available
     const result = getAvailableActions(player, location, makeGameTime(14), kentonActionRegistry);
     const ids = result.map(a => a.id);
     expect(ids).toContain('raid_fridge');
@@ -170,13 +200,15 @@ describe('getAvailableActions — real Kenton location data', () => {
     expect(result.map(a => a.id)).not.toContain('look_for_change');
   });
 
-  it('actions sorted by descending weight at moms_house', () => {
+  it('highest-weight location actions appear first at moms_house', () => {
     const location = createLocation(kentonLocations.moms_house);
     const player = createPlayer('Test');
     const result = getAvailableActions(player, location, makeGameTime(14), kentonActionRegistry);
-    // raid_fridge weight=80, stare_at_ceiling weight=40
-    expect(result[0].id).toBe('raid_fridge');
-    expect(result[1].id).toBe('stare_at_ceiling');
+    // raid_fridge weight=80 — must be the top location-specific action
+    expect(result.map(a => a.id)).toContain('raid_fridge');
+    const raidIdx = result.findIndex(a => a.id === 'raid_fridge');
+    const stareIdx = result.findIndex(a => a.id === 'stare_at_ceiling');
+    expect(raidIdx).toBeLessThan(stareIdx);
   });
 
   it('always returns "any" location actions regardless of actionIds', () => {

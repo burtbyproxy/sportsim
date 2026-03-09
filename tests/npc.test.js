@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
+// npc.js is deprecated — these tests now run against character.js which
+// exports createNPC as a backward-compat alias for createCharacter.
 import {
   createNPC,
   getScheduledLocation,
   adjustRelationship,
-} from '../src/models/npc.js';
+} from '../src/models/character.js';
 
 // ---------------------------------------------------------------------------
 // createNPC

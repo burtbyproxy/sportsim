@@ -1,6 +1,21 @@
+// @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { kentonLocations } from '../src/data/locations/kenton/index.js';
+import { readFileSync, readdirSync, existsSync } from 'fs';
+import { join, resolve } from 'path';
 import { createLocation, isOpen, getDescription } from '../src/models/location.js';
+
+// Load Kenton locations from content/ (keyed by ID)
+const locDir = resolve('content/maps/kenton/locations');
+const kentonLocations = existsSync(locDir)
+  ? Object.fromEntries(
+      readdirSync(locDir)
+        .filter(f => f.endsWith('.json'))
+        .map(f => {
+          const data = JSON.parse(readFileSync(join(locDir, f), 'utf-8'));
+          return [data.id, data];
+        })
+    )
+  : {};
 
 const EXPECTED_IDS = [
   'moms_house', 'blue_parrot', 'mocks_crest', 'columbia_park',
