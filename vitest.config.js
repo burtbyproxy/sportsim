@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
@@ -10,9 +10,8 @@ export default defineConfig({
       include: [
         'src/models/player.js',
         'src/models/location.js',
-        'src/models/npc.js',
+        'src/models/character.js',
         'src/models/item.js',
-        'src/data/locations/**/*.js',
         'src/engine/**/*.js',
         'src/utils/**/*.js',
         'src/composables/useNarrative.js',
@@ -26,4 +25,4 @@ export default defineConfig({
       },
     },
   },
-});
+})
