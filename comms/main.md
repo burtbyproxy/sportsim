@@ -16,23 +16,26 @@ Each team member's `profile.md` defines what they call the user — "Colonel," "
 
 Define your team in the table below. Each member has a codename, one or more roles, and a directory.
 
-| Codename | Roles | Directory |
-|---|---|---|
-| Kirk | Architect, Product | `comms/kirk/` |
-| Scotty | Backend, Frontend, Data / Migration, Overflow | `comms/scotty/` |
-| Spock | QA, Reviewer | `comms/spock/` |
-| Bones | Overflow, Performance | `comms/bones/` |
+| Codename | Roles                                         | Directory       |
+| -------- | --------------------------------------------- | --------------- |
+| Kirk     | Architect, Product                            | `comms/kirk/`   |
+| Scotty   | Backend, Frontend, Data / Migration, Overflow | `comms/scotty/` |
+| Spock    | QA, Reviewer                                  | `comms/spock/`  |
+| Bones    | Overflow, Performance                         | `comms/bones/`  |
+| Uhura    | Content, Narrative                            | `comms/uhura/`  |
 
 See `comms/docs/roles.md` for the full list of available roles and their descriptions.
 
 ## Directory Structure
 
 Shared team resources:
+
 ```
 comms/docs/       <- shared reference docs, architecture, conventions — everyone reads, the Architect maintains
 ```
 
 Each team member has:
+
 ```
 comms/<name>/
   profile.md    <- YOUR personal operating instructions (private, only you read this)
@@ -53,6 +56,7 @@ comms/<name>/
 ### notes/ — Your Working Memory
 
 Loaded at every session startup. This is your persistent brain — the stuff you must never forget:
+
 - Cheat sheets, gotchas, workarounds
 - Patterns you discovered that apply to your domain
 - Conventions and rules specific to your work
@@ -63,6 +67,7 @@ Keep it short, current, and useful. Prune what's stale. This is reference materi
 ### journal/ — Session History
 
 Written at session end (or during, depending on your personality). This is the narrative record:
+
 - What happened this session, in your voice
 - Decisions made, mistakes caught, things learned
 - Where you left off
@@ -102,6 +107,7 @@ This is the core operating cycle. Every team member follows this. Every time. No
 ### Profile Hooks in the Loop
 
 Each agent's `profile.md` can define additional steps that run as part of the loop. Examples:
+
 - A QA agent might run tests after every commit
 - A meticulous agent might update their notes after learning something
 - A DevOps agent might check deployment status
@@ -161,12 +167,14 @@ active/ ->  someone else's inbox/  (handoff)
 ```
 
 ### Starting a task:
+
 1. Move it from `inbox/` to `active/`.
 2. If the task is too big for one clean commit, break it up — create multiple smaller task files in `active/` and trash the original.
 3. Do the work.
 4. If the work produces something another team member needs, drop a message in THEIR `inbox/` immediately.
 
 ### Finishing a task (MANDATORY — skip any step and the work did not happen):
+
 1. Move the task file from `active/` to `archive/`.
 2. **Commit.** One task, one commit. No exceptions.
 3. **Notify.** Drop a message in:
@@ -177,14 +185,17 @@ active/ ->  someone else's inbox/  (handoff)
 5. Pick up next item. Enter the loop.
 
 ### Killing a task:
+
 - If a task is cancelled, obsolete, or not gonna happen: move it to `trash/`. Done.
 
 ### Trash:
+
 - Each team member empties their own trash. Do it at session startup or whenever it's full.
 - Standups go to trash after reading — they are not worth archiving.
 - `rm` the files. Done.
 
 ### Self-initiated work:
+
 - You may create tasks directly in `active/` from your own initiative. Same rules apply — commit when done, notify, check inbox.
 
 ## Handoffs
@@ -196,6 +207,7 @@ If your `active/` is overloaded or you have a task better suited to someone else
 3. Remove it from your `active/`.
 
 **Handoff message format:**
+
 ```markdown
 **From:** <you>
 **Type:** handoff
@@ -224,11 +236,13 @@ This is mandatory. Every session. No exceptions. If the Architect doesn't have y
 ## Message Format
 
 Inbox messages should be markdown files named descriptively:
+
 ```
 comms/backend/inbox/add-user-auth-endpoint.md
 ```
 
 Contents should include:
+
 - **From:** who is sending it
 - **Priority:** low / medium / high / critical
 - **Summary:** what you need
@@ -241,6 +255,7 @@ Team members are expected to message each other as a standard part of work. Not 
 If you have a question about someone else's work, **drop it in their inbox**. Do not bring it up in conversation with the user (unless your profile says you workshop with the user). Put it in writing. Make it a record.
 
 If you disagree with an approach, **drop it in the requester's inbox AND the Architect's inbox** explaining:
+
 - What you disagree with
 - Why
 - What you'd do instead
@@ -295,6 +310,7 @@ Every task should be small enough to commit on its own. If a task feels too big,
 Each team member commits their own work within their domain. Commit messages must be clear, scoped, and meaningful.
 
 Format:
+
 ```
 [domain] short summary
 
@@ -314,12 +330,14 @@ The Architect does not commit code. They write plans.
 **Status:** Early prototype from 2019, being revived. Only 3 commits exist. The map zoom mechanic is the only wired-up feature. Many components are empty stubs. Tech stack decisions are pending — the Architect (Kirk) and Admiral will determine direction.
 
 **Current tech stack (may change):**
+
 - Frontend: Vue.js 2, Vue Router, Vuex (unused), Webpack 4, SCSS
 - Backend: PHP with Slim Framework 3, Medoo ORM
 - Database: MySQL
 - Server: Apache with mod_rewrite
 
 **Repo structure:**
+
 ```
 src/                  <- Vue.js source
   components/         <- Vue components (many are empty stubs)
@@ -335,6 +353,7 @@ index.php             <- SPA shell
 ```
 
 **Game model hierarchy:**
+
 - `LiveRecord` (base) -> `Entity`, `Location`, `Possession`, `Artwork`, `Structure`
 - `Human` extends `Entity` — 12 RPG stats across physical/mental/spiritual categories
 - `Consumable` extends `Possession` — items with effects

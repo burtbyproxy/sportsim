@@ -136,28 +136,32 @@ These are the shapes that connect Spock's models, Bones' engines, and Scotty's U
 
 ---
 
-## NPC
+## Character
+
+All people in the game — NPCs and simulated PCs — use the same contract. The `simulation` field controls how much work the engine does for this character.
 
 ```js
-/** @typedef {Object} NPC
+/** @typedef {Object} Character
  * @property {string} id
  * @property {string} name
  * @property {string} description - physical description
  * @property {string} habit - one tic or repeated behavior
  * @property {string} voice - how they talk (short sentences, big words, etc.)
- * @property {NPCStats} stats - same structure as player, simulated in Worker
- * @property {NPCStatus} status - hunger, sobriety, energy, mood, health
- * @property {NPCPsyche} psyche - traumas, obsessions, insanities, abilities
- * @property {NPCSchedule} schedule
+ * @property {string} simulation - "fixed", "routine", or "full" (see content-structure.md)
+ * @property {CharacterStats} stats - same structure as player, simulated in Worker
+ * @property {CharacterStatus|null} status - hunger, sobriety, energy, mood, health (null for fixed)
+ * @property {CharacterPsyche} psyche - traumas, obsessions, insanities, abilities
+ * @property {CharacterSchedule} schedule
  * @property {number} relationshipScore - -100 to 100 with player
  * @property {string} currentLocationId - set by simulation
  * @property {string[]} dialogueTreeIds - available conversation trees
  * @property {string} want - what they want (internal, may never be revealed)
  * @property {string} fear - what they fear (internal)
  * @property {number} level
+ * @property {DecisionWeights|null} decisionWeights - only for "full" simulation characters
  */
 
-/** @typedef {Object} NPCSchedule
+/** @typedef {Object} CharacterSchedule
  * @property {ScheduleEntry[]} entries - ordered by priority
  */
 
@@ -167,6 +171,13 @@ These are the shapes that connect Spock's models, Bones' engines, and Scotty's U
  * @property {number} endHour
  * @property {number} probability - 0-1, chance they're actually there (simulation rolls this)
  * @property {string[]} days - days of week, or ["all"]
+ */
+
+/** @typedef {Object} DecisionWeights
+ * @property {Object|null} low_sobriety - { bias: string, weight: number }
+ * @property {Object|null} low_hunger - { bias: string, weight: number }
+ * @property {Object|null} low_mood - { bias: string, weight: number }
+ * @property {Object|null} low_energy - { bias: string, weight: number }
  */
 ```
 
@@ -272,10 +283,10 @@ This allows the narrative renderer to do things like:
 ```js
 {
   tokens: [
-    { text: "The bartender looks at you. ", speed: "normal", pauseAfter: 500 },
-    { text: "Really", style: "italic", speed: "slow", pauseAfter: 200 },
-    { text: " looks at you.", speed: "normal", pauseAfter: 800 },
-    { text: " \"Get out.\"", style: "bold", speed: "crawl", pauseAfter: 0 }
+    { text: 'The bartender looks at you. ', speed: 'normal', pauseAfter: 500 },
+    { text: 'Really', style: 'italic', speed: 'slow', pauseAfter: 200 },
+    { text: ' looks at you.', speed: 'normal', pauseAfter: 800 },
+    { text: ' "Get out."', style: 'bold', speed: 'crawl', pauseAfter: 0 },
   ]
 }
 ```

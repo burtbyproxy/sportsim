@@ -9,6 +9,7 @@ Roles are the building blocks of your team. Each team member is assigned one or 
 Planning, design, orchestration, decision-making, documentation. The person with the plan.
 
 **Responsibilities:**
+
 - Define system architecture and design
 - Make technology decisions and resolve technical disputes
 - Plan feature work: break into tasks, sequence dependencies, assign to the right person
@@ -26,6 +27,7 @@ Planning, design, orchestration, decision-making, documentation. The person with
 Server-side logic, APIs, database, workers, migrations, business logic.
 
 **Responsibilities:**
+
 - Implement API endpoints, handlers, middleware
 - Design and maintain database schemas and migrations
 - Build background workers and job processing
@@ -39,6 +41,7 @@ Server-side logic, APIs, database, workers, migrations, business logic.
 User interfaces, client-side logic, UX, visual design, component architecture.
 
 **Responsibilities:**
+
 - Build and maintain UI components and pages
 - Implement client-side state management
 - Handle routing, forms, validation
@@ -52,6 +55,7 @@ User interfaces, client-side logic, UX, visual design, component architecture.
 Testing, edge cases, bug hunting, chaos engineering.
 
 **Responsibilities:**
+
 - Write and maintain test suites (unit, integration, e2e)
 - Hunt for edge cases and failure modes
 - File detailed bug reports in the appropriate inbox
@@ -66,6 +70,7 @@ Testing, edge cases, bug hunting, chaos engineering.
 Picks up slack, unblocks others. The utility player.
 
 **Responsibilities:**
+
 - Monitor other team members' inboxes for overflow work
 - Pull tasks from other inboxes when idle (the ONLY role allowed to do this)
 - Prioritize whatever unblocks the team fastest
@@ -76,11 +81,50 @@ Picks up slack, unblocks others. The utility player.
 
 ---
 
+## Content
+
+Game world authoring — characters, locations, items, events, dialogue, narrative text.
+
+**Responsibilities:**
+
+- Write and maintain all game content data (JSON in `content/`)
+- Create characters with personalities, voices, schedules, wants, fears
+- Write location descriptions (all context variants: default, night, drunk, repeat, exhausted, starving)
+- Write action narratives and event text
+- Define items with descriptions and flavor
+- Ensure all content follows the narrative voice guide
+- Workshop with the user on world-building and creative direction
+
+**Owns:** `content/` directory. Nobody else writes content files.
+
+**Does NOT:** Write code. Writes JSON data that the engine consumes through a loader.
+
+**Note:** Often paired with a Narrative role. The Content role creates the data; Narrative ensures voice consistency.
+
+---
+
+## Narrative
+
+Voice consistency, tone, writing quality, creative direction.
+
+**Responsibilities:**
+
+- Define and maintain the narrative voice guide
+- Review all player-facing text for tone and voice consistency
+- Ensure NPCs have distinct, authentic voices
+- Push back on content that breaks the established tone
+- Workshop creative direction with the user
+
+**Note:** Often combined with Content. Can also be combined with Product for teams where creative direction and product vision are tightly coupled.
+
+---
+
 ## Documentation
 
 Maintains docs, writes guides, keeps knowledge current.
 
 **Responsibilities:**
+
 - Write and maintain technical documentation
 - Keep API docs, architecture docs, and onboarding guides current
 - Document decisions, conventions, and patterns
@@ -96,6 +140,7 @@ Maintains docs, writes guides, keeps knowledge current.
 Code review, standards enforcement, quality gates.
 
 **Responsibilities:**
+
 - Review code changes for correctness, style, and maintainability
 - Enforce coding conventions and project standards
 - Catch bugs, security issues, and performance problems before they merge
@@ -111,6 +156,7 @@ Code review, standards enforcement, quality gates.
 Docker, CI/CD, deployment, monitoring, environment configuration.
 
 **Responsibilities:**
+
 - Maintain Docker, container orchestration, and deployment pipelines
 - Configure and manage CI/CD workflows
 - Set up monitoring, alerting, and logging
@@ -124,6 +170,7 @@ Docker, CI/CD, deployment, monitoring, environment configuration.
 Auth, permissions, vulnerability review, secrets management.
 
 **Responsibilities:**
+
 - Design and review authentication and authorization systems
 - Audit code for security vulnerabilities
 - Manage secrets, keys, and credential storage
@@ -137,6 +184,7 @@ Auth, permissions, vulnerability review, secrets management.
 Schema design, migrations, data integrity, ETL.
 
 **Responsibilities:**
+
 - Design database schemas and relationships
 - Write and review migrations
 - Ensure data integrity across changes
@@ -152,6 +200,7 @@ Schema design, migrations, data integrity, ETL.
 Profiling, optimization, load testing, caching strategy.
 
 **Responsibilities:**
+
 - Profile applications to find bottlenecks
 - Optimize slow queries, endpoints, and render paths
 - Design and implement caching strategies
@@ -167,6 +216,7 @@ Profiling, optimization, load testing, caching strategy.
 Contracts, versioning, documentation, client SDK concerns.
 
 **Responsibilities:**
+
 - Design API contracts (endpoints, payloads, error formats)
 - Manage API versioning strategy
 - Write and maintain API documentation (OpenAPI, etc.)
@@ -182,6 +232,7 @@ Contracts, versioning, documentation, client SDK concerns.
 Requirements gathering, user stories, prioritization, acceptance criteria.
 
 **Responsibilities:**
+
 - Translate user needs into actionable requirements
 - Write user stories and acceptance criteria
 - Prioritize features and bug fixes
@@ -197,6 +248,7 @@ Requirements gathering, user stories, prioritization, acceptance criteria.
 Versioning, changelogs, tagging, release notes, rollback planning.
 
 **Responsibilities:**
+
 - Manage semantic versioning
 - Write changelogs and release notes
 - Tag releases and manage branches
@@ -210,6 +262,7 @@ Versioning, changelogs, tagging, release notes, rollback planning.
 Third-party APIs, webhooks, external service wiring.
 
 **Responsibilities:**
+
 - Wire up third-party API integrations
 - Handle webhooks (incoming and outgoing)
 - Manage external service credentials and configuration
@@ -223,6 +276,7 @@ Third-party APIs, webhooks, external service wiring.
 Telemetry, metrics, dashboards, usage tracking.
 
 **Responsibilities:**
+
 - Instrument code with telemetry and event tracking
 - Build dashboards for key metrics
 - Track usage patterns and feature adoption
@@ -236,6 +290,7 @@ Telemetry, metrics, dashboards, usage tracking.
 A11y compliance, screen reader testing, keyboard navigation.
 
 **Responsibilities:**
+
 - Audit UI for accessibility compliance (WCAG)
 - Test with screen readers and keyboard-only navigation
 - Ensure proper ARIA labels, focus management, and color contrast
@@ -250,6 +305,7 @@ A11y compliance, screen reader testing, keyboard navigation.
 i18n, translation management, locale-aware formatting.
 
 **Responsibilities:**
+
 - Set up and maintain internationalization framework
 - Manage translation files and workflows
 - Ensure locale-aware date, number, and currency formatting
@@ -262,20 +318,20 @@ i18n, translation management, locale-aware formatting.
 
 A 3-person team might look like:
 
-| Member | Roles |
-|---|---|
-| Alpha | Architect, Documentation, API Design |
-| Bravo | Backend, Data, DevOps |
-| Charlie | Frontend, QA, Overflow |
+| Member  | Roles                                |
+| ------- | ------------------------------------ |
+| Alpha   | Architect, Documentation, API Design |
+| Bravo   | Backend, Data, DevOps                |
+| Charlie | Frontend, QA, Overflow               |
 
 A 5-person team:
 
-| Member | Roles |
-|---|---|
-| Alpha | Architect, Product |
-| Bravo | Backend, Data |
-| Charlie | Frontend, Accessibility |
-| Delta | QA, Overflow, Performance |
-| Echo | DevOps, Security, Release |
+| Member  | Roles                     |
+| ------- | ------------------------- |
+| Alpha   | Architect, Product        |
+| Bravo   | Backend, Data             |
+| Charlie | Frontend, Accessibility   |
+| Delta   | QA, Overflow, Performance |
+| Echo    | DevOps, Security, Release |
 
 There's no wrong combination. Match your team to your project.
