@@ -87,14 +87,58 @@ Assert `result.diceResult.criticalFailure === true` and check the outcome instea
 - chief_joseph is 0-23 (grounds accessible, building is not — but zone is walkable).
 - moms_house and columbia_park are always open (0-23).
 
-## Bones' Engine Files
+## Phase 3 — Complete (all committed)
 
-As of this session, Bones has committed engine files to src/engine/ but they are
-NOT committed yet (untracked). I will review the diffs when they are committed.
-Relevant files:
-- src/engine/dice.js + dice.test.js
-- src/engine/actions.js + actions.test.js
-- src/engine/events.js + events.test.js
-- src/engine/stats.js + stats.test.js
-- src/engine/unlocks.js
-- src/utils/ (unknown contents)
+Five commits landed:
+- `[engine]` Bones' simulation engine (schedule.js, simulation.js, character-registry.js + tests)
+- `[model]` character.js — replaces npc.js. createNPC() alias kept for backward compat.
+- `[build]` Phase 3 code — game.js, useGameLoop.js, workers, ActionMenu, LocationView, GameScreen
+- `[build]` TitleScreen/GameScreen loader migration (loadLocations/loadCharacters/loadItems from content/)
+- `[cleanup]` Legacy JS data files deleted, tests updated to load from content/ via fs
+
+Test count: 487/487. 19 test files.
+
+## coverage.include — update needed
+
+vitest.config.js still lists src/models/npc.js in coverage include. npc.js is DELETED.
+If coverage thresholds are rechecked, update include to:
+- src/models/player.js
+- src/models/location.js
+- src/models/character.js  ← new
+- src/models/item.js
+Remove npc.js entry. Notify Scotty to commit the config change.
+
+## Vue Template Ref Unwrapping — Critical Gotcha
+
+In Vue `<template>`, top-level refs are auto-unwrapped. `selectedCharacterId` injected
+as `ref<string|null>` becomes the string value in template context.
+`selectedCharacterId?.value` in a template = `(string)?.value` = always undefined.
+In `<script setup>`, `.value` is required as normal.
+
+Caught in LocationView.vue line 31. Fixed before Phase 3 commit.
+
+## JSDoc Comment Block Gotcha — `*/` in content
+
+The sequence `*/` inside a `/** ... */` JSDoc block closes the comment early.
+Found in: `content/maps/*/locations/*.json` written in a block comment.
+Vitest misreports the line number (points at the comment text, not the real error).
+Fix: replace glob-style `*` paths in JSDoc with `{placeholder}` notation.
+
+## Content Loader Pattern (loader.js)
+
+`import.meta.glob('/content/...', { eager: true })` — Vite loads all matching JSON eagerly.
+Each glob result value is a Vite module: `{ default: <parsed JSON> }`.
+_extractModules() normalizes with `.default ?? m`.
+_mergeById() flattens arrays and keys by .id — warns on missing id, does not crash.
+Item registry populated at TitleScreen mount (before startNewGame) so it persists across resets.
+
+## npcId → characterId (resolved)
+
+Kirk ruled Option A: `characterId` everywhere. Uhura renamed in content. Contract updated.
+`opposedNpcId` in DiceCheck was NOT renamed — it's a distinct concept (contested rolls)
+and all current values are null. Leave for future ruling if contested rolls are built.
+
+## SaveGame contract — stale reference fixed
+
+data-contracts.md SaveGame had `npcs: NPC` — updated to `characters: Character`.
+game.js loadSave() already supports both keys (backward compat for old saves).

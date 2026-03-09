@@ -29,3 +29,35 @@ NOTHING in the engine mutates player state. resolveAction(), resolveEvent(), get
 ## seededRandom (utils/random.js)
 
 Uses mulberry32 — fast, good distribution, reproducible. Pass it to any engine function via the `rng` parameter. Critical for testing deterministic outcomes.
+
+---
+
+## Stat Decay (stats.js) — Tuned Baselines
+
+DECAY_CONFIG is exported. Key values:
+- Hunger: -1/tick. Starving after ~24 ticks (6 game hours).
+- Energy: -0.5/tick. Exhausted after a full active day (~96 ticks).
+- Sobriety: +1/tick toward baseline **80** (not 100). Drunk wears off in ~8-12 ticks (2-3 hours).
+- Mood: -0.25/tick toward baseline **40**. Slow background melancholy. Events move mood; time brings it back to earth.
+
+If the feel is wrong, change DECAY_CONFIG. Don't hardcode rates anywhere else.
+
+---
+
+## Simulation Engine (simulation.js)
+
+Three tiers — `fixed`, `routine`, `full`. Keep them cheap in that order.
+
+- `fixed`: schedule + probability roll. No status. One call to `resolveSchedule`, one call to `chance`. Done.
+- `routine`: same + transit detection. `isInTransit` checks if character is between stops at non-zero minutes past an endHour.
+- `full`: status-driven bias first, then schedule fallback. `decisionWeights` on the character data drives which bias fires. Applies one tick of decay — returns `statusChanges` for the worker to apply.
+
+Performance verified: 50 chars (40/8/2 split) < 5ms.
+
+## Schedule Midnight Crossover (schedule.js)
+
+`isHourInWindow` handles bar shifts that cross midnight (e.g. 16:00-02:00). Rule: if `endHour < startHour`, the window spans midnight — `hour >= startHour OR hour < endHour`. Tests cover this. Don't touch it without running the schedule test suite.
+
+## Character Registry (character-registry.js)
+
+`buildCharacterRegistry` indexes by id, tier, and current location. All lookup functions are O(1) via the indexes. `updateCharacterLocation` is immutable — returns new registry. The worker calls this after applying simulation updates.
