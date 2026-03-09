@@ -1,0 +1,207 @@
+[
+  {
+    "id": "sit_on_bench",
+    "label": "Sit on a bench",
+    "locationId": "columbia_park",
+    "timeCost": 2,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": null,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You sit. The firs are very large. The sky is whatever color it is. A kid screams from the playground — joy, not pain. A dog sniffs your shoe and moves on. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "You feel slightly more okay than you did. This counts.",
+            "style": "normal",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "energy": 5, "mood": 5 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 50,
+    "obsessionIds": []
+  },
+  {
+    "id": "look_for_change",
+    "label": "Look for change in the fountain",
+    "locationId": "columbia_park",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 6,
+      "maxHour": 22,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "luck",
+      "dc": 12,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "There's something in the basin. Quarters, mostly. Nobody's watching. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 200,
+            "effect": "none"
+          },
+          {
+            "text": "You feel only mild shame, which is a good day.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": -5 },
+      "statChanges": null,
+      "moneyChange": 1.5,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": { "drifter": 1 },
+      "counterChanges": { "times_fished_fountain": 1 },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "There's nothing in the fountain except the water, which you look at for a long time, and then walk away.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": -3 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": { "times_fished_fountain": 1 },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalSuccess": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "There's a folded twenty in the drain. Wet. You don't think about how it got there. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 400,
+            "effect": "none"
+          },
+          {
+            "text": "Twenty dollars is twenty dollars.",
+            "style": "bold",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": null,
+      "statChanges": null,
+      "moneyChange": 20,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": { "lucky_bastard": 5 },
+      "counterChanges": { "times_fished_fountain": 1 },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalFailure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You lean too far over the fountain edge and get wet up to the elbow. A child witnesses this. You make eye contact. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 500,
+            "effect": "none"
+          },
+          {
+            "text": "You walk away.",
+            "style": "normal",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": -15 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": { "times_fished_fountain": 1 },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "weight": 40,
+    "obsessionIds": []
+  }
+]

@@ -1,0 +1,43 @@
+{
+  "id": "dancin_bare",
+  "type": "bar",
+  "variant": "exotic",
+  "display": "The Dancin' Bare",
+  "descriptions": {
+    "default": "Portland has more strip clubs per capita than anywhere in the country, and the Dancin' Bare represents the genre at its least glamorous. There are steak bites for two dollars. There is a pool table that is inexplicably zig-zag shaped. Amateur night runs on Thursdays and patrons throw spare change onto the stage, which is either the most degrading thing you've witnessed or a reasonable tipping system depending on how you look at it. The carpet is sticky in a way that doesn't narrow anything down.",
+    "night": "The amateur night crowd has a specific energy. Enthusiastic. Generous with coinage. The zig-zag pool table sees heavy use. The DJ plays hair metal at a volume that turns conversation into lip reading. Someone is eating steak bites in a way that suggests they came here for the food. Maybe they did.",
+    "drunk": "You are at the Dancin' Bare. You got here somehow. The steak bites are two dollars. The zig-zag pool table makes more sense when you're drunk, or less, it's hard to tell. The stage lights are warm on your face. You feel welcome. You should probably examine this.",
+    "repeat": "You know the layout now. Bar on the left, stage in the middle, zig-zag table in the back. The steak bites are still two dollars. They will always be two dollars. This is the one constant.",
+    "exhausted": "The Dancin' Bare is loud and bright and warm and everyone is having a better time than you. The steak bites are protein. The seat is a seat. You eat and watch the zig-zag pool table game and for a moment you don't think about anything at all.",
+    "starving": "Steak bites. Two dollars. You don't have to explain yourself to anyone here. Nobody is keeping track. You order two plates and eat them at the bar and the bartender refills your water without being asked. Two dollars. You'll remember this."
+  },
+  "exits": [
+    {
+      "locationId": "glitters",
+      "label": "Walk to All That Glitters",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "greeley_711",
+      "label": "Head to Greeley 7-11",
+      "travelTime": 2,
+      "requirements": null
+    },
+    {
+      "locationId": "liquor",
+      "label": "Walk to Kenton Liquor",
+      "travelTime": 2,
+      "requirements": null
+    }
+  ],
+  "npcSlots": [],
+  "actionIds": [],
+  "discovered": false,
+  "availability": {
+    "openHour": 11,
+    "closeHour": 2,
+    "closedMessage": "The Dancin' Bare is dark. No steak bites tonight."
+  },
+  "visitCount": 0
+}

@@ -1,0 +1,78 @@
+[
+  {
+    "id": "tallboy_oly",
+    "name": "Tallboy (Olympia)",
+    "description": "A 24oz can of Olympia beer. Gold. Cold. The kind of beer that doesn't pretend to be anything other than what it is — cheap, available, and effective.",
+    "type": "consumable",
+    "value": 2,
+    "stackable": true,
+    "quantity": 1,
+    "effects": [
+      { "target": "sobriety", "value": -20, "duration": null },
+      { "target": "mood", "value": 8, "duration": null }
+    ]
+  },
+  {
+    "id": "tallboy_pbr",
+    "name": "Tallboy (PBR)",
+    "description": "A 24oz can of Pabst Blue Ribbon. The official beer of not having a better option. Tastes like college if you went to college, and like Tuesday if you didn't.",
+    "type": "consumable",
+    "value": 2,
+    "stackable": true,
+    "quantity": 1,
+    "effects": [
+      { "target": "sobriety", "value": -20, "duration": null },
+      { "target": "mood", "value": 8, "duration": null }
+    ]
+  },
+  {
+    "id": "pack_cigarettes",
+    "name": "Pack of Cigarettes",
+    "description": "Marlboro Reds. The pack crinkles in your jacket pocket. You know it's there the way you know your own heartbeat. Twenty cigarettes. Twenty small decisions to keep going.",
+    "type": "consumable",
+    "value": 4,
+    "stackable": true,
+    "quantity": 1,
+    "effects": [
+      { "target": "mood", "value": 5, "duration": null },
+      { "target": "energy", "value": -3, "duration": null },
+      { "target": "health", "value": -1, "duration": null }
+    ]
+  },
+  {
+    "id": "plaid_hot_dog",
+    "name": "Plaid Pantry Hot Dog",
+    "description": "A hot dog from the roller grill. It has been rotating since morning. It has achieved a texture that is not found in nature. It costs a dollar forty-nine and it is the most accessible protein in Kenton.",
+    "type": "consumable",
+    "value": 1.49,
+    "stackable": true,
+    "quantity": 1,
+    "effects": [
+      { "target": "hunger", "value": 20, "duration": null },
+      { "target": "health", "value": -2, "duration": null }
+    ]
+  },
+  {
+    "id": "corn_dog",
+    "name": "Corn Dog",
+    "description": "A dollar. Battered, fried, and sitting under a heat lamp long enough to develop convictions. It crunches when you bite it. This is reassuring.",
+    "type": "consumable",
+    "value": 1,
+    "stackable": true,
+    "quantity": 1,
+    "effects": [{ "target": "hunger", "value": 15, "duration": null }]
+  },
+  {
+    "id": "coffee_711",
+    "name": "7-11 Coffee",
+    "description": "Hot. Brown. Was brewed during a different presidential administration. The cup is styrofoam and too large and the lid doesn't quite fit. You drink it because it's warm and it costs eighty-nine cents.",
+    "type": "consumable",
+    "value": 0.89,
+    "stackable": false,
+    "quantity": 1,
+    "effects": [
+      { "target": "energy", "value": 15, "duration": null },
+      { "target": "mood", "value": 3, "duration": null }
+    ]
+  }
+]

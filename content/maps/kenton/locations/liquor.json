@@ -1,0 +1,49 @@
+{
+  "id": "liquor",
+  "type": "market",
+  "variant": "liquor",
+  "display": "Kenton Liquor Store",
+  "descriptions": {
+    "default": "Oregon liquor stores are state-run, which means the same drab layout, the same price, the same slightly hostile efficiency everywhere you go. The Kenton location has a clerk who looks like he's been working here since the state acquired it and sees no reason to change jobs now. The selection is adequate. The prices are what they are. A sign by the door says 'We Reserve The Right To Refuse Service.' It does not say to whom.",
+    "night": "Closes at nine. Which you keep forgetting until you walk up and the lights are off. This is a lesson you will learn multiple times. The state of Oregon does not care about your schedule.",
+    "drunk": "You are drunk at the liquor store. The clerk looks at you the way a weatherman looks at a storm — professional assessment, no emotion. You buy a bottle of something. You will not remember what.",
+    "repeat": "The clerk does not recognize you. This is either because he doesn't look at faces or because you are not distinctive. You've decided it's the former. The selection hasn't changed. It never changes. The state decides what goes on these shelves and the state has made its decision.",
+    "exhausted": "The fluorescent lighting in an Oregon liquor store is designed to make everything look worse than it is. The bottles. The clerk. You. Everything. You buy what you came for and leave. The door chime sounds relieved.",
+    "starving": "You cannot eat alcohol. This is a fact that feels worth stating because you are standing in a liquor store while starving and your brain is presenting options that are not options."
+  },
+  "exits": [
+    {
+      "locationId": "greeley_plaid",
+      "label": "Walk to Greeley Plaid",
+      "travelTime": 2,
+      "requirements": null
+    },
+    {
+      "locationId": "glitters",
+      "label": "Head to All That Glitters",
+      "travelTime": 2,
+      "requirements": null
+    },
+    {
+      "locationId": "dancin_bare",
+      "label": "Walk to the Dancin' Bare",
+      "travelTime": 2,
+      "requirements": null
+    },
+    {
+      "locationId": "lombard_dental",
+      "label": "Walk to Lombard Dental",
+      "travelTime": 2,
+      "requirements": null
+    }
+  ],
+  "npcSlots": [],
+  "actionIds": [],
+  "discovered": false,
+  "availability": {
+    "openHour": 9,
+    "closeHour": 21,
+    "closedMessage": "The Oregon Liquor Control Commission has closed this location for the night."
+  },
+  "visitCount": 0
+}

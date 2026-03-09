@@ -1,0 +1,199 @@
+[
+  {
+    "id": "buy_tallboy",
+    "label": "Buy a tallboy",
+    "locationId": "ainsworth_plaid",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": null,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Two dollars for a tallboy Olympia. The clerk rings it up without looking away from his book. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 200,
+            "effect": "none"
+          },
+          {
+            "text": "You're not proud of this. You're not ashamed either. You're just cold and this is what's available.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": null,
+      "statChanges": null,
+      "moneyChange": -2,
+      "itemsGained": ["tallboy_oly"],
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": { "barfly": 1 },
+      "counterChanges": { "tallboys_purchased": 1 },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 70,
+    "obsessionIds": []
+  },
+  {
+    "id": "shoplift_plaid",
+    "label": "Shoplift something",
+    "locationId": "ainsworth_plaid",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": 50,
+      "maxSobriety": null,
+      "minHour": null,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "wits",
+      "dc": 14,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You walk out with a hot dog and a pack of peanuts in your jacket. The clerk did not look up from his book. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "You are better at this than you thought, which is concerning.",
+            "style": "normal",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "hunger": 10 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": { "drifter": 2 },
+      "counterChanges": { "successful_shoplifts": 1 },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "The clerk looks up from his book. He doesn't call the cops. He just says ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          },
+          {
+            "text": "'put it back.'",
+            "style": "bold",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": " You put it back. You both agree never to speak of this. He goes back to his book.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": -20 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": { "failed_shoplifts": 1 },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalSuccess": null,
+    "criticalFailure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "The clerk puts his book down. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 500,
+            "effect": "none"
+          },
+          {
+            "text": "This has never happened before. ",
+            "style": "italic",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "He hits something under the counter. Two minutes later a cop car pulls up. You explain that you were confused. The officer does not believe this. You leave with a warning and the specific feeling of a person who has made poor decisions.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": -30 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": { "police_encounters": 1, "failed_shoplifts": 1 },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "weight": 30,
+    "obsessionIds": []
+  }
+]

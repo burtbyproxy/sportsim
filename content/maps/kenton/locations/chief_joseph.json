@@ -1,0 +1,39 @@
+{
+  "id": "chief_joseph",
+  "type": "school",
+  "variant": "elementary",
+  "display": "Chief Joseph Elementary",
+  "descriptions": {
+    "default": "An elementary school. You are not a child and have no business here. The chain-link fence runs the length of the block. The playground equipment is the solid metal kind from the seventies that you could break an arm on. The school day ends at 3pm. After that, the yard is technically public. You try not to look suspicious. This is harder than it sounds when you're a grown adult standing alone on an elementary school playground.",
+    "night": "The school is dark. The playground is accessible. Sitting on a metal slide at midnight is a legitimate activity if you keep it moving. The chain-link fence throws grid shadows across the blacktop. The monkey bars are cold. Everything is cold.",
+    "drunk": "The playground equipment is tempting in a way that only makes sense when you're drunk. The slide is right there. The monkey bars are right there. You are an adult. You go down the slide anyway. It is shorter than you remember all slides being.",
+    "repeat": "You have been to an elementary school multiple times as an adult with no children. This is fine. The playground is public after three. You're not doing anything wrong. You repeat this to yourself because it's true.",
+    "exhausted": "The blacktop is surprisingly warm from the afternoon sun. You sit against the fence and close your eyes. For a minute you could be eight years old. Then a car drives by and you're not.",
+    "starving": "There is no food at an elementary school after hours. There is a drinking fountain. The water tastes like pipe and childhood. You drink until it's cold."
+  },
+  "exits": [
+    {
+      "locationId": "lombard_dental",
+      "label": "Walk to Lombard Dental",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "abundant_life",
+      "label": "Head to Abundant Life Church",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "moms_house",
+      "label": "Walk back toward Mom's",
+      "travelTime": 3,
+      "requirements": null
+    }
+  ],
+  "npcSlots": [],
+  "actionIds": [],
+  "discovered": false,
+  "availability": { "openHour": 0, "closeHour": 23, "closedMessage": null },
+  "visitCount": 0
+}

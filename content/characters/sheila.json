@@ -1,0 +1,43 @@
+{
+  "id": "sheila",
+  "name": "Sheila",
+  "description": "Early forties, dark hair cut short and practical. Sheila has the kind of face that looks like she's about to say something funny and then doesn't. She pours with the same hand she uses to wave people off when they've had enough, and there's no gap between the two motions. She and Dale run Mock's Crest like a machine. If Dale is the engine, Sheila is the brakes.",
+  "habit": "Cuts people off without announcing it. Your next order just comes back as water. If you complain, she looks at you until you stop complaining. This takes about four seconds.",
+  "voice": "Dry. Short sentences. Lets silence do the work. When she does say something, it lands because you weren't expecting it. Funny in a way that takes a second to arrive. 'You're done, sweetheart' is her version of a speech.",
+  "simulation": "fixed",
+  "stats": {
+    "stamina": { "base": 55, "modifiers": [], "xp": 0 },
+    "toughness": { "base": 60, "modifiers": [], "xp": 0 },
+    "wits": { "base": 65, "modifiers": [], "xp": 0 },
+    "creativity": { "base": 25, "modifiers": [], "xp": 0 },
+    "charm": { "base": 55, "modifiers": [], "xp": 0 },
+    "reputation": { "base": 65, "modifiers": [], "xp": 0 },
+    "luck": { "base": 40, "modifiers": [], "xp": 0 },
+    "karma": { "base": 60, "modifiers": [], "xp": 0 }
+  },
+  "status": null,
+  "psyche": {
+    "traumas": [],
+    "obsessions": [],
+    "insanities": [],
+    "abilities": []
+  },
+  "schedule": {
+    "entries": [
+      {
+        "locationId": "mocks_crest",
+        "startHour": 15,
+        "endHour": 2,
+        "probability": 0.85,
+        "days": ["wednesday", "thursday", "friday", "saturday", "sunday"]
+      }
+    ]
+  },
+  "relationshipScore": 0,
+  "currentLocationId": "mocks_crest",
+  "dialogueTreeIds": [],
+  "want": "Respect. Not deference — just the basic understanding that she's in charge of this bar and you're in it. Sheila doesn't need to be liked. She needs to be taken seriously. She always is.",
+  "fear": "Losing control of a situation. Not a fight — she can handle a fight. The thing she fears is the moment where someone doesn't listen and she has to decide what comes next.",
+  "level": 1,
+  "decisionWeights": null
+}

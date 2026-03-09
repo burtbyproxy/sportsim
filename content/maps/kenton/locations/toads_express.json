@@ -1,0 +1,40 @@
+{
+  "id": "toads_express",
+  "type": "fuel",
+  "variant": "convenience",
+  "display": "Toad's Express",
+  "descriptions": {
+    "default": "Really just a cheap cigarette shop with an Astro gas station attached for optics. The clerk sits behind bulletproof glass. On weekends there's an armed guard by the door, which seems like a lot of security for a place that sells discount Marlboros, but here we are. A hand-lettered sign on the glass says 'No checks No exceptions.' It has been laminated.",
+    "night": "The fluorescent overheads outside buzz with insects. The guard watches the lot. You buy cigarettes through the sliding drawer. Nobody makes eye contact. It's efficient.",
+    "drunk": "The bulletproof glass reflects your face back at you. You look fine. Everything is fine. The sliding drawer is harder to operate than it should be. You manage.",
+    "repeat": "The guard recognizes you now. Not in a friendly way. In the way a security camera recognizes you. You are a known pattern. This does not come with perks.",
+    "exhausted": "The fluorescents are very bright. The Astro pumps hum. Everything here is awake and you are not. You buy what you came for through the drawer and leave. The guard watches you go.",
+    "starving": "Toad's Express does not sell food. Toad's Express sells cigarettes, lighters, and the specific feeling of being in a parking lot at midnight. None of these are edible."
+  },
+  "exits": [
+    {
+      "locationId": "moms_house",
+      "label": "Walk back toward Mom's",
+      "travelTime": 2,
+      "requirements": null
+    },
+    { "locationId": "arbys", "label": "Head to Arby's", "travelTime": 1, "requirements": null },
+    {
+      "locationId": "mouse_trap",
+      "label": "Walk to the Mouse Trap",
+      "travelTime": 2,
+      "requirements": null
+    },
+    {
+      "locationId": "ainsworth_plaid",
+      "label": "Head to Plaid Pantry",
+      "travelTime": 2,
+      "requirements": null
+    }
+  ],
+  "npcSlots": [],
+  "actionIds": [],
+  "discovered": false,
+  "availability": { "openHour": 0, "closeHour": 23, "closedMessage": null },
+  "visitCount": 0
+}

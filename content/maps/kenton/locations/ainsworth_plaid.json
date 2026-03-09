@@ -1,0 +1,34 @@
+{
+  "id": "ainsworth_plaid",
+  "type": "market",
+  "variant": "convenience",
+  "display": "Plaid Pantry",
+  "descriptions": {
+    "default": "This Plaid Pantry is indistinguishable from every other Plaid Pantry. That is not an accident. The design is intentional, a franchise commitment to radical sameness. The hot dog rollers turn with a devotion that borders on spiritual. The staff pays you minimal attention. The night clerk reads a paperback behind the counter and does not look up when you come in. He does not look up when you leave. He has noticed everything in between.",
+    "night": "The night shift belongs to Ray and his book and the hum of the refrigeration units. The hot dogs have been rotating since morning. They have achieved a texture. One fluorescent tube flickers in the back aisle. It has been flickering for months. Nobody has reported it. Nobody will.",
+    "drunk": "The aisles are narrower than you remember. Or you are wider. The hot dogs look incredible. You know they're not. You know this and it changes nothing.",
+    "repeat": "You know exactly where the tallboys are. Second aisle, bottom shelf, back of the cooler where they're coldest. You know this the way you know where light switches are. Automatically. Without pride.",
+    "exhausted": "The Plaid Pantry is always the same temperature and the same brightness and the same everything. There is something comforting about a place that never changes. You stand in front of the hot dog rollers for longer than necessary. Nobody asks you to leave.",
+    "starving": "The hot dogs are $1.49. The taquitos are $0.99. The corn dogs are a dollar. Everything under the heat lamp has been there long enough to develop a philosophy about existence. You buy two corn dogs. They are exactly what you expected."
+  },
+  "exits": [
+    {
+      "locationId": "toads_express",
+      "label": "Walk to Toad's Express",
+      "travelTime": 2,
+      "requirements": null
+    },
+    { "locationId": "arbys", "label": "Head to Arby's", "travelTime": 2, "requirements": null },
+    {
+      "locationId": "denver_711",
+      "label": "Walk to Denver 7-11",
+      "travelTime": 2,
+      "requirements": null
+    }
+  ],
+  "npcSlots": ["ray", "dale"],
+  "actionIds": ["buy_tallboy", "shoplift_plaid"],
+  "discovered": false,
+  "availability": { "openHour": 0, "closeHour": 23, "closedMessage": null },
+  "visitCount": 0
+}

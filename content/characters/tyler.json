@@ -1,0 +1,43 @@
+{
+  "id": "tyler",
+  "name": "Tyler",
+  "description": "Looks nineteen. Might be nineteen. Might be seventeen. Nobody has asked and nobody is going to. Tyler has the kind of face that could be any age between sixteen and twenty-two depending on the lighting, and the Mouse Trap's lighting is not helping. He wears a backwards cap and a hoodie under his bar apron, which is not standard bartender attire, but nothing about the Mouse Trap is standard. He pours like he learned from watching someone pour.",
+  "habit": "Checks his pager. Constantly. Whatever's on that pager is more interesting than the Mouse Trap, which is a low bar, but still.",
+  "voice": "Says 'dude' a lot. Asks if things are 'cool' in a way that suggests he needs them to be cool. Ends statements like they're questions? Talks about bands you've never heard of with total authority.",
+  "simulation": "fixed",
+  "stats": {
+    "stamina": { "base": 55, "modifiers": [], "xp": 0 },
+    "toughness": { "base": 30, "modifiers": [], "xp": 0 },
+    "wits": { "base": 35, "modifiers": [], "xp": 0 },
+    "creativity": { "base": 40, "modifiers": [], "xp": 0 },
+    "charm": { "base": 35, "modifiers": [], "xp": 0 },
+    "reputation": { "base": 10, "modifiers": [], "xp": 0 },
+    "luck": { "base": 45, "modifiers": [], "xp": 0 },
+    "karma": { "base": 45, "modifiers": [], "xp": 0 }
+  },
+  "status": null,
+  "psyche": {
+    "traumas": [],
+    "obsessions": [],
+    "insanities": [],
+    "abilities": []
+  },
+  "schedule": {
+    "entries": [
+      {
+        "locationId": "mouse_trap",
+        "startHour": 19,
+        "endHour": 2,
+        "probability": 0.8,
+        "days": ["thursday", "friday", "saturday"]
+      }
+    ]
+  },
+  "relationshipScore": 0,
+  "currentLocationId": "mouse_trap",
+  "dialogueTreeIds": [],
+  "want": "To be somewhere else. Tyler is bartending at the Mouse Trap because nowhere else hired him. This is temporary. Everything in Tyler's life is temporary. He just hasn't figured out what the permanent thing is yet.",
+  "fear": "Getting caught. Not at anything specific — just the general ambient fear of a person who is probably not old enough to be doing what he's doing and knows it.",
+  "level": 1,
+  "decisionWeights": null
+}

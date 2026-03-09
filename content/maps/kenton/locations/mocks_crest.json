@@ -1,0 +1,49 @@
+{
+  "id": "mocks_crest",
+  "type": "bar",
+  "variant": "tavern",
+  "display": "Mock's Crest Tavern",
+  "descriptions": {
+    "default": "Mock's Crest is always busier than it has any right to be. The drinks cost a little more than the Parrot but they pour heavy and nobody tracks how many you've had. There's a taxidermied elk head above the bar that somebody put a Santa hat on around 1994. The hat is still there. The bar is lined with video poker machines that blink and chirp and eat money with a patience that borders on malice. The food is good. The service is good. This is a professional operation.",
+    "night": "By ten o'clock the volume has reached a point where conversation is a theory. Everybody is shouting. Nobody is listening. The video poker machines don't care. The elk watches all of it with the same expression. Poker night fills the back tables. The regulars have nicknames — not the ones they gave themselves, the ones Dale put in the register.",
+    "drunk": "The elk head seems sympathetic. You are projecting. The video poker machine in front of you has been blinking the same pattern for ten minutes and you have been watching it for ten minutes. The bartender puts a glass of water next to your drink without comment.",
+    "repeat": "The bartender knows your order. You have a nickname in the register now. You didn't choose it. It's accurate. You have feelings about this you cannot fully articulate.",
+    "exhausted": "Mock's Crest is warm and loud and the food smells good and the stool supports your weight and the bartender doesn't judge you for putting your head on the bar. For thirty seconds. Then the water glass appears.",
+    "starving": "The menu is on a chalkboard behind the bar. The prices are reasonable. The food is real food, cooked by a real person, and it arrives fast. This is the difference between Mock's and everywhere else."
+  },
+  "exits": [
+    {
+      "locationId": "blue_parrot",
+      "label": "Cross back to the Blue Parrot",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "moms_house",
+      "label": "Walk down to Mom's",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "columbia_park",
+      "label": "Head to Columbia Park",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "arbys",
+      "label": "Walk south to Arby's",
+      "travelTime": 2,
+      "requirements": null
+    }
+  ],
+  "npcSlots": ["dale", "sheila", "dennis", "maurice"],
+  "actionIds": ["order_beer_mocks", "play_pool_mocks"],
+  "discovered": false,
+  "availability": {
+    "openHour": 11,
+    "closeHour": 2,
+    "closedMessage": "Mock's Crest is closed. The elk is unavailable."
+  },
+  "visitCount": 0
+}

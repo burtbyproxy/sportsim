@@ -1,0 +1,45 @@
+{
+  "id": "greeley_711",
+  "type": "market",
+  "variant": "convenience",
+  "display": "7-11",
+  "descriptions": {
+    "default": "This 7-11 is cleaner than it has any right to be. The shelves are fully stocked. Two guys work every shift and they are both genuinely friendly, which is disorienting in a convenience store context. There are always more cars in the lot than there are people inside. You have wondered about this and then stopped wondering because some things don't require an answer.",
+    "night": "The night shift guys keep the coffee fresh. They nod at you. You nod back. This is a relationship. The parking lot is quieter than Denver's. The cars are still there. The people who drove them are not.",
+    "drunk": "The friendly clerks are still friendly. Their friendliness lands differently when you're drunk. It feels like kindness. It might be kindness. You buy a Gatorade and one of them says 'good call.' You think about this for the rest of the night.",
+    "repeat": "The clerks know you now. Not your name — just your face. One of them asks how your night's going. You say fine. He says good. This is the most normal human interaction available in Kenton at this hour.",
+    "exhausted": "The fresh coffee. The clean floor. The stocked shelves. The friendly nod. This 7-11 is running a better operation than most of the bars you've been to tonight. You stand in the coffee aisle and feel something adjacent to gratitude.",
+    "starving": "Hot dogs that were put on the rollers recently enough to still be food. A taquito that crunches when you bite it. The clerks don't judge. They've seen worse than a hungry person at midnight. They've seen the parking lot."
+  },
+  "exits": [
+    {
+      "locationId": "denver_711",
+      "label": "Walk north to Denver 7-11",
+      "travelTime": 3,
+      "requirements": null
+    },
+    {
+      "locationId": "greeley_plaid",
+      "label": "Walk to the Greeley Plaid",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "glitters",
+      "label": "Head to All That Glitters",
+      "travelTime": 2,
+      "requirements": null
+    },
+    {
+      "locationId": "dancin_bare",
+      "label": "Walk to the Dancin' Bare",
+      "travelTime": 2,
+      "requirements": null
+    }
+  ],
+  "npcSlots": [],
+  "actionIds": [],
+  "discovered": false,
+  "availability": { "openHour": 0, "closeHour": 23, "closedMessage": null },
+  "visitCount": 0
+}

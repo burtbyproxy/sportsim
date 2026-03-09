@@ -1,0 +1,43 @@
+{
+  "id": "lombard_dental",
+  "type": "clinic",
+  "variant": "dental",
+  "display": "Lombard Dental",
+  "descriptions": {
+    "default": "The waiting room has a fish tank where one fish circles endlessly and the other fish do not move. There are magazines from 1997. A sign says 'Financing Available' and underneath, someone has written in ballpoint pen, 'You'll need it.' The receptionist has heard all the jokes about dentists and has achieved a kind of transcendence beyond them.",
+    "night": "Closed. The fish continue regardless. The circling one still circles. The still ones are still still. The parking lot light catches the tank through the window. It's oddly beautiful for a dental office at midnight.",
+    "drunk": "You're drunk outside a dentist. This is not a situation that requires a description. It requires a decision, and the decision is to leave.",
+    "repeat": "The same fish. The same magazines. The same sign with the same ballpoint addition. Time does not pass in this waiting room. It just accumulates.",
+    "exhausted": "The waiting room chairs are surprisingly comfortable. The fish tank hums. The circling fish circles. You could fall asleep here. The receptionist would wake you. Eventually.",
+    "starving": "Lombard Dental is not a restaurant. You are standing in a dental office thinking about food. The receptionist offers you a mint from a bowl on the counter. It's sugar-free. Of course it is."
+  },
+  "exits": [
+    {
+      "locationId": "liquor",
+      "label": "Walk to Kenton Liquor",
+      "travelTime": 2,
+      "requirements": null
+    },
+    {
+      "locationId": "chief_joseph",
+      "label": "Walk past Chief Joseph",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "abundant_life",
+      "label": "Head to Abundant Life Church",
+      "travelTime": 2,
+      "requirements": null
+    }
+  ],
+  "npcSlots": [],
+  "actionIds": [],
+  "discovered": false,
+  "availability": {
+    "openHour": 8,
+    "closeHour": 17,
+    "closedMessage": "Lombard Dental is closed. Your tooth will keep until morning."
+  },
+  "visitCount": 0
+}

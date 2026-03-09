@@ -1,0 +1,76 @@
+{
+  "id": "dennis",
+  "name": "Dennis",
+  "description": "Late forties, thick around the middle, wears a denim jacket with band patches that tell you everything about his opinions before he opens his mouth. Dennis has a red face and the posture of a man who has been sitting on barstools for decades. He used to be a Blue Parrot regular. He is not anymore. If you ask him why, he doesn't know what you're talking about. He has never been to the Blue Parrot. He has certainly never been punched in the face on the smoke porch by a teenager over whether or not Kiss sucks. That did not happen.",
+  "habit": "Steers every conversation toward classic rock within three sentences. Has learned — recently, painfully — to stop short of arguing about it. The opinions are still there. The volume is lower.",
+  "voice": "Talks like a guy at a bar because he is a guy at a bar. Starts sentences with 'I'll tell you what.' Uses 'back in the day' to refer to any point in the past. Gets louder when he's excited. Gets quiet when someone mentions the Blue Parrot.",
+  "simulation": "routine",
+  "stats": {
+    "stamina": { "base": 40, "modifiers": [], "xp": 0 },
+    "toughness": { "base": 30, "modifiers": [], "xp": 0 },
+    "wits": { "base": 35, "modifiers": [], "xp": 0 },
+    "creativity": { "base": 20, "modifiers": [], "xp": 0 },
+    "charm": { "base": 40, "modifiers": [], "xp": 0 },
+    "reputation": { "base": 25, "modifiers": [], "xp": 0 },
+    "luck": { "base": 30, "modifiers": [], "xp": 0 },
+    "karma": { "base": 40, "modifiers": [], "xp": 0 }
+  },
+  "status": null,
+  "psyche": {
+    "traumas": [
+      {
+        "id": "trauma_kiss_incident",
+        "name": "The Incident",
+        "description": "Dennis was beaten up on the Blue Parrot smoke porch by a young man who turned out to be a literal minor with a fake ID. The fight was about Kiss. Dennis lost. Everyone watched. He has not been back to the Blue Parrot since. He does not discuss this. It did not happen.",
+        "source": "kiss_fight_event",
+        "effects": {
+          "locationAvoidance": "blue_parrot",
+          "topicSensitivity": "kiss"
+        }
+      }
+    ],
+    "obsessions": [
+      {
+        "id": "obs_classic_rock",
+        "name": "Classic Rock Opinions",
+        "strength": 70,
+        "relatedActions": ["talk_to_dennis"],
+        "effects": { "actionWeightModifier": { "music_conversations": 1.3 } }
+      }
+    ],
+    "insanities": [],
+    "abilities": []
+  },
+  "schedule": {
+    "entries": [
+      {
+        "locationId": "mocks_crest",
+        "startHour": 17,
+        "endHour": 22,
+        "probability": 0.7,
+        "days": ["all"]
+      },
+      {
+        "locationId": "mouse_trap",
+        "startHour": 22,
+        "endHour": 1,
+        "probability": 0.5,
+        "days": ["friday", "saturday"]
+      },
+      {
+        "locationId": "arbys",
+        "startHour": 1,
+        "endHour": 2,
+        "probability": 0.4,
+        "days": ["friday", "saturday"]
+      }
+    ]
+  },
+  "relationshipScore": 0,
+  "currentLocationId": "mocks_crest",
+  "dialogueTreeIds": [],
+  "want": "To be the guy who knows things. The authority. The man with the right opinion delivered at the right volume. He had this at the Blue Parrot and lost it in the worst possible way. Now he's rebuilding at Mock's, quieter, but the need is the same.",
+  "fear": "Being humiliated again. Not physically — Dennis can take a punch. What he can't take is the room watching and doing nothing. The silence afterward. Walking out and knowing every person in that bar has a story about you now.",
+  "level": 1,
+  "decisionWeights": null
+}

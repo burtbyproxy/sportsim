@@ -1,0 +1,43 @@
+{
+  "id": "tina",
+  "name": "Tina",
+  "description": "Mid-twenties, blonde hair pulled back with a scrunchie that's doing its best. Pretty in a way that gets her out of trouble and into different trouble. She moves behind the bar like she's looking for something she put down a minute ago. She smiles at everyone the same way — wide, genuine, and completely unhelpful if you're trying to figure out whether she likes you or is just like that.",
+  "habit": "Leaves the bar gate open. Always. People walk behind the bar. People go down to the basement where the kegs are. Tina does not notice or does not care. The distinction is academic.",
+  "voice": "Sweet. Uses 'totally' and 'oh my god' without irony. Asks questions she forgets she asked. Laughs at things that aren't jokes and misses things that are. Not dumb exactly — just somewhere else.",
+  "simulation": "fixed",
+  "stats": {
+    "stamina": { "base": 40, "modifiers": [], "xp": 0 },
+    "toughness": { "base": 20, "modifiers": [], "xp": 0 },
+    "wits": { "base": 25, "modifiers": [], "xp": 0 },
+    "creativity": { "base": 35, "modifiers": [], "xp": 0 },
+    "charm": { "base": 75, "modifiers": [], "xp": 0 },
+    "reputation": { "base": 20, "modifiers": [], "xp": 0 },
+    "luck": { "base": 60, "modifiers": [], "xp": 0 },
+    "karma": { "base": 65, "modifiers": [], "xp": 0 }
+  },
+  "status": null,
+  "psyche": {
+    "traumas": [],
+    "obsessions": [],
+    "insanities": [],
+    "abilities": []
+  },
+  "schedule": {
+    "entries": [
+      {
+        "locationId": "blue_parrot",
+        "startHour": 11,
+        "endHour": 19,
+        "probability": 0.6,
+        "days": ["monday", "wednesday", "friday", "saturday"]
+      }
+    ]
+  },
+  "relationshipScore": 5,
+  "currentLocationId": "blue_parrot",
+  "dialogueTreeIds": [],
+  "want": "To be liked. Not respected, not feared, not admired. Just liked. Tina wants every person in the room to feel good, and she'll break every rule behind the bar to make it happen. She doesn't understand that this is why she keeps getting fired.",
+  "fear": "Confrontation. Any kind. She'd rather let someone walk out with a case of beer than have a conversation about it.",
+  "level": 1,
+  "decisionWeights": null
+}

@@ -1,0 +1,39 @@
+{
+  "id": "greeley_plaid",
+  "type": "market",
+  "variant": "convenience",
+  "display": "Plaid Pantry",
+  "descriptions": {
+    "default": "The Greeley Plaid is not the same as the Ainsworth Plaid despite being the same chain selling the same products under the same lighting. The difference is difficult to articulate and probably not real. The clerk here seems to recognize you even if you've never been in before. Maybe you just have one of those faces. The hot dog rollers turn. The fluorescents hum. The sameness is the point.",
+    "night": "Quieter than the other Plaid. The kind of quiet that's just the refrigeration units humming. A moth circles the parking lot light. You are the only customer. The clerk watches the moth. You watch the clerk. Nobody is watching you.",
+    "drunk": "Is this the same Plaid Pantry you were in earlier? It's a different one. It looks the same. They all look the same. This is either comforting or disturbing and you're too drunk to decide which.",
+    "repeat": "The clerk definitely recognizes you now. The nod is quicker. The transaction is faster. You are becoming a known entity at a Plaid Pantry. Add it to the list of things you didn't plan for your life.",
+    "exhausted": "The refrigeration hum is almost soothing. Almost. The Greeley Plaid is the quietest commercial space in Kenton after midnight. You stand in the chip aisle and breathe. The clerk does not rush you.",
+    "starving": "Same roller food. Same heat lamp items. Same prices. The Greeley Plaid offers no surprises and right now that's what you need — a predictable source of calories at a predictable price."
+  },
+  "exits": [
+    {
+      "locationId": "greeley_711",
+      "label": "Walk to Greeley 7-11",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "glitters",
+      "label": "Walk to All That Glitters",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "liquor",
+      "label": "Head to Kenton Liquor",
+      "travelTime": 2,
+      "requirements": null
+    }
+  ],
+  "npcSlots": [],
+  "actionIds": [],
+  "discovered": false,
+  "availability": { "openHour": 0, "closeHour": 23, "closedMessage": null },
+  "visitCount": 0
+}

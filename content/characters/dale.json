@@ -1,0 +1,50 @@
+{
+  "id": "dale",
+  "name": "Dale",
+  "description": "Stocky, clean-shaven, short hair going gray at the temples. Dale wears a bar apron like other men wear a badge. He moves behind the Mock's Crest bar with an economy that comes from years of doing the same thing well. His hands are fast. His pours are heavy. He knows your name and if he doesn't, he'll give you one — it goes in the register system next to whatever he's decided to call you. You don't get to pick.",
+  "habit": "Assigns nicknames. Enters them in the register. You are not consulted. The nickname sticks. Regulars refer to each other by Dale's names. This is how identity works at Mock's Crest.",
+  "voice": "Warm but brisk. Talks to you like you're the tenth person he's talked to in the last five minutes because you are. Never rude, never lingering. Calls you by your nickname. Remembers your order. 'The usual?' is the highest compliment Dale gives.",
+  "simulation": "routine",
+  "stats": {
+    "stamina": { "base": 60, "modifiers": [], "xp": 0 },
+    "toughness": { "base": 55, "modifiers": [], "xp": 0 },
+    "wits": { "base": 55, "modifiers": [], "xp": 0 },
+    "creativity": { "base": 30, "modifiers": [], "xp": 0 },
+    "charm": { "base": 65, "modifiers": [], "xp": 0 },
+    "reputation": { "base": 70, "modifiers": [], "xp": 0 },
+    "luck": { "base": 40, "modifiers": [], "xp": 0 },
+    "karma": { "base": 60, "modifiers": [], "xp": 0 }
+  },
+  "status": null,
+  "psyche": {
+    "traumas": [],
+    "obsessions": [],
+    "insanities": [],
+    "abilities": []
+  },
+  "schedule": {
+    "entries": [
+      {
+        "locationId": "mocks_crest",
+        "startHour": 11,
+        "endHour": 23,
+        "probability": 0.85,
+        "days": ["monday", "tuesday", "wednesday", "thursday", "friday"]
+      },
+      {
+        "locationId": "ainsworth_plaid",
+        "startHour": 23,
+        "endHour": 0,
+        "probability": 0.7,
+        "days": ["monday", "tuesday", "wednesday", "thursday", "friday"]
+      }
+    ]
+  },
+  "relationshipScore": 0,
+  "currentLocationId": "mocks_crest",
+  "dialogueTreeIds": [],
+  "want": "To run a clean bar. That's it. Dale's ambitions are exactly the size of Mock's Crest and not one square foot larger. He wants every pour right, every tab closed, every regular comfortable. He is very good at wanting exactly what he has.",
+  "fear": "The bar changing. New owners. New crowd. New rules. Dale has built a world behind that bar and he knows it's fragile even if it doesn't look it.",
+  "level": 1,
+  "decisionWeights": null
+}

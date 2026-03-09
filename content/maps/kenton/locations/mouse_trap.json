@@ -1,0 +1,43 @@
+{
+  "id": "mouse_trap",
+  "type": "bar",
+  "variant": "tavern",
+  "display": "The Mouse Trap",
+  "descriptions": {
+    "default": "The Mouse Trap has five pool tables. This is three more pool tables than there are people, on a good day. The bar has been known to close without notice when the only bartender is in jail, which happens. The light fixtures are the kind that made sense in 1978. The carpet is the color of a mistake. There's a table out front on the sidewalk where people smoke. It's not a porch. It's a table.",
+    "night": "The same three guys are here who were here last time. You're not sure they ever leave. One of them nods at you like you're old friends. You don't know his name. You have the sense that learning it would be a commitment you're not ready for.",
+    "drunk": "Pool suddenly seems achievable. You are wrong about this. The cue feels right in your hand. This is the hand lying to you.",
+    "repeat": "You've memorized the exact pitch the third pool table makes when the cue ball drops into the corner pocket. You did not choose to learn this. The guys at the bar nod. You nod. This is the Mouse Trap's version of a warm welcome.",
+    "exhausted": "The Mouse Trap is the quietest bar in Kenton, which is like saying it's the driest lake. But right now quiet is what you need. The carpet is soft. The light is low. Nobody expects anything from you here. Nobody expects anything from anyone here.",
+    "starving": "The Mouse Trap does not serve food. There is a jar of pickled eggs behind the bar that has been there long enough to qualify as a resident. You look at the eggs. The eggs look back. You decide against it."
+  },
+  "exits": [
+    {
+      "locationId": "arbys",
+      "label": "Walk south to Arby's",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "toads_express",
+      "label": "Head to Toad's Express",
+      "travelTime": 2,
+      "requirements": null
+    },
+    {
+      "locationId": "mocks_crest",
+      "label": "Walk north to Mock's Crest",
+      "travelTime": 2,
+      "requirements": null
+    }
+  ],
+  "npcSlots": ["larry", "tyler", "dennis", "maurice"],
+  "actionIds": [],
+  "discovered": false,
+  "availability": {
+    "openHour": 11,
+    "closeHour": 2,
+    "closedMessage": "The Mouse Trap is closed. Or the bartender is in jail again. Same thing."
+  },
+  "visitCount": 0
+}

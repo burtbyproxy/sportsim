@@ -1,0 +1,49 @@
+{
+  "id": "arbys",
+  "type": "restaurant",
+  "variant": "fast",
+  "display": "Arby's",
+  "descriptions": {
+    "default": "What can you say about Arby's. The cheesy curly fries are a genuine achievement of American food science. This particular Arby's has tables with a slimy film that no amount of wiping fully removes. The bathroom situation is unclear. The clientele at this location tends toward the weathered.",
+    "night": "The late-night Arby's crowd is a specific demographic. You are part of it now. The overhead lights are very bright. Everyone looks worse than they did an hour ago. A man is asleep in a booth. Nobody wakes him. This is policy or pity or both.",
+    "drunk": "The curly fries have never been more important. You need them. This is clear. You order with the precision of a person who has rehearsed this moment. The total is four dollars. You pay with coins. The cashier does not react.",
+    "repeat": "The slimy film on the table is the same slimy film from last time. The curly fries are also the same. Consistency is a form of comfort. You are comfortable at Arby's now. Examine this at your leisure.",
+    "exhausted": "The booth is the closest thing to a bed that isn't a bed. The fluorescent lights hum at a frequency that is either soothing or maddening depending on how long you sit here. You have been here long enough to find out.",
+    "starving": "There is food here. It costs money. This is the situation. The menu has pictures. The pictures look better than the food. The food tastes better than it looks. Everything evens out."
+  },
+  "exits": [
+    {
+      "locationId": "mocks_crest",
+      "label": "Walk north to Mock's Crest",
+      "travelTime": 2,
+      "requirements": null
+    },
+    {
+      "locationId": "mouse_trap",
+      "label": "Head to the Mouse Trap",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "toads_express",
+      "label": "Walk to Toad's Express",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "ainsworth_plaid",
+      "label": "Head to Plaid Pantry",
+      "travelTime": 2,
+      "requirements": null
+    }
+  ],
+  "npcSlots": ["dennis"],
+  "actionIds": [],
+  "discovered": false,
+  "availability": {
+    "openHour": 9,
+    "closeHour": 23,
+    "closedMessage": "Arby's is closed. The curly fries will have to wait."
+  },
+  "visitCount": 0
+}

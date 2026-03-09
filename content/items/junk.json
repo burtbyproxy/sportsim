@@ -1,0 +1,45 @@
+[
+  {
+    "id": "loose_change",
+    "name": "Loose Change",
+    "description": "A handful of coins — mostly pennies, a few dimes, one quarter that's been in your pocket long enough to feel like it belongs there. Adds up to something. Not much.",
+    "type": "junk",
+    "value": 0.67,
+    "stackable": true,
+    "quantity": 1,
+    "effects": []
+  },
+  {
+    "id": "bus_token",
+    "name": "Bus Token",
+    "description": "A Tri-Met bus token. Good for one ride anywhere the 4 or the 6 will take you. Which is not Kenton — not directly. But it's a way out if you need one. You keep it in your pocket like a promise.",
+    "type": "key",
+    "value": 1.25,
+    "stackable": true,
+    "quantity": 1,
+    "effects": []
+  },
+  {
+    "id": "karaoke_tape",
+    "name": "Karaoke Cassette",
+    "description": "A cassette tape of you singing at the Blue Parrot. Five dollars you will never get back. The sound quality is what you'd expect from a tape recorder mounted above a karaoke machine in a dive bar in 2001. You sound terrible. This is a document.",
+    "type": "junk",
+    "value": 0,
+    "stackable": false,
+    "quantity": 1,
+    "effects": []
+  },
+  {
+    "id": "church_pantry_bag",
+    "name": "Food Pantry Bag",
+    "description": "A brown paper bag from Abundant Life Church. Canned beans, canned corn, a box of mac and cheese, and a granola bar. They didn't make you sit through anything. They just handed it to you and said God bless.",
+    "type": "consumable",
+    "value": 0,
+    "stackable": false,
+    "quantity": 1,
+    "effects": [
+      { "target": "hunger", "value": 40, "duration": null },
+      { "target": "mood", "value": 5, "duration": null }
+    ]
+  }
+]

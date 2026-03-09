@@ -1,0 +1,51 @@
+{
+  "id": "ray",
+  "name": "Ray",
+  "description": "Thin, early thirties, wire-frame glasses that he pushes up his nose with one finger while reading. Ray works the night shift at the Ainsworth Plaid Pantry and has achieved a state of boredom so advanced it might be enlightenment. He sits behind the counter with a paperback — always science fiction, always with a spaceship on the cover — and does not look up when you come in. He does not look up when you leave. He has, however, noticed everything you did in between. Ray sees all. Ray says nothing. This arrangement has worked so far.",
+  "habit": "Reads behind the counter. Turns pages with one hand. Rings up purchases without looking at the register. Has never lost his place in a book while conducting a transaction. This is his only impressive skill and he uses it constantly.",
+  "voice": "Flat. Monotone. Says 'yep' and 'that it?' and 'have a good one' in the exact same tone regardless of context. The only time his voice changes is when someone tries to talk to him about the book he's reading, at which point he becomes a different person entirely — animated, specific, passionate. This lasts until the conversation ends, at which point he returns to baseline.",
+  "simulation": "fixed",
+  "stats": {
+    "stamina": { "base": 35, "modifiers": [], "xp": 0 },
+    "toughness": { "base": 25, "modifiers": [], "xp": 0 },
+    "wits": { "base": 65, "modifiers": [], "xp": 0 },
+    "creativity": { "base": 45, "modifiers": [], "xp": 0 },
+    "charm": { "base": 20, "modifiers": [], "xp": 0 },
+    "reputation": { "base": 15, "modifiers": [], "xp": 0 },
+    "luck": { "base": 40, "modifiers": [], "xp": 0 },
+    "karma": { "base": 55, "modifiers": [], "xp": 0 }
+  },
+  "status": null,
+  "psyche": {
+    "traumas": [],
+    "obsessions": [
+      {
+        "id": "obs_scifi",
+        "name": "Science Fiction",
+        "strength": 80,
+        "relatedActions": ["talk_scifi_ray"],
+        "effects": { "actionWeightModifier": {} }
+      }
+    ],
+    "insanities": [],
+    "abilities": []
+  },
+  "schedule": {
+    "entries": [
+      {
+        "locationId": "ainsworth_plaid",
+        "startHour": 22,
+        "endHour": 6,
+        "probability": 0.95,
+        "days": ["all"]
+      }
+    ]
+  },
+  "relationshipScore": 0,
+  "currentLocationId": "ainsworth_plaid",
+  "dialogueTreeIds": [],
+  "want": "To be left alone with his book. That's it. Ray has found the perfect job for a man who wants to read science fiction and be paid for it. The fact that a convenience store happens around him is incidental.",
+  "fear": "Being put on day shift. Days have customers. Customers talk. Ray's entire system depends on the night shift being empty enough to read.",
+  "level": 1,
+  "decisionWeights": null
+}

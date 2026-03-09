@@ -1,0 +1,43 @@
+{
+  "id": "blue_parrot",
+  "type": "bar",
+  "variant": "tavern",
+  "display": "The Blue Parrot",
+  "descriptions": {
+    "default": "The Blue Parrot smells like decades of spilled beer fermented into the wood grain. The neon parrot in the window has one dead eye and the other flickers in a way that feels intentional, like it's winking at people it recognizes. There are four stools at the bar. One of them is broken. Nobody sits in the other three either. There is no register. Cash only. The gate behind the bar is open. It is always open.",
+    "night": "Karaoke night. The sound system sounds like someone recorded a tape of a tape of a tape, and the song selection tops out at 1987. A man in a Blazers jersey is murdering 'Livin' on a Prayer.' You can buy a cassette of your own performance for five bucks. Nobody ever does. The smoke porch out back is full. The camera above the porch door has a red light that nobody notices.",
+    "drunk": "The neon parrot winks at you. You wink back. This feels like an understanding. The gate behind the bar is right there. The basement is right there. Everything is available to you. This is either freedom or a lack of supervision. Same thing.",
+    "repeat": "The bartender sees you and reaches for the Pabst without being asked. The parrot winks. The gate is open. You know this place now. This is not the same as understanding it.",
+    "exhausted": "The Parrot feels darker when you're tired. The neon flicker is slower, or you are. The barstool accepts your weight with a creak that sounds like agreement. You don't have to be anywhere. That's the Parrot's whole pitch.",
+    "starving": "The Blue Parrot does not serve food. The Blue Parrot has never served food. The pretzels in the plastic bowl on the bar are of unknown vintage. You eat three of them. They are stale in a way that transcends time."
+  },
+  "exits": [
+    {
+      "locationId": "moms_house",
+      "label": "Head back down Denver to Mom's",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "mocks_crest",
+      "label": "Cross the street to Mock's Crest",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "columbia_park",
+      "label": "Walk over to Columbia Park",
+      "travelTime": 1,
+      "requirements": null
+    }
+  ],
+  "npcSlots": ["tina", "greg"],
+  "actionIds": ["order_beer_parrot", "talk_to_bartender_parrot"],
+  "discovered": false,
+  "availability": {
+    "openHour": 11,
+    "closeHour": 2,
+    "closedMessage": "The Blue Parrot is dark. Even parrots sleep."
+  },
+  "visitCount": 0
+}

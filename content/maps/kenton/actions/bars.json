@@ -1,0 +1,215 @@
+[
+  {
+    "id": "order_beer_parrot",
+    "label": "Order a beer",
+    "locationId": "blue_parrot",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 11,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Pabst. Three dollars. Cash on the bar — there's no register. The bartender makes change from a cigar box. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 200,
+            "effect": "none"
+          },
+          {
+            "text": "The neon parrot flickers. You feel marginally less like yourself, which is the point.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "sobriety": -15, "mood": 10 },
+      "statChanges": null,
+      "moneyChange": -3,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": { "barfly": 2 },
+      "counterChanges": { "beers_consumed": 1 },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 90,
+    "obsessionIds": []
+  },
+  {
+    "id": "order_beer_mocks",
+    "label": "Order a drink",
+    "locationId": "mocks_crest",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 11,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "They pour heavy here. You've been warned. You weren't warned enough. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "The elk watches from above. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 200,
+            "effect": "none"
+          },
+          {
+            "text": "You drink.",
+            "style": "normal",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "sobriety": -20, "mood": 12 },
+      "statChanges": null,
+      "moneyChange": -4,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": { "barfly": 2 },
+      "counterChanges": { "beers_consumed": 1 },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 90,
+    "obsessionIds": []
+  },
+  {
+    "id": "play_pool_mocks",
+    "label": "Play pool",
+    "locationId": "mocks_crest",
+    "timeCost": 2,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 11,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "wits",
+      "dc": 10,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You hold your own. Not impressive, but not embarrassing. The table respects consistency. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 200,
+            "effect": "none"
+          },
+          {
+            "text": "You feel briefly competent.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": 10, "energy": -5 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You scratch on the eight ball in front of everyone. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 400,
+            "effect": "none"
+          },
+          {
+            "text": "Nobody says anything. This is somehow worse than if they had.",
+            "style": "normal",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": -8, "energy": -5 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 50,
+    "obsessionIds": []
+  }
+]

@@ -1,0 +1,39 @@
+{
+  "id": "denver_711",
+  "type": "market",
+  "variant": "convenience",
+  "display": "7-11",
+  "descriptions": {
+    "default": "The Denver Ave 7-11 is the kind of place where the Slurpee machine is always one flavor from being completely out of something. The parking lot has good light, which means it sees a lot of business after the bars close. The dumpster out back is not locked. You have noticed this.",
+    "night": "Post-bar crowd cycles through in waves. Drunk people making decisions about nachos. You are one of these people, or close enough. The parking lot is bright enough to read by. People stand in it talking like it's a living room. Someone is sitting on the hood of a car that may or may not be theirs.",
+    "drunk": "The Slurpee machine is right there. This is important information. You push the lever. The cup fills. Cherry and Coke swirled together. It is the best thing you have ever tasted. This feeling will not survive sobriety.",
+    "repeat": "You know the layout. You know the parking lot. You know which dumpster is unlocked. You are becoming a regular at a 7-11 and this information sits differently depending on the time of day.",
+    "exhausted": "The 7-11 is open. That's the whole pitch. It is open and lit and has coffee that is technically hot. You buy a coffee. It tastes like it was brewed during a different presidential administration. You drink it anyway.",
+    "starving": "Nachos. A dollar ninety-nine. Orange cheese from a pump. Chips that were crispy at some point in their lifecycle. You pump the cheese. It comes out in a way that is technically a pour. You eat standing at the counter. Dignity is not a factor."
+  },
+  "exits": [
+    {
+      "locationId": "columbia_park",
+      "label": "Walk to Columbia Park",
+      "travelTime": 2,
+      "requirements": null
+    },
+    {
+      "locationId": "ainsworth_plaid",
+      "label": "Head to Plaid Pantry",
+      "travelTime": 2,
+      "requirements": null
+    },
+    {
+      "locationId": "greeley_711",
+      "label": "Walk south to the Greeley 7-11",
+      "travelTime": 3,
+      "requirements": null
+    }
+  ],
+  "npcSlots": [],
+  "actionIds": [],
+  "discovered": false,
+  "availability": { "openHour": 0, "closeHour": 23, "closedMessage": null },
+  "visitCount": 0
+}

@@ -1,0 +1,733 @@
+[
+  {
+    "id": "talk_to_tina",
+    "label": "Talk to Tina",
+    "locationId": "blue_parrot",
+    "npcId": "tina",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": null,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "charm",
+      "dc": 8,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Tina leans on the bar and gives you her full attention, which is like standing in sunlight — warm, unfocused, and gone the second someone else walks in. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 200,
+            "effect": "none"
+          },
+          {
+            "text": "'Oh my god, totally,' she says to something you didn't finish saying. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 200,
+            "effect": "none"
+          },
+          {
+            "text": "You feel seen. Whether or not you were actually seen is a different question.",
+            "style": "normal",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": 8 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": { "social": 1 },
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Tina smiles at you. It's the same smile she gives everyone. You are everyone.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": -2 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 60,
+    "obsessionIds": []
+  },
+  {
+    "id": "talk_to_greg",
+    "label": "Talk to Greg",
+    "locationId": "blue_parrot",
+    "npcId": "greg",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": null,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "charm",
+      "dc": 14,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Greg stops wiping and looks at you. This is an event. He talks for about thirty seconds — short, factual, like a weather report for the neighborhood. You learn something. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "Then he goes back to work.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": 5 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": { "social": 1 },
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "'What are you having.' ",
+            "style": "bold",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "That's it. That's the conversation. Greg has things to do. Talking to you is not one of them.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": -3 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 50,
+    "obsessionIds": []
+  },
+  {
+    "id": "talk_to_dale",
+    "label": "Talk to Dale",
+    "locationId": "mocks_crest",
+    "npcId": "dale",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": null,
+      "maxHour": null,
+      "minVisits": 2,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "charm",
+      "dc": 10,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Dale pours your drink and leans in. Not a lot — just enough to hear. He tells you something about the neighborhood, or someone in it, delivered with the flat authority of a man who has poured drinks here for a decade. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "He uses your nickname. You didn't know you had a nickname.",
+            "style": "normal",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": 10 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": { "social": 2 },
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Dale is busy. Not rude — just busy. 'The usual?' he asks, and that's the whole exchange. Professional. Warm. Brief.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": 2 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 60,
+    "obsessionIds": []
+  },
+  {
+    "id": "talk_to_dennis",
+    "label": "Talk to Dennis",
+    "locationId": "mocks_crest",
+    "npcId": "dennis",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": null,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "charm",
+      "dc": 6,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Dennis lights up. Not many people talk to Dennis on purpose. He's got opinions — about Zeppelin, about the Blazers, about the way they used to make beer before everything went corporate. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 200,
+            "effect": "none"
+          },
+          {
+            "text": "He doesn't mention Kiss. He doesn't mention the Blue Parrot. He's having a good night.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": 5 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": { "social": 1 },
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Dennis starts a sentence about Lynyrd Skynyrd and then stops. He looks at his drink. The conversation dies of natural causes.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": -2 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 45,
+    "obsessionIds": []
+  },
+  {
+    "id": "talk_to_maurice",
+    "label": "Talk to Maurice",
+    "locationId": "any",
+    "npcId": "maurice",
+    "timeCost": 2,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": null,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Maurice sees you and his face opens like a door. 'My man,' he says, and produces a quarter from behind your ear. He's already talking — about something that happened to him, or might have happened, or is happening right now in a way only he can see. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 200,
+            "effect": "none"
+          },
+          {
+            "text": "You listen. Somewhere in the middle of it is something true. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 400,
+            "effect": "none"
+          },
+          {
+            "text": "He doesn't charge for this. He charges for everything else.",
+            "style": "normal",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": 12 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": { "social": 2 },
+      "counterChanges": { "maurice_conversations": 1 },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 70,
+    "obsessionIds": []
+  },
+  {
+    "id": "follow_maurice",
+    "label": "Follow Maurice",
+    "locationId": "any",
+    "npcId": "maurice",
+    "timeCost": 3,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": 60,
+      "minHour": 20,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "charm",
+      "dc": 12,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Maurice is going somewhere. You go too. He doesn't ask if you're coming — he just keeps talking, and you keep walking, and the night moves around you both. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "You end up somewhere you didn't expect. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 200,
+            "effect": "none"
+          },
+          {
+            "text": "You always end up somewhere you didn't expect with Maurice.",
+            "style": "italic",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": 15, "energy": -10, "sobriety": -10 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": { "social": 3, "drifter": 1 },
+      "counterChanges": { "maurice_adventures": 1 },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Maurice is moving. You try to keep up. At some point you lose him — he turns a corner and he's just gone. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "You're standing on a street you don't recognize. It's fine. You'll figure it out.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": -5, "energy": -10 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 55,
+    "obsessionIds": []
+  },
+  {
+    "id": "talk_to_vernon",
+    "label": "Sit with Vernon",
+    "locationId": "columbia_park",
+    "npcId": "vernon",
+    "timeCost": 2,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 7,
+      "maxHour": 19,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "karma",
+      "dc": 10,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You sit on the bench. Not Vernon's bench — the one next to it. He doesn't look at you. A pigeon walks over. Vernon gives it a piece of bread. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 500,
+            "effect": "none"
+          },
+          {
+            "text": "'You eat today?' he asks. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "It's not small talk. He already knows the answer.",
+            "style": "normal",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": 8 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": { "philosopher": 2 },
+      "counterChanges": { "vernon_conversations": 1 },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You sit down near Vernon. He feeds his pigeons. You exist next to each other. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "He is not unfriendly. He is just not available right now. The pigeons come first.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": 2 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 50,
+    "obsessionIds": []
+  },
+  {
+    "id": "talk_to_ray",
+    "label": "Talk to the clerk",
+    "locationId": "ainsworth_plaid",
+    "npcId": "ray",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 22,
+      "maxHour": null,
+      "minVisits": 2,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "creativity",
+      "dc": 12,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You ask about the book. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "Ray transforms. ",
+            "style": "italic",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 200,
+            "effect": "none"
+          },
+          {
+            "text": "He sits up, puts the book down, and talks for five minutes straight about faster-than-light travel and whether Heinlein was a fascist. His eyes are bright. His hands move. This is a different person. Then a customer walks in and Ray goes back to baseline. The book comes up. The conversation is over.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": 8 },
+      "statChanges": { "creativity": 1 },
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": { "philosopher": 1 },
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You say something about the book. Ray looks at you over his glasses. He looks back at the book. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "'Yep,' he says. That's it.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": { "mood": -2 },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 40,
+    "obsessionIds": []
+  }
+]

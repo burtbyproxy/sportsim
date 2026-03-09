@@ -1,0 +1,43 @@
+{
+  "id": "abundant_life",
+  "type": "church",
+  "variant": "christian",
+  "display": "Abundant Life Church",
+  "descriptions": {
+    "default": "A Pentecostal church in a converted storefront. The sign out front changes weekly with a new message — not scripture, exactly, more like scripture adjacent. Something that sounds like it should be a verse but isn't. Inside, on Sundays, there is singing that you can hear from half a block away. The pastor has a handshake like a vice and remembers every name. Every one.",
+    "night": "Dark except for a light in the pastor's office, which is always on. The sign out front is lit by a single bulb. This week it says 'God Already Knows What You Did Last Night.' You're not sure if this is a comfort or a threat.",
+    "drunk": "The church sign has something to say to you. It always has something to say to you. Tonight it feels personal. You stand on the sidewalk and read it three times. It's not a judgment. It's not a welcome. It's just there. Like the church.",
+    "repeat": "The pastor sees you coming. He has already remembered your name. This should not be as unsettling as it is. He smiles like he's been expecting you. He is always expecting you. That's the whole system.",
+    "exhausted": "The church is warm. The pews are wooden and not comfortable but they're inside and they're still. Someone offers you coffee from a pot that's been on since morning. It's terrible. You drink it. The warmth is the point, not the taste.",
+    "starving": "The church has a food pantry. It's in the back. They don't make you sit through a sermon to use it. They don't make you do anything. They just hand you a bag and say God bless. You take the bag. You say thank you. This is an honest transaction."
+  },
+  "exits": [
+    {
+      "locationId": "chief_joseph",
+      "label": "Walk past the school",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "lombard_dental",
+      "label": "Walk to Lombard Dental",
+      "travelTime": 2,
+      "requirements": null
+    },
+    {
+      "locationId": "moms_house",
+      "label": "Walk back toward Mom's",
+      "travelTime": 3,
+      "requirements": null
+    }
+  ],
+  "npcSlots": [],
+  "actionIds": [],
+  "discovered": false,
+  "availability": {
+    "openHour": 8,
+    "closeHour": 20,
+    "closedMessage": "The church doors are closed. The light in the pastor's office is on."
+  },
+  "visitCount": 0
+}

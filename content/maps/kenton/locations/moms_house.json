@@ -1,0 +1,45 @@
+{
+  "id": "moms_house",
+  "type": "home",
+  "variant": "house",
+  "display": "Mom's House",
+  "descriptions": {
+    "default": "The basement has a cot, a space heater that smells like burning dust, and a litter box in the corner that Dave — the cat — uses as a territorial statement. Your mom is upstairs. She is kind. She does not ask questions. Dave is not kind. Dave has irritable bowel syndrome and strong opinions about squatters.",
+    "night": "After midnight the furnace kicks on and shudders like it's thinking about giving up. Dave prowls the perimeter in the dark. You can hear him but you cannot see him. This is how Dave prefers it.",
+    "repeat": "You know this basement. You know every creak in the stairs, every draft from the window that doesn't quite close, every place Dave has marked. You are home. This is not a compliment.",
+    "drunk": "The basement tilts slightly. Dave watches you from the top of the dryer with an expression that suggests he has been waiting for exactly this.",
+    "exhausted": "The cot has never looked better. It is a cot. It has looked better than this before, objectively. You are beyond objectivity. You are beyond most things. The space heater clicks on and the smell of burning dust is, right now, the most comforting thing in your life.",
+    "starving": "There is a fridge upstairs. Your mom is also upstairs. Going up there means eye contact and possibly a conversation about your plans. You weigh this against the hunger. The hunger is winning."
+  },
+  "exits": [
+    {
+      "locationId": "blue_parrot",
+      "label": "Walk up Denver Ave to the Blue Parrot",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "mocks_crest",
+      "label": "Cut across to Mock's Crest",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "columbia_park",
+      "label": "Head over to Columbia Park",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "toads_express",
+      "label": "Walk to Toad's Express",
+      "travelTime": 2,
+      "requirements": null
+    }
+  ],
+  "npcSlots": [],
+  "actionIds": ["raid_fridge", "stare_at_ceiling", "sleep"],
+  "discovered": true,
+  "availability": { "openHour": 0, "closeHour": 23, "closedMessage": null },
+  "visitCount": 0
+}

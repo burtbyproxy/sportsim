@@ -1,0 +1,45 @@
+{
+  "id": "columbia_park",
+  "type": "park",
+  "variant": "community",
+  "display": "Columbia Park",
+  "descriptions": {
+    "default": "Columbia Park is huge. Old-growth firs so tall they make the sky small. During the day the place is alive — kids on the playground, dogs off-leash, people on blankets, a guy throwing a frisbee badly, someone's portable radio playing something you almost recognize. The paths branch and loop and if you're not paying attention you end up somewhere you didn't mean to be. There's a broken swing that spins when there's no wind. There's a bench where the same man sits every single day.",
+    "night": "You're not supposed to be here. The park after dark is a different country with different rules and nobody wrote them down. The old-growth firs are just shapes now. The paths that made sense in daylight go somewhere else at night. Things move between the trees. If you look like you know where you're going, nobody bothers you. Look lost and someone will find you. You do not want to be found.",
+    "drunk": "The trees are very large and very dark and the swing is spinning again. You find this beautiful. This is a sign. The park is enormous and you are small in it and for once that feels like the right proportion.",
+    "repeat": "You know the main path now. You know Vernon's bench. You know which fork leads to the playground and which one leads deeper in. The park is starting to feel like yours, which means you've been here too many times.",
+    "exhausted": "The grass looks extremely comfortable. This is a trap. You know it's a trap. You sit down anyway. A dog comes over and sniffs your hand. You pet the dog. This is the most meaningful interaction you've had today.",
+    "starving": "The park smells like someone's barbecue from across the street. You can't see it. You can smell it. Charcoal and meat and summer. Your stomach makes a sound that startles a pigeon."
+  },
+  "exits": [
+    {
+      "locationId": "moms_house",
+      "label": "Head back to Mom's",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "blue_parrot",
+      "label": "Walk to the Blue Parrot",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "mocks_crest",
+      "label": "Head to Mock's Crest",
+      "travelTime": 1,
+      "requirements": null
+    },
+    {
+      "locationId": "denver_711",
+      "label": "Walk to the Denver 7-11",
+      "travelTime": 2,
+      "requirements": null
+    }
+  ],
+  "npcSlots": ["vernon", "maurice"],
+  "actionIds": ["sit_on_bench", "look_for_change"],
+  "discovered": false,
+  "availability": { "openHour": 0, "closeHour": 23, "closedMessage": null },
+  "visitCount": 0
+}
