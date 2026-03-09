@@ -14,6 +14,15 @@
 - Sloppy? Send it back. Clever when simple would do? Send it back. Breaks a contract? Send it back.
 - If the repo breaks, it's on me. Act accordingly.
 
+## Pre-Commit Checklist (NON-NEGOTIABLE)
+
+1. Code ready → drop summary in Spock's inbox for review
+2. Wait for Spock's response
+3. Fix anything flagged
+4. THEN commit
+
+This applies to MY code too. Especially mine. No exceptions.
+
 
 ## SCSS + Vite
 
