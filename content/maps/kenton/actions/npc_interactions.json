@@ -3,7 +3,7 @@
     "id": "talk_to_tina",
     "label": "Talk to Tina",
     "locationId": "blue_parrot",
-    "npcId": "tina",
+    "characterId": "tina",
     "timeCost": 1,
     "requirements": {
       "minStats": null,
@@ -97,7 +97,7 @@
     "id": "talk_to_greg",
     "label": "Talk to Greg",
     "locationId": "blue_parrot",
-    "npcId": "greg",
+    "characterId": "greg",
     "timeCost": 1,
     "requirements": {
       "minStats": null,
@@ -191,7 +191,7 @@
     "id": "talk_to_dale",
     "label": "Talk to Dale",
     "locationId": "mocks_crest",
-    "npcId": "dale",
+    "characterId": "dale",
     "timeCost": 1,
     "requirements": {
       "minStats": null,
@@ -277,7 +277,7 @@
     "id": "talk_to_dennis",
     "label": "Talk to Dennis",
     "locationId": "mocks_crest",
-    "npcId": "dennis",
+    "characterId": "dennis",
     "timeCost": 1,
     "requirements": {
       "minStats": null,
@@ -363,7 +363,7 @@
     "id": "talk_to_maurice",
     "label": "Talk to Maurice",
     "locationId": "any",
-    "npcId": "maurice",
+    "characterId": "maurice",
     "timeCost": 2,
     "requirements": {
       "minStats": null,
@@ -428,7 +428,7 @@
     "id": "follow_maurice",
     "label": "Follow Maurice",
     "locationId": "any",
-    "npcId": "maurice",
+    "characterId": "maurice",
     "timeCost": 3,
     "requirements": {
       "minStats": null,
@@ -530,7 +530,7 @@
     "id": "talk_to_vernon",
     "label": "Sit with Vernon",
     "locationId": "columbia_park",
-    "npcId": "vernon",
+    "characterId": "vernon",
     "timeCost": 2,
     "requirements": {
       "minStats": null,
@@ -632,7 +632,7 @@
     "id": "talk_to_ray",
     "label": "Talk to the clerk",
     "locationId": "ainsworth_plaid",
-    "npcId": "ray",
+    "characterId": "ray",
     "timeCost": 1,
     "requirements": {
       "minStats": null,
