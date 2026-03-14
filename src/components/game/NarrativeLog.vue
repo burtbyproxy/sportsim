@@ -11,39 +11,39 @@
     aria-label="Game narrative"
   >
     <!-- Completed log entries -->
-    <div
-      v-for="entry in log"
-      :key="entry.id"
-      class="narrative-entry narrative-text"
-    >
+    <div v-for="entry in log" :key="entry.id" class="narrative-entry narrative-text">
       <span
         v-for="(token, i) in entry.tokens"
         :key="i"
         :class="tokenClass(token)"
         :style="tokenStyle(token)"
-      >{{ token.rendered }}</span>
+        >{{ token.rendered }}</span
+      >
     </div>
 
     <!-- Currently animating entry -->
-    <div v-if="isAnimating && activeEntry" class="narrative-entry narrative-text narrative-entry--active">
+    <div
+      v-if="isAnimating && activeEntry"
+      class="narrative-entry narrative-text narrative-entry--active"
+    >
       <span
         v-for="(token, i) in activeEntry.completedTokens"
         :key="`done-${i}`"
         :class="tokenClass(token)"
         :style="tokenStyle(token)"
-      >{{ token.text }}</span>
+        >{{ token.text }}</span
+      >
       <span
         v-if="activeEntry.currentToken"
         :class="tokenClass(activeEntry.currentToken)"
         :style="tokenStyle(activeEntry.currentToken)"
         class="cursor-blink"
-      >{{ currentTokenProgress }}</span>
+        >{{ currentTokenProgress }}</span
+      >
     </div>
 
     <!-- Skip hint -->
-    <div v-if="isAnimating" class="narrative-skip-hint">
-      click or press space to skip
-    </div>
+    <div v-if="isAnimating" class="narrative-skip-hint">space to skip</div>
   </div>
 </template>
 
@@ -111,10 +111,12 @@ function tokenStyle(token) {
 </script>
 
 <style lang="scss" scoped>
+@use '../../scss/variables' as *;
+
 .narrative-log {
-  height: 100%;
+  flex: 1 1 auto;
   overflow-y: auto;
-  padding: 24px;
+  padding: 20px 32px 28px 28px;
   outline: none;
   cursor: default;
 }
@@ -124,9 +126,11 @@ function tokenStyle(token) {
 }
 
 .narrative-skip-hint {
-  font-size: 11px;
-  color: var(--color-text-muted, #555548);
-  margin-top: 12px;
-  opacity: 0.6;
+  font-size: 10px;
+  color: $color-text-muted;
+  margin-top: 16px;
+  opacity: 0.45;
+  letter-spacing: 0.5px;
+  font-style: italic;
 }
 </style>

@@ -1,45 +1,26 @@
 <template>
   <div class="location-view">
-    <!-- Location description is enqueued on enter — NarrativeLog handles display -->
+    <!-- Location name — this is a PLACE -->
+    <h1 v-if="location" class="location-name">{{ location.display ?? location.id }}</h1>
 
-    <!-- Exits -->
-    <div v-if="exits.length > 0" class="location-exits">
-      <div class="exits-label ui-label">exits</div>
-      <div class="exits-list">
-        <button
-          v-for="exit in exits"
-          :key="exit.locationId"
-          class="exit-link"
-          :disabled="!canTravel(exit)"
-          :title="travelBlockReason(exit)"
-          @click="travel(exit)"
-        >
-          {{ exit.label }}
-          <span v-if="exit.travelTime > 0" class="exit-travel-time">
-            ({{ formatTravelTime(exit.travelTime) }})
-          </span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Characters present -->
-    <div v-if="charactersPresent.length > 0" class="character-list">
+    <!-- Characters present — woven into the scene, not a widget -->
+    <div v-if="charactersPresent.length > 0" class="scene-people">
       <button
         v-for="character in charactersPresent"
         :key="character.id"
-        class="character-entry"
-        :class="{ 'character-entry--selected': selectedCharacterId === character.id }"
+        class="scene-person"
+        :class="{ 'scene-person--selected': selectedCharacterId === character.id }"
         @click="selectCharacter(character.id)"
       >
-        <span class="character-name">{{ character.name }}</span>
-        <span v-if="character.habit" class="character-habit">{{ character.habit }}</span>
+        <span class="scene-person__name">{{ character.name }}</span>
+        <span v-if="character.habit" class="scene-person__habit">{{ character.habit }}</span>
       </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, inject, watch, onMounted } from 'vue'
+import { computed, inject, watch, onMounted, onUnmounted } from 'vue'
 import { useGameStore } from '../../stores/game.js'
 import { generateLocationNarrative } from '../../composables/useNarrative.js'
 import { isOpen } from '../../models/location.js'
@@ -52,6 +33,9 @@ const selectedCharacterId = inject('selectedCharacterId', null)
 const location = computed(() => game.currentLocation)
 const exits = computed(() => location.value?.exits ?? [])
 const charactersPresent = computed(() => game.charactersAtCurrentLocation)
+
+// Letter keys a–z for exit shortcuts
+const EXIT_KEYS = 'abcdefghijklmnopqrstuvwxyz'
 
 function selectCharacter(characterId) {
   if (!selectedCharacterId) return
@@ -69,15 +53,6 @@ function canTravel(exit) {
   // Honor exit requirements if any
   if (exit.requirements) return false // TODO: full requirement check
   return true
-}
-
-function travelBlockReason(exit) {
-  const dest = game.locations[exit.locationId]
-  if (!dest) return 'unknown destination'
-  if (!isOpen(dest, game.time.hour)) {
-    return dest.availability?.closedMessage || 'closed'
-  }
-  return ''
 }
 
 function onLocationEntered() {
@@ -109,112 +84,101 @@ function travel(exit) {
   }
 }
 
-function formatTravelTime(ticks) {
-  const minutes = ticks * 15
-  if (minutes < 60) return `${minutes}m`
-  const hours = Math.floor(minutes / 60)
-  const rem = minutes % 60
-  return rem > 0 ? `${hours}h ${rem}m` : `${hours}h`
+// ── Exit key shortcuts ───────────────────────────────────────────────────────
+
+function handleGlobalKeydown(e) {
+  // Skip if typing in an input
+  const tag = document.activeElement?.tagName?.toLowerCase()
+  if (tag === 'input' || tag === 'textarea') return
+
+  // Letter keys a–z: check if they match an exit
+  if (e.key.length === 1 && /^[a-z]$/i.test(e.key)) {
+    const letter = e.key.toLowerCase()
+    const idx = EXIT_KEYS.indexOf(letter)
+    if (idx >= 0 && idx < exits.value.length) {
+      const exit = exits.value[idx]
+      if (canTravel(exit)) {
+        e.preventDefault()
+        travel(exit)
+      }
+    }
+  }
 }
+
+onMounted(() => document.addEventListener('keydown', handleGlobalKeydown))
+onUnmounted(() => document.removeEventListener('keydown', handleGlobalKeydown))
 </script>
 
 <style lang="scss" scoped>
+@use '../../scss/variables' as *;
+
 .location-view {
-  margin-bottom: 24px;
+  padding: 28px 32px 0 28px;
+  margin-bottom: 0;
 }
 
-.location-exits {
-  margin-top: 16px;
+// The place name — this deserves real presence
+.location-name {
+  font-family: $font-mono;
+  font-size: 22px;
+  font-weight: normal;
+  color: $color-amber-bright;
+  letter-spacing: 0.5px;
+  margin: 0 0 20px 0;
+  line-height: 1.2;
+  // subtle text shadow for warmth
+  text-shadow: 0 0 24px rgba(201, 162, 64, 0.18);
 }
 
-.exits-label {
-  font-size: 10px;
-  color: #555548;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 4px;
-}
-
-.exits-list {
+// People in the scene
+.scene-people {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
+  margin-top: 8px;
 }
 
-.exit-link {
-  background: none;
-  border: none;
-  font-family: 'Courier New', monospace;
-  font-size: 14px;
-  color: #d4a843;
-  cursor: pointer;
-  text-align: left;
-  padding: 0;
-  text-decoration: underline;
-  text-decoration-style: dotted;
-
-  &:hover:not(:disabled) {
-    color: #a87e28;
-  }
-
-  &:disabled {
-    color: #555548;
-    cursor: not-allowed;
-    text-decoration: none;
-  }
-}
-
-.exit-travel-time {
-  color: #555548;
-  font-size: 12px;
-  margin-left: 4px;
-}
-
-.character-list {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.character-entry {
+.scene-person {
   display: block;
   text-align: left;
   background: none;
   border: 1px solid transparent;
   border-radius: 2px;
   cursor: pointer;
-  padding: 4px 6px;
-  font-family: 'Courier New', monospace;
-  transition: border-color 150ms ease, background-color 150ms ease;
+  padding: 5px 8px;
+  font-family: $font-mono;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
 
   &::before {
     content: '— ';
-    color: #555548;
-    font-size: 13px;
+    color: $color-text-muted;
+    font-size: 12px;
   }
 
   &:hover {
-    border-color: #3a3a34;
-    background-color: #111110;
+    border-color: $color-border-accent;
+    background-color: $color-bg-elevated;
   }
 
   &--selected {
-    border-color: #555548;
-    background-color: #141412;
+    border-color: $color-amber-dim;
+    background-color: $color-bg-elevated;
   }
 }
 
-.character-name {
+.scene-person__name {
   font-size: 13px;
-  color: #aaa99a;
+  color: $color-text-secondary;
 }
 
-.character-habit {
+.scene-person__habit {
   display: block;
-  font-size: 12px;
-  color: #666658;
-  padding-left: 16px;
+  font-size: 11px;
+  color: $color-text-muted;
+  padding-left: 18px;
   font-style: italic;
+  margin-top: 1px;
 }
 </style>

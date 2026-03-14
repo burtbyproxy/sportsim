@@ -1,27 +1,36 @@
 // === Color Palette ===
-$color-bg: #0a0a0a;
-$color-bg-surface: #111111;
-$color-bg-elevated: #1a1a1a;
+$color-bg: #0c0b09; // not pure black — old wood, burnt coffee
+$color-bg-surface: #131210; // slightly warm dark
+$color-bg-elevated: #1c1a16; // surfaces that catch light
 
-$color-text-primary: #c8c8a8;       // aged paper / warm white
-$color-text-secondary: #888878;     // dim, secondary info
-$color-text-muted: #555548;         // barely visible
+$color-text-primary: #d4cdb8; // worn paper, warm cream
+$color-text-secondary: #8c8472; // faded ink
+$color-text-muted: #524d42; // ghost text
 
-$color-accent: #7aad5a;             // phosphor green
+$color-accent: #7aad5a; // phosphor green — keep it
 $color-accent-dim: #3d5a2e;
 $color-accent-bright: #a8d888;
 
-$color-amber: #d4a843;              // amber variant
+$color-amber: #c9a240; // amber — warm gold
 $color-amber-dim: #6b5420;
+$color-amber-bright: #e8c060;
 
-$color-danger: #c04040;
-$color-warning: #b8882a;
+$color-danger: #b84040;
+$color-warning: #b07828;
 
-$color-highlight-bg: #2a2a1a;       // text highlight background
-$color-highlight-text: #e8e8b0;
+$color-highlight-bg: #2a2616; // text highlight background
+$color-highlight-text: #ede5b0;
 
-$color-border: #2a2a2a;
-$color-border-subtle: #1a1a1a;
+$color-border: #2c2820; // warm brown-black border
+$color-border-subtle: #1c1a16;
+$color-border-accent: #3a3520; // slightly warmer border for panels
+
+// === Stat Bar Colors ===
+$color-stat-health: #6aaa52; // alive green
+$color-stat-energy: #5a8fad; // cool blue — electricity
+$color-stat-mood: #a06ab4; // warm purple — feelings
+$color-stat-sobriety: #5aada8; // clear teal — clarity
+$color-stat-hunger: #c9a240; // amber — appetite
 
 // === Typography ===
 $font-mono: 'Courier New', Courier, monospace;
@@ -47,7 +56,7 @@ $spacing-xl: 40px;
 
 // === Animation ===
 $speed-instant: 0ms;
-$speed-fast: 20ms;       // ms per character
+$speed-fast: 20ms; // ms per character
 $speed-normal: 40ms;
 $speed-slow: 80ms;
 $speed-crawl: 150ms;

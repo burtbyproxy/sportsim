@@ -5,12 +5,15 @@
 .narrative-text {
   font-family: $font-mono;
   font-size: $font-size-base;
-  line-height: $line-height-narrative;
+  line-height: 1.85; // generous — let it breathe
   color: $color-text-primary;
+  // Soft hyphenation for long words in narrow panes
+  hyphens: auto;
+  word-break: break-word;
 }
 
 .narrative-entry {
-  margin-bottom: $spacing-lg;
+  margin-bottom: $spacing-xl;
   padding-bottom: $spacing-lg;
   border-bottom: 1px solid $color-border-subtle;
 
@@ -83,7 +86,9 @@
   width: 100%;
   text-align: left;
   background: none;
-  transition: border-color $transition-ui, background-color $transition-ui;
+  transition:
+    border-color $transition-ui,
+    background-color $transition-ui;
 
   &:hover {
     border-color: $color-accent-dim;

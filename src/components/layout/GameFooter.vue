@@ -1,6 +1,6 @@
 <template>
   <footer class="game-footer">
-    <span class="footer-status">{{ statusText }}</span>
+    <span class="footer-hint">{{ hint }}</span>
   </footer>
 </template>
 
@@ -10,27 +10,29 @@ import { useGameStore } from '../../stores/game.js'
 
 const game = useGameStore()
 
-const statusText = computed(() => {
+const hint = computed(() => {
   if (!game.isRunning) return 'no active game'
-  if (!game.currentLocation) return '...'
-  return game.currentLocation.display ?? game.currentLocationId
+  return '1–9 actions · a–z go · space skip'
 })
 </script>
 
 <style lang="scss" scoped>
+@use '../../scss/variables' as *;
+
 .game-footer {
   display: flex;
   align-items: center;
   height: 100%;
-  padding: 0 16px;
-  background: #111111;
-  border-top: 1px solid #2a2a2a;
+  padding: 0 $spacing-md;
+  background: $color-bg-surface;
+  border-top: 1px solid $color-border-accent;
 }
 
-.footer-status {
-  font-size: 11px;
-  color: #555548;
-  font-family: 'Courier New', monospace;
-  text-transform: lowercase;
+.footer-hint {
+  font-size: 10px;
+  color: $color-text-muted;
+  font-family: $font-mono;
+  letter-spacing: 0.5px;
+  opacity: 0.6;
 }
 </style>

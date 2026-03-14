@@ -23,6 +23,9 @@ body {
   font-family: $font-mono;
   font-size: $font-size-base;
   line-height: $line-height-narrative;
+  // Warm up rendering slightly
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 // === Game Shell ===
@@ -38,7 +41,7 @@ body {
   flex: 0 0 $header-height;
   height: $header-height;
   background: $color-bg-surface;
-  border-bottom: 1px solid $color-border;
+  border-bottom: 1px solid $color-border-accent;
   display: flex;
   align-items: center;
   padding: 0 $spacing-md;
@@ -47,28 +50,48 @@ body {
 
 .game-main {
   flex: 1 1 auto;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  grid-template-rows: 1fr auto;
   overflow: hidden;
 }
 
-.narrative-column {
-  flex: 1 1 auto;
+.location-column {
+  grid-column: 1;
+  grid-row: 1;
   overflow-y: auto;
-  padding: $spacing-lg;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .action-column {
-  flex: 0 0 240px;
-  border-left: 1px solid $color-border;
+  grid-column: 1;
+  grid-row: 2;
+  border-top: 1px solid $color-border-accent;
+  padding: 0;
+  overflow-y: auto;
+  // give the command panel some minimum presence
+  min-height: 120px;
+  max-height: 260px;
+}
+
+.status-column {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  border-left: 1px solid $color-border-accent;
   overflow-y: auto;
   padding: $spacing-md;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .game-footer {
   flex: 0 0 $footer-height;
   height: $footer-height;
   background: $color-bg-surface;
-  border-top: 1px solid $color-border;
+  border-top: 1px solid $color-border-accent;
   display: flex;
   align-items: center;
   padding: 0 $spacing-md;

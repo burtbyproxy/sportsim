@@ -2,27 +2,54 @@
   <div class="action-menu">
     <div class="action-menu__label ui-label">
       <span v-if="selectedCharacter">{{ selectedCharacter.name }}</span>
-      <span v-else>actions</span>
+      <span v-else>what now</span>
     </div>
 
-    <div v-if="filteredActions.length === 0" class="action-menu__empty">
+    <!-- Actions -->
+    <div v-if="filteredActions.length === 0 && exits.length === 0" class="action-menu__empty">
       <span v-if="selectedCharacter">nothing to say to {{ selectedCharacter.name }}</span>
       <span v-else>nothing to do here</span>
     </div>
 
     <div v-else class="action-menu__list">
+      <!-- Location / character actions -->
       <button
-        v-for="action in sortedActions"
+        v-for="(action, i) in sortedActions"
         :key="action.id"
         class="action-item"
-        :class="{ 'action-item--disabled': !action.available }"
+        :class="{
+          'action-item--disabled': !action.available,
+          'action-item--selected': navIndex === i,
+        }"
         :disabled="!action.available || isResolving"
         :title="action.available ? formatTimeCost(action.timeCost) : disabledReason(action)"
         @click="executeAction(action)"
+        @mouseenter="navIndex = i"
       >
+        <span class="action-shortcut">{{ i < 9 ? i + 1 + '.' : '  ' }}</span>
         {{ action.label }}
         <span v-if="action.timeCost > 0" class="action-time-cost">
           {{ formatTimeCost(action.timeCost) }}
+        </span>
+      </button>
+
+      <!-- Separator between actions and exits -->
+      <div v-if="sortedActions.length > 0 && exits.length > 0" class="action-menu__separator"></div>
+
+      <!-- Exits — go somewhere -->
+      <button
+        v-for="(exit, i) in exits"
+        :key="exit.locationId"
+        class="action-item action-item--exit"
+        :class="{ 'action-item--disabled': !canTravel(exit) }"
+        :disabled="!canTravel(exit)"
+        :title="canTravel(exit) ? formatTravelTime(exit.travelTime) : travelBlockReason(exit)"
+        @click="travel(exit)"
+      >
+        <span class="action-shortcut action-shortcut--exit">{{ exitKey(i) }}.</span>
+        {{ exit.label }}
+        <span v-if="exit.travelTime > 0" class="action-time-cost">
+          {{ formatTravelTime(exit.travelTime) }}
         </span>
       </button>
     </div>
@@ -30,9 +57,11 @@
 </template>
 
 <script setup>
-import { computed, inject, ref } from 'vue'
+import { computed, inject, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useGameStore } from '../../stores/game.js'
 import { meetsRequirements } from '../../engine/actions.js'
+import { useKeyboardNav } from '../../composables/useKeyboardNav.js'
+import { isOpen } from '../../models/location.js'
 
 const game = useGameStore()
 const gameLoop = inject('gameLoop')
@@ -73,6 +102,52 @@ const sortedActions = computed(() => {
   return [...available, ...disabled]
 })
 
+// ── Exits (injected from GameScreen which reads from game store) ─────────────
+
+const EXIT_KEYS = 'abcdefghijklmnopqrstuvwxyz'
+
+const exits = computed(() => game.currentLocation?.exits ?? [])
+
+function exitKey(index) {
+  return EXIT_KEYS[index] ?? '?'
+}
+
+function canTravel(exit) {
+  if (!exit) return false
+  const dest = game.locations[exit.locationId]
+  if (!dest) return false
+  if (!isOpen(dest, game.time.hour)) return false
+  if (exit.requirements) return false
+  return true
+}
+
+function travelBlockReason(exit) {
+  const dest = game.locations[exit.locationId]
+  if (!dest) return 'unknown destination'
+  if (!isOpen(dest, game.time.hour)) {
+    return dest.availability?.closedMessage || 'closed'
+  }
+  return ''
+}
+
+function travel(exit) {
+  if (!canTravel(exit)) return
+  if (gameLoop) {
+    gameLoop.travel(exit.locationId, exit.travelTime ?? 1)
+  }
+}
+
+function formatTravelTime(ticks) {
+  if (!ticks) return ''
+  const minutes = ticks * 15
+  if (minutes < 60) return `${minutes}m`
+  const hours = Math.floor(minutes / 60)
+  const rem = minutes % 60
+  return rem > 0 ? `${hours}h ${rem}m` : `${hours}h`
+}
+
+// ── Actions ──────────────────────────────────────────────────────────────────
+
 async function executeAction(action) {
   if (!action.available || isResolving.value || !gameLoop) return
   isResolving.value = true
@@ -98,61 +173,112 @@ function formatTimeCost(ticks) {
   const rem = minutes % 60
   return rem > 0 ? `${hours}h ${rem}m` : `${hours}h`
 }
+
+// ── Keyboard navigation ──────────────────────────────────────────────────────
+
+const {
+  selectedIndex: navIndex,
+  onKeydown,
+  clamp,
+} = useKeyboardNav(sortedActions, {
+  onSelect: (action) => executeAction(action),
+  skip: (action) => !action.available,
+  loop: true,
+})
+
+// Reset nav index when actions change
+watch(sortedActions, () => clamp())
+
+function handleGlobalKeydown(e) {
+  // Number keys 1–9: activate the Nth action
+  const num = parseInt(e.key, 10)
+  if (num >= 1 && num <= 9) {
+    const action = sortedActions.value[num - 1]
+    if (action && action.available) {
+      e.preventDefault()
+      executeAction(action)
+      return
+    }
+  }
+
+  // Arrow keys + Enter — only when a non-input element has focus
+  const tag = document.activeElement?.tagName?.toLowerCase()
+  if (tag === 'input' || tag === 'textarea') return
+  onKeydown(e)
+}
+
+onMounted(() => document.addEventListener('keydown', handleGlobalKeydown))
+onUnmounted(() => document.removeEventListener('keydown', handleGlobalKeydown))
 </script>
 
 <style lang="scss" scoped>
+@use '../../scss/variables' as *;
+
 .action-menu {
-  padding: 16px;
+  padding: 14px 16px 16px;
 }
 
 .action-menu__label {
   font-size: 10px;
-  color: #555548;
+  color: $color-text-muted;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+  font-family: $font-ui;
 }
 
 .action-menu__empty {
-  font-size: 13px;
-  color: #555548;
-  font-family: 'Courier New', monospace;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  font-family: $font-mono;
   font-style: italic;
 }
 
 .action-menu__list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
+}
+
+.action-menu__separator {
+  height: 1px;
+  background: $color-border;
+  margin: 6px 0;
+  opacity: 0.6;
 }
 
 .action-item {
-  font-family: 'Courier New', monospace;
+  font-family: $font-mono;
   font-size: 13px;
-  color: #7aad5a;
+  color: $color-accent;
   background: none;
   border: 1px solid transparent;
   border-radius: 2px;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 5px 8px;
   text-align: left;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: border-color 150ms ease, background-color 150ms ease;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease;
 
-  &:hover:not(:disabled) {
-    border-color: #3d5a2e;
-    background-color: #1a1a1a;
+  &:hover:not(:disabled),
+  &--selected:not(:disabled) {
+    border-color: $color-accent-dim;
+    background-color: $color-bg-elevated;
   }
 
   &:focus {
-    outline: 1px solid #7aad5a;
+    outline: 1px solid $color-accent;
+    outline-offset: -1px;
   }
 
   &.action-item--disabled,
   &:disabled {
-    color: #555548;
+    color: $color-text-muted;
     cursor: not-allowed;
 
     &:hover {
@@ -160,12 +286,47 @@ function formatTimeCost(ticks) {
       background: none;
     }
   }
+
+  // Exits — different colour: amber instead of green
+  &--exit {
+    color: $color-amber;
+
+    &:hover:not(:disabled),
+    &.action-item--selected:not(:disabled) {
+      border-color: $color-amber-dim;
+      background-color: $color-bg-elevated;
+    }
+
+    &:focus {
+      outline-color: $color-amber;
+    }
+
+    &.action-item--disabled,
+    &:disabled {
+      color: $color-text-muted;
+    }
+  }
+}
+
+.action-shortcut {
+  font-size: 10px;
+  color: $color-text-muted;
+  margin-right: 6px;
+  flex-shrink: 0;
+  min-width: 16px;
+  display: inline-block;
+  letter-spacing: 0;
+
+  &--exit {
+    color: $color-amber-dim;
+  }
 }
 
 .action-time-cost {
-  font-size: 11px;
-  color: #555548;
-  margin-left: 4px;
+  font-size: 10px;
+  color: $color-text-muted;
+  margin-left: auto;
+  padding-left: 8px;
   flex-shrink: 0;
 }
 </style>
