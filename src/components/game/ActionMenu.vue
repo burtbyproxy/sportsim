@@ -34,7 +34,7 @@
       </button>
 
       <!-- Separator between actions and exits -->
-      <div v-if="sortedActions.length > 0 && exits.length > 0" class="action-menu__separator"></div>
+      <div v-if="sortedActions.length > 0 && exits.length > 0" class="action-menu__separator" />
 
       <!-- Exits — go somewhere -->
       <button
@@ -57,9 +57,10 @@
 </template>
 
 <script setup>
-import { computed, inject, ref, watch, onMounted, onUnmounted } from 'vue'
+import { computed, inject, ref, watch } from 'vue'
 import { useGameStore } from '../../stores/game.js'
 import { meetsRequirements } from '../../engine/actions.js'
+import { useKeyboard } from '../../composables/useKeyboard.js'
 import { useKeyboardNav } from '../../composables/useKeyboardNav.js'
 import { isOpen } from '../../models/location.js'
 
@@ -178,7 +179,7 @@ function formatTimeCost(ticks) {
 
 const {
   selectedIndex: navIndex,
-  onKeydown,
+  onKeydown: navKeydown,
   clamp,
 } = useKeyboardNav(sortedActions, {
   onSelect: (action) => executeAction(action),
@@ -189,26 +190,76 @@ const {
 // Reset nav index when actions change
 watch(sortedActions, () => clamp())
 
-function handleGlobalKeydown(e) {
-  // Number keys 1–9: activate the Nth action
-  const num = parseInt(e.key, 10)
-  if (num >= 1 && num <= 9) {
-    const action = sortedActions.value[num - 1]
-    if (action && action.available) {
+// Number keys 1–9 for action shortcuts, arrow keys + enter for nav.
+// useKeyboard handles input exclusion and repeat filtering automatically.
+useKeyboard({
+  1: (e) => {
+    const a = sortedActions.value[0]
+    if (a?.available) {
       e.preventDefault()
-      executeAction(action)
-      return
+      executeAction(a)
     }
-  }
-
-  // Arrow keys + Enter — only when a non-input element has focus
-  const tag = document.activeElement?.tagName?.toLowerCase()
-  if (tag === 'input' || tag === 'textarea') return
-  onKeydown(e)
-}
-
-onMounted(() => document.addEventListener('keydown', handleGlobalKeydown))
-onUnmounted(() => document.removeEventListener('keydown', handleGlobalKeydown))
+  },
+  2: (e) => {
+    const a = sortedActions.value[1]
+    if (a?.available) {
+      e.preventDefault()
+      executeAction(a)
+    }
+  },
+  3: (e) => {
+    const a = sortedActions.value[2]
+    if (a?.available) {
+      e.preventDefault()
+      executeAction(a)
+    }
+  },
+  4: (e) => {
+    const a = sortedActions.value[3]
+    if (a?.available) {
+      e.preventDefault()
+      executeAction(a)
+    }
+  },
+  5: (e) => {
+    const a = sortedActions.value[4]
+    if (a?.available) {
+      e.preventDefault()
+      executeAction(a)
+    }
+  },
+  6: (e) => {
+    const a = sortedActions.value[5]
+    if (a?.available) {
+      e.preventDefault()
+      executeAction(a)
+    }
+  },
+  7: (e) => {
+    const a = sortedActions.value[6]
+    if (a?.available) {
+      e.preventDefault()
+      executeAction(a)
+    }
+  },
+  8: (e) => {
+    const a = sortedActions.value[7]
+    if (a?.available) {
+      e.preventDefault()
+      executeAction(a)
+    }
+  },
+  9: (e) => {
+    const a = sortedActions.value[8]
+    if (a?.available) {
+      e.preventDefault()
+      executeAction(a)
+    }
+  },
+  ArrowUp: (e) => navKeydown(e),
+  ArrowDown: (e) => navKeydown(e),
+  Enter: (e) => navKeydown(e),
+})
 </script>
 
 <style lang="scss" scoped>

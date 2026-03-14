@@ -1,7 +1,9 @@
 <template>
   <div class="location-view">
     <!-- Location name — this is a PLACE -->
-    <h1 v-if="location" class="location-name">{{ location.display ?? location.id }}</h1>
+    <h1 v-if="location" class="location-name">
+      {{ location.display ?? location.id }}
+    </h1>
 
     <!-- Characters present — woven into the scene, not a widget -->
     <div v-if="charactersPresent.length > 0" class="scene-people">
@@ -20,10 +22,11 @@
 </template>
 
 <script setup>
-import { computed, inject, watch, onMounted, onUnmounted } from 'vue'
+import { computed, inject, watch, onMounted } from 'vue'
 import { useGameStore } from '../../stores/game.js'
 import { generateLocationNarrative } from '../../composables/useNarrative.js'
 import { isOpen } from '../../models/location.js'
+import { useKeyboard } from '../../composables/useKeyboard.js'
 
 const game = useGameStore()
 const narrative = inject('narrative')
@@ -85,28 +88,25 @@ function travel(exit) {
 }
 
 // ── Exit key shortcuts ───────────────────────────────────────────────────────
+// Letter keys a–z: each maps to the exit at that index position.
+// useKeyboard handles input exclusion and repeat filtering automatically.
 
-function handleGlobalKeydown(e) {
-  // Skip if typing in an input
-  const tag = document.activeElement?.tagName?.toLowerCase()
-  if (tag === 'input' || tag === 'textarea') return
-
-  // Letter keys a–z: check if they match an exit
-  if (e.key.length === 1 && /^[a-z]$/i.test(e.key)) {
-    const letter = e.key.toLowerCase()
-    const idx = EXIT_KEYS.indexOf(letter)
-    if (idx >= 0 && idx < exits.value.length) {
-      const exit = exits.value[idx]
-      if (canTravel(exit)) {
-        e.preventDefault()
-        travel(exit)
+const exitKeyBindings = Object.fromEntries(
+  EXIT_KEYS.split('').map((letter, idx) => [
+    letter,
+    (e) => {
+      if (idx < exits.value.length) {
+        const exit = exits.value[idx]
+        if (canTravel(exit)) {
+          e.preventDefault()
+          travel(exit)
+        }
       }
-    }
-  }
-}
+    },
+  ])
+)
 
-onMounted(() => document.addEventListener('keydown', handleGlobalKeydown))
-onUnmounted(() => document.removeEventListener('keydown', handleGlobalKeydown))
+useKeyboard(exitKeyBindings)
 </script>
 
 <style lang="scss" scoped>

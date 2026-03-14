@@ -39,11 +39,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '../../stores/game.js'
 import { useMetaStore } from '../../stores/meta.js'
 import { useSave } from '../../composables/useSave.js'
+import { useKeyboard } from '../../composables/useKeyboard.js'
 import { useKeyboardNav } from '../../composables/useKeyboardNav.js'
 import { loadLocations, loadCharacters, loadItems } from '../../data/loader.js'
 import { createPlayer } from '../../models/player.js'
@@ -68,11 +69,7 @@ onMounted(() => {
   hasSave.value = save.listSaves().length > 0
   // Auto-focus so keyboard works immediately, no click required
   menuEl.value?.focus()
-  // Global keyboard listener — shortcuts work without clicking first
-  document.addEventListener('keydown', handleGlobalKeydown)
 })
-
-onUnmounted(() => document.removeEventListener('keydown', handleGlobalKeydown))
 
 const bootLines = [
   'SPORTSIM v0.1.0',
@@ -144,26 +141,34 @@ const { selectedIndex, onKeydown: navKeydown } = useKeyboardNav(menuItems, {
   loop: true,
 })
 
-function onKeydown(e) {
-  // Shortcut keys: press the letter to activate
-  if (e.key.length === 1 && /^[a-z]$/i.test(e.key)) {
-    const letter = e.key.toLowerCase()
-    const item = menuItems.value.find((m) => m.shortcut === letter && !m.disabled)
+// Letter shortcuts: n → new game, l → load game, u → unlocks etc.
+// Arrow nav + Enter handled by useKeyboardNav via navKeydown.
+useKeyboard({
+  n: (e) => {
+    const item = menuItems.value.find((m) => m.shortcut === 'n' && !m.disabled)
     if (item) {
       e.preventDefault()
       item.action()
-      return
     }
-  }
-  navKeydown(e)
-}
-
-// Global keyboard listener so shortcuts work even without nav focus
-function handleGlobalKeydown(e) {
-  const tag = document.activeElement?.tagName?.toLowerCase()
-  if (tag === 'input' || tag === 'textarea') return
-  onKeydown(e)
-}
+  },
+  l: (e) => {
+    const item = menuItems.value.find((m) => m.shortcut === 'l' && !m.disabled)
+    if (item) {
+      e.preventDefault()
+      item.action()
+    }
+  },
+  u: (e) => {
+    const item = menuItems.value.find((m) => m.shortcut === 'u' && !m.disabled)
+    if (item) {
+      e.preventDefault()
+      item.action()
+    }
+  },
+  ArrowUp: (e) => navKeydown(e),
+  ArrowDown: (e) => navKeydown(e),
+  Enter: (e) => navKeydown(e),
+})
 </script>
 
 <style lang="scss" scoped>
