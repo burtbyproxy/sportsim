@@ -3,9 +3,9 @@
 # Shows inbox and active counts for all agents at a glance.
 
 COMMS_DIR="$(dirname "$0")/../comms"
-AGENTS=("kirk" "spock" "bones" "scotty")
-NAMES=("Captain Kirk" "Mr. Spock" "Dr. McCoy" "Scotty")
-ROLES=("Captain" "Scientist" "Doctor" "Engineer")
+AGENTS=("kirk" "spock" "bones" "scotty" "uhura")
+NAMES=("Captain Kirk" "Mr. Spock" "Dr. McCoy" "Scotty" "Uhura")
+ROLES=("Captain" "Scientist" "Doctor" "Engineer" "Communications")
 
 printf "\n  %-16s %-14s  %s\n" "AGENT" "INBOX" "ACTIVE"
 printf "  %-16s %-14s  %s\n" "────────────────" "──────────────" "──────────────"

@@ -45,7 +45,9 @@
           <!-- Time -->
           <div class="status-section">
             <div class="status-section__label">time</div>
-            <div class="status-time">{{ formattedTime }}</div>
+            <div class="status-time">
+              {{ formattedTime }}
+            </div>
           </div>
 
           <!-- Stat bars -->
@@ -68,7 +70,7 @@
                     class="status-stat__fill"
                     :class="[`status-stat__fill--${stat.key}`, barFillClass(stat.key, stat.value)]"
                     :style="{ width: `${stat.value}%` }"
-                  ></div>
+                  />
                 </div>
               </div>
             </div>
@@ -135,16 +137,8 @@ provide('gameLoop', gameLoop)
 const selectedCharacterId = ref(null)
 provide('selectedCharacterId', selectedCharacterId)
 
-/** Tracks the entry currently being animated (for live display) */
-const activeEntry = ref(null)
-
-narrative.on('animation-start', () => {
-  activeEntry.value = { completedTokens: [], currentToken: null }
-})
-
-narrative.on('animation-complete', () => {
-  activeEntry.value = null
-})
+/** Live entry state — driven by the narrative composable itself */
+const activeEntry = computed(() => narrative.activeEntryState.value)
 
 // === Sidebar tabs ===
 

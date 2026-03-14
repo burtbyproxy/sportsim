@@ -104,24 +104,47 @@ export function useNarrative() {
   /**
    * Render a NarrativeText into a log entry.
    * Returns a plain object safe to store in log.
+   * Updates activeEntryState in real-time so components can show live progress.
    */
   async function _renderNarrativeText(narrativeText) {
     const renderedTokens = []
+
+    // Initialize live entry state
+    activeEntryState.value = { completedTokens: [], currentToken: null }
 
     for (const token of narrativeText.tokens) {
       if (skipRequested) {
         // Instant-complete this token
         renderedTokens.push({ ...token, rendered: token.text })
+        activeEntryState.value = {
+          completedTokens: [...renderedTokens],
+          currentToken: null,
+        }
         continue
+      }
+
+      // Signal that this token is now being animated
+      activeEntryState.value = {
+        completedTokens: [...renderedTokens],
+        currentToken: token,
       }
 
       const rendered = await _animateToken(token)
       renderedTokens.push({ ...token, rendered })
 
+      // Token done — update completed list
+      activeEntryState.value = {
+        completedTokens: [...renderedTokens],
+        currentToken: null,
+      }
+
       if (!skipRequested && token.pauseAfter > 0) {
         await _pause(token.pauseAfter)
       }
     }
+
+    // Clear live state — entry is about to go into log
+    activeEntryState.value = null
 
     return { tokens: renderedTokens, id: Date.now() + Math.random() }
   }
@@ -190,15 +213,18 @@ export function useNarrative() {
   const _currentTokenProgress = ref('')
 
   /**
-   * Whether there's content being animated or queued.
+   * Live-updated active entry state for the currently animating NarrativeText.
+   * Components can bind to this to show text as it renders character-by-character.
+   * Shape: { completedTokens: NarrativeToken[], currentToken: NarrativeToken|null }
    */
-  const hasContent = ref(false)
+  const activeEntryState = ref(null)
 
   return {
     log: readonly(log),
     queue: readonly(queue),
     isAnimating: readonly(isAnimating),
     currentTokenProgress: readonly(_currentTokenProgress),
+    activeEntryState: readonly(activeEntryState),
     enqueue,
     skip,
     clearLog,

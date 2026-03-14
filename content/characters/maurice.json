@@ -49,6 +49,7 @@
     "entries": [
       {
         "locationId": "mocks_crest",
+        "type": "bar",
         "startHour": 17,
         "endHour": 21,
         "probability": 0.4,
@@ -56,6 +57,7 @@
       },
       {
         "locationId": "blue_parrot",
+        "type": "bar",
         "startHour": 21,
         "endHour": 1,
         "probability": 0.5,
@@ -63,6 +65,7 @@
       },
       {
         "locationId": "mouse_trap",
+        "type": "bar",
         "startHour": 18,
         "endHour": 23,
         "probability": 0.25,
@@ -70,6 +73,7 @@
       },
       {
         "locationId": "columbia_park",
+        "type": "park",
         "startHour": 10,
         "endHour": 16,
         "probability": 0.3,

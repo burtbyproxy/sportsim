@@ -7,30 +7,44 @@
         :key="i"
         class="boot-line"
         :style="{ animationDelay: `${i * 120}ms` }"
-      >{{ line }}</div>
+      >
+        {{ line }}
+      </div>
     </div>
 
     <h1 class="title-screen__title">SportSim</h1>
-    <p class="title-screen__subtitle">Portland, Oregon. 2001. You are broke. You are talentless. You are in your mom's basement.</p>
+    <p class="title-screen__subtitle">
+      Portland, Oregon. 2001. You are broke. You are talentless. You are in your mom's basement.
+    </p>
 
-    <nav class="title-screen__menu" aria-label="Main menu">
-      <button class="title-menu-item" @click="startNewGame">New Game</button>
+    <nav ref="menuEl" class="title-screen__menu" aria-label="Main menu" tabindex="0">
       <button
+        v-for="(item, i) in menuItems"
+        :key="item.id"
         class="title-menu-item"
-        :disabled="!hasSave"
-        @click="loadGame"
-      >Load Game</button>
-      <button class="title-menu-item" disabled>Unlocks</button>
+        :class="{ 'title-menu-item--selected': selectedIndex === i }"
+        :disabled="item.disabled"
+        @click="item.action()"
+        @mouseenter="selectedIndex = i"
+      >
+        <span
+          v-for="(part, j) in renderShortcutLabel(item.label, item.shortcut)"
+          :key="j"
+          :class="part.isKey ? 'shortcut-key' : ''"
+          >{{ part.text }}</span
+        >
+      </button>
     </nav>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '../../stores/game.js'
 import { useMetaStore } from '../../stores/meta.js'
 import { useSave } from '../../composables/useSave.js'
+import { useKeyboardNav } from '../../composables/useKeyboardNav.js'
 import { loadLocations, loadCharacters, loadItems } from '../../data/loader.js'
 import { createPlayer } from '../../models/player.js'
 import { createCharacter } from '../../models/character.js'
@@ -39,6 +53,7 @@ const router = useRouter()
 const game = useGameStore()
 const meta = useMetaStore()
 const save = useSave()
+const menuEl = ref(null)
 
 const hasSave = ref(false)
 
@@ -51,6 +66,8 @@ for (const item of Object.values(allItems)) {
 onMounted(() => {
   meta.load()
   hasSave.value = save.listSaves().length > 0
+  // Auto-focus so keyboard works immediately, no click required
+  menuEl.value?.focus()
 })
 
 const bootLines = [
@@ -93,6 +110,59 @@ function loadGame() {
     router.push('/game')
   }
 }
+
+const menuItems = computed(() => [
+  { id: 'new', label: 'New Game', shortcut: 'n', disabled: false, action: startNewGame },
+  { id: 'load', label: 'Load Game', shortcut: 'l', disabled: !hasSave.value, action: loadGame },
+  { id: 'unlocks', label: 'Unlocks', shortcut: 'u', disabled: true, action: () => {} },
+])
+
+/**
+ * Split a label around a shortcut letter to render as:
+ * "[n]ew Game" — the shortcut letter gets brackets and a highlight class.
+ */
+function renderShortcutLabel(label, shortcut) {
+  if (!shortcut) return [{ text: label, isKey: false }]
+  const idx = label.toLowerCase().indexOf(shortcut.toLowerCase())
+  if (idx === -1) return [{ text: label, isKey: false }]
+  const parts = []
+  if (idx > 0) parts.push({ text: label.slice(0, idx), isKey: false })
+  parts.push({ text: `[${label[idx]}]`, isKey: true })
+  if (idx + 1 < label.length) parts.push({ text: label.slice(idx + 1), isKey: false })
+  return parts
+}
+
+const { selectedIndex, onKeydown: navKeydown } = useKeyboardNav(menuItems, {
+  onSelect: (item) => {
+    if (!item.disabled) item.action()
+  },
+  skip: (item) => item.disabled,
+  loop: true,
+})
+
+function onKeydown(e) {
+  // Shortcut keys: press the letter to activate
+  if (e.key.length === 1 && /^[a-z]$/i.test(e.key)) {
+    const letter = e.key.toLowerCase()
+    const item = menuItems.value.find((m) => m.shortcut === letter && !m.disabled)
+    if (item) {
+      e.preventDefault()
+      item.action()
+      return
+    }
+  }
+  navKeydown(e)
+}
+
+// Global keyboard listener so shortcuts work even without nav focus
+function handleGlobalKeydown(e) {
+  const tag = document.activeElement?.tagName?.toLowerCase()
+  if (tag === 'input' || tag === 'textarea') return
+  onKeydown(e)
+}
+
+onMounted(() => document.addEventListener('keydown', handleGlobalKeydown))
+onUnmounted(() => document.removeEventListener('keydown', handleGlobalKeydown))
 </script>
 
 <style lang="scss" scoped>
@@ -137,6 +207,7 @@ function loadGame() {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  outline: none;
 }
 
 .title-menu-item {
@@ -149,18 +220,41 @@ function loadGame() {
   padding: 0;
   text-align: left;
 
+  // No prefix by default
   &::before {
+    content: '  ';
+    color: #555548;
+  }
+
+  // Prefix only appears on the keyboard-selected item
+  &--selected::before {
     content: '> ';
     color: #555548;
+  }
+
+  &--selected {
+    color: #a8d888;
   }
 
   &:hover:not(:disabled) {
     color: #a8d888;
   }
 
+  &:hover:not(:disabled)::before {
+    content: '> ';
+  }
+
   &:disabled {
     color: #555548;
     cursor: not-allowed;
+
+    .shortcut-key {
+      color: #3a3a34;
+    }
   }
+}
+
+.shortcut-key {
+  color: #a8d888;
 }
 </style>
