@@ -4,11 +4,66 @@ const SAVE_PREFIX = 'sportsim_save_'
 const SAVE_INDEX_KEY = 'sportsim_saves'
 
 /**
+ * Current save format version.
+ * Bump this whenever the save shape changes in a breaking way.
+ * Old Gregg will know. Old Gregg always knows.
+ */
+export const SAVE_VERSION = 1
+
+/**
+ * Maximum number of save slots.
+ * localStorage is ~5MB. Don't let greedy players fill the deep.
+ */
+export const MAX_SAVES = 20
+
+/**
+ * Required top-level fields for a save to be considered valid.
+ * These are the bones of the save. Without them it is nothing.
+ */
+const REQUIRED_SAVE_FIELDS = [
+  'id',
+  'name',
+  'timestamp',
+  'version',
+  'player',
+  'time',
+  'locations',
+  'characters',
+  'firedEventIds',
+  'counters',
+]
+
+/**
+ * Validate a parsed save object.
+ * Returns true if the save has all required fields and recognisable version.
+ * @param {*} data
+ * @returns {boolean}
+ */
+export function validateSave(data) {
+  if (!data || typeof data !== 'object') return false
+  for (const field of REQUIRED_SAVE_FIELDS) {
+    if (!(field in data)) {
+      console.warn(`[save] Validation failed: missing field "${field}"`)
+      return false
+    }
+  }
+  if (typeof data.version !== 'number' || data.version < 1) {
+    console.warn(`[save] Validation failed: invalid version "${data.version}"`)
+    return false
+  }
+  return true
+}
+
+/**
  * Save/Load composable.
  *
  * Saves full game state to localStorage.
  * Each save has its own key: sportsim_save_{id}
  * An index of saves is kept at sportsim_saves.
+ *
+ * Do you love the save system, Howard? Are you playing your love games with it?
+ * It's got validation now. It's got versioning. It's got export/import.
+ * It's beautiful. Like a watercolour. But it works.
  */
 export function useSave() {
   const game = useGameStore()
@@ -16,9 +71,15 @@ export function useSave() {
   /**
    * Save current game state.
    * @param {string} [name] - optional display name
-   * @returns {string} save ID
+   * @returns {string|null} save ID, or null if at capacity or write failed
    */
   function save(name) {
+    const saves = listSaves()
+    if (saves.length >= MAX_SAVES) {
+      console.warn(`[save] Save limit reached (${MAX_SAVES}). Delete a save before saving again.`)
+      return null
+    }
+
     const id = crypto.randomUUID()
     const timestamp = Date.now()
     const displayName = name ?? `Day ${game.time.day} — ${game.time.period}`
@@ -27,6 +88,7 @@ export function useSave() {
       id,
       name: displayName,
       timestamp,
+      version: SAVE_VERSION,
       player: game.player,
       time: game.time,
       locations: game.locations,
@@ -40,6 +102,7 @@ export function useSave() {
       _indexSave({ id, name: displayName, timestamp })
     } catch (e) {
       console.warn('[save] Failed to write save:', e)
+      return null
     }
 
     return id
@@ -47,14 +110,21 @@ export function useSave() {
 
   /**
    * Load a save by ID.
+   * Validates the save before returning it.
+   * Returns null if not found, malformed, or from an incompatible version.
    * @param {string} id
-   * @returns {Object|null} save data, or null if not found
+   * @returns {Object|null} save data, or null if not found/invalid
    */
   function load(id) {
     try {
       const raw = localStorage.getItem(SAVE_PREFIX + id)
       if (!raw) return null
-      return JSON.parse(raw)
+      const data = JSON.parse(raw)
+      if (!validateSave(data)) {
+        console.warn(`[save] Save "${id}" failed validation — discarding.`)
+        return null
+      }
+      return data
     } catch (e) {
       console.warn('[save] Failed to load save:', e)
       return null
@@ -102,6 +172,61 @@ export function useSave() {
     save('auto')
   }
 
+  /**
+   * Export a save as a JSON string.
+   * Useful for players to back up their games or move between browsers.
+   * Old Gregg approves of backup strategies.
+   * @param {string} id
+   * @returns {string|null} JSON string, or null if save not found/invalid
+   */
+  function exportSave(id) {
+    const data = load(id)
+    if (!data) return null
+    return JSON.stringify(data, null, 2)
+  }
+
+  /**
+   * Import a save from a JSON string.
+   * Validates the data before writing it to localStorage.
+   * Returns the new save ID if successful, null otherwise.
+   * @param {string} jsonString
+   * @returns {string|null} save ID, or null if invalid
+   */
+  function importSave(jsonString) {
+    let data
+    try {
+      data = JSON.parse(jsonString)
+    } catch (e) {
+      console.warn('[save] importSave: invalid JSON —', e)
+      return null
+    }
+
+    if (!validateSave(data)) {
+      console.warn('[save] importSave: save data failed validation.')
+      return null
+    }
+
+    const saves = listSaves()
+    if (saves.length >= MAX_SAVES) {
+      console.warn(`[save] importSave: save limit reached (${MAX_SAVES}). Delete a save first.`)
+      return null
+    }
+
+    // Give it a fresh ID so it doesn't stomp an existing save
+    const newId = crypto.randomUUID()
+    const importedData = { ...data, id: newId }
+
+    try {
+      localStorage.setItem(SAVE_PREFIX + newId, JSON.stringify(importedData))
+      _indexSave({ id: newId, name: importedData.name, timestamp: importedData.timestamp })
+    } catch (e) {
+      console.warn('[save] importSave: failed to write to localStorage:', e)
+      return null
+    }
+
+    return newId
+  }
+
   function _indexSave(entry) {
     const saves = listSaves()
     saves.push(entry)
@@ -114,5 +239,7 @@ export function useSave() {
     listSaves,
     deleteSave,
     autoSave,
+    exportSave,
+    importSave,
   }
 }
