@@ -13,13 +13,64 @@ import { template, pickVariant, toNarrativeText } from '../utils/text.js'
  * @emits 'skip' - when user skips animation
  */
 
-/** ms per character for each speed setting */
+/**
+ * Per-character delay ranges (ms) for each speed setting.
+ * Each character gets a random value within [min, max].
+ * instant is always 0 — no range needed.
+ */
 const SPEED_MS = {
   instant: 0,
-  fast: 20,
-  normal: 40,
-  slow: 80,
-  crawl: 150,
+  fast: { min: 5, max: 18 },
+  normal: { min: 8, max: 35 },
+  slow: { min: 30, max: 90 },
+  crawl: { min: 80, max: 200 },
+}
+
+/**
+ * Extra delay added after punctuation characters — makes the text breathe.
+ * These stack on top of the base character delay.
+ */
+const PUNCTUATION_PAUSE = {
+  '.': { min: 80, max: 150 },
+  '!': { min: 80, max: 150 },
+  '?': { min: 80, max: 150 },
+  ',': { min: 40, max: 80 },
+  ';': { min: 40, max: 80 },
+  ':': { min: 30, max: 60 },
+  '—': { min: 80, max: 160 }, // em-dash — dramatic
+  '–': { min: 40, max: 80 }, // en-dash
+  ' ': { min: 10, max: 30 }, // word boundary micro-pause
+}
+
+/** Pick a random integer in [min, max] inclusive. */
+function _randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
+/**
+ * Resolve a speed setting to a base character delay in ms.
+ * For range-based speeds, picks a random value within the range.
+ * @param {string} speed
+ * @returns {number}
+ */
+function _resolveSpeedMs(speed) {
+  const setting = SPEED_MS[speed] ?? SPEED_MS.normal
+  if (setting === 0) return 0
+  return _randInt(setting.min, setting.max)
+}
+
+/**
+ * Calculate the total delay for rendering a character at a given speed.
+ * Adds punctuation / word-boundary pauses on top of the base delay.
+ * @param {string} char - the character just typed
+ * @param {string} speed - speed tier name
+ * @returns {number} ms to wait before rendering the next character
+ */
+function _charDelay(char, speed) {
+  const base = _resolveSpeedMs(speed)
+  const extra = PUNCTUATION_PAUSE[char]
+  if (!extra) return base
+  return base + _randInt(extra.min, extra.max)
 }
 
 export function useNarrative() {
@@ -152,34 +203,47 @@ export function useNarrative() {
   /**
    * Animate a single token character by character.
    * Returns the full text when done.
+   *
+   * Uses recursive setTimeout so each character gets its own freshly-calculated
+   * delay — base speed randomised within the tier's range, plus punctuation and
+   * word-boundary pauses stacked on top.  Feels like a human typing at 2am.
    */
   function _animateToken(token) {
     return new Promise((resolve) => {
-      const speedMs = SPEED_MS[token.speed] ?? SPEED_MS.normal
+      const speed = token.speed ?? 'normal'
       const text = token.text
 
-      if (speedMs === 0 || skipRequested) {
+      // instant speed or skip — resolve immediately
+      if (SPEED_MS[speed] === 0 || skipRequested) {
         resolve(text)
         return
       }
 
       let i = 0
-      // We update the last rendered token in the current working entry
-      // by mutating via a live ref — see NarrativeLog for how it reads this
-      const interval = setInterval(() => {
+
+      function tick() {
         if (skipRequested) {
-          clearInterval(interval)
           resolve(text)
           return
         }
+
         i++
         // Emit partial render via a reactive ref the component can watch
         _currentTokenProgress.value = text.slice(0, i)
+
         if (i >= text.length) {
-          clearInterval(interval)
           resolve(text)
+          return
         }
-      }, speedMs)
+
+        // Delay for the NEXT character is based on the character we just typed
+        // — punctuation after a full-stop breathes longer than a mid-word letter
+        const delay = _charDelay(text[i - 1], speed)
+        setTimeout(tick, delay)
+      }
+
+      // Kick off with the delay for the very first character
+      setTimeout(tick, _resolveSpeedMs(speed))
     })
   }
 
