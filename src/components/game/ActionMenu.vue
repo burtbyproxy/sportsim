@@ -192,70 +192,21 @@ watch(sortedActions, () => clamp())
 
 // Number keys 1–9 for action shortcuts, arrow keys + enter for nav.
 // useKeyboard handles input exclusion and repeat filtering automatically.
+const actionKeyBindings = Object.fromEntries(
+  [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => [
+    String(n),
+    (e) => {
+      const a = sortedActions.value[n - 1]
+      if (a?.available) {
+        e.preventDefault()
+        executeAction(a)
+      }
+    },
+  ])
+)
+
 useKeyboard({
-  1: (e) => {
-    const a = sortedActions.value[0]
-    if (a?.available) {
-      e.preventDefault()
-      executeAction(a)
-    }
-  },
-  2: (e) => {
-    const a = sortedActions.value[1]
-    if (a?.available) {
-      e.preventDefault()
-      executeAction(a)
-    }
-  },
-  3: (e) => {
-    const a = sortedActions.value[2]
-    if (a?.available) {
-      e.preventDefault()
-      executeAction(a)
-    }
-  },
-  4: (e) => {
-    const a = sortedActions.value[3]
-    if (a?.available) {
-      e.preventDefault()
-      executeAction(a)
-    }
-  },
-  5: (e) => {
-    const a = sortedActions.value[4]
-    if (a?.available) {
-      e.preventDefault()
-      executeAction(a)
-    }
-  },
-  6: (e) => {
-    const a = sortedActions.value[5]
-    if (a?.available) {
-      e.preventDefault()
-      executeAction(a)
-    }
-  },
-  7: (e) => {
-    const a = sortedActions.value[6]
-    if (a?.available) {
-      e.preventDefault()
-      executeAction(a)
-    }
-  },
-  8: (e) => {
-    const a = sortedActions.value[7]
-    if (a?.available) {
-      e.preventDefault()
-      executeAction(a)
-    }
-  },
-  9: (e) => {
-    const a = sortedActions.value[8]
-    if (a?.available) {
-      e.preventDefault()
-      executeAction(a)
-    }
-  },
+  ...actionKeyBindings,
   ArrowUp: (e) => navKeydown(e),
   ArrowDown: (e) => navKeydown(e),
   Enter: (e) => navKeydown(e),
