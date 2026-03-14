@@ -333,3 +333,181 @@ describe('GameFooter keyboard hint', () => {
     expect(HINT_IDLE).toBeTruthy()
   })
 })
+
+// ─── TitleScreen renderShortcutLabel ─────────────────────────────────────────
+// Pure function that splits a label around a shortcut letter.
+// "[n]ew Game" — bracket + class on the matched character.
+
+function renderShortcutLabel(label, shortcut) {
+  if (!shortcut) return [{ text: label, isKey: false }]
+  const idx = label.toLowerCase().indexOf(shortcut.toLowerCase())
+  if (idx === -1) return [{ text: label, isKey: false }]
+  const parts = []
+  if (idx > 0) parts.push({ text: label.slice(0, idx), isKey: false })
+  parts.push({ text: `[${label[idx]}]`, isKey: true })
+  if (idx + 1 < label.length) parts.push({ text: label.slice(idx + 1), isKey: false })
+  return parts
+}
+
+describe('renderShortcutLabel (TitleScreen)', () => {
+  it('wraps the shortcut letter in brackets', () => {
+    const parts = renderShortcutLabel('New Game', 'n')
+    const keyPart = parts.find((p) => p.isKey)
+    expect(keyPart).toBeDefined()
+    expect(keyPart.text).toBe('[N]')
+  })
+
+  it('prefix text before the shortcut is a non-key part (when shortcut is mid-word)', () => {
+    // 'Unlocks' with shortcut 'l' — idx=2, prefix='Un'
+    const parts = renderShortcutLabel('Unlocks', 'l')
+    expect(parts[0].isKey).toBe(false)
+    expect(parts[0].text).toBe('Un')
+  })
+
+  it('Load Game — [L] is first char, no prefix part', () => {
+    // 'l' is at index 0 in 'Load Game' — no prefix pushed
+    const parts = renderShortcutLabel('Load Game', 'l')
+    expect(parts.length).toBe(2)
+    expect(parts[0].text).toBe('[L]')
+    expect(parts[0].isKey).toBe(true)
+    expect(parts[1].text).toBe('oad Game')
+    expect(parts[1].isKey).toBe(false)
+  })
+
+  it('New Game — prefix is empty (n is first char)', () => {
+    const parts = renderShortcutLabel('New Game', 'n')
+    // idx=0, no prefix part pushed
+    expect(parts.length).toBe(2) // [key][suffix]
+    expect(parts[0].text).toBe('[N]')
+    expect(parts[1].text).toBe('ew Game')
+  })
+
+  it('Unlocks — [U] first char', () => {
+    const parts = renderShortcutLabel('Unlocks', 'u')
+    expect(parts.length).toBe(2)
+    expect(parts[0].text).toBe('[U]')
+    expect(parts[0].isKey).toBe(true)
+  })
+
+  it('returns single part when shortcut not found', () => {
+    const parts = renderShortcutLabel('New Game', 'z')
+    expect(parts).toHaveLength(1)
+    expect(parts[0].text).toBe('New Game')
+    expect(parts[0].isKey).toBe(false)
+  })
+
+  it('returns single part when no shortcut given', () => {
+    const parts = renderShortcutLabel('New Game', undefined)
+    expect(parts).toHaveLength(1)
+    expect(parts[0].isKey).toBe(false)
+  })
+
+  it('is case-insensitive on the match', () => {
+    // shortcut 'n' matches 'N' in 'New Game'
+    const parts = renderShortcutLabel('New Game', 'n')
+    const key = parts.find((p) => p.isKey)
+    expect(key).toBeDefined()
+    expect(key.text).toBe('[N]')
+  })
+})
+
+// ─── TitleScreen menu item shortcut contract ──────────────────────────────────
+// The three menu items must have the right ids, shortcuts, and disabled states.
+
+describe('TitleScreen menu item contract', () => {
+  // Mirrors the menuItems computed in TitleScreen.vue (with hasSave = false)
+  function buildMenuItems(hasSave) {
+    return [
+      { id: 'new', label: 'New Game', shortcut: 'n', disabled: false },
+      { id: 'load', label: 'Load Game', shortcut: 'l', disabled: !hasSave },
+      { id: 'unlocks', label: 'Unlocks', shortcut: 'u', disabled: true },
+    ]
+  }
+
+  it('has exactly 3 menu items', () => {
+    expect(buildMenuItems(false)).toHaveLength(3)
+  })
+
+  it('new game is never disabled', () => {
+    expect(buildMenuItems(false)[0].disabled).toBe(false)
+    expect(buildMenuItems(true)[0].disabled).toBe(false)
+  })
+
+  it('load game is disabled when no save exists', () => {
+    expect(buildMenuItems(false)[1].disabled).toBe(true)
+  })
+
+  it('load game is enabled when save exists', () => {
+    expect(buildMenuItems(true)[1].disabled).toBe(false)
+  })
+
+  it('unlocks is always disabled (not implemented)', () => {
+    expect(buildMenuItems(false)[2].disabled).toBe(true)
+    expect(buildMenuItems(true)[2].disabled).toBe(true)
+  })
+
+  it('each item has a unique shortcut key', () => {
+    const items = buildMenuItems(false)
+    const shortcuts = items.map((i) => i.shortcut)
+    const unique = new Set(shortcuts)
+    expect(unique.size).toBe(shortcuts.length)
+  })
+
+  it('shortcuts are single lowercase letters', () => {
+    const items = buildMenuItems(false)
+    for (const item of items) {
+      expect(item.shortcut).toMatch(/^[a-z]$/)
+    }
+  })
+})
+
+// ─── TitleScreen onKeydown shortcut routing ───────────────────────────────────
+// The keyboard handler should: fire disabled shortcuts = no-op, fire enabled = action.
+
+describe('TitleScreen onKeydown shortcut routing', () => {
+  function buildItems(hasSave) {
+    return [
+      { id: 'new', shortcut: 'n', disabled: false },
+      { id: 'load', shortcut: 'l', disabled: !hasSave },
+      { id: 'unlocks', shortcut: 'u', disabled: true },
+    ]
+  }
+
+  function findShortcutItem(items, key) {
+    const letter = key.toLowerCase()
+    return items.find((m) => m.shortcut === letter && !m.disabled) ?? null
+  }
+
+  it('n routes to new game item', () => {
+    const item = findShortcutItem(buildItems(false), 'n')
+    expect(item).not.toBeNull()
+    expect(item.id).toBe('new')
+  })
+
+  it('l routes to load game when save exists', () => {
+    const item = findShortcutItem(buildItems(true), 'l')
+    expect(item).not.toBeNull()
+    expect(item.id).toBe('load')
+  })
+
+  it('l returns null when no save (disabled)', () => {
+    const item = findShortcutItem(buildItems(false), 'l')
+    expect(item).toBeNull()
+  })
+
+  it('u returns null (unlocks always disabled)', () => {
+    const item = findShortcutItem(buildItems(false), 'u')
+    expect(item).toBeNull()
+  })
+
+  it('unknown key returns null', () => {
+    const item = findShortcutItem(buildItems(false), 'z')
+    expect(item).toBeNull()
+  })
+
+  it('capital N also routes to new game (case insensitive)', () => {
+    const item = findShortcutItem(buildItems(false), 'N')
+    expect(item).not.toBeNull()
+    expect(item.id).toBe('new')
+  })
+})

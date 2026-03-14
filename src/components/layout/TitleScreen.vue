@@ -68,7 +68,11 @@ onMounted(() => {
   hasSave.value = save.listSaves().length > 0
   // Auto-focus so keyboard works immediately, no click required
   menuEl.value?.focus()
+  // Global keyboard listener — shortcuts work without clicking first
+  document.addEventListener('keydown', handleGlobalKeydown)
 })
+
+onUnmounted(() => document.removeEventListener('keydown', handleGlobalKeydown))
 
 const bootLines = [
   'SPORTSIM v0.1.0',
@@ -160,9 +164,6 @@ function handleGlobalKeydown(e) {
   if (tag === 'input' || tag === 'textarea') return
   onKeydown(e)
 }
-
-onMounted(() => document.addEventListener('keydown', handleGlobalKeydown))
-onUnmounted(() => document.removeEventListener('keydown', handleGlobalKeydown))
 </script>
 
 <style lang="scss" scoped>
