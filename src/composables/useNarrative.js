@@ -18,28 +18,52 @@ import { template, pickVariant, toNarrativeText } from '../utils/text.js'
  * Each character gets a random value within [min, max].
  * instant is always 0 — no range needed.
  */
-const SPEED_MS = {
+export const SPEED_MS = {
   instant: 0,
-  fast: { min: 5, max: 18 },
-  normal: { min: 8, max: 35 },
-  slow: { min: 30, max: 90 },
-  crawl: { min: 80, max: 200 },
+  fast: { min: 1, max: 5 },
+  normal: { min: 2, max: 10 },
+  slow: { min: 15, max: 40 },
+  crawl: { min: 50, max: 120 },
 }
+
+/**
+ * Minimum mean throughput the normal tier must sustain on ordinary prose,
+ * in characters per second. Guards against the pauses stacking up until
+ * a paragraph takes fifteen seconds to read.
+ */
+export const NORMAL_TIER_MIN_CHARS_PER_SECOND = 100
 
 /**
  * Extra delay added after punctuation characters — makes the text breathe.
  * These stack on top of the base character delay.
  */
-const PUNCTUATION_PAUSE = {
-  '.': { min: 80, max: 150 },
-  '!': { min: 80, max: 150 },
-  '?': { min: 80, max: 150 },
-  ',': { min: 40, max: 80 },
-  ';': { min: 40, max: 80 },
-  ':': { min: 30, max: 60 },
-  '—': { min: 80, max: 160 }, // em-dash — dramatic
-  '–': { min: 40, max: 80 }, // en-dash
-  ' ': { min: 10, max: 30 }, // word boundary micro-pause
+export const PUNCTUATION_PAUSE = {
+  '.': { min: 60, max: 110 },
+  '!': { min: 60, max: 110 },
+  '?': { min: 60, max: 110 },
+  ',': { min: 25, max: 50 },
+  ';': { min: 25, max: 50 },
+  ':': { min: 20, max: 40 },
+  '—': { min: 60, max: 110 }, // em-dash — dramatic
+  '–': { min: 25, max: 50 }, // en-dash
+}
+
+/**
+ * Mean milliseconds the renderer spends on one character of `text` at `speed`,
+ * base delay plus punctuation pauses. Pure — used to prove the throughput contract.
+ * @param {{ text: string, speed: string }} input
+ * @returns {number}
+ */
+export function meanCharDelayMs({ text, speed }) {
+  const setting = SPEED_MS[speed] ?? SPEED_MS.normal
+  if (setting === 0 || text.length === 0) return 0
+  const baseMean = (setting.min + setting.max) / 2
+  let total = 0
+  for (const char of text) {
+    const extra = PUNCTUATION_PAUSE[char]
+    total += baseMean + (extra ? (extra.min + extra.max) / 2 : 0)
+  }
+  return total / text.length
 }
 
 /** Pick a random integer in [min, max] inclusive. */
@@ -86,6 +110,12 @@ export function useNarrative() {
   /** Whether we should skip the current animation */
   let skipRequested = false
 
+  /**
+   * Bumped by clearLog. A render that started under an older generation
+   * is discarded when it finishes instead of landing in the fresh log.
+   */
+  let renderGeneration = 0
+
   /** Event callbacks */
   const listeners = { 'animation-start': [], 'animation-complete': [], skip: [] }
 
@@ -123,9 +153,16 @@ export function useNarrative() {
 
   /**
    * Clear the log (new game / location transition).
+   * Drops everything still queued and aborts the animation in flight so the
+   * old scene's prose never keeps typing under the new scene's header.
    */
   function clearLog() {
     log.value = []
+    queue.value = []
+    renderGeneration++
+    skipRequested = true
+    activeEntryState.value = null
+    _currentTokenProgress.value = ''
   }
 
   /**
@@ -140,10 +177,18 @@ export function useNarrative() {
     isAnimating.value = true
     const narrativeText = queue.value.shift()
     skipRequested = false
+    const generation = renderGeneration
 
     emit('animation-start', narrativeText)
 
     const entry = await _renderNarrativeText(narrativeText)
+
+    // clearLog ran while this was rendering — the entry belongs to a dead scene
+    if (generation !== renderGeneration) {
+      _processQueue()
+      return
+    }
+
     log.value.push(entry)
 
     emit('animation-complete', entry)
@@ -294,6 +339,24 @@ export function useNarrative() {
     clearLog,
     on,
     off,
+  }
+}
+
+/**
+ * Keyboard bindings that let the player skip the running animation from
+ * anywhere on the screen. Feed the result to useKeyboard.
+ * Space only acts while text is animating, so it never eats a keypress
+ * the rest of the screen might want.
+ * @param {{ narrative: ReturnType<typeof useNarrative> }} input
+ * @returns {Record<string, (e: KeyboardEvent) => void>}
+ */
+export function narrativeSkipBindings({ narrative }) {
+  return {
+    ' ': (e) => {
+      if (!narrative.isAnimating.value) return
+      e.preventDefault()
+      narrative.skip()
+    },
   }
 }
 

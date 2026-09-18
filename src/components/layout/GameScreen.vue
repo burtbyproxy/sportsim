@@ -104,8 +104,9 @@
 import { ref, computed, provide } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '../../stores/game.js'
-import { useNarrative } from '../../composables/useNarrative.js'
+import { useNarrative, narrativeSkipBindings } from '../../composables/useNarrative.js'
 import { useGameLoop } from '../../composables/useGameLoop.js'
+import { useKeyboard } from '../../composables/useKeyboard.js'
 import { loadActions } from '../../data/loader.js'
 import { formatTime } from '../../engine/clock.js'
 import GameHeader from './GameHeader.vue'
@@ -127,6 +128,9 @@ const actionRegistry = Object.values(loadActions('kenton'))
 
 const narrative = useNarrative()
 provide('narrative', narrative)
+
+// Space skips the running narrative from anywhere on the screen
+useKeyboard(narrativeSkipBindings({ narrative }))
 
 const gameLoop = useGameLoop(actionRegistry)
 provide('gameLoop', gameLoop)

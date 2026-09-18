@@ -2,13 +2,10 @@
   <div
     ref="logEl"
     class="narrative-log"
-    @click="handleSkip"
-    @keydown.space.prevent="handleSkip"
-    @keydown.enter.prevent="handleSkip"
-    tabindex="0"
     role="log"
     aria-live="polite"
     aria-label="Game narrative"
+    @click="handleSkip"
   >
     <!-- Completed log entries -->
     <div v-for="entry in log" :key="entry.id" class="narrative-entry narrative-text">
@@ -48,7 +45,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick, computed } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 
 const props = defineProps({
   /** Array of completed log entries from useNarrative */
