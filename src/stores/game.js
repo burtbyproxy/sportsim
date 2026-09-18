@@ -734,6 +734,7 @@ export const useGameStore = defineStore('game', {
       }
       this.player.makings = result.data.makings
       for (const itemId of result.data.itemIdsConsumed) removeItem(this.player, itemId)
+      if (result.data.moneyCost > 0) this.adjustMoney(-result.data.moneyCost)
       return { ...result, data: { ...result.data, promptCode: dealt.data.promptCode } }
     },
 

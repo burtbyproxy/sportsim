@@ -341,6 +341,80 @@ describe('makingStart', () => {
   })
 })
 
+describe('what a plan can cost, and who will not do it', () => {
+  const shy = {
+    ...mediums,
+    tagging: {
+      ...mediums.tagging,
+      making: {
+        ...mediums.tagging.making,
+        refusals: [{ personaId: 'sober', reason: 'Not sober. No.' }],
+      },
+    },
+  }
+  const paidAlley = {
+    ...alley,
+    surfaces: [{ id: 'wall', mediumIds: ['tagging'], cost: 5 }],
+  }
+  const withMoney = (money) => ({
+    ...playerWith({ carrying: ['spray'], mediumId: 'tagging' }),
+    status: { money },
+  })
+
+  it('a surface that charges is listed with its price and whether the player can cover it', () => {
+    const plan = (money) =>
+      makingOptions({ player: withMoney(money), location: paidAlley, items, mediums }).data.plans[0]
+    expect(plan(2)).toMatchObject({ cost: 5, affordable: false })
+    expect(plan(5)).toMatchObject({ cost: 5, affordable: true })
+  })
+
+  it('starting pays up front, and refuses a player who is short', () => {
+    const start = (money) =>
+      makingStart({
+        player: withMoney(money),
+        location: paidAlley,
+        items,
+        mediums,
+        plan: wallPlan,
+        gameState: {},
+        gameTime: { tick: 0 },
+      })
+    expect(start(4.99).error.code).toBe(MAKING_ERROR_CODES.MONEY_SHORT)
+    expect(start(5).data.moneyCost).toBe(5)
+    // A free wall costs nothing.
+    const free = makingStart({
+      player: withMoney(0),
+      location: alley,
+      items,
+      mediums,
+      plan: wallPlan,
+      gameState: {},
+      gameTime: { tick: 0 },
+    })
+    expect(free.data.moneyCost).toBe(0)
+  })
+
+  it('whoever is in charge can refuse a form outright; somebody else holding the brush will do it', () => {
+    const sober = playerWith({ carrying: ['spray'], mediumId: 'tagging' })
+    const plans = makingOptions({ player: sober, location: alley, items, mediums: shy }).data.plans
+    expect(plans.find((p) => p.mediumId === 'tagging').refusedReason).toBe('Not sober. No.')
+    expect(plans.find((p) => p.mediumId === 'performance').refusedReason).toBeNull()
+    const start = (player) =>
+      makingStart({
+        player,
+        location: alley,
+        items,
+        mediums: shy,
+        plan: wallPlan,
+        gameState: {},
+        gameTime: { tick: 0 },
+      })
+    expect(start(sober).error.code).toBe(MAKING_ERROR_CODES.PERSONA_REFUSES)
+    const drunk = { ...sober, blend: { ...sober.blend, dominantPersonaId: 'host' } }
+    expect(start(drunk).ok).toBe(true)
+  })
+})
+
 describe('makingWork', () => {
   it('moves the work forward and says when it is done, never past it', () => {
     let player = started({ player: playerWith({ carrying: ['paints', 'door'] }), plan: doorPlan })
@@ -563,10 +637,28 @@ describe('makingFinish', () => {
     expect(result.data.markIdsCovered).toEqual(['old'])
   })
 
+  it('a surface that keeps nothing leaves the experience and nothing else', () => {
+    const location = {
+      ...alley,
+      surfaces: [{ id: 'wall', mediumIds: ['tagging'], artifact: 'none' }],
+    }
+    const player = worked({
+      player: started({
+        player: playerWith({ carrying: ['spray'], mediumId: 'tagging' }),
+        plan: wallPlan,
+        location,
+      }),
+      ticksWorked: 1,
+    })
+    const result = makingFinish({ player, location, mediums, gameTime: { tick: 5 }, rng: die(20) })
+    expect(result.data.artifact).toBeNull()
+    expect(result.data.experience.tier).toBe(MAKING_TIERS.INSPIRED)
+  })
+
   it('a surface the place marks portable hands you something to carry, and the wall is untouched', () => {
     const location = {
       ...alley,
-      surfaces: [{ id: 'wall', mediumIds: ['tagging'], portable: true }],
+      surfaces: [{ id: 'wall', mediumIds: ['tagging'], artifact: 'portable' }],
       marks: [{ id: 'old', surfaceId: 'wall', status: ARTIFACT_STATUSES.FRESH }],
     }
     const player = worked({

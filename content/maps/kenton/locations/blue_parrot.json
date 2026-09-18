@@ -56,9 +56,21 @@
     {
       "id": "karaoke_machine",
       "name": "the karaoke machine",
+      "pieceAs": "at karaoke night at the Blue Parrot",
+      "mediumIds": ["karaoke"],
+      "artifact": "none",
+      "hours": {
+        "openHour": 21,
+        "closeHour": 1
+      }
+    },
+    {
+      "id": "karaoke_machine_taped",
+      "name": "the karaoke machine, with the tape rolling",
       "pieceAs": "at karaoke night at the Blue Parrot, on a tape of a tape of a tape",
       "mediumIds": ["karaoke"],
-      "portable": true,
+      "artifact": "portable",
+      "cost": 5,
       "hours": {
         "openHour": 21,
         "closeHour": 1

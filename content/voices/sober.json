@@ -48,8 +48,8 @@
     "game.karaoke.crowd.warm": "A couple of heads are nodding. The man in the Blazers jersey mouths the words.",
     "game.karaoke.crowd.hot": "They're singing it back at you. The whole bar. Badly. It's the best sound there is.",
     "game.karaoke.crowd.turning": "Somebody laughs, and it isn't the good kind.",
-    "game.karaoke.pushed": "You go for it. All of it. From the floor up.",
-    "game.karaoke.held": "You stay where your voice lives and ride the chorus.",
+    "game.karaoke.pushed": "In your head it's the big note. In the room it's a noise. Somebody at the bar puts a hand over their drink.",
+    "game.karaoke.held": "In your head you're riding the chorus. In the room you're a verse behind, reading the screen out loud like it's a menu.",
     "game.karaoke.bowed": "You hand back the mic. The machine clunks. Somewhere above it, a tape stops turning.",
     "piece.words": "It says: {words}."
   }

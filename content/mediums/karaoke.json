@@ -2,7 +2,7 @@
   "id": "karaoke",
   "display": "Karaoke",
   "stat": "charm",
-  "description": "Somebody else's song, your whole chest. The machine keeps a tape whether you want one or not.",
+  "description": "Somebody else's song, your whole chest. Nobody does it sober. The machine will tape it for five bucks; nobody ever pays.",
   "pieceAs": "a karaoke number",
   "making": {
     "gameId": "karaoke",
@@ -14,6 +14,12 @@
     "leavesArtifact": true,
     "statusChanges": {
       "energy": -2
-    }
+    },
+    "refusals": [
+      {
+        "personaId": "sober",
+        "reason": "Sober? No. Not for money, not on a dare, not if the whole bar chants your name"
+      }
+    ]
   }
 }
