@@ -36,6 +36,17 @@ export function meetsRequirements(player, action, gameTime) {
     }
   }
 
+  // Money floor — anything that costs money declares what it costs
+  if (req.minMoney !== null && req.minMoney !== undefined) {
+    const money = player.status?.money ?? 0
+    if (money < req.minMoney) {
+      return {
+        meets: false,
+        reason: `Costs $${req.minMoney.toFixed(2)} (you have $${money.toFixed(2)})`,
+      }
+    }
+  }
+
   // Sobriety requirements
   const sobriety = player.status?.sobriety ?? 100
   if (req.minSobriety !== null && req.minSobriety !== undefined && sobriety < req.minSobriety) {

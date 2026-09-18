@@ -12,6 +12,7 @@
       "minHour": 9,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": 7.95,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -76,6 +77,7 @@
       "minHour": 9,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },

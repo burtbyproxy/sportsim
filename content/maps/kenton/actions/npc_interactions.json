@@ -13,6 +13,7 @@
       "minHour": null,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -51,14 +52,18 @@
           }
         ]
       },
-      "statusChanges": { "mood": 8 },
+      "statusChanges": {
+        "mood": 8
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,
-      "archetypeChanges": { "social": 1 },
+      "archetypeChanges": {
+        "social": 1
+      },
       "counterChanges": null,
       "traumaGained": null,
       "obsessionFed": null
@@ -76,7 +81,9 @@
           }
         ]
       },
-      "statusChanges": { "mood": -2 },
+      "statusChanges": {
+        "mood": -2
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
@@ -107,6 +114,7 @@
       "minHour": null,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -137,14 +145,18 @@
           }
         ]
       },
-      "statusChanges": { "mood": 5 },
+      "statusChanges": {
+        "mood": 5
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,
-      "archetypeChanges": { "social": 1 },
+      "archetypeChanges": {
+        "social": 1
+      },
       "counterChanges": null,
       "traumaGained": null,
       "obsessionFed": null
@@ -170,7 +182,9 @@
           }
         ]
       },
-      "statusChanges": { "mood": -3 },
+      "statusChanges": {
+        "mood": -3
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
@@ -201,6 +215,7 @@
       "minHour": null,
       "maxHour": null,
       "minVisits": 2,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -231,14 +246,18 @@
           }
         ]
       },
-      "statusChanges": { "mood": 10 },
+      "statusChanges": {
+        "mood": 10
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,
-      "archetypeChanges": { "social": 2 },
+      "archetypeChanges": {
+        "social": 2
+      },
       "counterChanges": null,
       "traumaGained": null,
       "obsessionFed": null
@@ -256,7 +275,9 @@
           }
         ]
       },
-      "statusChanges": { "mood": 2 },
+      "statusChanges": {
+        "mood": 2
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
@@ -287,6 +308,7 @@
       "minHour": null,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -317,14 +339,18 @@
           }
         ]
       },
-      "statusChanges": { "mood": 5 },
+      "statusChanges": {
+        "mood": 5
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,
-      "archetypeChanges": { "social": 1 },
+      "archetypeChanges": {
+        "social": 1
+      },
       "counterChanges": null,
       "traumaGained": null,
       "obsessionFed": null
@@ -342,7 +368,9 @@
           }
         ]
       },
-      "statusChanges": { "mood": -2 },
+      "statusChanges": {
+        "mood": -2
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
@@ -373,6 +401,7 @@
       "minHour": null,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -406,15 +435,21 @@
           }
         ]
       },
-      "statusChanges": { "mood": 12 },
+      "statusChanges": {
+        "mood": 12
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,
-      "archetypeChanges": { "social": 2 },
-      "counterChanges": { "maurice_conversations": 1 },
+      "archetypeChanges": {
+        "social": 2
+      },
+      "counterChanges": {
+        "maurice_conversations": 1
+      },
       "traumaGained": null,
       "obsessionFed": null
     },
@@ -438,6 +473,7 @@
       "minHour": 20,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -476,15 +512,24 @@
           }
         ]
       },
-      "statusChanges": { "mood": 15, "energy": -10, "sobriety": -10 },
+      "statusChanges": {
+        "mood": 15,
+        "energy": -10,
+        "sobriety": -10
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,
-      "archetypeChanges": { "social": 3, "drifter": 1 },
-      "counterChanges": { "maurice_adventures": 1 },
+      "archetypeChanges": {
+        "social": 3,
+        "drifter": 1
+      },
+      "counterChanges": {
+        "maurice_adventures": 1
+      },
       "traumaGained": null,
       "obsessionFed": null
     },
@@ -509,7 +554,10 @@
           }
         ]
       },
-      "statusChanges": { "mood": -5, "energy": -10 },
+      "statusChanges": {
+        "mood": -5,
+        "energy": -10
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
@@ -540,6 +588,7 @@
       "minHour": 7,
       "maxHour": 19,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -578,15 +627,21 @@
           }
         ]
       },
-      "statusChanges": { "mood": 8 },
+      "statusChanges": {
+        "mood": 8
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,
-      "archetypeChanges": { "philosopher": 2 },
-      "counterChanges": { "vernon_conversations": 1 },
+      "archetypeChanges": {
+        "philosopher": 2
+      },
+      "counterChanges": {
+        "vernon_conversations": 1
+      },
       "traumaGained": null,
       "obsessionFed": null
     },
@@ -611,7 +666,9 @@
           }
         ]
       },
-      "statusChanges": { "mood": 2 },
+      "statusChanges": {
+        "mood": 2
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
@@ -642,6 +699,7 @@
       "minHour": 22,
       "maxHour": null,
       "minVisits": 2,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -680,14 +738,20 @@
           }
         ]
       },
-      "statusChanges": { "mood": 8 },
-      "statChanges": { "creativity": 1 },
+      "statusChanges": {
+        "mood": 8
+      },
+      "statChanges": {
+        "creativity": 1
+      },
       "moneyChange": null,
       "itemsGained": null,
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,
-      "archetypeChanges": { "philosopher": 1 },
+      "archetypeChanges": {
+        "philosopher": 1
+      },
       "counterChanges": null,
       "traumaGained": null,
       "obsessionFed": null
@@ -713,7 +777,9 @@
           }
         ]
       },
-      "statusChanges": { "mood": -2 },
+      "statusChanges": {
+        "mood": -2
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,

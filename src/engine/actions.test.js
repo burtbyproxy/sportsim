@@ -278,3 +278,24 @@ describe('resolveAction', () => {
     expect(result.diceResult).toBeNull()
   })
 })
+
+describe('meetsRequirements — money floor', () => {
+  const gameTime = { hour: 14 }
+  const action = (minMoney) => ({ requirements: { minMoney } })
+  const playerWith = (money) => ({ status: { money, sobriety: 100 }, stats: {}, inventory: [] })
+
+  it('a player with at least the floor passes', () => {
+    expect(meetsRequirements(playerWith(3), action(3), gameTime).meets).toBe(true)
+    expect(meetsRequirements(playerWith(10), action(3), gameTime).meets).toBe(true)
+  })
+
+  it('a broke player is refused and told the price', () => {
+    const result = meetsRequirements(playerWith(1.5), action(3), gameTime)
+    expect(result.meets).toBe(false)
+    expect(result.reason).toBe('Costs $3.00 (you have $1.50)')
+  })
+
+  it('a null floor costs nothing', () => {
+    expect(meetsRequirements(playerWith(0), action(null), gameTime).meets).toBe(true)
+  })
+})

@@ -12,6 +12,7 @@
       "minHour": 11,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -118,6 +119,7 @@
       "minHour": 11,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -179,6 +181,7 @@
       "minHour": 11,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": 2,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -242,6 +245,7 @@
       "minHour": 20,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },

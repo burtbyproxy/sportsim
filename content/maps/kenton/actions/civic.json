@@ -12,6 +12,7 @@
       "minHour": 8,
       "maxHour": 17,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -112,6 +113,7 @@
       "minHour": 8,
       "maxHour": 17,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -173,6 +175,7 @@
       "minHour": 15,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -279,6 +282,7 @@
       "minHour": 15,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -340,6 +344,7 @@
       "minHour": 8,
       "maxHour": 17,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -402,6 +407,7 @@
       "minHour": 8,
       "maxHour": 20,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },

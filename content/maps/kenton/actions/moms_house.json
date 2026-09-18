@@ -12,6 +12,7 @@
       "minHour": null,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -45,7 +46,9 @@
           }
         ]
       },
-      "statusChanges": { "hunger": 25 },
+      "statusChanges": {
+        "hunger": 25
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
@@ -53,7 +56,9 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": { "times_raided_fridge": 1 },
+      "counterChanges": {
+        "times_raided_fridge": 1
+      },
       "traumaGained": null,
       "obsessionFed": null
     },
@@ -76,6 +81,7 @@
       "minHour": null,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -109,7 +115,10 @@
           }
         ]
       },
-      "statusChanges": { "energy": 10, "mood": -5 },
+      "statusChanges": {
+        "energy": 10,
+        "mood": -5
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
@@ -140,6 +149,7 @@
       "minHour": 21,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -165,7 +175,10 @@
           }
         ]
       },
-      "statusChanges": { "energy": 60, "mood": 10 },
+      "statusChanges": {
+        "energy": 60,
+        "mood": 10
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
