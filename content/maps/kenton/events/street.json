@@ -227,7 +227,7 @@
         "label": "Be polite. Be boring.",
         "check": {
           "stat": "charm",
-          "dc": 24
+          "dc": 13
         },
         "outcome": {
           "narrative": {
@@ -289,7 +289,7 @@
         "label": "Walk faster.",
         "check": {
           "stat": "stamina",
-          "dc": 24
+          "dc": 12
         },
         "outcome": {
           "narrative": {
@@ -354,7 +354,7 @@
         "label": "Tell him about your art.",
         "check": {
           "stat": "creativity",
-          "dc": 25
+          "dc": 14
         },
         "outcome": {
           "narrative": {

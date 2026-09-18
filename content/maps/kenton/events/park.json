@@ -35,7 +35,7 @@
         "label": "Say hi. Commit to it.",
         "check": {
           "stat": "charm",
-          "dc": 24
+          "dc": 13
         },
         "outcome": {
           "narrative": {

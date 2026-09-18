@@ -5,7 +5,8 @@ import {
   rollContested,
   isCriticalSuccess,
   isCriticalFailure,
-  calculateModifier,
+  statEffective,
+  checkModifier,
 } from './dice.js'
 import { seededRandom } from '../utils/random.js'
 
@@ -71,67 +72,67 @@ describe('isCriticalFailure', () => {
   })
 })
 
-// --- calculateModifier ---
+// --- statEffective ---
 
-describe('calculateModifier', () => {
+describe('statEffective', () => {
   it('returns base stat value for sober, healthy player', () => {
     const player = makePlayer()
-    expect(calculateModifier(player, 'charm')).toBe(10)
+    expect(statEffective({ player: player, statName: 'charm' })).toBe(10)
   })
 
   it('includes active modifiers on the stat', () => {
     const player = makePlayer()
     player.stats.charm.modifiers = [{ source: 'test', value: 5, duration: null }]
-    expect(calculateModifier(player, 'charm')).toBe(15)
+    expect(statEffective({ player: player, statName: 'charm' })).toBe(15)
   })
 
   it('includes negative modifiers', () => {
     const player = makePlayer()
     player.stats.charm.modifiers = [{ source: 'test', value: -3, duration: null }]
-    expect(calculateModifier(player, 'charm')).toBe(7)
+    expect(statEffective({ player: player, statName: 'charm' })).toBe(7)
   })
 
   describe('altered state thresholds', () => {
     it('applies wits penalty when sobriety < 30', () => {
       const player = makePlayer({ status: { ...makePlayer().status, sobriety: 25 } })
       // wits base = 12, sobriety < 30 applies wits -5
-      expect(calculateModifier(player, 'wits')).toBe(7)
+      expect(statEffective({ player: player, statName: 'wits' })).toBe(7)
     })
 
     it('applies charm bonus when sobriety < 30', () => {
       const player = makePlayer({ status: { ...makePlayer().status, sobriety: 25 } })
       // charm base = 10, sobriety < 30 applies charm +3
-      expect(calculateModifier(player, 'charm')).toBe(13)
+      expect(statEffective({ player: player, statName: 'charm' })).toBe(13)
     })
 
     it('applies override thresholds when sobriety < 15 (wits -10, not -5)', () => {
       const player = makePlayer({ status: { ...makePlayer().status, sobriety: 10 } })
       // sobriety < 15 OVERRIDES: wits -10
-      expect(calculateModifier(player, 'wits')).toBe(2)
+      expect(statEffective({ player: player, statName: 'wits' })).toBe(2)
     })
 
     it('applies toughness bonus when sobriety < 15', () => {
       const player = makePlayer({ status: { ...makePlayer().status, sobriety: 10 } })
       // sobriety < 15: toughness +5
-      expect(calculateModifier(player, 'toughness')).toBe(13)
+      expect(statEffective({ player: player, statName: 'toughness' })).toBe(13)
     })
 
     it('applies physical stat penalties when energy < 20', () => {
       const player = makePlayer({ status: { ...makePlayer().status, energy: 15 } })
       // stamina base 10, energy < 20: stamina -3
-      expect(calculateModifier(player, 'stamina')).toBe(7)
+      expect(statEffective({ player: player, statName: 'stamina' })).toBe(7)
     })
 
     it('applies mood bonuses when mood > 80', () => {
       const player = makePlayer({ status: { ...makePlayer().status, mood: 90 } })
       // charm base 10, mood > 80: charm +3
-      expect(calculateModifier(player, 'charm')).toBe(13)
+      expect(statEffective({ player: player, statName: 'charm' })).toBe(13)
     })
 
     it('applies mood penalties when mood < 20 (charm down, creativity up)', () => {
       const player = makePlayer({ status: { ...makePlayer().status, mood: 15 } })
-      expect(calculateModifier(player, 'charm')).toBe(5) // 10 - 5
-      expect(calculateModifier(player, 'creativity')).toBe(13) // 10 + 3
+      expect(statEffective({ player: player, statName: 'charm' })).toBe(5) // 10 - 5
+      expect(statEffective({ player: player, statName: 'creativity' })).toBe(13) // 10 + 3
     })
 
     it('stacks multiple altered state effects', () => {
@@ -139,7 +140,7 @@ describe('calculateModifier', () => {
         status: { ...makePlayer().status, sobriety: 25, energy: 15 },
       })
       // wits: base 12, sobriety<30 wits-5, energy<20 wits-3 = 4
-      expect(calculateModifier(player, 'wits')).toBe(4)
+      expect(statEffective({ player: player, statName: 'wits' })).toBe(4)
     })
   })
 
@@ -152,7 +153,7 @@ describe('calculateModifier', () => {
         effects: { diceModifiers: { luck: 5 } },
       },
     ]
-    expect(calculateModifier(player, 'luck')).toBe(10) // 5 base + 5 ability
+    expect(statEffective({ player: player, statName: 'luck' })).toBe(10) // 5 base + 5 ability
   })
 
   it('ignores inactive abilities', () => {
@@ -164,7 +165,7 @@ describe('calculateModifier', () => {
         effects: { diceModifiers: { luck: 5 } },
       },
     ]
-    expect(calculateModifier(player, 'luck')).toBe(5)
+    expect(statEffective({ player: player, statName: 'luck' })).toBe(5)
   })
 
   it('includes trauma stat modifiers', () => {
@@ -175,7 +176,7 @@ describe('calculateModifier', () => {
         effects: { statModifiers: { charm: -2 } },
       },
     ]
-    expect(calculateModifier(player, 'charm')).toBe(8)
+    expect(statEffective({ player: player, statName: 'charm' })).toBe(8)
   })
 })
 
@@ -201,8 +202,9 @@ describe('rollCheck', () => {
     // Force a natural 20
     const alwaysMax = () => 0.999999
     const player = makePlayer()
-    const result = rollCheck(player, 'charm', [], 30, alwaysMax)
-    // natural 20 + charm 10 = 30 >= dc 30
+    const result = rollCheck(player, 'charm', [], 21, alwaysMax)
+    // natural 20 + charm 10 → +1 = 21 >= dc 21
+    expect(result.total).toBe(21)
     expect(result.success).toBe(true)
     expect(result.criticalSuccess).toBe(true)
   })
@@ -220,8 +222,8 @@ describe('rollCheck', () => {
     const alwaysMin = () => 0 // natural = 1
     const player = makePlayer()
     const result = rollCheck(player, 'charm', [5, 5], 1, alwaysMin)
-    // natural 1 + charm 10 + extra 10 = 21
-    expect(result.total).toBe(21)
+    // natural 1 + charm 10 → +1, + extra 10 = 12
+    expect(result.total).toBe(12)
     expect(result.success).toBe(true)
   })
 })
@@ -269,5 +271,48 @@ describe('rollContested', () => {
     const player2 = makePlayer()
     const result = rollContested(player1, [], 'charm', player2, [], 'charm', alwaysSame)
     expect(result.winner).toBe('tie')
+  })
+})
+
+// --- checkModifier ---
+
+describe('checkModifier', () => {
+  const withCharm = (base) => makePlayer({ stats: { charm: { base, modifiers: [], xp: 0 } } })
+
+  it('gives one point per ten points of stat', () => {
+    expect(checkModifier({ player: withCharm(10), statName: 'charm' })).toBe(1)
+    expect(checkModifier({ player: withCharm(19), statName: 'charm' })).toBe(1)
+    expect(checkModifier({ player: withCharm(20), statName: 'charm' })).toBe(2)
+    expect(checkModifier({ player: withCharm(50), statName: 'charm' })).toBe(5)
+    expect(checkModifier({ player: withCharm(85), statName: 'charm' })).toBe(8)
+    expect(checkModifier({ player: withCharm(100), statName: 'charm' })).toBe(10)
+  })
+
+  it('never drops below zero when penalties drag the stat under ten', () => {
+    const player = withCharm(5)
+    player.stats.charm.modifiers = [{ source: 'test', value: -20, duration: null }]
+    expect(checkModifier({ player, statName: 'charm' })).toBe(0)
+  })
+
+  it('caps at ten', () => {
+    const player = withCharm(100)
+    player.stats.charm.modifiers = [{ source: 'test', value: 50, duration: null }]
+    expect(checkModifier({ player, statName: 'charm' })).toBe(10)
+  })
+
+  it('altered state shifts the stat before conversion', () => {
+    const player = withCharm(38)
+    expect(checkModifier({ player, statName: 'charm' })).toBe(3)
+    player.status.sobriety = 20 // charm +3 while tipsy → 41 → +4
+    expect(checkModifier({ player, statName: 'charm' })).toBe(4)
+  })
+
+  it('a starting player passes an easy check more often than not', () => {
+    const player = withCharm(15) // +1
+    let passes = 0
+    for (let n = 1; n <= 20; n++) {
+      if (rollCheck(player, 'charm', [], 10, () => (n - 1) / 20).success) passes++
+    }
+    expect(passes).toBe(12) // 9..20 on the die
   })
 })
