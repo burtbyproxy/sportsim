@@ -299,3 +299,38 @@ describe('meetsRequirements — money floor', () => {
     expect(meetsRequirements(playerWith(0), action(null), gameTime).meets).toBe(true)
   })
 })
+
+// --- requiresInspiration ---
+
+describe('meetsRequirements — requiresInspiration', () => {
+  const action = { id: 'make_something', requirements: { requiresInspiration: true } }
+  const time = { hour: 14 }
+  const record = (status) => ({
+    id: 'i1',
+    status,
+    personaSnapshot: {},
+    endedBy: null,
+  })
+
+  it('refuses a player nothing is moving', () => {
+    const result = meetsRequirements({ status: {}, inspirations: [] }, action, time)
+    expect(result).toEqual({ meets: false, reason: 'Nothing is moving you' })
+  })
+
+  it('refuses a player whose inspiration already ended', () => {
+    const player = { status: {}, inspirations: [record('expired'), record('interrupted')] }
+    expect(meetsRequirements(player, action, time).meets).toBe(false)
+  })
+
+  it('allows an inspired player', () => {
+    const player = { status: {}, inspirations: [record('expired'), record('active')] }
+    expect(meetsRequirements(player, action, time).meets).toBe(true)
+  })
+
+  it('ignores the field when it is null or false', () => {
+    for (const requiresInspiration of [null, false, undefined]) {
+      const cold = { id: 'x', requirements: { requiresInspiration } }
+      expect(meetsRequirements({ status: {}, inspirations: [] }, cold, time).meets).toBe(true)
+    }
+  })
+})

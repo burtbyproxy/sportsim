@@ -1,0 +1,12 @@
+{
+  "id": "sober",
+  "lines": {
+    "inspiration.struck": "Something catches. You don't know what yet. You know it's yours, and you know it won't wait.",
+    "inspiration.replaced": "The other thing, the thing from before, is gone. You don't miss it. You will.",
+    "inspiration.expired": "Whatever it was, it's gone. You had it and you did nothing, and now it belongs to somebody else, somewhere, who will.",
+    "inspiration.interrupted": "And it's gone. Just like that. You could feel exactly where it had been.",
+    "inspiration.status.fresh": "inspired",
+    "inspiration.status.fading": "inspired, fading",
+    "inspiration.status.none": "nothing"
+  }
+}

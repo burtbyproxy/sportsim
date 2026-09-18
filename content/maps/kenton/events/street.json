@@ -66,7 +66,8 @@
         "hit_by_car_objects": 1
       },
       "traumaGained": null,
-      "obsessionFed": null
+      "obsessionFed": null,
+        "inspiration": { "mediumId": "drawing", "strength": 40, "ticksTotal": 8 }
     },
     "nextEventId": null
   },
@@ -169,7 +170,8 @@
       "archetypeChanges": null,
       "counterChanges": null,
       "traumaGained": null,
-      "obsessionFed": null
+      "obsessionFed": null,
+        "inspiration": { "mediumId": "writing", "strength": 30, "ticksTotal": 6 }
     },
     "nextEventId": null
   },
@@ -539,7 +541,8 @@
         "blackouts_remembered": 1
       },
       "traumaGained": null,
-      "obsessionFed": null
+      "obsessionFed": null,
+        "inspiration": { "mediumId": "painting", "strength": 60, "ticksTotal": 12 }
     },
     "nextEventId": null
   }

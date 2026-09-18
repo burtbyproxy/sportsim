@@ -1,5 +1,6 @@
 import { ref, readonly } from 'vue'
 import { blendSober } from '../engine/blend.js'
+import { inspirationActive } from '../engine/inspiration.js'
 import { template, pickVariant, toNarrativeText } from '../utils/text.js'
 
 /**
@@ -412,6 +413,7 @@ function _buildNarrativeContext(player, gameTime, location) {
     starving: hunger < 15,
     ...personaFlags,
     personaId: blend.dominantPersonaId,
+    inspired: Boolean(inspirationActive({ player })),
   }
 }
 

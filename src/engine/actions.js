@@ -4,6 +4,7 @@
  */
 
 import { rollCheck, rollContested } from './dice.js'
+import { inspirationActive } from './inspiration.js'
 
 /**
  * Checks whether a player meets the requirements for an action.
@@ -81,6 +82,11 @@ export function meetsRequirements(player, action, gameTime) {
         return { meets: false, reason: `Requires trauma: ${traumaId}` }
       }
     }
+  }
+
+  // Inspiration — some things cannot be done cold
+  if (req.requiresInspiration && !inspirationActive({ player })) {
+    return { meets: false, reason: 'Nothing is moving you' }
   }
 
   // Ability requirements

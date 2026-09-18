@@ -76,6 +76,14 @@
             </div>
           </div>
 
+          <!-- Muse -->
+          <div class="status-section">
+            <div class="status-section__label">muse</div>
+            <div class="status-muse" :class="{ 'status-muse--active': game.inspirationActive }">
+              {{ game.inspirationLabel }}
+            </div>
+          </div>
+
           <!-- Money -->
           <div class="status-section">
             <div class="status-section__label">funds</div>
@@ -351,6 +359,17 @@ function barFillClass(key, value) {
 }
 
 // Money
+
+.status-muse {
+  font-family: $font-mono;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  font-style: italic;
+
+  &--active {
+    color: $color-text-primary;
+  }
+}
 
 .status-money {
   display: flex;

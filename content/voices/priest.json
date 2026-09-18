@@ -1,0 +1,9 @@
+{
+  "id": "priest",
+  "lines": {
+    "inspiration.struck": "The Lord, or somebody, has a job for you. You accept. You'd accept anything right now, but you accept this one in particular.",
+    "inspiration.expired": "You let it go. That's alright. You forgive yourself. You forgive everyone in this room, out loud, one at a time.",
+    "inspiration.status.fresh": "called",
+    "inspiration.status.fading": "called, and stalling"
+  }
+}

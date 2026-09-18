@@ -20,6 +20,7 @@ const _itemFiles = import.meta.glob('/content/items/*.json', { eager: true })
 const _substanceFiles = import.meta.glob('/content/substances/*.json', { eager: true })
 const _conditionFiles = import.meta.glob('/content/conditions/*.json', { eager: true })
 const _mediumFiles = import.meta.glob('/content/mediums/*.json', { eager: true })
+const _voiceFiles = import.meta.glob('/content/voices/*.json', { eager: true })
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -158,4 +159,13 @@ export function loadConditions() {
 export function loadMediums() {
   const modules = _extractModules(_mediumFiles)
   return _mergeById(modules, 'loadMediums()')
+}
+
+/**
+ * Load all voice catalogs (global). One file per persona, keyed by persona id.
+ * @returns {Object<string, Object>}
+ */
+export function loadVoices() {
+  const modules = _extractModules(_voiceFiles)
+  return _mergeById(modules, 'loadVoices()')
 }

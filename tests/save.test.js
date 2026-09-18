@@ -757,6 +757,21 @@ describe('saveMigrate', () => {
     expect(migrated.characters.fixed.skills).toEqual({})
   })
 
+  it('gives everyone an empty inspiration log on the way to v4', () => {
+    const migrated = saveMigrate({ save: makeV1Save() })
+    expect(migrated.player.inspirations).toEqual([])
+    expect(migrated.characters.maurice.inspirations).toEqual([])
+  })
+
+  it('a v3 save keeps its skills and gains only the log', () => {
+    const v3 = makeValidSave({ version: 3 })
+    v3.player.skills = { painting: { sober: { base: 4, modifiers: [], xp: 2 } } }
+    const migrated = saveMigrate({ save: v3 })
+    expect(migrated.version).toBe(SAVE_VERSION)
+    expect(migrated.player.skills.painting.sober.base).toBe(4)
+    expect(migrated.player.inspirations).toEqual([])
+  })
+
   it('does not mutate the input', () => {
     const v1 = makeV1Save()
     saveMigrate({ save: v1 })
