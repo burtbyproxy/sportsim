@@ -50,6 +50,12 @@ import { toNarrativeText } from '../utils/text.js'
 import { sim } from '../workers/simulation-api.js'
 import { moneyFormat } from '../utils/money.js'
 
+/** What can go wrong in the loop itself, as opposed to in what it calls. */
+export const LOOP_ERROR_CODES = Object.freeze({
+  SIMULATION_FAILED: 'SIMULATION_FAILED',
+  ITEM_UNKNOWN: 'ITEM_UNKNOWN',
+})
+
 /**
  * @param {{
  *   actionRegistry?: Object[],
@@ -121,8 +127,8 @@ export function useGameLoop({
         game.charactersStatusApply({ updates: simResult.characters })
       }
     } catch (err) {
-      // Worker failure is non-fatal — log and continue
-      console.warn('[useGameLoop] simulation worker tick failed:', err)
+      // The world stands still this tick; the player hears why.
+      _failureShow({ error: { code: LOOP_ERROR_CODES.SIMULATION_FAILED, params: {} } })
     }
 
     // 4b. Substances wear off — player and characters alike — and the blend
@@ -131,13 +137,13 @@ export function useGameLoop({
 
     // 4c. The inspiration clock runs down. An idea that ran out says so.
     const clock = game.applyInspirationTick({ ticksElapsed: ticks })
-    if (clock.ok && clock.data.expired) {
-      _voiceEnqueue({ code: 'inspiration.expired' })
-    }
+    if (!clock.ok) _failureShow(clock)
+    else if (clock.data.expired) _voiceEnqueue({ code: 'inspiration.expired' })
 
     // 4d. Whoever is in charge may get the urge to do something about it.
     const urge = game.applyInspirationUrge({ ticksElapsed: ticks, rng })
-    if (urge.ok && urge.data.struck) _voiceEnqueue({ code: 'inspiration.urge' })
+    if (!urge.ok) _failureShow(urge)
+    else if (urge.data.struck) _voiceEnqueue({ code: 'inspiration.urge' })
 
     // 5. Move if requested — the new scene's prose goes into a fresh log
     if (toLocationId) {
@@ -154,7 +160,10 @@ export function useGameLoop({
     // work on it dies too.
     _makingReconcile()
 
-    // 7. Re-evaluate available actions
+    // 7. Anything that went wrong with nobody to tell is told now.
+    _faultsShow()
+
+    // 8. Re-evaluate available actions
     _refreshActions()
   }
 
@@ -205,7 +214,8 @@ export function useGameLoop({
     // the world is what's moving them, in which case the strike replaces it.
     if (!event.outcome?.inspiration) {
       const cut = game.applyInspirationInterrupt({ reason: { kind: 'event', id: event.id } })
-      if (cut.ok && cut.data.interrupted) _voiceEnqueue({ code: 'inspiration.interrupted' })
+      if (!cut.ok) _failureShow(cut)
+      else if (cut.data.interrupted) _voiceEnqueue({ code: 'inspiration.interrupted' })
     }
     if (event.choices?.length > 0) {
       game.setActiveEvent(event)
@@ -270,7 +280,7 @@ export function useGameLoop({
   async function useItem({ itemId }) {
     if (!game.player || game.activeEvent) return
     const result = game.applyItemUse({ itemId, rng })
-    if (!result.ok) return
+    if (!result.ok) return _failureShow(result)
     _voiceEnqueue({ code: 'item.used', params: { item: result.data.item.name } })
     await tick(1)
   }
@@ -280,6 +290,20 @@ export function useGameLoop({
     if (!narrative) return
     const text = game.voiceLine({ code, params })
     if (text) _narrativeEnqueue(toNarrativeText(text))
+  }
+
+  /**
+   * A failure, in play. Content may give its code a line like any other;
+   * a code nobody wrote a line for shows as itself, never as nothing.
+   * @param {{ error: { code: string, params?: Object } }} result
+   */
+  function _failureShow(result) {
+    _voiceEnqueue({ code: result.error.code, params: result.error.params ?? {} })
+  }
+
+  /** Everything that went wrong with nobody to tell, told now. */
+  function _faultsShow() {
+    for (const fault of game.faultsDrain()) _failureShow({ error: fault })
   }
 
   /** Prose that is already in somebody's voice: a piece's own words. */
@@ -293,7 +317,7 @@ export function useGameLoop({
    */
   function _scavenge() {
     const result = game.applyScavenge({ rng })
-    if (!result.ok) return
+    if (!result.ok) return _failureShow(result)
     _checkTrain(result.data.check)
     const { itemId, entry, pickedClean } = result.data
     if (!itemId) {
@@ -307,10 +331,9 @@ export function useGameLoop({
         ...entry.inspiration,
         source: { kind: 'item', id: itemId },
       })
-      if (struck.ok) {
-        if (struck.data.replaced) _voiceEnqueue({ code: 'inspiration.replaced' })
-        _voiceEnqueue({ code: 'inspiration.struck' })
-      }
+      if (!struck.ok) return _failureShow(struck)
+      if (struck.data.replaced) _voiceEnqueue({ code: 'inspiration.replaced' })
+      _voiceEnqueue({ code: 'inspiration.struck' })
     }
   }
 
@@ -326,7 +349,8 @@ export function useGameLoop({
     const idea = (game.player.inspirations ?? []).find((r) => r.id === making.inspirationId)
     const reason = idea?.endedBy ?? { kind: 'inspiration', id: making.inspirationId }
     const result = game.applyMakingAbandon({ reason })
-    if (result.ok && result.data.abandoned) _voiceEnqueue({ code: 'making.abandoned.lost' })
+    if (!result.ok) _failureShow(result)
+    else if (result.data.abandoned) _voiceEnqueue({ code: 'making.abandoned.lost' })
   }
 
   /** What a thing is called on the menu. */
@@ -467,7 +491,7 @@ export function useGameLoop({
       mediums: game.mediums,
       gameTime: game.time,
     })
-    if (!options.ok) return
+    if (!options.ok) return _failureShow(options)
     if (options.data.plans.length === 0) {
       _voiceEnqueue({ code: 'making.nothing_to_work_with' })
       return
@@ -479,7 +503,7 @@ export function useGameLoop({
   function _makingBegin({ plan }) {
     game.makingPickerSet({ picker: null })
     const started = game.applyMakingStart({ plan, rng })
-    if (!started.ok) return
+    if (!started.ok) return _failureShow(started)
     _voiceEnqueue({ code: 'making.started' })
     if (started.data.promptCode) _voiceEnqueue({ code: started.data.promptCode })
   }
@@ -493,7 +517,7 @@ export function useGameLoop({
   async function _makingSitting({ choiceId }) {
     const before = game.makingActive
     const played = game.applyMakingRound({ choiceId, rng })
-    if (!played.ok) return
+    if (!played.ok) return _failureShow(played)
     _voiceEnqueue({ code: played.data.lineCode, params: played.data.lineParams })
     const cost = game.mediums[before.mediumId].making.statusChanges
     if (cost) game.applyStatusChanges(cost)
@@ -506,7 +530,7 @@ export function useGameLoop({
       return
     }
     const finished = game.applyMakingFinish({ rng })
-    if (!finished.ok) return
+    if (!finished.ok) return _failureShow(finished)
     _checkTrain(finished.data.check)
     _voiceLiteralEnqueue(finished.data.experience.artistText)
     if (finished.data.markIdsCovered.length > 0) _voiceEnqueue({ code: 'making.covered' })
@@ -529,8 +553,8 @@ export function useGameLoop({
         mediums: game.mediums,
         gameTime: game.time,
       })
-      const offer =
-        entry.ingredientsOffered && ingredients.ok && ingredients.data.ingredientItemIds.length > 0
+      if (!ingredients.ok) return _failureShow(ingredients)
+      const offer = entry.ingredientsOffered && ingredients.data.ingredientItemIds.length > 0
       if (offer) {
         game.makingPickerSet({ picker: { step: 'ingredient', plan: entry.plan } })
       } else {
@@ -544,9 +568,8 @@ export function useGameLoop({
       await _makingSitting({ choiceId: entry.choiceId })
     } else if (entry.kind === 'making_abandon') {
       const result = game.applyMakingAbandon({ reason: { kind: 'player', id: 'walked_away' } })
-      if (result.ok && result.data.abandoned) {
-        _voiceEnqueue({ code: 'making.abandoned.walked_away' })
-      }
+      if (!result.ok) _failureShow(result)
+      else if (result.data.abandoned) _voiceEnqueue({ code: 'making.abandoned.walked_away' })
     }
     _refreshActions()
   }
@@ -562,7 +585,10 @@ export function useGameLoop({
     if (game.makingActive) return
     game.makingPickerSet({ picker: null })
     await tick(travelTicks > 0 ? travelTicks : 1, locationId)
-    if (save) save.autoSave()
+    if (save) {
+      const saved = save.saveAuto()
+      if (!saved.ok) _voiceEnqueue({ code: 'save.failed' })
+    }
   }
 
   /**
@@ -617,7 +643,8 @@ export function useGameLoop({
     // Some actions are the interruption: sleep, mostly.
     if (action.interruptsInspiration) {
       const cut = game.applyInspirationInterrupt({ reason: { kind: 'action', id: action.id } })
-      if (cut.ok && cut.data.interrupted) _voiceEnqueue({ code: 'inspiration.interrupted' })
+      if (!cut.ok) _failureShow(cut)
+      else if (cut.data.interrupted) _voiceEnqueue({ code: 'inspiration.interrupted' })
     }
 
     // Advance time by action cost
@@ -655,7 +682,9 @@ export function useGameLoop({
     // after the doses, because whoever you are right now owns the idea.
     if (outcome.inspiration) {
       const struck = game.applyInspirationStrike({ ...outcome.inspiration, source })
-      if (struck.ok) {
+      if (!struck.ok) {
+        _failureShow(struck)
+      } else {
         if (struck.data.replaced) _voiceEnqueue({ code: 'inspiration.replaced' })
         _voiceEnqueue({ code: 'inspiration.struck' })
       }
@@ -669,7 +698,7 @@ export function useGameLoop({
         if (itemDef) {
           addItem(game.player, itemDef)
         } else {
-          console.warn(`[useGameLoop] itemsGained: unknown item ID '${itemId}'`)
+          _failureShow({ error: { code: LOOP_ERROR_CODES.ITEM_UNKNOWN, params: { itemId } } })
         }
       }
     }

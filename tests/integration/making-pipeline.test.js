@@ -457,7 +457,7 @@ describe('making pipeline', () => {
     await pick(ctx, 'Make something')
     await pick(ctx, 'Cabinet Door')
     await pick(ctx, 'Keep at it')
-    const id = useSave().save('mid-painting')
+    const id = useSave().saveWrite({ name: 'mid-painting' }).data.id
 
     setActivePinia(createPinia())
     const restored = useGameStore()
@@ -465,7 +465,7 @@ describe('making pipeline', () => {
     for (const v of voices) restored.registerVoice({ voice: v })
     for (const m of mediums) restored.registerMedium({ medium: m })
     for (const g of games) restored.registerGame({ game: g })
-    restored.loadSave(useSave().load(id))
+    restored.loadSave(useSave().saveRead({ id }).data)
     restored.locationsRestore({ definitions: Object.fromEntries(locations.map((l) => [l.id, l])) })
 
     expect(restored.locations.lombard_dental.marks).toHaveLength(1)

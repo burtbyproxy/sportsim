@@ -124,9 +124,12 @@ describe('item pipeline', () => {
     expect(result.error.code).toBe('ITEM_NOT_CONSUMABLE')
     expect(game.playerInventory).toHaveLength(1)
 
-    const loop = useGameLoop()
+    const narrative = useNarrative()
+    const loop = useGameLoop({ narrative })
     await loop.useItem({ itemId: 'single_sock' })
     expect(game.time.tick).toBe(0)
+    // Nobody wrote a line for it yet, so it shows as its code: seen, not swallowed.
+    expect(await settle(narrative)).toContain('[ITEM_NOT_CONSUMABLE]')
   })
 
   it('using something you do not have is refused with a code', () => {
@@ -213,6 +216,89 @@ describe('learning by doing', () => {
   it('training a stat that does not exist is refused with a code', () => {
     const game = startGame()
     expect(game.applyStatXp({ statName: 'swagger', amount: 5 }).error.code).toBe('STAT_UNKNOWN')
+  })
+})
+
+describe('failures are shown in play, never swallowed', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  it('a simulation that falls over says so, and the world waits a tick', async () => {
+    const game = startGame()
+    game.registerCharacter(createCharacter(maurice))
+    const narrative = useNarrative()
+    const broken = {
+      tick: () => {
+        throw new Error('worker gone')
+      },
+    }
+    const loop = useGameLoop({ narrative, simulation: broken })
+
+    await loop.tick(1)
+
+    expect(await settle(narrative)).toContain('[SIMULATION_FAILED]')
+    expect(game.time.tick).toBe(1)
+  })
+
+  it('a character whose blend cannot be worked out is reported by name, after the tick', async () => {
+    const game = startGame()
+    game.registerCharacter(createCharacter({ ...maurice, intoxications: { moonshine_x: 40 } }))
+    const narrative = useNarrative()
+    const loop = useGameLoop({ narrative, simulation: simulationLocal })
+
+    await loop.tick(1)
+
+    expect(await settle(narrative)).toContain('[SUBSTANCE_UNKNOWN]')
+    expect(game.faults).toEqual([])
+  })
+
+  it('the store keeps the fault, with who it was about, until the loop takes it', () => {
+    const game = startGame()
+    game.registerCharacter(createCharacter({ ...maurice, intoxications: { moonshine_x: 40 } }))
+    game.blendRefresh()
+    expect(game.faults[0]).toMatchObject({
+      code: 'SUBSTANCE_UNKNOWN',
+      params: { subjectId: 'maurice' },
+    })
+    expect(game.faultsDrain()).toHaveLength(1)
+    expect(game.faults).toEqual([])
+  })
+
+  it('wearing off counts as its own failure, beside working out the blend', () => {
+    const game = startGame()
+    game.registerCharacter(createCharacter({ ...maurice, intoxications: { moonshine_x: 40 } }))
+    game.faultsDrain()
+    game.applyBlendDecay({ ticksElapsed: 1 })
+    // One from the decay, one from the blend it refreshes after.
+    expect(game.faultsDrain()).toEqual([
+      expect.objectContaining({
+        code: 'SUBSTANCE_UNKNOWN',
+        params: expect.objectContaining({ subjectId: 'maurice' }),
+      }),
+      expect.objectContaining({
+        code: 'SUBSTANCE_UNKNOWN',
+        params: expect.objectContaining({ subjectId: 'maurice' }),
+      }),
+    ])
+  })
+
+  it('an outcome that gives an item nobody defined names the item', async () => {
+    startGame()
+    const narrative = useNarrative()
+    const loop = useGameLoop({ narrative })
+    const gift = {
+      id: 'gift',
+      locationId: 'any',
+      timeCost: 0,
+      requirements: {},
+      check: null,
+      success: { narrative: 'Here.', itemsGained: ['nothing_real'] },
+      failure: null,
+    }
+
+    await loop.resolvePlayerAction(gift)
+
+    expect(await settle(narrative)).toContain('[ITEM_UNKNOWN]')
   })
 })
 

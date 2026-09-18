@@ -11,8 +11,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import {
   useSave,
-  validateSave,
+  saveValidate,
   saveMigrate,
+  SAVE_ERROR_CODES,
   SAVE_VERSION,
   MAX_SAVES,
 } from '../src/composables/useSave.js'
@@ -36,6 +37,10 @@ function createLocalStorageMock() {
     clear: vi.fn(() => {
       store = {}
     }),
+    key: vi.fn((i) => Object.keys(store)[i] ?? null),
+    get length() {
+      return Object.keys(store).length
+    },
     _store: () => store,
   }
 }
@@ -70,28 +75,28 @@ function makeValidSave(overrides = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// validateSave
+// saveValidate
 // ---------------------------------------------------------------------------
 
-describe('validateSave', () => {
+describe('saveValidate', () => {
   it('accepts a well-formed save', () => {
-    expect(validateSave(makeValidSave())).toBe(true)
+    expect(saveValidate({ save: makeValidSave() }).ok).toBe(true)
   })
 
   it('rejects null', () => {
-    expect(validateSave(null)).toBe(false)
+    expect(saveValidate({ save: null }).ok).toBe(false)
   })
 
   it('rejects a non-object (string)', () => {
-    expect(validateSave('{"version":1}')).toBe(false)
+    expect(saveValidate({ save: '{"version":1}' }).ok).toBe(false)
   })
 
   it('rejects a non-object (number)', () => {
-    expect(validateSave(42)).toBe(false)
+    expect(saveValidate({ save: 42 }).ok).toBe(false)
   })
 
   it('rejects an empty object', () => {
-    expect(validateSave({})).toBe(false)
+    expect(saveValidate({ save: {} }).ok).toBe(false)
   })
 
   const requiredFields = [
@@ -109,25 +114,30 @@ describe('validateSave', () => {
     it(`rejects a save missing "${field}"`, () => {
       const save = makeValidSave()
       delete save[field]
-      expect(validateSave(save)).toBe(false)
+      expect(saveValidate({ save }).error).toMatchObject({
+        code: SAVE_ERROR_CODES.FIELD_MISSING,
+        params: { field },
+      })
     })
   }
 
   it('rejects a save with version 0', () => {
-    expect(validateSave(makeValidSave({ version: 0 }))).toBe(false)
+    expect(saveValidate({ save: makeValidSave({ version: 0 }) }).error.code).toBe(
+      SAVE_ERROR_CODES.VERSION_INVALID
+    )
   })
 
   it('rejects a save with a negative version', () => {
-    expect(validateSave(makeValidSave({ version: -1 }))).toBe(false)
+    expect(saveValidate({ save: makeValidSave({ version: -1 }) }).ok).toBe(false)
   })
 
   it('rejects a save with a string version', () => {
-    expect(validateSave(makeValidSave({ version: '1' }))).toBe(false)
+    expect(saveValidate({ save: makeValidSave({ version: '1' }) }).ok).toBe(false)
   })
 
   it('accepts a save with a future (higher) version number', () => {
     // Future versions are valid — migration is a separate concern
-    expect(validateSave(makeValidSave({ version: 99 }))).toBe(true)
+    expect(saveValidate({ save: makeValidSave({ version: 99 }) }).ok).toBe(true)
   })
 
   it('rejects a save where a required field is null (simulates explicit nulling)', () => {
@@ -137,7 +147,7 @@ describe('validateSave', () => {
     // This test documents that the validator cares about key presence, not null-ness.
     const save = makeValidSave()
     delete save.player
-    expect(validateSave(save)).toBe(false)
+    expect(saveValidate({ save }).ok).toBe(false)
   })
 })
 
@@ -212,27 +222,27 @@ describe('save() and load() — round trip', () => {
   })
 
   it('save() returns a non-null ID', () => {
-    const id = sys.save('My Save')
+    const id = sys.saveWrite({ name: 'My Save' }).data.id
     expect(id).not.toBeNull()
     expect(typeof id).toBe('string')
   })
 
   it('load() returns valid save data after save()', () => {
-    const id = sys.save('My Save')
-    const data = sys.load(id)
+    const id = sys.saveWrite({ name: 'My Save' }).data.id
+    const data = sys.saveRead({ id }).data
     expect(data).not.toBeNull()
     expect(data.name).toBe('My Save')
   })
 
   it('saved data includes SAVE_VERSION', () => {
-    const id = sys.save()
-    const data = sys.load(id)
+    const id = sys.saveWrite().data.id
+    const data = sys.saveRead({ id }).data
     expect(data.version).toBe(SAVE_VERSION)
   })
 
   it('saved data includes all required fields', () => {
-    const id = sys.save()
-    const data = sys.load(id)
+    const id = sys.saveWrite().data.id
+    const data = sys.saveRead({ id }).data
     expect(data.player).toBeDefined()
     expect(data.time).toBeDefined()
     expect(data.locations).toBeDefined()
@@ -241,35 +251,38 @@ describe('save() and load() — round trip', () => {
   })
 
   it("saves only what the game reads: no counters beside the player's own", () => {
-    const data = sys.load(sys.save())
+    const data = sys.saveRead({ id: sys.saveWrite().data.id }).data
     expect(data).not.toHaveProperty('counters')
     expect(data.player.counters).toBeDefined()
   })
 
   it('load() returns null for an unknown ID', () => {
-    expect(sys.load('does-not-exist')).toBeNull()
+    expect(sys.saveRead({ id: 'does-not-exist' }).error.code).toBe(SAVE_ERROR_CODES.NOT_FOUND)
   })
 
   it('load() returns null for a corrupted (non-JSON) save', () => {
     ls.setItem('sportsim_save_bad', 'not json at all {{{{')
-    expect(sys.load('bad')).toBeNull()
+    expect(sys.saveRead({ id: 'bad' }).error.code).toBe(SAVE_ERROR_CODES.UNREADABLE)
   })
 
   it('load() returns null for a save missing required fields', () => {
     const partial = { id: 'x', name: 'X', timestamp: 1, version: 1 } // missing player, time, etc.
     ls.setItem('sportsim_save_x', JSON.stringify(partial))
-    expect(sys.load('x')).toBeNull()
+    expect(sys.saveRead({ id: 'x' }).error).toMatchObject({
+      code: SAVE_ERROR_CODES.FIELD_MISSING,
+      params: { field: 'player' },
+    })
   })
 
   it('load() returns null for a save with version 0', () => {
     const bad = makeValidSave({ version: 0 })
     ls.setItem('sportsim_save_bad', JSON.stringify(bad))
-    expect(sys.load('bad')).toBeNull()
+    expect(sys.saveRead({ id: 'bad' }).error.code).toBe(SAVE_ERROR_CODES.VERSION_INVALID)
   })
 
   it('default name uses day and period from game state', () => {
-    const id = sys.save()
-    const data = sys.load(id)
+    const id = sys.saveWrite().data.id
+    const data = sys.saveRead({ id }).data
     expect(data.name).toBe('Day 3 — afternoon')
   })
 })
@@ -288,53 +301,53 @@ describe('listSaves() and deleteSave()', () => {
   })
 
   it('listSaves() returns empty array when no saves exist', () => {
-    expect(sys.listSaves()).toEqual([])
+    expect(sys.savesList().data).toEqual([])
   })
 
   it('listSaves() returns one entry after save()', () => {
-    sys.save('First')
-    expect(sys.listSaves()).toHaveLength(1)
+    sys.saveWrite({ name: 'First' })
+    expect(sys.savesList().data).toHaveLength(1)
   })
 
   it('listSaves() index entry has id, name, timestamp', () => {
-    sys.save('Named Save')
-    const [entry] = sys.listSaves()
+    sys.saveWrite({ name: 'Named Save' })
+    const [entry] = sys.savesList().data
     expect(entry.id).toBeTruthy()
     expect(entry.name).toBe('Named Save')
     expect(typeof entry.timestamp).toBe('number')
   })
 
   it('listSaves() grows with each save', () => {
-    sys.save('A')
-    sys.save('B')
-    sys.save('C')
-    expect(sys.listSaves()).toHaveLength(3)
+    sys.saveWrite({ name: 'A' })
+    sys.saveWrite({ name: 'B' })
+    sys.saveWrite({ name: 'C' })
+    expect(sys.savesList().data).toHaveLength(3)
   })
 
   it('deleteSave() removes the entry from the index', () => {
-    const id = sys.save('ToDelete')
-    sys.deleteSave(id)
-    expect(sys.listSaves()).toHaveLength(0)
+    const id = sys.saveWrite({ name: 'ToDelete' }).data.id
+    sys.saveDelete({ id })
+    expect(sys.savesList().data).toHaveLength(0)
   })
 
   it('deleteSave() means load() returns null for that ID', () => {
-    const id = sys.save('ToDelete')
-    sys.deleteSave(id)
-    expect(sys.load(id)).toBeNull()
+    const id = sys.saveWrite({ name: 'ToDelete' }).data.id
+    sys.saveDelete({ id })
+    expect(sys.saveRead({ id }).error.code).toBe(SAVE_ERROR_CODES.NOT_FOUND)
   })
 
   it('deleteSave() does not affect other saves', () => {
-    const id1 = sys.save('Keep')
-    const id2 = sys.save('Delete')
-    sys.deleteSave(id2)
-    expect(sys.listSaves()).toHaveLength(1)
-    expect(sys.listSaves()[0].id).toBe(id1)
+    const id1 = sys.saveWrite({ name: 'Keep' }).data.id
+    const id2 = sys.saveWrite({ name: 'Delete' }).data.id
+    sys.saveDelete({ id: id2 })
+    expect(sys.savesList().data).toHaveLength(1)
+    expect(sys.savesList().data[0].id).toBe(id1)
   })
 
   it('deleteSave() is a no-op for unknown ID', () => {
-    sys.save('Safe')
-    expect(() => sys.deleteSave('ghost')).not.toThrow()
-    expect(sys.listSaves()).toHaveLength(1)
+    sys.saveWrite({ name: 'Safe' })
+    expect(sys.saveDelete({ id: 'ghost' }).ok).toBe(true)
+    expect(sys.savesList().data).toHaveLength(1)
   })
 })
 
@@ -352,25 +365,25 @@ describe('autoSave()', () => {
   })
 
   it('creates a save named "auto"', () => {
-    sys.autoSave()
-    const saves = sys.listSaves()
+    sys.saveAuto()
+    const saves = sys.savesList().data
     expect(saves).toHaveLength(1)
     expect(saves[0].name).toBe('auto')
   })
 
   it('calling autoSave() twice still results in only one auto save', () => {
-    sys.autoSave()
-    sys.autoSave()
-    const saves = sys.listSaves()
+    sys.saveAuto()
+    sys.saveAuto()
+    const saves = sys.savesList().data
     expect(saves).toHaveLength(1)
     expect(saves[0].name).toBe('auto')
   })
 
   it('autoSave() does not delete manual saves', () => {
-    sys.save('Manual')
-    sys.autoSave()
-    sys.autoSave()
-    const saves = sys.listSaves()
+    sys.saveWrite({ name: 'Manual' })
+    sys.saveAuto()
+    sys.saveAuto()
+    const saves = sys.savesList().data
     expect(saves).toHaveLength(2)
     expect(saves.some((s) => s.name === 'Manual')).toBe(true)
     expect(saves.some((s) => s.name === 'auto')).toBe(true)
@@ -390,31 +403,34 @@ describe('MAX_SAVES limit', () => {
     sys = buildSaveSystem(ls)
   })
 
-  it('save() returns null when at MAX_SAVES capacity', () => {
+  it('saveWrite() refuses at MAX_SAVES capacity', () => {
     for (let i = 0; i < MAX_SAVES; i++) {
-      const id = sys.save(`Save ${i}`)
+      const id = sys.saveWrite({ name: `Save ${i}` }).data.id
       expect(id).not.toBeNull()
     }
-    const overflow = sys.save('Overflow')
-    expect(overflow).toBeNull()
+    const overflow = sys.saveWrite({ name: 'Overflow' })
+    expect(overflow.error).toMatchObject({
+      code: SAVE_ERROR_CODES.LIMIT_REACHED,
+      params: { limit: MAX_SAVES },
+    })
   })
 
   it('deleting a save and then saving again succeeds', () => {
     const ids = []
     for (let i = 0; i < MAX_SAVES; i++) {
-      ids.push(sys.save(`Save ${i}`))
+      ids.push(sys.saveWrite({ name: `Save ${i}` }).data.id)
     }
-    sys.deleteSave(ids[0])
-    const newId = sys.save('After delete')
+    sys.saveDelete({ id: ids[0] })
+    const newId = sys.saveWrite({ name: 'After delete' }).data.id
     expect(newId).not.toBeNull()
-    expect(sys.listSaves()).toHaveLength(MAX_SAVES)
+    expect(sys.savesList().data).toHaveLength(MAX_SAVES)
   })
 
   it('index count never exceeds MAX_SAVES', () => {
     for (let i = 0; i < MAX_SAVES + 5; i++) {
-      sys.save(`Save ${i}`)
+      sys.saveWrite({ name: `Save ${i}` })
     }
-    expect(sys.listSaves().length).toBeLessThanOrEqual(MAX_SAVES)
+    expect(sys.savesList().data.length).toBeLessThanOrEqual(MAX_SAVES)
   })
 })
 
@@ -448,15 +464,15 @@ describe('exportSave()', () => {
   })
 
   it('returns a JSON string for a valid save ID', () => {
-    const id = sys.save('My Export')
-    const json = sys.exportSave(id)
+    const id = sys.saveWrite({ name: 'My Export' }).data.id
+    const json = sys.saveExport({ id }).data.json
     expect(typeof json).toBe('string')
     expect(() => JSON.parse(json)).not.toThrow()
   })
 
   it('exported JSON contains all required fields', () => {
-    const id = sys.save('My Export')
-    const json = sys.exportSave(id)
+    const id = sys.saveWrite({ name: 'My Export' }).data.id
+    const json = sys.saveExport({ id }).data.json
     const data = JSON.parse(json)
     expect(data.id).toBeTruthy()
     expect(data.version).toBe(SAVE_VERSION)
@@ -466,12 +482,12 @@ describe('exportSave()', () => {
   })
 
   it('returns null for an unknown save ID', () => {
-    expect(sys.exportSave('no-such-id')).toBeNull()
+    expect(sys.saveExport({ id: 'no-such-id' }).error.code).toBe(SAVE_ERROR_CODES.NOT_FOUND)
   })
 
   it('exported JSON is pretty-printed (contains newlines)', () => {
-    const id = sys.save('Pretty')
-    const json = sys.exportSave(id)
+    const id = sys.saveWrite({ name: 'Pretty' }).data.id
+    const json = sys.saveExport({ id }).data.json
     expect(json).toContain('\n')
   })
 })
@@ -507,69 +523,73 @@ describe('importSave()', () => {
 
   it('returns a new ID when importing valid JSON', () => {
     const json = JSON.stringify(makeValidSave())
-    const newId = sys.importSave(json)
+    const newId = sys.saveImport({ json }).data.id
     expect(newId).not.toBeNull()
     expect(typeof newId).toBe('string')
   })
 
   it('imported save is loadable', () => {
     const original = makeValidSave({ name: 'Imported Save' })
-    const newId = sys.importSave(JSON.stringify(original))
-    const loaded = sys.load(newId)
+    const newId = sys.saveImport({ json: JSON.stringify(original) }).data.id
+    const loaded = sys.saveRead({ id: newId }).data
     expect(loaded).not.toBeNull()
     expect(loaded.name).toBe('Imported Save')
   })
 
   it('imported save appears in listSaves()', () => {
-    sys.importSave(JSON.stringify(makeValidSave({ name: 'From File' })))
-    const saves = sys.listSaves()
+    sys.saveImport({ json: JSON.stringify(makeValidSave({ name: 'From File' })) })
+    const saves = sys.savesList().data
     expect(saves).toHaveLength(1)
     expect(saves[0].name).toBe('From File')
   })
 
   it('imported save gets a fresh ID (does not use original ID)', () => {
     const original = makeValidSave({ id: 'original-id-xyz' })
-    const newId = sys.importSave(JSON.stringify(original))
+    const newId = sys.saveImport({ json: JSON.stringify(original) }).data.id
     expect(newId).not.toBe('original-id-xyz')
   })
 
   it('returns null for invalid JSON', () => {
-    expect(sys.importSave('this is not json }{{')).toBeNull()
+    expect(sys.saveImport({ json: 'this is not json }{{' }).error.code).toBe(
+      SAVE_ERROR_CODES.UNREADABLE
+    )
   })
 
   it('returns null for valid JSON but missing required fields', () => {
     const bad = JSON.stringify({ version: 1, name: 'incomplete' })
-    expect(sys.importSave(bad)).toBeNull()
+    expect(sys.saveImport({ json: bad }).error.code).toBe(SAVE_ERROR_CODES.FIELD_MISSING)
   })
 
   it('returns null for a save with version 0', () => {
     const bad = makeValidSave({ version: 0 })
-    expect(sys.importSave(JSON.stringify(bad))).toBeNull()
+    expect(sys.saveImport({ json: JSON.stringify(bad) }).error.code).toBe(
+      SAVE_ERROR_CODES.VERSION_INVALID
+    )
   })
 
   it('returns null when at MAX_SAVES capacity', () => {
     for (let i = 0; i < MAX_SAVES; i++) {
-      sys.save(`Save ${i}`)
+      sys.saveWrite({ name: `Save ${i}` })
     }
     const json = JSON.stringify(makeValidSave())
-    expect(sys.importSave(json)).toBeNull()
+    expect(sys.saveImport({ json }).error.code).toBe(SAVE_ERROR_CODES.LIMIT_REACHED)
   })
 
   it('can round-trip export then import', () => {
-    const id = sys.save('Round Trip')
-    const json = sys.exportSave(id)
-    const newId = sys.importSave(json)
+    const id = sys.saveWrite({ name: 'Round Trip' }).data.id
+    const json = sys.saveExport({ id }).data.json
+    const newId = sys.saveImport({ json }).data.id
     expect(newId).not.toBeNull()
-    const loaded = sys.load(newId)
+    const loaded = sys.saveRead({ id: newId }).data
     expect(loaded.name).toBe('Round Trip')
     expect(loaded.version).toBe(SAVE_VERSION)
   })
 
   it('after import there are two separate saves in the index', () => {
-    const id = sys.save('Original')
-    const json = sys.exportSave(id)
-    sys.importSave(json)
-    expect(sys.listSaves()).toHaveLength(2)
+    const id = sys.saveWrite({ name: 'Original' }).data.id
+    const json = sys.saveExport({ id }).data.json
+    sys.saveImport({ json })
+    expect(sys.savesList().data).toHaveLength(2)
   })
 })
 
@@ -586,15 +606,31 @@ describe('resilience — corrupted index', () => {
     sys = buildSaveSystem(ls)
   })
 
-  it('listSaves() returns [] when the index is corrupted JSON', () => {
+  it('a corrupted index with no saves behind it lists nothing', () => {
     ls.setItem('sportsim_saves', 'totally broken {{{')
-    expect(sys.listSaves()).toEqual([])
+    expect(sys.savesList().data).toEqual([])
   })
 
-  it('save() still works after a corrupted index (starts fresh)', () => {
+  it('a corrupted index is rebuilt from the saves themselves, so none are stranded', () => {
+    const first = sys.saveWrite({ name: 'First' }).data.id
+    const second = sys.saveWrite({ name: 'Second' }).data.id
     ls.setItem('sportsim_saves', 'broken')
-    const id = sys.save('After corruption')
-    expect(id).not.toBeNull()
+
+    const listed = sys.savesList().data.map((entry) => entry.id)
+    expect(listed.sort()).toEqual([first, second].sort())
+    expect(JSON.parse(ls._store().sportsim_saves)).toHaveLength(2)
+  })
+
+  it('a new save after a corrupted index keeps the old ones listed', () => {
+    sys.saveWrite({ name: 'Before' })
+    ls.setItem('sportsim_saves', 'broken')
+    expect(sys.saveWrite({ name: 'After corruption' }).ok).toBe(true)
+    expect(
+      sys
+        .savesList()
+        .data.map((entry) => entry.name)
+        .sort()
+    ).toEqual(['After corruption', 'Before'])
   })
 })
 
@@ -740,7 +776,7 @@ describe('load() and importSave() — old saves and fresh ids', () => {
 
   it('a v1 save read off disk comes back migrated, not as it was written', () => {
     v1OnDisk()
-    const loaded = sys.load('old-one')
+    const loaded = sys.saveRead({ id: 'old-one' }).data
     expect(loaded.version).toBe(SAVE_VERSION)
     expect(loaded.player.intoxications).toEqual({})
     expect(loaded.player.skills).toEqual({})
@@ -750,30 +786,30 @@ describe('load() and importSave() — old saves and fresh ids', () => {
 
   it('loading does not rewrite what is on disk', () => {
     const v1 = v1OnDisk()
-    sys.load('old-one')
+    sys.saveRead({ id: 'old-one' })
     expect(JSON.parse(ls.getItem('sportsim_save_old-one'))).toEqual(v1)
   })
 
   it('an import gets an id of its own and leaves the original id unwritten', () => {
     const foreign = makeValidSave({ id: 'somebody-elses' })
-    const newId = sys.importSave(JSON.stringify(foreign))
+    const newId = sys.saveImport({ json: JSON.stringify(foreign) }).data.id
     expect(newId).not.toBeNull()
     expect(newId).not.toBe('somebody-elses')
     expect(ls.getItem('sportsim_save_somebody-elses')).toBeNull()
-    expect(sys.load(newId).id).toBe(newId)
+    expect(sys.saveRead({ id: newId }).data.id).toBe(newId)
   })
 
   it('importing the same file twice makes two saves, not one overwritten', () => {
     const json = JSON.stringify(makeValidSave({ id: 'dupe' }))
-    const first = sys.importSave(json)
-    const second = sys.importSave(json)
+    const first = sys.saveImport({ json }).data.id
+    const second = sys.saveImport({ json }).data.id
     expect(first).not.toBe(second)
-    expect(sys.listSaves()).toHaveLength(2)
+    expect(sys.savesList().data).toHaveLength(2)
   })
 
   it('an imported v1 save is stored already migrated', () => {
     const v1 = makeValidSave({ id: 'ancient', version: 1 })
-    const newId = sys.importSave(JSON.stringify(v1))
+    const newId = sys.saveImport({ json: JSON.stringify(v1) }).data.id
     expect(JSON.parse(ls.getItem(`sportsim_save_${newId}`)).version).toBe(SAVE_VERSION)
   })
 })

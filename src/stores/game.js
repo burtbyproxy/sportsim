@@ -84,6 +84,12 @@ export const useGameStore = defineStore('game', {
     /** An event waiting on the player's choice, or null. One at a time. */
     activeEvent: null,
 
+    /**
+     * Failures with no caller to hand a result back to, waiting to be shown:
+     * { code, message, params, tick }. The loop drains them into play.
+     */
+    faults: [],
+
     /** @type {Object<string, Object>} */
     items: {},
 
@@ -345,10 +351,9 @@ export const useGameStore = defineStore('game', {
           conditions: this.conditions,
         })
         if (!result.ok) {
-          console.warn(
-            `[game] blendRefresh (${subject.id}): ${result.error.code}`,
-            result.error.message
-          )
+          this.faultRecord({
+            error: { ...result.error, params: { ...result.error.params, subjectId: subject.id } },
+          })
           continue
         }
         subject.blend = result.data
@@ -369,7 +374,6 @@ export const useGameStore = defineStore('game', {
       this.player.habituations ??= {}
       const result = dosesApply({ player: this.player, substances: this.substances, doses, rng })
       if (!result.ok) {
-        console.warn(`[game] applyDoses: ${result.error.code}`, result.error.message)
         return result
       }
       _levelsApply({ levels: this.player.intoxications, changes: result.data.intoxicationChanges })
@@ -392,10 +396,9 @@ export const useGameStore = defineStore('game', {
         subject.habituations ??= {}
         const result = blendDecay({ player: subject, substances: this.substances, ticksElapsed })
         if (!result.ok) {
-          console.warn(
-            `[game] applyBlendDecay (${subject.id}): ${result.error.code}`,
-            result.error.message
-          )
+          this.faultRecord({
+            error: { ...result.error, params: { ...result.error.params, subjectId: subject.id } },
+          })
           continue
         }
         _levelsApply({ levels: subject.intoxications, changes: result.data.intoxicationChanges })
@@ -462,7 +465,6 @@ export const useGameStore = defineStore('game', {
         ...(statusIds.length > 0 ? { statusIds } : {}),
       })
       if (!result.ok) {
-        console.warn(`[game] applyItemUse: ${result.error.code}`, result.error.message)
         return result
       }
       const { statusChanges, statModifiers, doses } = result.data
@@ -634,7 +636,6 @@ export const useGameStore = defineStore('game', {
         rng,
       })
       if (!result.ok) {
-        console.warn(`[game] applyScavenge: ${result.error.code}`, result.error.message)
         return result
       }
       this.currentLocation.scavenge = result.data.scavenge
@@ -651,6 +652,24 @@ export const useGameStore = defineStore('game', {
      * @param {{ code: string, params?: Object<string, string> }} input
      * @returns {string}
      */
+    /**
+     * Keep a failure that has no caller to return to, so it can be shown.
+     * @param {{ error: { code: string, message: string, params?: Object } }} input
+     */
+    faultRecord({ error }) {
+      this.faults.push({ ...error, params: error.params ?? {}, tick: this.time.tick })
+    },
+
+    /**
+     * Hand over every recorded failure and forget them.
+     * @returns {Array<{ code: string, message: string, params: Object, tick: number }>}
+     */
+    faultsDrain() {
+      const drained = this.faults
+      this.faults = []
+      return drained
+    },
+
     voiceLine({ code, params = {} }) {
       const line = voiceLine({
         code,
@@ -660,7 +679,6 @@ export const useGameStore = defineStore('game', {
       })
       if (!line.ok) {
         // A line nobody wrote shows up as its code, in play, instead of vanishing.
-        console.warn(`[game] voiceLine: ${line.error.code}`, line.error.message)
         return `[${code}]`
       }
       return line.data.text
@@ -685,7 +703,6 @@ export const useGameStore = defineStore('game', {
         locationId: this.currentLocationId,
       })
       if (!result.ok) {
-        console.warn(`[game] applyInspirationStrike: ${result.error.code}`, result.error.message)
         return result
       }
       this.player.inspirations = result.data.inspirations
@@ -709,7 +726,6 @@ export const useGameStore = defineStore('game', {
         rng,
       })
       if (!rolled.ok) {
-        console.warn(`[game] applyInspirationUrge: ${rolled.error.code}`, rolled.error.message)
         return rolled
       }
       if (!rolled.data.urge) return resultOk({ struck: null })
@@ -735,7 +751,6 @@ export const useGameStore = defineStore('game', {
       }
       const result = inspirationTick({ player: this.player, ticksElapsed, gameTime: this.time })
       if (!result.ok) {
-        console.warn(`[game] applyInspirationTick: ${result.error.code}`, result.error.message)
         return result
       }
       this.player.inspirations = result.data.inspirations
@@ -753,7 +768,6 @@ export const useGameStore = defineStore('game', {
       }
       const result = inspirationInterrupt({ player: this.player, reason, gameTime: this.time })
       if (!result.ok) {
-        console.warn(`[game] applyInspirationInterrupt: ${result.error.code}`, result.error.message)
         return result
       }
       this.player.inspirations = result.data.inspirations
@@ -771,7 +785,6 @@ export const useGameStore = defineStore('game', {
       }
       const result = inspirationSpend({ player: this.player, spentOn, gameTime: this.time })
       if (!result.ok) {
-        console.warn(`[game] applyInspirationSpend: ${result.error.code}`, result.error.message)
         return result
       }
       this.player.inspirations = result.data.inspirations
@@ -790,7 +803,6 @@ export const useGameStore = defineStore('game', {
       }
       const result = skillGain({ player: this.player, mediumId, mediums: this.mediums, amount })
       if (!result.ok) {
-        console.warn(`[game] applySkillGain: ${result.error.code}`, result.error.message)
         return result
       }
       this.player.skills ??= {}
@@ -820,7 +832,6 @@ export const useGameStore = defineStore('game', {
         rng,
       })
       if (!dealt.ok) {
-        console.warn(`[game] applyMakingStart: ${dealt.error.code}`, dealt.error.message)
         return dealt
       }
       const result = makingStart({
@@ -833,7 +844,6 @@ export const useGameStore = defineStore('game', {
         gameTime: this.time,
       })
       if (!result.ok) {
-        console.warn(`[game] applyMakingStart: ${result.error.code}`, result.error.message)
         return result
       }
       this.player.makings = result.data.makings
@@ -872,7 +882,6 @@ export const useGameStore = defineStore('game', {
         rng,
       })
       if (!round.ok) {
-        console.warn(`[game] applyMakingRound: ${round.error.code}`, round.error.message)
         return round
       }
       const ticksWorked = Math.min(minigame.sittingTicks, making.ticksTotal - making.ticksDone)
@@ -884,7 +893,6 @@ export const useGameStore = defineStore('game', {
         gameTime: this.time,
       })
       if (!result.ok) {
-        console.warn(`[game] applyMakingRound: ${result.error.code}`, result.error.message)
         return result
       }
       this.player.makings = result.data.makings
@@ -906,7 +914,6 @@ export const useGameStore = defineStore('game', {
       const active = this.makingActive
       const played = gameScore({ game: this.games[active?.game?.id], state: active?.game?.state })
       if (!played.ok) {
-        console.warn(`[game] applyMakingFinish: ${played.error.code}`, played.error.message)
         return played
       }
       const result = makingFinish({
@@ -918,7 +925,6 @@ export const useGameStore = defineStore('game', {
         rng,
       })
       if (!result.ok) {
-        console.warn(`[game] applyMakingFinish: ${result.error.code}`, result.error.message)
         return result
       }
       const { making, tier, experience, artifact, markIdsCovered } = result.data
@@ -938,7 +944,6 @@ export const useGameStore = defineStore('game', {
         voices: this.voices,
       })
       if (!words.ok) {
-        console.warn(`[game] applyMakingFinish: ${words.error.code}`, words.error.message)
         return words
       }
       for (const record of [experience, artifact]) {
@@ -988,7 +993,6 @@ export const useGameStore = defineStore('game', {
     applyMakingAbandon({ reason }) {
       const result = makingAbandon({ player: this.player, reason, gameTime: this.time })
       if (!result.ok) {
-        console.warn(`[game] applyMakingAbandon: ${result.error.code}`, result.error.message)
         return result
       }
       this.player.makings = result.data.makings

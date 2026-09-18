@@ -16,10 +16,11 @@ export function resultOk(data) {
 }
 
 /**
- * It did not, and here is which way.
- * @param {{ code: string, message: string }} input
- * @returns {{ ok: false, data: null, error: { code: string, message: string } }}
+ * It did not, and here is which way. `params` names what the failure was
+ * about (which field, which save) so the words can be written from it.
+ * @param {{ code: string, message: string, params?: Object<string, *> }} input
+ * @returns {{ ok: false, data: null, error: { code: string, message: string, params: Object<string, *> } }}
  */
-export function resultFail({ code, message }) {
-  return { ok: false, data: null, error: { code, message } }
+export function resultFail({ code, message, params = {} }) {
+  return { ok: false, data: null, error: { code, message, params } }
 }

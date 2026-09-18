@@ -155,11 +155,11 @@ describe('useGameLoop → auto-save', () => {
 
     await loop.travel('columbia_park', 2)
 
-    const saves = save.listSaves()
+    const saves = save.savesList().data
     expect(saves).toHaveLength(1)
     expect(saves[0].name).toBe(AUTO_SAVE_NAME)
 
-    const data = save.load(saves[0].id)
+    const data = save.saveRead({ id: saves[0].id }).data
     expect(data.player.currentLocationId).toBe('columbia_park')
     expect(data.time.tick).toBe(2)
     expect(data.locations.columbia_park.visitCount).toBe(1)
@@ -174,9 +174,9 @@ describe('useGameLoop → auto-save', () => {
     await loop.travel('columbia_park', 1)
     await loop.travel('moms_house', 1)
 
-    const saves = save.listSaves()
+    const saves = save.savesList().data
     expect(saves).toHaveLength(1)
-    expect(save.load(saves[0].id).player.currentLocationId).toBe('moms_house')
+    expect(save.saveRead({ id: saves[0].id }).data.player.currentLocationId).toBe('moms_house')
   })
 
   it('a fresh store restored from the auto-save resumes where the player was', async () => {
@@ -191,8 +191,8 @@ describe('useGameLoop → auto-save', () => {
     setActivePinia(createPinia())
     const restored = useGameStore()
     expect(restored.isRunning).toBe(false)
-    const [entry] = useSave().listSaves()
-    restored.loadSave(useSave().load(entry.id))
+    const [entry] = useSave().savesList().data
+    restored.loadSave(useSave().saveRead({ id: entry.id }).data)
 
     expect(restored.isRunning).toBe(true)
     expect(restored.currentLocationId).toBe('columbia_park')
@@ -200,12 +200,28 @@ describe('useGameLoop → auto-save', () => {
     expect(restored.time.tick).toBe(2)
   })
 
+  it('a save that cannot be written is said out loud, not swallowed', async () => {
+    const game = startGame()
+    game.registerLocation(createLocation(columbiaPark))
+    for (const voice of voices) game.registerVoice({ voice })
+    globalThis.localStorage.setItem = () => {
+      throw new Error('QuotaExceededError')
+    }
+    const narrative = useNarrative()
+    const loop = useGameLoop({ actionRegistry: momsHouseActions, narrative, save: useSave() })
+
+    await loop.travel('columbia_park', 1)
+    const entries = await settle(narrative)
+
+    expect(entries).toContain(voices.find((v) => v.id === 'sober').lines['save.failed'])
+  })
+
   it('actions alone do not write a save', async () => {
     startGame()
     const save = useSave()
     const loop = useGameLoop({ actionRegistry: momsHouseActions, save })
     await loop.resolvePlayerAction(byId('raid_fridge'))
-    expect(save.listSaves()).toHaveLength(0)
+    expect(save.savesList().data).toHaveLength(0)
   })
 })
 
@@ -361,8 +377,8 @@ describe('useGameLoop → events', () => {
 
     setActivePinia(createPinia())
     const restored = useGameStore()
-    const [entry] = useSave().listSaves()
-    restored.loadSave(useSave().load(entry.id))
+    const [entry] = useSave().savesList().data
+    restored.loadSave(useSave().saveRead({ id: entry.id }).data)
     expect(restored.activeEvent?.id).toBe('park_acquaintance')
     delete globalThis.localStorage
   })

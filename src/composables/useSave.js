@@ -1,6 +1,7 @@
 import { useGameStore } from '../stores/game.js'
 import { blendSober, sobrietyDerive } from '../engine/blend.js'
 import { MAKING_STATUSES } from '../engine/making.js'
+import { resultOk, resultFail } from '../engine/result.js'
 
 const SAVE_PREFIX = 'sportsim_save_'
 const SAVE_INDEX_KEY = 'sportsim_saves'
@@ -21,6 +22,19 @@ export const MAX_SAVES = 20
 export const AUTO_SAVE_NAME = 'auto'
 
 /**
+ * Why a save could not be written, read, or taken in. The code is the
+ * contract; the message is for whoever is debugging.
+ */
+export const SAVE_ERROR_CODES = Object.freeze({
+  LIMIT_REACHED: 'SAVE_LIMIT_REACHED',
+  NOT_FOUND: 'SAVE_NOT_FOUND',
+  UNREADABLE: 'SAVE_UNREADABLE',
+  FIELD_MISSING: 'SAVE_FIELD_MISSING',
+  VERSION_INVALID: 'SAVE_VERSION_INVALID',
+  STORAGE_FAILED: 'SAVE_STORAGE_FAILED',
+})
+
+/**
  * Required top-level fields for a save to be considered valid.
  * These are the bones of the save. Without them it is nothing.
  */
@@ -37,24 +51,30 @@ const REQUIRED_SAVE_FIELDS = [
 ]
 
 /**
- * Validate a parsed save object.
- * Returns true if the save has all required fields and recognisable version.
- * @param {*} data
- * @returns {boolean}
+ * Whether parsed data is a save: every required field, and a version.
+ * @param {{ save: * }} input
+ * @returns {{ ok: boolean, data: Object|null, error: { code: string, message: string, params?: Object }|null }}
  */
-export function validateSave(data) {
-  if (!data || typeof data !== 'object') return false
+export function saveValidate({ save }) {
+  if (!save || typeof save !== 'object') {
+    return resultFail({ code: SAVE_ERROR_CODES.UNREADABLE, message: 'Not an object' })
+  }
   for (const field of REQUIRED_SAVE_FIELDS) {
-    if (!(field in data)) {
-      console.warn(`[save] Validation failed: missing field "${field}"`)
-      return false
+    if (!(field in save)) {
+      return resultFail({
+        code: SAVE_ERROR_CODES.FIELD_MISSING,
+        message: `Missing field "${field}"`,
+        params: { field },
+      })
     }
   }
-  if (typeof data.version !== 'number' || data.version < 1) {
-    console.warn(`[save] Validation failed: invalid version "${data.version}"`)
-    return false
+  if (typeof save.version !== 'number' || save.version < 1) {
+    return resultFail({
+      code: SAVE_ERROR_CODES.VERSION_INVALID,
+      message: `Invalid version "${save.version}"`,
+    })
   }
-  return true
+  return resultOk(save)
 }
 
 /**
@@ -155,33 +175,33 @@ export function saveMigrate({ save }) {
 /**
  * Save/Load composable.
  *
- * Saves full game state to localStorage.
- * Each save has its own key: sportsim_save_{id}
- * An index of saves is kept at sportsim_saves.
+ * Saves full game state to localStorage. Each save has its own key,
+ * sportsim_save_{id}, and an index of saves is kept at sportsim_saves.
  * Saves are validated and versioned, and can be exported and imported.
+ * Every function returns a result; nothing throws, nothing logs.
  */
 export function useSave() {
   const game = useGameStore()
 
   /**
-   * Save current game state.
-   * @param {string} [name] - optional display name
-   * @returns {string|null} save ID, or null if at capacity or write failed
+   * Write the current game as a new save.
+   * @param {{ name?: string }} [input] - display name; defaults to the day and period
+   * @returns {{ ok: boolean, data: { id: string }|null, error: Object|null }}
    */
-  function save(name) {
-    const saves = listSaves()
-    if (saves.length >= MAX_SAVES) {
-      console.warn(`[save] Save limit reached (${MAX_SAVES}). Delete a save before saving again.`)
-      return null
+  function saveWrite({ name } = {}) {
+    const listed = savesList()
+    if (listed.data.length >= MAX_SAVES) {
+      return resultFail({
+        code: SAVE_ERROR_CODES.LIMIT_REACHED,
+        message: `${MAX_SAVES} saves already; delete one first`,
+        params: { limit: MAX_SAVES },
+      })
     }
-
     const id = crypto.randomUUID()
     const timestamp = Date.now()
-    const displayName = name ?? `Day ${game.time.day} — ${game.time.period}`
-
     const saveData = {
       id,
-      name: displayName,
+      name: name ?? `Day ${game.time.day} — ${game.time.period}`,
       timestamp,
       version: SAVE_VERSION,
       player: game.player,
@@ -191,150 +211,171 @@ export function useSave() {
       firedEventIds: game.firedEventIds,
       activeEvent: game.activeEvent,
     }
-
-    try {
-      localStorage.setItem(SAVE_PREFIX + id, JSON.stringify(saveData))
-      _indexSave({ id, name: displayName, timestamp })
-    } catch (e) {
-      console.warn('[save] Failed to write save:', e)
-      return null
-    }
-
-    return id
+    return _saveStore({ save: saveData, index: listed.data })
   }
 
   /**
-   * Load a save by ID.
-   * Validates the save before returning it.
-   * Returns null if not found, malformed, or from an incompatible version.
-   * @param {string} id
-   * @returns {Object|null} save data, or null if not found/invalid
+   * Read a save by id, validated and brought up to the current version.
+   * @param {{ id: string }} input
+   * @returns {{ ok: boolean, data: Object|null, error: Object|null }}
    */
-  function load(id) {
-    try {
-      const raw = localStorage.getItem(SAVE_PREFIX + id)
-      if (!raw) return null
-      const data = JSON.parse(raw)
-      if (!validateSave(data)) {
-        console.warn(`[save] Save "${id}" failed validation — discarding.`)
-        return null
-      }
-      return saveMigrate({ save: data })
-    } catch (e) {
-      console.warn('[save] Failed to load save:', e)
-      return null
+  function saveRead({ id }) {
+    const raw = _storageGet({ key: SAVE_PREFIX + id })
+    if (!raw.ok) return raw
+    if (raw.data === null) {
+      return resultFail({
+        code: SAVE_ERROR_CODES.NOT_FOUND,
+        message: `No save "${id}"`,
+        params: { id },
+      })
     }
+    const parsed = _jsonParse({ text: raw.data })
+    if (!parsed.ok) return parsed
+    const valid = saveValidate({ save: parsed.data })
+    if (!valid.ok) return valid
+    return resultOk(saveMigrate({ save: valid.data }))
   }
 
   /**
-   * List all saves (index only — id, name, timestamp).
-   * @returns {Array<{id: string, name: string, timestamp: number}>}
+   * Every save: id, name, timestamp. A missing index is no saves; an
+   * unreadable one is rebuilt from the saves themselves, so a broken index
+   * never strands a save.
+   * @returns {{ ok: boolean, data: Array<{ id: string, name: string, timestamp: number }>, error: Object|null }}
    */
-  function listSaves() {
-    try {
-      const raw = localStorage.getItem(SAVE_INDEX_KEY)
-      if (!raw) return []
-      return JSON.parse(raw)
-    } catch {
-      return []
-    }
+  function savesList() {
+    const raw = _storageGet({ key: SAVE_INDEX_KEY })
+    if (raw.ok && raw.data === null) return resultOk([])
+    const parsed = raw.ok ? _jsonParse({ text: raw.data }) : raw
+    if (parsed.ok && Array.isArray(parsed.data)) return resultOk(parsed.data)
+    return resultOk(_indexRebuild())
   }
 
   /**
-   * Delete a save by ID.
-   * @param {string} id
+   * Delete a save by id.
+   * @param {{ id: string }} input
+   * @returns {{ ok: boolean, data: { id: string }|null, error: Object|null }}
    */
-  function deleteSave(id) {
+  function saveDelete({ id }) {
+    const index = savesList().data.filter((entry) => entry.id !== id)
     try {
       localStorage.removeItem(SAVE_PREFIX + id)
-      const saves = listSaves().filter((s) => s.id !== id)
-      localStorage.setItem(SAVE_INDEX_KEY, JSON.stringify(saves))
+      localStorage.setItem(SAVE_INDEX_KEY, JSON.stringify(index))
     } catch (e) {
-      console.warn('[save] Failed to delete save:', e)
+      return resultFail({ code: SAVE_ERROR_CODES.STORAGE_FAILED, message: String(e) })
     }
+    return resultOk({ id })
   }
 
   /**
-   * Auto-save current state. The game loop calls this on arrival at a
-   * location. There is one auto-save slot; each call replaces it.
-   * @returns {string|null} save ID, or null if the write failed
+   * Auto-save. There is one auto-save slot; each call replaces it. The game
+   * loop calls this on arrival at a location.
+   * @returns {{ ok: boolean, data: { id: string }|null, error: Object|null }}
    */
-  function autoSave() {
-    const saves = listSaves()
-    const existing = saves.find((s) => s.name === AUTO_SAVE_NAME)
+  function saveAuto() {
+    const existing = savesList().data.find((entry) => entry.name === AUTO_SAVE_NAME)
     if (existing) {
-      deleteSave(existing.id)
+      const deleted = saveDelete({ id: existing.id })
+      if (!deleted.ok) return deleted
     }
-    return save(AUTO_SAVE_NAME)
+    return saveWrite({ name: AUTO_SAVE_NAME })
   }
 
   /**
-   * Export a save as a JSON string.
-   * Useful for players to back up their games or move between browsers.
-   * @param {string} id
-   * @returns {string|null} JSON string, or null if save not found/invalid
+   * A save as a JSON string, for backing up or moving between browsers.
+   * @param {{ id: string }} input
+   * @returns {{ ok: boolean, data: { json: string }|null, error: Object|null }}
    */
-  function exportSave(id) {
-    const data = load(id)
-    if (!data) return null
-    return JSON.stringify(data, null, 2)
+  function saveExport({ id }) {
+    const read = saveRead({ id })
+    if (!read.ok) return read
+    return resultOk({ json: JSON.stringify(read.data, null, 2) })
   }
 
   /**
-   * Import a save from a JSON string.
-   * Validates the data before writing it to localStorage.
-   * Returns the new save ID if successful, null otherwise.
-   * @param {string} jsonString
-   * @returns {string|null} save ID, or null if invalid
+   * Take in an exported save. It gets a fresh id so it never overwrites one.
+   * @param {{ json: string }} input
+   * @returns {{ ok: boolean, data: { id: string }|null, error: Object|null }}
    */
-  function importSave(jsonString) {
-    let data
-    try {
-      data = JSON.parse(jsonString)
-    } catch (e) {
-      console.warn('[save] importSave: invalid JSON —', e)
-      return null
+  function saveImport({ json }) {
+    const parsed = _jsonParse({ text: json })
+    if (!parsed.ok) return parsed
+    const valid = saveValidate({ save: parsed.data })
+    if (!valid.ok) return valid
+    const listed = savesList()
+    if (listed.data.length >= MAX_SAVES) {
+      return resultFail({
+        code: SAVE_ERROR_CODES.LIMIT_REACHED,
+        message: `${MAX_SAVES} saves already; delete one first`,
+        params: { limit: MAX_SAVES },
+      })
     }
-
-    if (!validateSave(data)) {
-      console.warn('[save] importSave: save data failed validation.')
-      return null
-    }
-
-    const saves = listSaves()
-    if (saves.length >= MAX_SAVES) {
-      console.warn(`[save] importSave: save limit reached (${MAX_SAVES}). Delete a save first.`)
-      return null
-    }
-
-    // Give it a fresh ID so it doesn't stomp an existing save
-    const newId = crypto.randomUUID()
-    const importedData = { ...saveMigrate({ save: data }), id: newId }
-
-    try {
-      localStorage.setItem(SAVE_PREFIX + newId, JSON.stringify(importedData))
-      _indexSave({ id: newId, name: importedData.name, timestamp: importedData.timestamp })
-    } catch (e) {
-      console.warn('[save] importSave: failed to write to localStorage:', e)
-      return null
-    }
-
-    return newId
+    const imported = { ...saveMigrate({ save: valid.data }), id: crypto.randomUUID() }
+    return _saveStore({ save: imported, index: listed.data })
   }
 
-  function _indexSave(entry) {
-    const saves = listSaves()
-    saves.push(entry)
-    localStorage.setItem(SAVE_INDEX_KEY, JSON.stringify(saves))
+  /**
+   * Write a save and its index entry.
+   * @param {{ save: Object, index: Array<Object> }} input
+   * @returns {{ ok: boolean, data: { id: string }|null, error: Object|null }}
+   */
+  function _saveStore({ save, index }) {
+    try {
+      localStorage.setItem(SAVE_PREFIX + save.id, JSON.stringify(save))
+      const entry = { id: save.id, name: save.name, timestamp: save.timestamp }
+      localStorage.setItem(SAVE_INDEX_KEY, JSON.stringify([...index, entry]))
+    } catch (e) {
+      return resultFail({ code: SAVE_ERROR_CODES.STORAGE_FAILED, message: String(e) })
+    }
+    return resultOk({ id: save.id })
   }
 
-  return {
-    save,
-    load,
-    listSaves,
-    deleteSave,
-    autoSave,
-    exportSave,
-    importSave,
+  /**
+   * The index, rebuilt from every readable save in storage, and written back.
+   * @returns {Array<{ id: string, name: string, timestamp: number }>}
+   */
+  function _indexRebuild() {
+    const index = []
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (!key?.startsWith(SAVE_PREFIX)) continue
+        const parsed = _jsonParse({ text: localStorage.getItem(key) })
+        if (!parsed.ok || !saveValidate({ save: parsed.data }).ok) continue
+        const { id, name, timestamp } = parsed.data
+        index.push({ id, name, timestamp })
+      }
+      localStorage.setItem(SAVE_INDEX_KEY, JSON.stringify(index))
+    } catch {
+      // Storage itself is failing; the saves found so far are all there is to list.
+    }
+    return index
+  }
+
+  return { saveWrite, saveRead, savesList, saveDelete, saveAuto, saveExport, saveImport }
+}
+
+/**
+ * Read a key from storage. A missing key is data: null.
+ * @param {{ key: string }} input
+ * @returns {{ ok: boolean, data: string|null, error: Object|null }}
+ */
+function _storageGet({ key }) {
+  try {
+    return resultOk(localStorage.getItem(key))
+  } catch (e) {
+    return resultFail({ code: SAVE_ERROR_CODES.STORAGE_FAILED, message: String(e) })
+  }
+}
+
+/**
+ * Parse JSON as a result.
+ * @param {{ text: string }} input
+ * @returns {{ ok: boolean, data: *, error: Object|null }}
+ */
+function _jsonParse({ text }) {
+  try {
+    return resultOk(JSON.parse(text))
+  } catch (e) {
+    return resultFail({ code: SAVE_ERROR_CODES.UNREADABLE, message: String(e) })
   }
 }

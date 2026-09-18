@@ -1139,6 +1139,7 @@ describe('content/game.json — what a new game is', () => {
     ).toBe(true)
     expect(typeof config.menu?.new).toBe('string')
     expect(typeof config.menu?.load).toBe('string')
+    expect(typeof config.menu?.loadFailed).toBe('string')
   })
 
   it('names a map that exists and starts the player somewhere on it', () => {
@@ -1417,7 +1418,7 @@ describe('making — every medium can actually be made in', () => {
   for (const source of sources) {
     const text = readFileSync(resolve(source), 'utf-8')
     for (const match of text.matchAll(
-      /'((?:inspiration|scavenge|item|making|mark|piece|work|requirement|menu)\.[a-z_.]+)'/g
+      /'((?:inspiration|scavenge|item|making|mark|piece|work|requirement|menu|save)\.[a-z_.]+)'/g
     )) {
       codes.add(match[1])
     }

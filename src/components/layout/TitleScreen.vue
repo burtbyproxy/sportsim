@@ -33,6 +33,8 @@
         >
       </button>
     </nav>
+
+    <p v-if="loadFailed" class="title-screen__notice" role="status">{{ config.menu.loadFailed }}</p>
   </div>
 </template>
 
@@ -69,6 +71,7 @@ const save = useSave()
 const menuEl = ref(null)
 
 const hasSave = ref(false)
+const loadFailed = ref(false)
 
 // What a new game is — its words, its map, where and as whom you start — is content.
 const config = loadGameConfig()
@@ -102,7 +105,7 @@ for (const minigame of Object.values(loadGames())) {
 }
 
 onMounted(() => {
-  hasSave.value = save.listSaves().length > 0
+  hasSave.value = save.savesList().data.length > 0
   // Auto-focus so keyboard works immediately, no click required
   menuEl.value?.focus()
 })
@@ -132,17 +135,17 @@ function startNewGame() {
 }
 
 function loadGame() {
-  const saves = save.listSaves()
+  const saves = save.savesList().data
   if (saves.length === 0) return
   // Load most recent save
-  const latest = saves.sort((a, b) => b.timestamp - a.timestamp)[0]
-  const saveData = save.load(latest.id)
-  if (saveData) {
-    game.loadSave(saveData)
-    // What a place is comes from content; the save only knows what happened there.
-    game.locationsRestore({ definitions: loadLocations(config.mapId) })
-    router.push('/game')
-  }
+  const latest = [...saves].sort((a, b) => b.timestamp - a.timestamp)[0]
+  const read = save.saveRead({ id: latest.id })
+  loadFailed.value = !read.ok
+  if (!read.ok) return
+  game.loadSave(read.data)
+  // What a place is comes from content; the save only knows what happened there.
+  game.locationsRestore({ definitions: loadLocations(config.mapId) })
+  router.push('/game')
 }
 
 const menuItems = computed(() => [
@@ -188,6 +191,8 @@ useKeyboard({
 </script>
 
 <style lang="scss" scoped>
+@use '../../scss/variables' as *;
+
 .title-screen {
   display: flex;
   flex-direction: column;
@@ -215,6 +220,13 @@ useKeyboard({
   letter-spacing: 3px;
   text-transform: uppercase;
   font-weight: normal;
+}
+
+.title-screen__notice {
+  color: $color-danger;
+  font-size: 13px;
+  margin-top: 24px;
+  max-width: 500px;
 }
 
 .title-screen__subtitle {
