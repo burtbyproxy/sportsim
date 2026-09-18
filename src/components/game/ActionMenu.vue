@@ -1,12 +1,28 @@
 <template>
   <div class="action-menu">
     <div class="action-menu__label ui-label">
-      <span v-if="selectedCharacter">{{ selectedCharacter.name }}</span>
+      <span v-if="activeEvent">{{ activeEvent.title ?? 'what now' }}</span>
+      <span v-else-if="selectedCharacter">{{ selectedCharacter.name }}</span>
       <span v-else>what now</span>
     </div>
 
+    <!-- Event choices — the world is waiting on you -->
+    <div v-if="activeEvent" class="action-menu__list">
+      <button
+        v-for="(entry, i) in menuEntries"
+        :key="`choice-${i}`"
+        class="action-item action-item--choice"
+        :class="{ 'action-item--selected': navIndex === i }"
+        @click="choose(entry)"
+        @mouseenter="navIndex = i"
+      >
+        <span class="action-shortcut">{{ entry.key }}.</span>
+        {{ entry.label }}
+      </button>
+    </div>
+
     <!-- Actions -->
-    <div v-if="filteredActions.length === 0 && exits.length === 0" class="action-menu__empty">
+    <div v-else-if="filteredActions.length === 0 && exits.length === 0" class="action-menu__empty">
       <span v-if="selectedCharacter">nothing to say to {{ selectedCharacter.name }}</span>
       <span v-else>nothing to do here</span>
     </div>
@@ -76,6 +92,9 @@ const selectedCharacterId = inject('selectedCharacterId', null)
 /** Prevent double-clicks during resolution */
 const isResolving = ref(false)
 
+/** The event waiting on the player's choice, if any */
+const activeEvent = computed(() => game.activeEvent)
+
 /** The selected character object (or null) */
 const selectedCharacter = computed(() => {
   const id = selectedCharacterId?.value
@@ -133,8 +152,13 @@ function travelBlockReason(exit) {
   return ''
 }
 
+function choose(entry) {
+  if (!gameLoop || entry.kind !== 'choice') return
+  gameLoop.resolveEventChoice({ choiceIndex: entry.choiceIndex })
+}
+
 function travel(exit) {
-  if (!canTravel(exit)) return
+  if (!canTravel(exit) || activeEvent.value) return
   if (gameLoop) {
     gameLoop.travel(exit.locationId, exit.travelTime ?? 1)
   }
@@ -152,7 +176,7 @@ function formatTravelTime(ticks) {
 // ── Actions ──────────────────────────────────────────────────────────────────
 
 async function executeAction(action) {
-  if (!action.available || isResolving.value || !gameLoop) return
+  if (!action.available || isResolving.value || !gameLoop || activeEvent.value) return
   isResolving.value = true
   try {
     await gameLoop.resolvePlayerAction(action)
@@ -181,7 +205,12 @@ function formatTimeCost(ticks) {
 
 // Arrow keys and Enter walk one list: actions first, then exits.
 const menuEntries = computed(() =>
-  menuEntriesBuild({ actions: sortedActions.value, exits: exits.value, exitAvailable: canTravel })
+  menuEntriesBuild({
+    actions: sortedActions.value,
+    exits: exits.value,
+    exitAvailable: canTravel,
+    choices: activeEvent.value?.choices ?? [],
+  })
 )
 
 const {
@@ -190,7 +219,8 @@ const {
   clamp,
 } = useKeyboardNav(menuEntries, {
   onSelect: (entry) => {
-    if (entry.kind === 'action') executeAction(entry.action)
+    if (entry.kind === 'choice') choose(entry)
+    else if (entry.kind === 'action') executeAction(entry.action)
     else travel(entry.exit)
   },
   skip: (entry) => !entry.available,
@@ -212,11 +242,11 @@ const actionKeyBindings = Object.fromEntries(
   [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => [
     String(n),
     (e) => {
-      const a = sortedActions.value[n - 1]
-      if (a?.available) {
-        e.preventDefault()
-        executeAction(a)
-      }
+      const entry = menuEntries.value.find((m) => m.key === String(n))
+      if (!entry?.available) return
+      e.preventDefault()
+      if (entry.kind === 'choice') choose(entry)
+      else executeAction(entry.action)
     },
   ])
 )

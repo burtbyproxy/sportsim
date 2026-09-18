@@ -7,14 +7,25 @@ export const EXIT_KEYS = 'abcdefghijklmnopqrstuvwxyz'
 
 /**
  * Build the flat entry list for the action menu.
+ * While an event waits on the player, its choices are the whole menu.
  * @param {{
  *   actions: Object[],
  *   exits: Object[],
  *   exitAvailable: (exit: Object) => boolean,
+ *   choices?: Object[],
  * }} input
- * @returns {Array<{ kind: 'action'|'exit', key: string, label: string, available: boolean, action?: Object, exit?: Object }>}
+ * @returns {Array<{ kind: 'action'|'exit'|'choice', key: string, label: string, available: boolean, action?: Object, exit?: Object, choiceIndex?: number }>}
  */
-export function menuEntriesBuild({ actions, exits, exitAvailable }) {
+export function menuEntriesBuild({ actions, exits, exitAvailable, choices = [] }) {
+  if (choices.length > 0) {
+    return choices.map((choice, i) => ({
+      kind: 'choice',
+      key: i < 9 ? String(i + 1) : '',
+      label: choice.label,
+      available: true,
+      choiceIndex: i,
+    }))
+  }
   const actionEntries = actions.map((action, i) => ({
     kind: 'action',
     key: i < 9 ? String(i + 1) : '',

@@ -24,12 +24,10 @@
 <script setup>
 import { computed, inject, watch, onMounted } from 'vue'
 import { useGameStore } from '../../stores/game.js'
-import { generateLocationNarrative } from '../../composables/useNarrative.js'
 import { isOpen, exitMeetsRequirements } from '../../models/location.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
 
 const game = useGameStore()
-const narrative = inject('narrative')
 const gameLoop = inject('gameLoop')
 const selectedCharacterId = inject('selectedCharacterId', null)
 
@@ -57,30 +55,20 @@ function canTravel(exit) {
   return exitMeetsRequirements({ exit, player: game.player, gameTime: game.time }).meets
 }
 
-function onLocationEntered() {
-  if (!location.value || !game.player) return
-
-  // Clear character selection on location change
-  if (selectedCharacterId) selectedCharacterId.value = null
-
-  // Clear log and enqueue new description
-  if (narrative) {
-    narrative.clearLog()
-    const narrativeText = generateLocationNarrative(location.value, game.player, game.time)
-    narrative.enqueue(narrativeText)
+// The scene itself (log, description, events, actions) is the game loop's.
+// This component only owns the character selection.
+onMounted(() => {
+  if (gameLoop) gameLoop.onLocationEntered()
+})
+watch(
+  () => game.currentLocationId,
+  () => {
+    if (selectedCharacterId) selectedCharacterId.value = null
   }
-
-  // Refresh available actions via game loop
-  if (gameLoop) {
-    gameLoop.onLocationEntered()
-  }
-}
-
-onMounted(onLocationEntered)
-watch(() => game.currentLocationId, onLocationEntered)
+)
 
 function travel(exit) {
-  if (!canTravel(exit)) return
+  if (!canTravel(exit) || game.activeEvent) return
   if (gameLoop) {
     gameLoop.travel(exit.locationId, exit.travelTime ?? 1)
   }

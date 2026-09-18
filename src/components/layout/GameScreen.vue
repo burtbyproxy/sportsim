@@ -108,7 +108,7 @@ import { useNarrative, narrativeSkipBindings } from '../../composables/useNarrat
 import { useGameLoop } from '../../composables/useGameLoop.js'
 import { useSave } from '../../composables/useSave.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
-import { loadActions } from '../../data/loader.js'
+import { loadActions, loadEvents } from '../../data/loader.js'
 import { formatTime } from '../../engine/clock.js'
 import GameHeader from './GameHeader.vue'
 import GameFooter from './GameFooter.vue'
@@ -124,8 +124,9 @@ if (!game.isRunning) {
   router.replace('/')
 }
 
-// Load action registry from content/ — array of Action objects
+// Load action and event registries from content/
 const actionRegistry = Object.values(loadActions('kenton'))
+const eventRegistry = Object.values(loadEvents('kenton'))
 
 const narrative = useNarrative()
 provide('narrative', narrative)
@@ -134,7 +135,7 @@ provide('narrative', narrative)
 useKeyboard(narrativeSkipBindings({ narrative }))
 
 const save = useSave()
-const gameLoop = useGameLoop({ actionRegistry, narrative, save })
+const gameLoop = useGameLoop({ actionRegistry, eventRegistry, narrative, save })
 provide('gameLoop', gameLoop)
 
 // Selected character — set by LocationView when player clicks a character,

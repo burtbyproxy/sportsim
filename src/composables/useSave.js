@@ -93,6 +93,7 @@ export function useSave() {
       locations: game.locations,
       characters: game.characters,
       firedEventIds: game.firedEventIds,
+      activeEvent: game.activeEvent,
       counters: game.counters,
     }
 

@@ -22,8 +22,9 @@ function _meetsEventConditions(event, player, location, gameTime, firedEventIds)
   const cond = event.conditions
   if (!cond) return true
 
-  // Location check
+  // Location checks — a specific place, or any place of a type (bar, park, market...)
   if (cond.locationId && cond.locationId !== location.id) return false
+  if (cond.locationType && cond.locationType !== location.type) return false
 
   // Time checks
   if (cond.minHour !== null && cond.minHour !== undefined && gameTime.hour < cond.minHour)
@@ -153,7 +154,10 @@ export function resolveEvent(event, player, choiceIndex = null, rng = Math.rando
       // Invalid choice index — fall through to automatic outcome
     } else if (choice.check) {
       const diceResult = rollCheck(player, choice.check.stat, [], choice.check.dc, rng)
-      return { outcome: choice.outcome, diceResult }
+      const outcome = diceResult.success
+        ? choice.outcome
+        : (choice.failureOutcome ?? choice.outcome)
+      return { outcome, diceResult }
     } else {
       // No check on this choice — auto-resolve
       return { outcome: choice.outcome, diceResult: null }

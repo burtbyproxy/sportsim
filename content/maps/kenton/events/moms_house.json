@@ -1,0 +1,269 @@
+[
+  {
+    "id": "moms_note",
+    "title": "a note from mom",
+    "type": "triggered",
+    "oneTime": true,
+    "probability": null,
+    "conditions": {
+      "locationId": "moms_house",
+      "locationType": null,
+      "minHour": null,
+      "maxHour": null,
+      "minStats": null,
+      "maxStats": null,
+      "minStatus": null,
+      "maxStatus": null,
+      "requiredItems": null,
+      "requiredTraumas": null,
+      "minVisits": 2
+    },
+    "narrative": {
+      "tokens": [
+        {
+          "text": "There is a shoebox on the cot that was not there before. Inside: a set of watercolours, the cheap kind, still in the shrink wrap. A note in your mother's handwriting. ",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 0,
+          "effect": "none"
+        },
+        {
+          "text": "\"Grandma wanted you to have these. Make something. Love, Mom.\"",
+          "style": "normal",
+          "color": null,
+          "speed": "slow",
+          "pauseAfter": 500,
+          "effect": "none"
+        },
+        {
+          "text": " You sit with that for a while.",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 0,
+          "effect": "none"
+        }
+      ]
+    },
+    "choices": null,
+    "outcome": {
+      "narrative": null,
+      "statusChanges": {
+        "mood": 10
+      },
+      "statChanges": {
+        "creativity": 2
+      },
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "gifts_from_mom": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "nextEventId": null
+  },
+  {
+    "id": "dave_ambush",
+    "title": "Dave",
+    "type": "random",
+    "oneTime": false,
+    "probability": 0.2,
+    "conditions": {
+      "locationId": "moms_house",
+      "locationType": null,
+      "minHour": null,
+      "maxHour": null,
+      "minStats": null,
+      "maxStats": null,
+      "minStatus": null,
+      "maxStatus": null,
+      "requiredItems": null,
+      "requiredTraumas": null,
+      "minVisits": null
+    },
+    "narrative": {
+      "tokens": [
+        {
+          "text": "Dave is on the stairs. Dave has been waiting on the stairs. You do not see Dave until Dave has made contact with your ankle, at which point Dave is already gone, and you are alone with the consequences.",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 0,
+          "effect": "none"
+        }
+      ]
+    },
+    "choices": null,
+    "outcome": {
+      "narrative": null,
+      "statusChanges": {
+        "health": -2,
+        "mood": -3
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "dave_attacks": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "nextEventId": null
+  },
+  {
+    "id": "mom_upstairs",
+    "title": "mom, upstairs",
+    "type": "random",
+    "oneTime": false,
+    "probability": 0.15,
+    "conditions": {
+      "locationId": "moms_house",
+      "locationType": null,
+      "minHour": 9,
+      "maxHour": 22,
+      "minStats": null,
+      "maxStats": null,
+      "minStatus": null,
+      "maxStatus": null,
+      "requiredItems": null,
+      "requiredTraumas": null,
+      "minVisits": null
+    },
+    "narrative": {
+      "tokens": [
+        {
+          "text": "Footsteps upstairs. A pause at the top of the basement door. ",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 0,
+          "effect": "none"
+        },
+        {
+          "text": "\"You okay down there, honey?\"",
+          "style": "normal",
+          "color": null,
+          "speed": "slow",
+          "pauseAfter": 400,
+          "effect": "none"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "label": "\"I'm fine, Mom.\"",
+        "check": null,
+        "outcome": {
+          "narrative": {
+            "tokens": [
+              {
+                "text": "\"Okay.\" The footsteps go away. Neither of you believes you and both of you agree not to mention it. This is love, in this house.",
+                "style": "normal",
+                "color": null,
+                "speed": "normal",
+                "pauseAfter": 0,
+                "effect": "none"
+              }
+            ]
+          },
+          "statusChanges": {
+            "mood": 2
+          },
+          "statChanges": null,
+          "moneyChange": null,
+          "itemsGained": null,
+          "itemsLost": null,
+          "eventTriggered": null,
+          "locationDiscovered": null,
+          "archetypeChanges": null,
+          "counterChanges": null,
+          "traumaGained": null,
+          "obsessionFed": null
+        },
+        "failureOutcome": null
+      },
+      {
+        "label": "Go up and talk to her.",
+        "check": null,
+        "outcome": {
+          "narrative": {
+            "tokens": [
+              {
+                "text": "You go up. She makes you a sandwich without asking. You talk about nothing, which is the only subject either of you can handle right now. You come back down heavier and better.",
+                "style": "normal",
+                "color": null,
+                "speed": "normal",
+                "pauseAfter": 0,
+                "effect": "none"
+              }
+            ]
+          },
+          "statusChanges": {
+            "hunger": 20,
+            "mood": 8,
+            "energy": 3
+          },
+          "statChanges": null,
+          "moneyChange": null,
+          "itemsGained": null,
+          "itemsLost": null,
+          "eventTriggered": null,
+          "locationDiscovered": null,
+          "archetypeChanges": null,
+          "counterChanges": {
+            "talks_with_mom": 1
+          },
+          "traumaGained": null,
+          "obsessionFed": null
+        },
+        "failureOutcome": null
+      },
+      {
+        "label": "Pretend to be asleep.",
+        "check": null,
+        "outcome": {
+          "narrative": {
+            "tokens": [
+              {
+                "text": "You pretend to be asleep. She knows. Dave knows. The furnace knows. The footsteps go away anyway.",
+                "style": "normal",
+                "color": null,
+                "speed": "normal",
+                "pauseAfter": 0,
+                "effect": "none"
+              }
+            ]
+          },
+          "statusChanges": {
+            "mood": -4
+          },
+          "statChanges": null,
+          "moneyChange": null,
+          "itemsGained": null,
+          "itemsLost": null,
+          "eventTriggered": null,
+          "locationDiscovered": null,
+          "archetypeChanges": null,
+          "counterChanges": null,
+          "traumaGained": null,
+          "obsessionFed": null
+        },
+        "failureOutcome": null
+      }
+    ],
+    "outcome": null,
+    "nextEventId": null
+  }
+]

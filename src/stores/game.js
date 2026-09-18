@@ -25,6 +25,9 @@ export const useGameStore = defineStore('game', {
     /** IDs of one-time events that have fired this run */
     firedEventIds: [],
 
+    /** An event waiting on the player's choice, or null. One at a time. */
+    activeEvent: null,
+
     /** General-purpose counters */
     counters: {},
 
@@ -78,6 +81,7 @@ export const useGameStore = defineStore('game', {
       this.currentLocationId = startLocationId
       this.time = createClock()
       this.firedEventIds = []
+      this.activeEvent = null
       this.counters = {}
       this.characters = {}
       this.availableActions = []
@@ -160,6 +164,18 @@ export const useGameStore = defineStore('game', {
       if (!this.firedEventIds.includes(eventId)) {
         this.firedEventIds.push(eventId)
       }
+    },
+
+    /**
+     * Put an event in front of the player until they choose.
+     * @param {Object} event
+     */
+    setActiveEvent(event) {
+      this.activeEvent = event
+    },
+
+    clearActiveEvent() {
+      this.activeEvent = null
     },
 
     /**
@@ -246,6 +262,7 @@ export const useGameStore = defineStore('game', {
       // Support both old saves (npcs key) and new saves (characters key)
       this.characters = save.characters ?? save.npcs ?? {}
       this.firedEventIds = save.firedEventIds
+      this.activeEvent = save.activeEvent ?? null
       this.counters = save.counters
       this.isRunning = true
       // Note: items registry (this.items) is NOT restored from save —
@@ -259,6 +276,7 @@ export const useGameStore = defineStore('game', {
       this.locations = {}
       this.characters = {}
       this.firedEventIds = []
+      this.activeEvent = null
       this.counters = {}
       this.availableActions = []
       this.isRunning = false

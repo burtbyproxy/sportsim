@@ -65,3 +65,23 @@ describe('menuEntriesBuild', () => {
     expect(entries[10 + 26].key).toBe('')
   })
 })
+
+describe('menuEntriesBuild — event choices', () => {
+  const choices = [
+    { label: 'Be polite', check: null, outcome: {} },
+    { label: 'Walk faster', check: null, outcome: {} },
+  ]
+
+  it('choices replace actions and exits entirely while an event waits', () => {
+    const entries = menuEntriesBuild({ actions, exits, exitAvailable: allOpen, choices })
+    expect(entries.map((e) => e.kind)).toEqual(['choice', 'choice'])
+    expect(entries.map((e) => e.key)).toEqual(['1', '2'])
+    expect(entries.map((e) => e.choiceIndex)).toEqual([0, 1])
+    expect(entries.every((e) => e.available)).toBe(true)
+  })
+
+  it('no choices means the ordinary menu', () => {
+    const entries = menuEntriesBuild({ actions, exits, exitAvailable: allOpen, choices: [] })
+    expect(entries.map((e) => e.kind)).toEqual(['action', 'action', 'exit', 'exit'])
+  })
+})

@@ -68,7 +68,9 @@ describe('useGameLoop → narrative', () => {
     await loop.resolvePlayerAction(byId('stare_at_ceiling'))
     const entries = await settle(narrative)
 
-    const expected = byId('stare_at_ceiling').success.narrative.tokens.map((t) => t.text).join('')
+    const expected = byId('stare_at_ceiling')
+      .success.narrative.tokens.map((t) => t.text)
+      .join('')
     expect(entries).toEqual([expected])
   })
 
@@ -189,5 +191,198 @@ describe('useGameLoop → auto-save', () => {
     const loop = useGameLoop({ actionRegistry: momsHouseActions, save })
     await loop.resolvePlayerAction(byId('raid_fridge'))
     expect(save.listSaves()).toHaveLength(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Events: the world happens to the player
+// ---------------------------------------------------------------------------
+
+const kentonEvents = ['street', 'moms_house', 'bars', 'park', 'market'].flatMap((name) =>
+  JSON.parse(readFileSync(resolve(`content/maps/kenton/events/${name}.json`), 'utf-8'))
+)
+const eventById = (id) => kentonEvents.find((e) => e.id === id)
+const always = () => 0 // chance(p) is rng() < p, so 0 fires anything with p > 0
+const never = () => 0.999
+
+describe('useGameLoop → events', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  it('a random event fires on the tick, says its piece, and applies its outcome', async () => {
+    const game = startGame()
+    const narrative = useNarrative()
+    const loop = useGameLoop({
+      actionRegistry: momsHouseActions,
+      eventRegistry: [eventById('found_change')],
+      narrative,
+      rng: always,
+    })
+    const moneyBefore = game.player.status.money
+
+    await loop.tick(1)
+    const entries = await settle(narrative)
+
+    expect(entries).toHaveLength(1)
+    expect(entries[0]).toContain('money on the ground')
+    expect(game.player.status.money).toBeCloseTo(moneyBefore + 0.6, 5)
+    expect(game.player.counters.change_found).toBe(1)
+  })
+
+  it('nothing fires when the roll misses', async () => {
+    const game = startGame()
+    const narrative = useNarrative()
+    const loop = useGameLoop({
+      actionRegistry: momsHouseActions,
+      eventRegistry: [eventById('found_change')],
+      narrative,
+      rng: never,
+    })
+    await loop.tick(1)
+    expect(await settle(narrative)).toHaveLength(0)
+    expect(game.activeEvent).toBeNull()
+  })
+
+  it('a one-time triggered event fires once and never again', async () => {
+    const game = startGame()
+    game.player.status.hunger = 10
+    const narrative = useNarrative()
+    const loop = useGameLoop({
+      actionRegistry: momsHouseActions,
+      eventRegistry: [eventById('first_starving')],
+      narrative,
+      rng: never,
+    })
+
+    await loop.tick(1)
+    await loop.tick(1)
+    await loop.tick(1)
+
+    expect(await settle(narrative)).toHaveLength(1)
+    expect(game.firedEventIds).toEqual(['first_starving'])
+    expect(game.player.counters.times_starving).toBe(1)
+  })
+
+  it('an event with choices waits on the player, then the choice resolves it', async () => {
+    const game = startGame()
+    const narrative = useNarrative()
+    const loop = useGameLoop({
+      actionRegistry: momsHouseActions,
+      eventRegistry: [eventById('mom_upstairs')],
+      narrative,
+      rng: always,
+    })
+    await loop.tick(16) // 8:00 → 12:00, inside mom's waking hours
+    expect(game.activeEvent?.id).toBe('mom_upstairs')
+    const hungerBefore = game.player.status.hunger
+
+    loop.resolveEventChoice({ choiceIndex: 1 })
+    const entries = await settle(narrative)
+
+    expect(game.activeEvent).toBeNull()
+    expect(entries).toHaveLength(2)
+    expect(entries[1]).toContain('sandwich')
+    expect(game.player.status.hunger).toBe(hungerBefore + 20)
+    expect(game.player.counters.talks_with_mom).toBe(1)
+  })
+
+  it('no second event fires while a choice is pending', async () => {
+    const game = startGame()
+    const loop = useGameLoop({
+      actionRegistry: momsHouseActions,
+      eventRegistry: [eventById('mom_upstairs'), eventById('found_change')],
+      rng: always,
+    })
+    await loop.tick(16)
+    const moneyAfterFirst = game.player.status.money
+    await loop.tick(1)
+    expect(game.activeEvent?.id).toBe('mom_upstairs')
+    expect(game.player.status.money).toBe(moneyAfterFirst)
+  })
+
+  it('a checked choice that fails applies the failure outcome', async () => {
+    const game = startGame()
+    const narrative = useNarrative()
+    // A low roll botches every check. Force the event by type so the roll only governs the check.
+    const botch = () => 0.001
+    const cop = { ...eventById('cop_hassle'), type: 'triggered' }
+    const loop = useGameLoop({
+      actionRegistry: momsHouseActions,
+      eventRegistry: [cop],
+      narrative,
+      rng: botch,
+    })
+
+    await loop.tick(56) // 8:00 → 22:00, after the cruiser starts prowling
+    game.player.status.sobriety = 20 // set after the clock moves; sobriety recovers over time
+    await loop.tick(1)
+    expect(game.activeEvent?.id).toBe('cop_hassle')
+    loop.resolveEventChoice({ choiceIndex: 1 })
+    const entries = await settle(narrative)
+
+    expect(entries[1]).toContain('spotlight')
+    expect(game.player.counters.times_detained).toBe(1)
+  })
+
+  it('the pending event survives the auto-save round trip', async () => {
+    const game = startGame()
+    const columbia = createLocation(columbiaPark)
+    game.registerLocation(columbia)
+    installLocalStorage()
+    const save = useSave()
+    const loop = useGameLoop({
+      actionRegistry: momsHouseActions,
+      eventRegistry: [eventById('park_acquaintance')],
+      save,
+      rng: always,
+    })
+    await loop.tick(16) // noon; nothing fires at home for a park event
+
+    await loop.travel('columbia_park', 1)
+    expect(game.activeEvent?.id).toBe('park_acquaintance')
+
+    setActivePinia(createPinia())
+    const restored = useGameStore()
+    const [entry] = useSave().listSaves()
+    restored.loadSave(useSave().load(entry.id))
+    expect(restored.activeEvent?.id).toBe('park_acquaintance')
+    delete globalThis.localStorage
+  })
+})
+
+describe('useGameLoop → scene order on arrival', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  it('the new place is described first and an arrival event lands beneath it', async () => {
+    const game = startGame()
+    game.registerLocation(createLocation(columbiaPark))
+    const narrative = useNarrative()
+    const loop = useGameLoop({
+      actionRegistry: momsHouseActions,
+      eventRegistry: [eventById('found_change')],
+      narrative,
+      rng: always,
+    })
+
+    await loop.travel('columbia_park', 1)
+    const entries = await settle(narrative)
+
+    expect(entries).toHaveLength(2)
+    expect(entries[0]).toContain('Columbia Park')
+    expect(entries[1]).toContain('money on the ground')
+  })
+
+  it('mounting the screen with a pending event puts the event back in front', async () => {
+    const game = startGame()
+    const narrative = useNarrative()
+    game.setActiveEvent(eventById('mom_upstairs'))
+    const loop = useGameLoop({ actionRegistry: momsHouseActions, narrative })
+
+    loop.onLocationEntered()
+    const entries = await settle(narrative)
+
+    expect(entries).toHaveLength(2)
+    expect(entries[1]).toContain('You okay down there')
   })
 })
