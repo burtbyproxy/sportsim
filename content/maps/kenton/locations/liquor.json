@@ -3,6 +3,7 @@
   "type": "market",
   "variant": "liquor",
   "display": "Kenton Liquor Store",
+  "pieceAs": "in the parking lot of the state liquor store",
   "descriptions": {
     "default": "Oregon liquor stores are state-run, which means the same drab layout, the same price, the same slightly hostile efficiency everywhere you go. The Kenton location has a clerk who looks like he's been working here since the state acquired it and sees no reason to change jobs now. The selection is adequate. The prices are what they are. A sign by the door says 'We Reserve The Right To Refuse Service.' It does not say to whom.",
     "night": "Closes at nine. Which you keep forgetting until you walk up and the lights are off. This is a lesson you will learn multiple times. The state of Oregon does not care about your schedule.",

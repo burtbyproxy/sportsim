@@ -2,6 +2,8 @@
   "id": "suburban_gangster",
   "lines": {
     "game.rhymes.picked": "{word}! You point at the ground when you say it. Twice. A sprinkler comes on somewhere in the cul-de-sac of your heart.",
-    "piece.artist.rough": "Done: {work}. That was hard. That was street. Nobody was here to see it, which is how you know it was real."
+    "piece.artist.rough": "Done: {work}. That was hard. That was street. Nobody was here to see it, which is how you know it was real.",
+    "inspiration.urge": "You've got bars. Right now. They're not going to keep. Somebody should be writing this down, and nobody is, and that's their loss.",
+    "making.encore": "That was only the first verse. There are, by your count, about forty more."
   }
 }

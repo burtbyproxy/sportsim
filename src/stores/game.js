@@ -8,6 +8,7 @@ import {
   inspirationTick,
   inspirationInterrupt,
   inspirationSpend,
+  inspirationUrge,
 } from '../engine/inspiration.js'
 import { voiceLine } from '../engine/voice.js'
 import { scavengeSearch, scavengedCounterName } from '../engine/scavenge.js'
@@ -152,6 +153,24 @@ export const useGameStore = defineStore('game', {
     /** The inspiration moving the player right now, or null. */
     inspirationActive: (state) =>
       state.player ? inspirationActive({ player: state.player }) : null,
+
+    /**
+     * Every persona anything can put in charge, keyed by id: a substance's,
+     * its withdrawal's, a condition's.
+     */
+    personas: (state) => {
+      const personas = {}
+      for (const substance of Object.values(state.substances)) {
+        personas[substance.persona.id] = substance.persona
+        if (substance.withdrawal) {
+          personas[substance.withdrawal.persona.id] = substance.withdrawal.persona
+        }
+      }
+      for (const condition of Object.values(state.conditions)) {
+        personas[condition.persona.id] = condition.persona
+      }
+      return personas
+    },
 
     /** The making under way, or null. */
     makingActive: (state) => (state.player ? makingActive({ player: state.player }) : null),
@@ -621,6 +640,38 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
+     * Whoever is in charge may get the urge. When one lands it strikes like
+     * any other inspiration, and the persona is its source.
+     * @param {{ ticksElapsed: number, rng?: () => number }} input
+     * @returns {{ ok: boolean, data: { struck: Object|null }|null, error: Object|null }}
+     */
+    applyInspirationUrge({ ticksElapsed, rng = Math.random }) {
+      if (!this.player) {
+        return { ok: false, data: null, error: { code: 'PLAYER_MISSING', message: 'No player' } }
+      }
+      const rolled = inspirationUrge({
+        player: this.player,
+        personas: this.personas,
+        ticksElapsed,
+        rng,
+      })
+      if (!rolled.ok) {
+        console.warn(`[game] applyInspirationUrge: ${rolled.error.code}`, rolled.error.message)
+        return rolled
+      }
+      if (!rolled.data.urge) return { ok: true, data: { struck: null }, error: null }
+      const { mediumId, strength, ticksTotal } = rolled.data.urge
+      const struck = this.applyInspirationStrike({
+        source: { kind: 'persona', id: rolled.data.personaId },
+        mediumId,
+        strength,
+        ticksTotal,
+      })
+      if (!struck.ok) return struck
+      return { ok: true, data: { struck: struck.data.struck }, error: null }
+    },
+
+    /**
      * The clock runs down.
      * @param {{ ticksElapsed: number }} input
      * @returns {{ ok: boolean, data: Object|null, error: Object|null }}
@@ -826,7 +877,9 @@ export const useGameStore = defineStore('game', {
         surface:
           making.surfaceKind === MAKING_SURFACE_KINDS.ITEM
             ? this.items[making.surfaceId]
-            : (location.surfaces ?? []).find((s) => s.id === making.surfaceId),
+            : making.surfaceKind === MAKING_SURFACE_KINDS.PLACE
+              ? location
+              : (location.surfaces ?? []).find((s) => s.id === making.surfaceId),
         ingredient: making.ingredientItemId ? this.items[making.ingredientItemId] : null,
         words: played.data.words,
         personaId: this.personaInCharge,
@@ -862,6 +915,12 @@ export const useGameStore = defineStore('game', {
         ]
       }
       this.applyInspirationSpend({ spentOn: { kind: 'experience', id: experience.id } })
+      if (result.data.encore) {
+        this.applyInspirationStrike({
+          ...result.data.encore,
+          source: { kind: 'experience', id: experience.id },
+        })
+      }
       this.applySkillGain({
         mediumId: making.mediumId,
         amount: this.mediums[making.mediumId].making.xp,

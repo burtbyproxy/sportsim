@@ -5,7 +5,15 @@
   "persona": {
     "id": "telepath",
     "display": "The telepath",
-    "compulsion": "Hear the thoughts of dogs, cats, and people. Freeze under the volume of them in public. Alone, everything you make is genius, and the worse it is the more genius it feels."
+    "compulsion": "Hear the thoughts of dogs, cats, and people. Freeze under the volume of them in public. Alone, everything you make is genius, and the worse it is the more genius it feels.",
+    "urges": [
+      {
+        "mediumId": "freestyle",
+        "chancePerTick": 0.08,
+        "strength": 30,
+        "ticksTotal": 8
+      }
+    ]
   },
   "decayPerTick": 3,
   "habituationRate": 0.03,
@@ -15,20 +23,47 @@
     {
       "atLeast": 15,
       "modifiers": [
-        { "stat": "creativity", "value": 4 },
-        { "stat": "wits", "value": 1 },
-        { "stat": "charm", "value": -3 },
-        { "stat": "stamina", "value": -1 }
+        {
+          "stat": "creativity",
+          "value": 4
+        },
+        {
+          "stat": "wits",
+          "value": 1
+        },
+        {
+          "stat": "charm",
+          "value": -3
+        },
+        {
+          "stat": "stamina",
+          "value": -1
+        }
       ]
     },
     {
       "atLeast": 50,
       "modifiers": [
-        { "stat": "creativity", "value": 6 },
-        { "stat": "luck", "value": 2 },
-        { "stat": "charm", "value": -6 },
-        { "stat": "stamina", "value": -3 },
-        { "stat": "wits", "value": -2 }
+        {
+          "stat": "creativity",
+          "value": 6
+        },
+        {
+          "stat": "luck",
+          "value": 2
+        },
+        {
+          "stat": "charm",
+          "value": -6
+        },
+        {
+          "stat": "stamina",
+          "value": -3
+        },
+        {
+          "stat": "wits",
+          "value": -2
+        }
       ]
     }
   ]

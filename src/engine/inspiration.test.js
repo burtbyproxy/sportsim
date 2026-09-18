@@ -7,6 +7,7 @@ import {
   inspirationTick,
   inspirationInterrupt,
   inspirationSpend,
+  inspirationUrge,
 } from './inspiration.js'
 import { blendSober } from './blend.js'
 
@@ -340,5 +341,77 @@ describe('inspirationSpend', () => {
   it('rejects a bad spentOn', () => {
     const result = inspirationSpend({ player: inspiredPlayer(), spentOn: null, gameTime: at(1) })
     expect(result.error.code).toBe(INSPIRATION_ERROR_CODES.SOURCE_INVALID)
+  })
+})
+
+describe('inspirationUrge', () => {
+  const personas = {
+    gangster: {
+      urges: [{ mediumId: 'freestyle', chancePerTick: 0.1, strength: 40, ticksTotal: 8 }],
+    },
+    quiet: {},
+  }
+  const as = (personaId, inspirations = []) => ({
+    blend: { dominantPersonaId: personaId, weights: [], soberWeight: 0 },
+    inspirations,
+  })
+
+  it('lands for the persona in charge when the roll is under the odds, and names who it was', () => {
+    const hit = inspirationUrge({
+      player: as('gangster'),
+      personas,
+      ticksElapsed: 1,
+      rng: () => 0.09,
+    })
+    expect(hit.data).toEqual({
+      urge: { mediumId: 'freestyle', chancePerTick: 0.1, strength: 40, ticksTotal: 8 },
+      personaId: 'gangster',
+    })
+    const miss = inspirationUrge({
+      player: as('gangster'),
+      personas,
+      ticksElapsed: 1,
+      rng: () => 0.1,
+    })
+    expect(miss.data.urge).toBeNull()
+  })
+
+  it('more time is more chances: a roll that misses one tick lands over four', () => {
+    const roll = () => 0.3
+    expect(
+      inspirationUrge({ player: as('gangster'), personas, ticksElapsed: 1, rng: roll }).data.urge
+    ).toBeNull()
+    // 1 - 0.9^4 = 0.344
+    expect(
+      inspirationUrge({ player: as('gangster'), personas, ticksElapsed: 4, rng: roll }).data.urge
+    ).not.toBeNull()
+  })
+
+  it('moves nobody who has no urges, nobody already moved, and nobody when no time passed', () => {
+    const always = () => 0.0
+    expect(
+      inspirationUrge({ player: as('quiet'), personas, ticksElapsed: 4, rng: always }).data.urge
+    ).toBeNull()
+    expect(
+      inspirationUrge({ player: as('stranger'), personas, ticksElapsed: 4, rng: always }).data.urge
+    ).toBeNull()
+    expect(
+      inspirationUrge({ player: as('gangster'), personas, ticksElapsed: 0, rng: always }).data.urge
+    ).toBeNull()
+    const busy = as('gangster', [
+      { id: 'i1', status: 'active', personaSnapshot: {}, endedBy: null },
+    ])
+    expect(
+      inspirationUrge({ player: busy, personas, ticksElapsed: 4, rng: always }).data.urge
+    ).toBeNull()
+  })
+
+  it('refuses a missing player and nonsense time', () => {
+    expect(inspirationUrge({ player: null, personas, ticksElapsed: 1 }).error.code).toBe(
+      'PLAYER_MISSING'
+    )
+    expect(inspirationUrge({ player: as('gangster'), personas, ticksElapsed: -1 }).error.code).toBe(
+      'TICKS_INVALID'
+    )
   })
 })

@@ -2,10 +2,11 @@
   "id": "freestyle",
   "display": "Freestyle",
   "stat": "wits",
-  "description": "Spitting rhymes off the top of your head, to a beat only you can hear. Words that rhyme are a flow. Words that don't are a man listing things in a parking lot.",
+  "description": "Spitting rhymes off the top of your head, to a beat only you can hear. You can start anywhere, and you will. Words that rhyme are a flow. Words that don't are a man listing things in a parking lot.",
   "pieceAs": "a freestyle",
   "making": {
     "gameId": "rhymes",
+    "anywhere": true,
     "ticksTotal": 4,
     "dc": 12,
     "xp": 8,
@@ -14,6 +15,11 @@
     "leavesArtifact": false,
     "statusChanges": {
       "energy": -2
+    },
+    "encore": {
+      "chance": 0.6,
+      "strength": 40,
+      "ticksTotal": 8
     }
   }
 }

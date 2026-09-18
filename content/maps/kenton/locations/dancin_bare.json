@@ -3,6 +3,7 @@
   "type": "bar",
   "variant": "exotic",
   "display": "The Dancin' Bare",
+  "pieceAs": "at the Dancin' Bare",
   "descriptions": {
     "default": "Portland has more strip clubs per capita than anywhere in the country, and the Dancin' Bare represents the genre at its least glamorous. There are steak bites for two dollars. There is a pool table that is inexplicably zig-zag shaped. Amateur night runs on Thursdays and patrons throw spare change onto the stage, which is either the most degrading thing you've witnessed or a reasonable tipping system depending on how you look at it. The carpet is sticky in a way that doesn't narrow anything down.",
     "night": "The amateur night crowd has a specific energy. Enthusiastic. Generous with coinage. The zig-zag pool table sees heavy use. The DJ plays hair metal at a volume that turns conversation into lip reading. Someone is eating steak bites in a way that suggests they came here for the food. Maybe they did.",

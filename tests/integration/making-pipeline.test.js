@@ -50,12 +50,13 @@ function startGame({
   carrying = [],
   rng = sequence(die(15)),
   events = [],
+  mediumsUsed = mediums,
 } = {}) {
   setActivePinia(createPinia())
   const game = useGameStore()
   for (const item of items) game.registerItem(createItem(item))
   for (const v of voices) game.registerVoice({ voice: v })
-  for (const m of mediums) game.registerMedium({ medium: m })
+  for (const m of mediumsUsed) game.registerMedium({ medium: m })
   for (const g of games) game.registerGame({ game: g })
   for (const substance of substances) game.registerSubstance({ substance })
   for (const condition of conditions) game.registerCondition({ condition })
@@ -104,8 +105,12 @@ describe('making pipeline', () => {
   })
 
   it('inspired with nothing to work with, the idea has nowhere to go and says so', async () => {
-    // Glitters offers only a sign to tag or write on, and the player has nothing to do either with.
-    const ctx = startGame({ at: 'glitters' })
+    // Glitters offers only a sign to tag or write on, and the player has nothing to do either
+    // with. (With the forms that need nothing, there is always something; this is a world without them.)
+    const ctx = startGame({
+      at: 'glitters',
+      mediumsUsed: mediums.filter((m) => !m.making.anywhere),
+    })
     strike(ctx.game)
     ctx.loop.onLocationEntered()
     const tickBefore = ctx.game.time.tick
@@ -734,7 +739,7 @@ describe('making pipeline', () => {
     strike(game, { mediumId: 'freestyle' })
     ctx.loop.onLocationEntered()
     await pick(ctx, 'Make something')
-    await pick(ctx, 'Freestyle: the good light in the parking lot')
+    await pick(ctx, 'Freestyle: right here')
 
     const rhymes = games.find((g) => g.id === 'rhymes')
     const familyOf = (word) =>
@@ -751,6 +756,7 @@ describe('making pipeline', () => {
     }
     const experience = game.player.experiences[0]
     expect(experience).toMatchObject({ mediumId: 'freestyle', artifactId: null, words: picked })
+    expect(experience.workText).toBe('a freestyle outside the Denver Ave 7-11')
     // Four words that rhyme are a flow, and the check hears it.
     const played = experience.check.modifierItems.find((m) => m.sourceId === 'game')
     expect(played.value).toBe(rhymes.params.voiceCap)
@@ -760,7 +766,7 @@ describe('making pipeline', () => {
     expect(game.player.skills.freestyle.suburban_gangster.xp).toBeGreaterThan(0)
   })
 
-  it('DLC: mime arrives as content alone — a medium, a game, a place to do it, and nothing else', async () => {
+  it('DLC: mime arrives as content alone — a medium, a game, and the gloves, because miming you need things', async () => {
     const ctx = startGame({ at: 'columbia_park' })
     const { game } = ctx
     // None of this ships. It is registered the way a content pack would be.
@@ -784,31 +790,131 @@ describe('making pipeline', () => {
         pieceAs: 'a mime',
         making: {
           gameId: 'invisible_box',
+          anywhere: true,
           ticksTotal: 4,
           dc: 13,
           xp: 8,
-          toolRequired: false,
+          toolRequired: true,
           takesIngredient: false,
           leavesArtifact: false,
         },
       },
     })
-    game.currentLocation.surfaces.push({
-      id: 'path',
-      name: 'the path by the playground',
-      pieceAs: 'on the path by the playground',
-      mediumIds: ['mime'],
-    })
+    game.registerItem(
+      createItem({
+        id: 'white_gloves',
+        name: 'White Gloves',
+        type: 'tool',
+        mediumIds: ['mime'],
+        pieceAs: 'white gloves',
+      })
+    )
     strike(game, { mediumId: 'mime' })
     ctx.loop.onLocationEntered()
     await pick(ctx, 'Make something')
-    await pick(ctx, 'Mime: the path by the playground')
+    // Anywhere, yes. Bare-handed, no.
+    expect(labels(game)).not.toContain('Mime')
+    await pick(ctx, 'Never mind')
+    game.player.inventory.push({ ...game.getItem('white_gloves') })
+    await pick(ctx, 'Make something')
+    await pick(ctx, 'Mime: White Gloves, right here')
     await pick(ctx, 'Feel along the wall')
     await pick(ctx, 'Find the door')
 
     expect(game.player.experiences[0]).toMatchObject({ mediumId: 'mime', artifactId: null })
-    expect(game.player.experiences[0].workText).toBe('a mime on the path by the playground')
+    expect(game.player.experiences[0].workText).toBe('a mime, white gloves in Columbia Park')
+    // The gloves are a tool. They survive the performance.
+    expect(game.playerInventory.map((i) => i.id)).toEqual(['white_gloves'])
     expect(game.player.skills.mime.sober.xp).toBeGreaterThan(0)
+  })
+
+  // ── Forms that need nothing ───────────────────────────────────────────────
+
+  it('you can start freestyling or singing anywhere: every place in Kenton offers both, and neither leaves a trace', async () => {
+    for (const location of locations) {
+      const ctx = startGame({ at: location.id })
+      strike(ctx.game, { mediumId: 'freestyle' })
+      ctx.loop.onLocationEntered()
+      await pick(ctx, 'Make something')
+      expect(labels(ctx.game), location.id).toContain('Freestyle: right here')
+      expect(labels(ctx.game), location.id).toContain('Singing: right here')
+    }
+    const ctx = startGame({ at: 'lombard_dental' })
+    strike(ctx.game, { mediumId: 'singing' })
+    ctx.loop.onLocationEntered()
+    await pick(ctx, 'Make something')
+    await pick(ctx, 'Singing: right here')
+    await pick(ctx, 'Keep it under your breath')
+    await pick(ctx, 'Trail off')
+    expect(ctx.game.player.experiences[0].workText).toBe(
+      'a song in the waiting room at Lombard Dental'
+    )
+    expect(ctx.game.player.portfolio).toHaveLength(0)
+    expect(ctx.game.locations.lombard_dental.marks).toHaveLength(0)
+  })
+
+  it('malt liquor puts the urge in you: given time it strikes on its own, and it is the persona who struck', async () => {
+    const urge = substances.find((s) => s.id === 'malt_liquor').persona.urges[0]
+    // A roll just under the odds of one tick: it lands the first time it is asked.
+    const ctx = startGame({ rng: () => urge.chancePerTick / 2 })
+    ctx.game.applyDoses({ doses: [{ substanceId: 'malt_liquor', value: 80 }] })
+    expect(ctx.game.inspirationActive).toBeNull()
+    await ctx.loop.tick(1)
+    expect(ctx.game.inspirationActive).toMatchObject({
+      mediumId: 'freestyle',
+      sourceKind: 'persona',
+      sourceId: 'suburban_gangster',
+      dominantPersonaId: 'suburban_gangster',
+    })
+    expect(await logOf(ctx.narrative)).toContain(voice('suburban_gangster', 'inspiration.urge'))
+
+    // Sober, the same roll moves nobody.
+    const sober = startGame({ rng: () => urge.chancePerTick / 2 })
+    await sober.loop.tick(1)
+    expect(sober.game.inspirationActive).toBeNull()
+  })
+
+  it('an urge does not barge in on an idea you already have', async () => {
+    const ctx = startGame({ rng: () => 0.001 })
+    ctx.game.applyDoses({ doses: [{ substanceId: 'malt_liquor', value: 80 }] })
+    const mine = strike(ctx.game, { mediumId: 'painting' }).data.struck
+    await ctx.loop.tick(1)
+    expect(ctx.game.inspirationActive.id).toBe(mine.id)
+  })
+
+  it('freestyling encourages freestyling: finishing one can be the idea for the next, and then the next', async () => {
+    const encore = medium('freestyle').making.encore
+    const run = async (roll) => {
+      const ctx = startGame({ at: 'denver_711', rng: () => roll })
+      strike(ctx.game, { mediumId: 'freestyle' })
+      ctx.loop.onLocationEntered()
+      await pick(ctx, 'Make something')
+      await pick(ctx, 'Freestyle: right here')
+      for (let bar = 0; bar < 4; bar++) {
+        await ctx.loop.resolvePlayerAction(
+          ctx.game.availableActions.find((a) => a.kind === 'making_choice')
+        )
+      }
+      return ctx
+    }
+    const again = await run(encore.chance - 0.01)
+    const first = again.game.player.experiences[0]
+    expect(again.game.player.inspirations[0].status).toBe('spent')
+    expect(again.game.inspirationActive).toMatchObject({
+      mediumId: 'freestyle',
+      sourceKind: 'experience',
+      sourceId: first.id,
+      strength: encore.strength,
+    })
+    expect(await logOf(again.narrative)).toContain(voice('sober', 'making.encore'))
+    // And it can be acted on straight away.
+    expect(labels(again.game)).toContain('Make something')
+    await pick(again, 'Make something')
+    expect(entry(again.game, 'Freestyle: right here').available).toBe(true)
+
+    const done = await run(encore.chance + 0.01)
+    expect(done.game.player.experiences).toHaveLength(1)
+    expect(done.game.inspirationActive).toBeNull()
   })
 
   it('work caught mid-stroke by an older save is abandoned on load, not left unplayable', () => {

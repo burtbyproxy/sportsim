@@ -415,6 +415,145 @@ describe('what a plan can cost, and who will not do it', () => {
   })
 })
 
+describe('a form that can be done anywhere', () => {
+  const loose = {
+    ...mediums,
+    performance: {
+      ...mediums.performance,
+      making: {
+        ...mediums.performance.making,
+        anywhere: true,
+        encore: { chance: 0.5, strength: 35, ticksTotal: 8 },
+      },
+    },
+  }
+  const nowhere = { id: 'void', surfaces: [], marks: [] }
+  const herePlan = {
+    mediumId: 'performance',
+    toolItemId: null,
+    surfaceKind: 'place',
+    surfaceId: 'void',
+  }
+  const inspired = () => playerWith({ carrying: [], mediumId: 'performance' })
+
+  it('is offered on the spot itself, even where the place offers nothing', () => {
+    const plans = makingOptions({ player: inspired(), location: nowhere, items, mediums: loose })
+      .data.plans
+    expect(plans).toEqual([
+      expect.objectContaining({ surfaceKind: 'place', surfaceId: 'void', cost: 0 }),
+    ])
+    // A form that is not marked anywhere gets no such plan.
+    expect(
+      makingOptions({ player: inspired(), location: nowhere, items, mediums }).data.plans
+    ).toEqual([])
+  })
+
+  it('starts only for a form marked anywhere, and only on the spot you are standing on', () => {
+    const start = (meds, plan) =>
+      makingStart({
+        player: inspired(),
+        location: nowhere,
+        items,
+        mediums: meds,
+        plan,
+        gameState: {},
+        gameTime: { tick: 0 },
+      })
+    expect(start(loose, herePlan).ok).toBe(true)
+    expect(start(mediums, herePlan).error.code).toBe(MAKING_ERROR_CODES.SURFACE_INVALID)
+    expect(start(loose, { ...herePlan, surfaceId: 'elsewhere' }).error.code).toBe(
+      MAKING_ERROR_CODES.SURFACE_INVALID
+    )
+  })
+
+  it('leaves nothing on the spot, even in a form that otherwise leaves things', () => {
+    const leaves = {
+      ...loose,
+      performance: {
+        ...loose.performance,
+        making: { ...loose.performance.making, leavesArtifact: true },
+      },
+    }
+    const base = inspired()
+    const begun = makingStart({
+      player: base,
+      location: nowhere,
+      items,
+      mediums: leaves,
+      plan: herePlan,
+      gameState: {},
+      gameTime: { tick: 0 },
+    })
+    const player = worked({ player: { ...base, makings: begun.data.makings }, ticksWorked: 2 })
+    const result = makingFinish({
+      player,
+      location: nowhere,
+      mediums: leaves,
+      gameTime: { tick: 3 },
+      rng: () => 0.99,
+    })
+    expect(result.data.tier).toBe(MAKING_TIERS.INSPIRED)
+    expect(result.data.artifact).toBeNull()
+  })
+})
+
+describe('encore', () => {
+  const encore = { chance: 0.5, strength: 35, ticksTotal: 8 }
+  const feeds = {
+    ...mediums,
+    tagging: { ...mediums.tagging, making: { ...mediums.tagging.making, encore } },
+  }
+  const ready = () =>
+    worked({
+      player: started({
+        player: playerWith({ carrying: ['spray'], mediumId: 'tagging' }),
+        plan: wallPlan,
+      }),
+      ticksWorked: 1,
+    })
+  /** The die first, then the encore roll. */
+  const rolls = (...values) => {
+    let i = 0
+    return () => values[i++]
+  }
+
+  it('a form that feeds itself can hand back the idea for the next one', () => {
+    const result = makingFinish({
+      player: ready(),
+      location: alley,
+      mediums: feeds,
+      gameTime: { tick: 5 },
+      rng: rolls(0.7, 0.49),
+    })
+    expect(result.data.encore).toEqual({ mediumId: 'tagging', strength: 35, ticksTotal: 8 })
+  })
+
+  it('or not; and a form that does not feed itself never does, and never rolls for it', () => {
+    const missed = makingFinish({
+      player: ready(),
+      location: alley,
+      mediums: feeds,
+      gameTime: { tick: 5 },
+      rng: rolls(0.7, 0.5),
+    })
+    expect(missed.data.encore).toBeNull()
+    let asked = 0
+    const counting = () => {
+      asked++
+      return 0.0
+    }
+    const plain = makingFinish({
+      player: ready(),
+      location: alley,
+      mediums,
+      gameTime: { tick: 5 },
+      rng: counting,
+    })
+    expect(plain.data.encore).toBeNull()
+    expect(asked).toBe(1)
+  })
+})
+
 describe('makingWork', () => {
   it('moves the work forward and says when it is done, never past it', () => {
     let player = started({ player: playerWith({ carrying: ['paints', 'door'] }), plan: doorPlan })

@@ -3,6 +3,7 @@
   "type": "fuel",
   "variant": "convenience",
   "display": "Toad's Express",
+  "pieceAs": "at the pumps at Toad's Express",
   "descriptions": {
     "default": "Really just a cheap cigarette shop with an Astro gas station attached for optics. The clerk sits behind bulletproof glass. On weekends there's an armed guard by the door, which seems like a lot of security for a place that sells discount Marlboros, but here we are. A hand-lettered sign on the glass says 'No checks No exceptions.' It has been laminated.",
     "night": "The fluorescent overheads outside buzz with insects. The guard watches the lot. You buy cigarettes through the sliding drawer. Nobody makes eye contact. It's efficient.",

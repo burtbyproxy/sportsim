@@ -549,6 +549,18 @@ function validateMedium(data, file) {
   if (making.takesIngredient) {
     expect(making.toolRequired, `${file}: an ingredient needs a tool to work it in`).toBe(true);
   }
+  if (making.anywhere !== undefined) {
+    // Where it can be done and what it takes in the hands are separate questions: a mime needs gloves.
+    expect(typeof making.anywhere, `${file}: making.anywhere must be boolean`).toBe('boolean');
+  }
+  if (making.encore !== undefined) {
+    expect(making.encore.chance, `${file}: encore.chance must be in (0, 1)`).toBeGreaterThan(0);
+    expect(making.encore.chance, `${file}: encore.chance must be in (0, 1) — a certain encore never ends`).toBeLessThan(1);
+    expect(making.encore.strength, `${file}: encore.strength must be 1-100`).toBeGreaterThanOrEqual(1);
+    expect(making.encore.strength, `${file}: encore.strength must be 1-100`).toBeLessThanOrEqual(100);
+    expect(Number.isInteger(making.encore.ticksTotal), `${file}: encore.ticksTotal must be a whole number`).toBe(true);
+    expect(making.encore.ticksTotal, `${file}: the encore has to outlast the work it asks for`).toBeGreaterThan(making.ticksTotal);
+  }
   for (const refusal of making.refusals ?? []) {
     expect(typeof refusal.personaId, `${file}: refusal.personaId must be string`).toBe('string');
     expect(typeof refusal.reason, `${file}: a refusal says why`).toBe('string');
@@ -975,6 +987,30 @@ describe('content/games/*.json — Minigame contract', () => {
     });
   }
 
+  // Urges: every persona's urges name a real medium and can outlast the work.
+  const mediumsById = new Map(loadJsonFiles(join(CONTENT_ROOT, 'mediums')).map(({ data }) => [data.id, data]));
+  const personaBlocks = [
+    ...loadJsonFiles(join(CONTENT_ROOT, 'substances')).flatMap(({ file, data }) =>
+      [data.persona, data.withdrawal?.persona].filter(Boolean).map(persona => ({ file, persona }))
+    ),
+    ...loadJsonFiles(join(CONTENT_ROOT, 'conditions')).map(({ file, data }) => ({ file, persona: data.persona })),
+  ];
+  for (const { file, persona } of personaBlocks) {
+    for (const urge of persona.urges ?? []) {
+      it(`${file}: persona '${persona.id}' urge to '${urge.mediumId}' is real and can be acted on`, () => {
+        const medium = mediumsById.get(urge.mediumId);
+        expect(medium, `unknown medium '${urge.mediumId}'`).toBeTruthy();
+        expect(urge.chancePerTick).toBeGreaterThan(0);
+        expect(urge.chancePerTick).toBeLessThanOrEqual(1);
+        expect(urge.strength).toBeGreaterThanOrEqual(1);
+        expect(urge.strength).toBeLessThanOrEqual(100);
+        expect(urge.ticksTotal, 'the urge has to outlast the work').toBeGreaterThan(medium.making.ticksTotal);
+        const refuses = (medium.making.refusals ?? []).some(r => r.personaId === persona.id);
+        expect(refuses, `'${persona.id}' has the urge to do what it refuses to do`).toBe(false);
+      });
+    }
+  }
+
   for (const { file, data } of loadJsonFiles(join(CONTENT_ROOT, 'mediums'))) {
     it(`${file}: gameId '${data.making?.gameId}' is a game`, () => {
       expect(gameIds.has(data.making?.gameId), `${file}: unknown game '${data.making?.gameId}'`).toBe(true);
@@ -1009,6 +1045,14 @@ describe('making — every medium can actually be made in', () => {
       const takes = thing => (thing.mediumIds ?? []).includes(medium.id);
       if (medium.making.toolRequired) {
         expect(items.some(i => i.type === 'tool' && takes(i)), `nothing in content/items is a tool for ${medium.id}`).toBe(true);
+      }
+      if (medium.making.anywhere) {
+        // The ground is the surface, so the form must leave nothing on it and every place must read in a sentence.
+        expect(medium.making.leavesArtifact, `${medium.id}: a form done anywhere leaves no artifact`).toBe(false);
+        for (const { file, data: location } of locationFiles) {
+          expect(typeof location.pieceAs, `${file}: needs pieceAs — '${medium.id}' can be done here`).toBe('string');
+        }
+        return;
       }
       const surfaces = [...items.filter(i => i.type === 'surface'), ...locationSurfaces].filter(takes);
       expect(surfaces.length, `nothing anywhere is a surface for ${medium.id}`).toBeGreaterThan(0);

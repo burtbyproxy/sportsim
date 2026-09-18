@@ -130,6 +130,10 @@ export function useGameLoop({
       _voiceEnqueue({ code: 'inspiration.expired' })
     }
 
+    // 4d. Whoever is in charge may get the urge to do something about it.
+    const urge = game.applyInspirationUrge({ ticksElapsed: ticks, rng })
+    if (urge.ok && urge.data.struck) _voiceEnqueue({ code: 'inspiration.urge' })
+
     // 5. Move if requested — the new scene's prose goes into a fresh log
     if (toLocationId) {
       game.moveTo(toLocationId)
@@ -321,6 +325,7 @@ export function useGameLoop({
   /** What a thing is called on the menu. */
   function _surfaceName(plan) {
     if (plan.surfaceKind === MAKING_SURFACE_KINDS.ITEM) return game.getItem(plan.surfaceId).name
+    if (plan.surfaceKind === MAKING_SURFACE_KINDS.PLACE) return 'right here'
     return game.currentLocation.surfaces.find((s) => s.id === plan.surfaceId).name
   }
 
@@ -469,6 +474,7 @@ export function useGameLoop({
     _checkTrain(finished.data.check)
     _voiceLiteralEnqueue(finished.data.experience.artistText)
     if (finished.data.markIdsCovered.length > 0) _voiceEnqueue({ code: 'making.covered' })
+    if (finished.data.encore) _voiceEnqueue({ code: 'making.encore' })
     _refreshActions()
   }
 
