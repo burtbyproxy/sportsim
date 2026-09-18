@@ -1,5 +1,6 @@
 import { useGameStore } from '../stores/game.js'
 import { blendSober, sobrietyDerive } from '../engine/blend.js'
+import { MAKING_STATUSES } from '../engine/making.js'
 
 const SAVE_PREFIX = 'sportsim_save_'
 const SAVE_INDEX_KEY = 'sportsim_saves'
@@ -8,7 +9,7 @@ const SAVE_INDEX_KEY = 'sportsim_saves'
  * Current save format version.
  * Bump this whenever the save shape changes in a breaking way.
  */
-export const SAVE_VERSION = 5
+export const SAVE_VERSION = 6
 
 /**
  * Maximum number of save slots.
@@ -69,6 +70,9 @@ export function validateSave(data) {
  * v3 → v4: the inspiration log. Nothing had struck yet, so it is empty.
  * v4 → v5: making. Nobody had made anything: no makings, no experiences, an
  * empty portfolio, and no marks on any location.
+ * v5 → v6: the work is played. A making from before has no game on it, so
+ * work caught in progress cannot be picked back up: it is abandoned, which
+ * is what would have happened to it anyway.
  *
  * @param {{ save: Object }} input
  * @returns {Object}
@@ -108,6 +112,18 @@ export function saveMigrate({ save }) {
       if (location) location.marks = []
     }
     migrated.version = 5
+  }
+  if (migrated.version < 6) {
+    for (const making of migrated.player?.makings ?? []) {
+      if (making.game) continue
+      making.game = null
+      if (making.status === MAKING_STATUSES.IN_PROGRESS) {
+        making.status = MAKING_STATUSES.ABANDONED
+        making.endedBy = { kind: 'migration', id: 'v6' }
+        making.updatedAtTick = migrated.time?.tick ?? making.updatedAtTick
+      }
+    }
+    migrated.version = 6
   }
   return migrated
 }

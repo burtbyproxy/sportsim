@@ -5,6 +5,7 @@
   "description": "A line on a surface. Napkins, tables, the backs of receipts.",
   "pieceAs": "a drawing",
   "making": {
+    "gameId": "steady",
     "ticksTotal": 2,
     "dc": 11,
     "xp": 6,

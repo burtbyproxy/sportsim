@@ -52,6 +52,17 @@
       "name": "the corner by the jukebox",
       "pieceAs": "in the corner by the jukebox at the Blue Parrot",
       "mediumIds": ["performance"]
+    },
+    {
+      "id": "karaoke_machine",
+      "name": "the karaoke machine",
+      "pieceAs": "at karaoke night at the Blue Parrot, on a tape of a tape of a tape",
+      "mediumIds": ["karaoke"],
+      "portable": true,
+      "hours": {
+        "openHour": 21,
+        "closeHour": 1
+      }
     }
   ],
   "discovered": false,

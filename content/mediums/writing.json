@@ -5,7 +5,8 @@
   "description": "Poems, letters that should not be sent, manifestos on bar napkins.",
   "pieceAs": "a few lines",
   "making": {
-    "ticksTotal": 2,
+    "gameId": "words",
+    "ticksTotal": 3,
     "dc": 11,
     "xp": 6,
     "toolRequired": true,

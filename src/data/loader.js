@@ -22,6 +22,7 @@ const _conditionFiles = import.meta.glob('/content/conditions/*.json', { eager: 
 const _mediumFiles = import.meta.glob('/content/mediums/*.json', { eager: true })
 const _voiceFiles = import.meta.glob('/content/voices/*.json', { eager: true })
 const _scavengeFiles = import.meta.glob('/content/scavenge/*.json', { eager: true })
+const _gameFiles = import.meta.glob('/content/games/*.json', { eager: true })
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -178,4 +179,13 @@ export function loadVoices() {
 export function loadScavengeTables() {
   const modules = _extractModules(_scavengeFiles)
   return _mergeById(modules, 'loadScavengeTables()')
+}
+
+/**
+ * Load all minigames (global). One file per game; mediums name theirs.
+ * @returns {Object<string, Object>}
+ */
+export function loadGames() {
+  const modules = _extractModules(_gameFiles)
+  return _mergeById(modules, 'loadGames()')
 }

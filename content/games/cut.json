@@ -1,0 +1,35 @@
+{
+  "id": "cut",
+  "shape": "push_luck",
+  "description": "Carving only takes away. Every cut is closer and every cut could be the one too many.",
+  "sittingTicks": 2,
+  "params": {
+    "riskBase": 0.05,
+    "riskStep": 0.2,
+    "skillRelief": 0.004,
+    "bankCap": 3,
+    "bustModifier": -5,
+    "timidModifier": -1
+  },
+  "choices": {
+    "press": {
+      "label": "Take a little more off"
+    },
+    "stop": {
+      "label": "Stop cutting. It's in there"
+    }
+  },
+  "lines": {
+    "pressed": "game.cut.pressed",
+    "busted": "game.cut.busted",
+    "stopped": "game.cut.stopped"
+  },
+  "compulsions": [
+    {
+      "personaId": "priest",
+      "choiceId": "stop",
+      "toRound": 1,
+      "reason": "You haven't even laid hands on it yet, son"
+    }
+  ]
+}

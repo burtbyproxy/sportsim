@@ -33,6 +33,7 @@ const substances = loadDir('content/substances')
 const conditions = loadDir('content/conditions')
 const locations = loadDir('content/maps/kenton/locations')
 const actions = loadDir('content/maps/kenton/actions').flat()
+const games = loadDir('content/games')
 
 const voice = (personaId, code) => voices.find((v) => v.id === personaId).lines[code]
 const medium = (id) => mediums.find((m) => m.id === id)
@@ -55,6 +56,7 @@ function startGame({
   for (const item of items) game.registerItem(createItem(item))
   for (const v of voices) game.registerVoice({ voice: v })
   for (const m of mediums) game.registerMedium({ medium: m })
+  for (const g of games) game.registerGame({ game: g })
   for (const substance of substances) game.registerSubstance({ substance })
   for (const condition of conditions) game.registerCondition({ condition })
   for (const location of locations) game.registerLocation(createLocation(location))
@@ -128,11 +130,13 @@ describe('making pipeline', () => {
     expect(labels(game)).toContain('Never mind')
 
     await pick(ctx, 'Cabinet Door')
-    // The first sitting happened. The door is committed; the paints are not.
+    // The door is committed; the paints are not. No time has passed yet.
     expect(game.playerInventory.map((i) => i.id)).toEqual(['grandmas_paints'])
-    expect(game.makingActive.ticksDone).toBe(2)
+    expect(game.time.tick).toBe(tickBefore)
     expect(labels(game)).toBe('Keep at it | Walk away from it')
 
+    await pick(ctx, 'Keep at it')
+    expect(game.makingActive.ticksDone).toBe(2)
     await pick(ctx, 'Keep at it')
     await pick(ctx, 'Keep at it')
 
@@ -176,6 +180,7 @@ describe('making pipeline', () => {
     await pick(ctx, 'Coaster')
     expect(labels(ctx.game)).toContain('Just that')
     await pick(ctx, 'Work in the')
+    await pick(ctx, 'Keep at it')
     expect(ctx.game.playerInventory.map((i) => i.id)).toEqual(['golf_pencil'])
     expect(ctx.game.player.portfolio[0].workText).toBe(
       'a drawing, golf pencil and Brut on the back of a beer coaster'
@@ -189,6 +194,8 @@ describe('making pipeline', () => {
     ctx.loop.onLocationEntered()
     await pick(ctx, 'Make something')
     await pick(ctx, 'Tagging: Sharpie, the back wall')
+    await pick(ctx, 'Keep going')
+    await pick(ctx, "That's enough")
 
     expect(game.player.portfolio).toHaveLength(0)
     const wall = () => game.locations.lombard_dental.marks
@@ -205,6 +212,8 @@ describe('making pipeline', () => {
     ctx.loop.onLocationEntered()
     await pick(ctx, 'Make something')
     await pick(ctx, 'Tagging: Sharpie, the back wall')
+    await pick(ctx, 'Keep going')
+    await pick(ctx, "That's enough")
     expect(wall().map((m) => m.status)).toEqual(['covered', 'fresh'])
     expect(wall()[0].endedBy).toEqual({ kind: 'mark', id: wall()[1].id })
     expect(await logOf(ctx.narrative)).toContain(voice('sober', 'making.covered'))
@@ -220,6 +229,18 @@ describe('making pipeline', () => {
     ctx.loop.onLocationEntered()
     await pick(ctx, 'Make something')
     await pick(ctx, 'Performance: the corner by the jukebox')
+    await pick(ctx, 'Hold it right here')
+    // You are told the room when you start and again after every move.
+    const room = games.find((g) => g.id === 'room')
+    const crowds = [room.params.crowdStart, ctx.game.makingActive.game.state.crowd]
+    const log = await logOf(ctx.narrative)
+    for (const crowd of new Set(crowds)) {
+      const line = voice('sober', room.lines.crowd[crowd])
+      expect(log.split(line).length - 1, `'${crowd}' line`).toBe(
+        crowds.filter((c) => c === crowd).length
+      )
+    }
+    await pick(ctx, 'Bow')
     expect(ctx.game.player.portfolio).toHaveLength(0)
     expect(ctx.game.locations.blue_parrot.marks).toHaveLength(0)
     expect(ctx.game.player.experiences).toHaveLength(1)
@@ -233,6 +254,7 @@ describe('making pipeline', () => {
     ctx.loop.onLocationEntered()
     await pick(ctx, 'Make something')
     await pick(ctx, 'Pizza Box')
+    await pick(ctx, 'Keep at it')
     expect(ctx.game.player.portfolio).toHaveLength(0)
     expect(ctx.game.playerInventory.map((i) => i.id)).toEqual(['golf_pencil'])
     expect(ctx.game.player.experiences[0].tier).toBe('botched')
@@ -251,6 +273,7 @@ describe('making pipeline', () => {
     ctx.loop.onLocationEntered()
     await pick(ctx, 'Make something')
     await pick(ctx, 'Coaster')
+    await pick(ctx, 'Keep at it')
     const piece = game.player.portfolio[0]
     expect(piece.tier).toBe('rough')
     expect(piece.artistText).toBe(
@@ -289,12 +312,18 @@ describe('making pipeline', () => {
       choices: [],
       outcome: { statusChanges: { mood: -1 } },
     }
-    const ctx = startGame({ carrying: ['grandmas_paints', 'cabinet_door'], events: [barge] })
+    // Certain on an idle day; over the work it still has to get past the focus, and this roll does.
+    const ctx = startGame({
+      carrying: ['grandmas_paints', 'cabinet_door'],
+      events: [barge],
+      rng: () => 0.1,
+    })
     const { game } = ctx
     strike(game)
     ctx.loop.onLocationEntered()
     await pick(ctx, 'Make something')
     await pick(ctx, 'Cabinet Door')
+    await pick(ctx, 'Keep at it')
 
     expect(game.firedEventIds).toContain('test_barge')
     expect(game.makingActive).toBeNull()
@@ -305,6 +334,59 @@ describe('making pipeline', () => {
     expect(game.playerInventory.map((i) => i.id)).toEqual(['grandmas_paints'])
     expect(await logOf(ctx.narrative)).toContain(voice('sober', 'making.abandoned.lost'))
     expect(labels(game)).not.toContain('Keep at it')
+  })
+
+  it('head down over the work, chance has a harder time finding you; hunger is not impressed', async () => {
+    const event = (id, extra) => ({
+      id,
+      title: id,
+      oneTime: true,
+      conditions: {},
+      narrative: { tokens: [{ text: `${id}.`, style: 'normal', speed: 'normal', pauseAfter: 0 }] },
+      choices: [],
+      outcome: { statusChanges: { mood: -1 } },
+      ...extra,
+    })
+    // A coin-flip event against a roll of 0.3: it fires on an idle afternoon, not over a painting.
+    const coinFlip = event('test_coin_flip', { type: 'random', probability: 0.5 })
+    const roll = () => 0.3
+
+    const idle = startGame({ events: [coinFlip], rng: roll })
+    await idle.loop.tick(2)
+    expect(idle.game.firedEventIds).toContain('test_coin_flip')
+
+    const ctx = startGame({
+      carrying: ['grandmas_paints', 'cabinet_door'],
+      events: [coinFlip],
+      rng: roll,
+    })
+    strike(ctx.game)
+    ctx.loop.onLocationEntered()
+    await pick(ctx, 'Make something')
+    await pick(ctx, 'Cabinet Door')
+    await pick(ctx, 'Keep at it')
+    await pick(ctx, 'Keep at it')
+    await pick(ctx, 'Keep at it')
+    expect(ctx.game.firedEventIds).not.toContain('test_coin_flip')
+    expect(ctx.game.player.portfolio).toHaveLength(1)
+    // The work is over, and so is the protection.
+    await ctx.loop.tick(2)
+    expect(ctx.game.firedEventIds).toContain('test_coin_flip')
+
+    // A triggered event does not roll, so there is nothing for focus to shrink.
+    const barges = event('test_triggered', { type: 'triggered' })
+    const other = startGame({
+      carrying: ['grandmas_paints', 'cabinet_door'],
+      events: [barges],
+      rng: roll,
+    })
+    strike(other.game)
+    other.loop.onLocationEntered()
+    await pick(other, 'Make something')
+    await pick(other, 'Cabinet Door')
+    await pick(other, 'Keep at it')
+    expect(other.game.firedEventIds).toContain('test_triggered')
+    expect(other.game.player.makings[0].status).toBe('abandoned')
   })
 
   it('you cannot leave in the middle of it, but you can walk away from it', async () => {
@@ -358,10 +440,13 @@ describe('making pipeline', () => {
     ctx.loop.onLocationEntered()
     await pick(ctx, 'Make something')
     await pick(ctx, 'Tagging: Sharpie, the back wall')
+    await pick(ctx, 'Keep going')
+    await pick(ctx, "That's enough")
     strike(ctx.game)
     ctx.loop.onLocationEntered()
     await pick(ctx, 'Make something')
     await pick(ctx, 'Cabinet Door')
+    await pick(ctx, 'Keep at it')
     const id = useSave().save('mid-painting')
 
     setActivePinia(createPinia())
@@ -369,6 +454,7 @@ describe('making pipeline', () => {
     for (const item of items) restored.registerItem(createItem(item))
     for (const v of voices) restored.registerVoice({ voice: v })
     for (const m of mediums) restored.registerMedium({ medium: m })
+    for (const g of games) restored.registerGame({ game: g })
     restored.loadSave(useSave().load(id))
     restored.locationsRestore({ definitions: Object.fromEntries(locations.map((l) => [l.id, l])) })
 
@@ -425,5 +511,244 @@ describe('making pipeline', () => {
     expect(dental.surfaces.map((s) => s.id)).toContain('back_wall')
     expect(dental.scavengeTableId).toBe('lot')
     expect(Object.keys(game.locations)).toHaveLength(locations.length)
+  })
+  // ── The work, played ──────────────────────────────────────────────────────
+
+  it('a tag is nerve: every beat banked helps the check, and the tag takes as long as you kept going', async () => {
+    const ctx = startGame({ at: 'lombard_dental', carrying: ['sharpie'] })
+    const { game } = ctx
+    strike(game, { mediumId: 'tagging' })
+    ctx.loop.onLocationEntered()
+    const tickBefore = game.time.tick
+    await pick(ctx, 'Make something')
+    await pick(ctx, 'Tagging: Sharpie, the back wall')
+    await pick(ctx, 'Keep going')
+    await pick(ctx, 'Keep going')
+    expect(await logOf(ctx.narrative)).toContain(voice('sober', 'game.nerve.pressed'))
+    await pick(ctx, "That's enough")
+
+    // Three beats, three quarter hours — not the four the medium allows.
+    expect(game.time.tick).toBe(tickBefore + 3)
+    const played = game.player.experiences[0].check.modifierItems.find((m) => m.sourceId === 'game')
+    expect(played.value).toBe(2)
+    expect(await logOf(ctx.narrative)).toContain(voice('sober', 'game.nerve.stopped'))
+  })
+
+  it('headlights: a bust ends the tag where it stands and the check pays for it', async () => {
+    // Beat one is safe (0.99); beat two rolls under the risk (0.0), and the die that follows is a 15.
+    const ctx = startGame({
+      at: 'lombard_dental',
+      carrying: ['sharpie'],
+      rng: sequence(0.99, 0.0, die(15)),
+    })
+    const { game } = ctx
+    strike(game, { mediumId: 'tagging' })
+    ctx.loop.onLocationEntered()
+    await pick(ctx, 'Make something')
+    await pick(ctx, 'Tagging: Sharpie, the back wall')
+    await pick(ctx, 'Keep going')
+    await pick(ctx, 'Keep going')
+
+    expect(await logOf(ctx.narrative)).toContain(voice('sober', 'game.nerve.busted'))
+    expect(game.makingActive).toBeNull()
+    const experience = game.player.experiences[0]
+    const played = experience.check.modifierItems.find((m) => m.sourceId === 'game')
+    expect(played.value).toBe(games.find((g) => g.id === 'nerve').params.bustModifier)
+    // 15 + 1 (luck) + 3 (idea) - 4 (the bust) = 15.
+    expect(experience.check.total).toBe(15)
+    expect(game.locations.lombard_dental.marks).toHaveLength(1)
+  })
+
+  it('practice steadies the hand: a roll that sends a beginner running leaves the practised at the wall', async () => {
+    const nerve = games.find((g) => g.id === 'nerve')
+    const roll = nerve.params.riskBase / 2
+    const beat = async ({ practised }) => {
+      const ctx = startGame({
+        at: 'lombard_dental',
+        carrying: ['sharpie'],
+        rng: sequence(roll, die(15)),
+      })
+      if (practised) {
+        ctx.game.player.skills = { tagging: { sober: { base: 40, modifiers: [], xp: 0 } } }
+      }
+      strike(ctx.game, { mediumId: 'tagging' })
+      ctx.loop.onLocationEntered()
+      await pick(ctx, 'Make something')
+      await pick(ctx, 'Tagging: Sharpie, the back wall')
+      await pick(ctx, 'Keep going')
+      return ctx.game.makingActive
+    }
+    expect(await beat({ practised: false })).toBeNull()
+    expect(await beat({ practised: true })).toMatchObject({ ticksDone: 1 })
+  })
+
+  it('on malt liquor you cannot stop early: the menu greys it out and says why', async () => {
+    const ctx = startGame({ at: 'lombard_dental', carrying: ['sharpie'] })
+    const { game } = ctx
+    game.applyDoses({ doses: [{ substanceId: 'malt_liquor', value: 80 }] })
+    expect(game.personaInCharge).toBe('suburban_gangster')
+    strike(game, { mediumId: 'tagging' })
+    ctx.loop.onLocationEntered()
+    await pick(ctx, 'Make something')
+    await pick(ctx, 'Tagging: Sharpie, the back wall')
+    const stop = () => game.availableActions.find((a) => a.label.includes("That's enough"))
+    expect(stop().available).toBe(false)
+    expect(stop().unavailableReason).toBe(
+      games
+        .find((g) => g.id === 'nerve')
+        .compulsions.find((c) => c.personaId === 'suburban_gangster').reason
+    )
+    // Refused at the boundary too, not just on the menu.
+    await ctx.loop.resolvePlayerAction(stop())
+    expect(game.makingActive.ticksDone).toBe(0)
+  })
+
+  it('a few lines are the words you picked: they end up in the piece, in order', async () => {
+    const ctx = startGame({ carrying: ['golf_pencil', 'bar_napkin'] })
+    const { game } = ctx
+    strike(game, { mediumId: 'writing' })
+    ctx.loop.onLocationEntered()
+    await pick(ctx, 'Make something')
+    await pick(ctx, 'Writing: Golf Pencil')
+    const picked = []
+    for (let i = 0; i < 3; i++) {
+      const offered = game.availableActions.filter((a) => a.kind === 'making_choice')
+      expect(offered).toHaveLength(3)
+      picked.push(offered[0].label)
+      await ctx.loop.resolvePlayerAction(offered[0])
+    }
+    const piece = game.player.portfolio[0]
+    expect(piece.words).toEqual(picked)
+    expect(piece.artistText).toContain(
+      voice('sober', 'piece.words').replace('{words}', picked.join(', '))
+    )
+    expect(await logOf(ctx.narrative)).toContain(
+      voice('sober', 'game.words.picked').replace('{word}', picked[1])
+    )
+  })
+
+  it('karaoke is only on at karaoke night, and the machine hands you a tape', async () => {
+    const ctx = startGame({ at: 'blue_parrot' })
+    const { game } = ctx
+    strike(game, { mediumId: 'karaoke', ticksTotal: 8 })
+    ctx.loop.onLocationEntered()
+    await pick(ctx, 'Make something')
+    // Eight in the morning: the corner by the jukebox, but no machine.
+    expect(labels(game)).toContain('Performance')
+    expect(labels(game)).not.toContain('Karaoke')
+    await pick(ctx, 'Never mind')
+
+    game.advanceTime(13 * 4)
+    expect(game.time.hour).toBe(21)
+    strike(game, { mediumId: 'karaoke', ticksTotal: 8 })
+    ctx.loop.onLocationEntered()
+    await pick(ctx, 'Make something')
+    await pick(ctx, 'Karaoke: the karaoke machine')
+    // The room starts warm, and you are told so.
+    expect(await logOf(ctx.narrative)).toContain(voice('sober', 'game.karaoke.crowd.warm'))
+    await pick(ctx, 'Go for the big note')
+    await pick(ctx, 'Hand back the mic')
+
+    expect(game.locations.blue_parrot.marks).toHaveLength(0)
+    expect(game.player.portfolio).toHaveLength(1)
+    expect(game.player.portfolio[0]).toMatchObject({ mediumId: 'karaoke', kind: 'portable' })
+    expect(game.player.portfolio[0].workText).toContain('a karaoke number')
+    const played = game.player.experiences[0].check.modifierItems.find((m) => m.sourceId === 'game')
+    expect(played.value).toBe(1)
+  })
+
+  it('DLC: mime arrives as content alone — a medium, a game, a place to do it, and nothing else', async () => {
+    const ctx = startGame({ at: 'columbia_park' })
+    const { game } = ctx
+    // None of this ships. It is registered the way a content pack would be.
+    game.registerGame({
+      game: {
+        ...games.find((g) => g.id === 'room'),
+        id: 'invisible_box',
+        choices: {
+          push: { label: 'The box gets smaller' },
+          hold: { label: 'Feel along the wall' },
+          bow: { label: 'Find the door. Leave' },
+        },
+      },
+    })
+    game.registerMedium({
+      medium: {
+        id: 'mime',
+        display: 'Mime',
+        stat: 'charm',
+        description: 'Nothing, committed to.',
+        pieceAs: 'a mime',
+        making: {
+          gameId: 'invisible_box',
+          ticksTotal: 4,
+          dc: 13,
+          xp: 8,
+          toolRequired: false,
+          takesIngredient: false,
+          leavesArtifact: false,
+        },
+      },
+    })
+    game.currentLocation.surfaces.push({
+      id: 'path',
+      name: 'the path by the playground',
+      pieceAs: 'on the path by the playground',
+      mediumIds: ['mime'],
+    })
+    strike(game, { mediumId: 'mime' })
+    ctx.loop.onLocationEntered()
+    await pick(ctx, 'Make something')
+    await pick(ctx, 'Mime: the path by the playground')
+    await pick(ctx, 'Feel along the wall')
+    await pick(ctx, 'Find the door')
+
+    expect(game.player.experiences[0]).toMatchObject({ mediumId: 'mime', artifactId: null })
+    expect(game.player.experiences[0].workText).toBe('a mime on the path by the playground')
+    expect(game.player.skills.mime.sober.xp).toBeGreaterThan(0)
+  })
+
+  it('work caught mid-stroke by an older save is abandoned on load, not left unplayable', () => {
+    const player = createPlayer('Old')
+    player.makings = [
+      {
+        id: 'm1',
+        status: 'in_progress',
+        mediumId: 'painting',
+        ticksDone: 2,
+        ticksTotal: 6,
+        updatedAtTick: 3,
+      },
+      {
+        id: 'm0',
+        status: 'finished',
+        mediumId: 'drawing',
+        ticksDone: 2,
+        ticksTotal: 2,
+        updatedAtTick: 1,
+      },
+    ]
+    const migrated = saveMigrate({
+      save: {
+        id: 'v5',
+        name: 'v5',
+        timestamp: 1,
+        version: 5,
+        player,
+        time: { tick: 9, hour: 10, day: 1 },
+        locations: {},
+        characters: {},
+        firedEventIds: [],
+        counters: {},
+      },
+    })
+    expect(migrated.version).toBe(SAVE_VERSION)
+    expect(migrated.player.makings[0]).toMatchObject({
+      status: 'abandoned',
+      endedBy: { kind: 'migration', id: 'v6' },
+      updatedAtTick: 9,
+      game: null,
+    })
+    expect(migrated.player.makings[1].status).toBe('finished')
   })
 })

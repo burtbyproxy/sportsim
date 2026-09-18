@@ -1,0 +1,19 @@
+{
+  "id": "karaoke",
+  "display": "Karaoke",
+  "stat": "charm",
+  "description": "Somebody else's song, your whole chest. The machine keeps a tape whether you want one or not.",
+  "pieceAs": "a karaoke number",
+  "making": {
+    "gameId": "karaoke",
+    "ticksTotal": 3,
+    "dc": 12,
+    "xp": 8,
+    "toolRequired": false,
+    "takesIngredient": false,
+    "leavesArtifact": true,
+    "statusChanges": {
+      "energy": -2
+    }
+  }
+}

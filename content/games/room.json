@@ -1,0 +1,151 @@
+{
+  "id": "room",
+  "shape": "read_room",
+  "description": "A performance is a room you read. Push when they're with you. Hold when they're not. Know when to bow.",
+  "sittingTicks": 1,
+  "params": {
+    "crowdStart": "cold",
+    "scoreCap": 4,
+    "transitions": {
+      "cold": {
+        "push": {
+          "score": -1,
+          "to": [
+            {
+              "crowd": "turning",
+              "weight": 6
+            },
+            {
+              "crowd": "cold",
+              "weight": 4
+            }
+          ]
+        },
+        "hold": {
+          "score": 0,
+          "to": [
+            {
+              "crowd": "warm",
+              "weight": 5
+            },
+            {
+              "crowd": "cold",
+              "weight": 5
+            }
+          ]
+        }
+      },
+      "warm": {
+        "push": {
+          "score": 1,
+          "to": [
+            {
+              "crowd": "hot",
+              "weight": 6
+            },
+            {
+              "crowd": "warm",
+              "weight": 4
+            }
+          ]
+        },
+        "hold": {
+          "score": 0,
+          "to": [
+            {
+              "crowd": "warm",
+              "weight": 6
+            },
+            {
+              "crowd": "cold",
+              "weight": 4
+            }
+          ]
+        }
+      },
+      "hot": {
+        "push": {
+          "score": 2,
+          "to": [
+            {
+              "crowd": "hot",
+              "weight": 4
+            },
+            {
+              "crowd": "turning",
+              "weight": 6
+            }
+          ]
+        },
+        "hold": {
+          "score": 1,
+          "to": [
+            {
+              "crowd": "warm",
+              "weight": 10
+            }
+          ]
+        }
+      },
+      "turning": {
+        "push": {
+          "score": -2,
+          "to": [
+            {
+              "crowd": "turning",
+              "weight": 10
+            }
+          ]
+        },
+        "hold": {
+          "score": 0,
+          "to": [
+            {
+              "crowd": "cold",
+              "weight": 7
+            },
+            {
+              "crowd": "warm",
+              "weight": 3
+            }
+          ]
+        }
+      }
+    }
+  },
+  "choices": {
+    "push": {
+      "label": "Take it further"
+    },
+    "hold": {
+      "label": "Hold it right here"
+    },
+    "bow": {
+      "label": "That's the end. Bow"
+    }
+  },
+  "lines": {
+    "pushed": "game.room.pushed",
+    "held": "game.room.held",
+    "bowed": "game.room.bowed",
+    "crowd": {
+      "cold": "game.room.crowd.cold",
+      "warm": "game.room.crowd.warm",
+      "hot": "game.room.crowd.hot",
+      "turning": "game.room.crowd.turning"
+    }
+  },
+  "compulsions": [
+    {
+      "personaId": "telepath",
+      "choiceId": "push",
+      "reason": "They can all hear what you're thinking. You can't move"
+    },
+    {
+      "personaId": "priest",
+      "choiceId": "bow",
+      "toRound": 2,
+      "reason": "You haven't reached the big man in the back yet"
+    }
+  ]
+}

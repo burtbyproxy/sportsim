@@ -22,6 +22,7 @@ const mediums = {
     id: 'painting',
     stat: 'creativity',
     making: {
+      gameId: 'steady',
       ticksTotal: 4,
       dc: 12,
       xp: 10,
@@ -34,6 +35,7 @@ const mediums = {
     id: 'tagging',
     stat: 'luck',
     making: {
+      gameId: 'steady',
       ticksTotal: 1,
       dc: 12,
       xp: 5,
@@ -46,6 +48,7 @@ const mediums = {
     id: 'performance',
     stat: 'charm',
     making: {
+      gameId: 'steady',
       ticksTotal: 2,
       dc: 13,
       xp: 8,
@@ -123,14 +126,23 @@ const wallPlan = {
 const die = (face) => () => (face - 1) / 20
 
 function started({ player, plan, location = alley }) {
-  const result = makingStart({ player, location, items, mediums, plan, gameTime: { tick: 1 } })
+  const result = makingStart({
+    player,
+    location,
+    items,
+    mediums,
+    plan,
+    gameState: { offer: null },
+    gameTime: { tick: 1 },
+  })
   return { ...player, makings: result.data.makings }
 }
 
 function worked({ player, ticksWorked }) {
   return {
     ...player,
-    makings: makingWork({ player, ticksWorked, gameTime: { tick: 2 } }).data.makings,
+    makings: makingWork({ player, ticksWorked, gameState: { offer: null }, gameTime: { tick: 2 } })
+      .data.makings,
   }
 }
 
@@ -164,6 +176,38 @@ describe('makingOptions', () => {
     expect(plans.find((p) => p.mediumId === 'performance').enoughTime).toBe(true)
   })
 
+  it('a surface with hours is only there during them, overnight included', () => {
+    const player = playerWith({ carrying: [], mediumId: 'performance' })
+    const bar = {
+      id: 'bar',
+      surfaces: [
+        { id: 'machine', mediumIds: ['performance'], hours: { openHour: 21, closeHour: 1 } },
+      ],
+    }
+    const plansAt = (hour) =>
+      makingOptions({ player, location: bar, items, mediums, gameTime: { hour } }).data.plans
+    expect(plansAt(20)).toHaveLength(0)
+    expect(plansAt(21)).toHaveLength(1)
+    expect(plansAt(0)).toHaveLength(1)
+    expect(plansAt(2)).toHaveLength(0)
+    const plan = {
+      mediumId: 'performance',
+      toolItemId: null,
+      surfaceKind: 'location',
+      surfaceId: 'machine',
+    }
+    const early = makingStart({
+      player,
+      location: bar,
+      items,
+      mediums,
+      plan,
+      gameState: {},
+      gameTime: { tick: 0, hour: 15 },
+    })
+    expect(early.error.code).toBe(MAKING_ERROR_CODES.SURFACE_INVALID)
+  })
+
   it('lists carried ingredients and nothing else', () => {
     const player = playerWith({ carrying: ['brut', 'sock', 'paints'] })
     const { ingredientItemIds } = makingOptions({ player, location: alley, items, mediums }).data
@@ -186,6 +230,7 @@ describe('makingStart', () => {
       items,
       mediums,
       plan: { ...doorPlan, ingredientItemId: 'brut' },
+      gameState: { round: 1 },
       gameTime: { tick: 7 },
     })
     expect(result.ok).toBe(true)
@@ -196,6 +241,7 @@ describe('makingStart', () => {
       ticksDone: 0,
       locationId: 'alley',
       startedAtTick: 7,
+      game: { id: 'steady', state: { round: 1 } },
     })
     // The surface and the ingredient go into the piece. The tool survives.
     expect(result.data.itemIdsConsumed.sort()).toEqual(['brut', 'door'])
@@ -308,6 +354,39 @@ describe('makingWork', () => {
     expect(second.data.making.updatedAtTick).toBe(5)
   })
 
+  it('keeps the round that was played on the record', () => {
+    const player = started({ player: playerWith({ carrying: ['paints', 'door'] }), plan: doorPlan })
+    const result = makingWork({
+      player,
+      ticksWorked: 1,
+      gameState: { banked: 2 },
+      gameTime: { tick: 3 },
+    })
+    expect(result.data.making.game).toEqual({ id: 'steady', state: { banked: 2 } })
+    expect(player.makings[0].game.state).toEqual({ offer: null })
+  })
+
+  it('a game that ends the work early makes the work done so far all the work there is', () => {
+    const player = started({ player: playerWith({ carrying: ['paints', 'door'] }), plan: doorPlan })
+    const result = makingWork({
+      player,
+      ticksWorked: 1,
+      gameState: { offer: null },
+      workDone: true,
+      gameTime: { tick: 3 },
+    })
+    expect(result.data.workDone).toBe(true)
+    expect(result.data.making).toMatchObject({ ticksDone: 1, ticksTotal: 1 })
+    const finished = makingFinish({
+      player: { ...player, makings: result.data.makings },
+      location: alley,
+      mediums,
+      gameTime: { tick: 4 },
+      rng: die(15),
+    })
+    expect(finished.ok).toBe(true)
+  })
+
   it('is an error with nothing in progress, and with a nonsense amount of work', () => {
     const idle = playerWith({ carrying: [] })
     expect(makingWork({ player: idle, ticksWorked: 1, gameTime: { tick: 0 } }).error.code).toBe(
@@ -393,6 +472,24 @@ describe('makingFinish', () => {
     expect(result.data.check.total).toBe(10 + 1 + 3)
   })
 
+  it('how the game went bears on the check, itemized with the rest', () => {
+    const result = makingFinish({
+      player: readyToFinish({ strength: 60 }),
+      location: alley,
+      mediums,
+      modifiers: [{ sourceId: 'game', value: -4 }],
+      gameTime: { tick: 5 },
+      rng: die(15),
+    })
+    expect(result.data.check.modifierItems).toContainEqual({
+      source: 'situational',
+      sourceId: 'game',
+      value: -4,
+    })
+    expect(result.data.check.total).toBe(15 + 1 + 3 - 4)
+    expect(result.data.tier).toBe(MAKING_TIERS.SOLID)
+  })
+
   it('a medium the idea did not ask for costs the check', () => {
     const result = makingFinish({
       player: readyToFinish({ plan: wallPlan, mediumId: 'painting' }),
@@ -464,6 +561,28 @@ describe('makingFinish', () => {
       status: ARTIFACT_STATUSES.FRESH,
     })
     expect(result.data.markIdsCovered).toEqual(['old'])
+  })
+
+  it('a surface the place marks portable hands you something to carry, and the wall is untouched', () => {
+    const location = {
+      ...alley,
+      surfaces: [{ id: 'wall', mediumIds: ['tagging'], portable: true }],
+      marks: [{ id: 'old', surfaceId: 'wall', status: ARTIFACT_STATUSES.FRESH }],
+    }
+    const player = worked({
+      player: started({
+        player: playerWith({ carrying: ['spray'], mediumId: 'tagging' }),
+        plan: wallPlan,
+        location,
+      }),
+      ticksWorked: 1,
+    })
+    const result = makingFinish({ player, location, mediums, gameTime: { tick: 5 }, rng: die(15) })
+    expect(result.data.artifact).toMatchObject({
+      kind: ARTIFACT_KINDS.PORTABLE,
+      status: ARTIFACT_STATUSES.UNSHOWN,
+    })
+    expect(result.data.markIdsCovered).toEqual([])
   })
 
   it('a botched piece leaves the experience and nothing else, and covers nothing', () => {

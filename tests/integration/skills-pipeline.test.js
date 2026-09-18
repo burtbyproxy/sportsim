@@ -47,14 +47,12 @@ const effective = (game, mediumId) =>
 describe('skills pipeline', () => {
   it('every medium in content is registered and a new player has an empty grid', () => {
     const game = startGame()
-    expect(Object.keys(game.mediums).sort()).toEqual([
-      'carving',
-      'drawing',
-      'painting',
-      'performance',
-      'tagging',
-      'writing',
-    ])
+    // One file per medium, named for it: adding a form is adding a file.
+    const mediumIdsInContent = readdirSync(resolve('content/mediums'))
+      .filter((f) => f.endsWith('.json'))
+      .map((f) => f.replace('.json', ''))
+    expect(mediumIdsInContent.length).toBeGreaterThan(0)
+    expect(Object.keys(game.mediums).sort()).toEqual(mediumIdsInContent.sort())
     expect(game.player.skills).toEqual({})
     expect(effective(game, 'painting')).toBe(0)
   })
