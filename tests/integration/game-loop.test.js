@@ -10,7 +10,7 @@
  * @vitest-environment node
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { readFileSync } from 'fs'
+import { readFileSync, readdirSync } from 'fs'
 import { resolve } from 'path'
 import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '../../src/stores/game.js'
@@ -26,11 +26,15 @@ const momsHouseActions = JSON.parse(
   readFileSync(resolve('content/maps/kenton/actions/moms_house.json'), 'utf-8')
 )
 const byId = (id) => momsHouseActions.find((a) => a.id === id)
+const substances = readdirSync(resolve('content/substances')).map((file) =>
+  JSON.parse(readFileSync(resolve('content/substances', file), 'utf-8'))
+)
 
 function startGame() {
   setActivePinia(createPinia())
   const game = useGameStore()
   game.registerLocation(createLocation(momsHouse))
+  for (const substance of substances) game.registerSubstance({ substance })
   game.startNewGame(createPlayer('Tester'), 'moms_house')
   return game
 }
@@ -314,7 +318,7 @@ describe('useGameLoop → events', () => {
     })
 
     await loop.tick(56) // 8:00 → 22:00, after the cruiser starts prowling
-    game.player.status.sobriety = 20 // set after the clock moves; sobriety recovers over time
+    game.applyDoses({ doses: [{ substanceId: 'beer', value: 80 }] }) // sobriety 20; beer wears off over time
     await loop.tick(1)
     expect(game.activeEvent?.id).toBe('cop_hassle')
     loop.resolveEventChoice({ choiceIndex: 1 })

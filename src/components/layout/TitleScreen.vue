@@ -46,7 +46,13 @@ import { useMetaStore } from '../../stores/meta.js'
 import { useSave } from '../../composables/useSave.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
 import { useKeyboardNav } from '../../composables/useKeyboardNav.js'
-import { loadLocations, loadCharacters, loadItems } from '../../data/loader.js'
+import {
+  loadLocations,
+  loadCharacters,
+  loadItems,
+  loadSubstances,
+  loadConditions,
+} from '../../data/loader.js'
 import { createPlayer } from '../../models/player.js'
 import { createCharacter } from '../../models/character.js'
 
@@ -58,10 +64,17 @@ const menuEl = ref(null)
 
 const hasSave = ref(false)
 
-// Load item registry once at startup — persists across game resets
+// Load item, substance, and condition registries once at startup — they
+// are definitions, not run state, and persist across game resets.
 const allItems = loadItems()
 for (const item of Object.values(allItems)) {
   game.registerItem(item)
+}
+for (const substance of Object.values(loadSubstances())) {
+  game.registerSubstance({ substance })
+}
+for (const condition of Object.values(loadConditions())) {
+  game.registerCondition({ condition })
 }
 
 onMounted(() => {
@@ -72,7 +85,7 @@ onMounted(() => {
 })
 
 const bootLines = [
-  'SPORTSIM v0.3.1',
+  'SPORTSIM v0.4.0',
   'Portland Art Scene Simulation Engine',
   'Loading city data...',
   'Generating despair...',

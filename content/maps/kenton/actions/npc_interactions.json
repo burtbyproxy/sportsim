@@ -514,9 +514,9 @@
       },
       "statusChanges": {
         "mood": 15,
-        "energy": -10,
-        "sobriety": -10
+        "energy": -10
       },
+      "doses": [{ "substanceId": "beer", "value": 10 }],
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,

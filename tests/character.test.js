@@ -99,7 +99,7 @@ describe('createCharacter', () => {
   it('routine tier gets default status when not provided', () => {
     const c = makeRoutineCharacter();
     expect(c.status).not.toBeNull();
-    expect(c.status.sobriety).toBe(80);
+    expect(c.status.sobriety).toBe(100);
   });
 
   it('full tier gets default status when not provided', () => {

@@ -1,4 +1,5 @@
 import { useGameStore } from '../stores/game.js'
+import { blendSober, sobrietyDerive } from '../engine/blend.js'
 
 const SAVE_PREFIX = 'sportsim_save_'
 const SAVE_INDEX_KEY = 'sportsim_saves'
@@ -7,7 +8,7 @@ const SAVE_INDEX_KEY = 'sportsim_saves'
  * Current save format version.
  * Bump this whenever the save shape changes in a breaking way.
  */
-export const SAVE_VERSION = 1
+export const SAVE_VERSION = 2
 
 /**
  * Maximum number of save slots.
@@ -54,6 +55,34 @@ export function validateSave(data) {
     return false
   }
   return true
+}
+
+/**
+ * Bring a validated save up to the current version. Returns a new object;
+ * the input is not mutated. A save already at the current version comes
+ * back as a copy.
+ *
+ * v1 → v2: sobriety became derived from per-substance intoxications. A v1
+ * save knows only a sobriety number, which cannot name what was drunk, so
+ * everyone wakes up sober with an empty blend.
+ *
+ * @param {{ save: Object }} input
+ * @returns {Object}
+ */
+export function saveMigrate({ save }) {
+  const migrated = JSON.parse(JSON.stringify(save))
+  if (migrated.version < 2) {
+    const subjects = [migrated.player, ...Object.values(migrated.characters ?? {})]
+    for (const subject of subjects) {
+      if (!subject) continue
+      subject.intoxications = {}
+      subject.habituations = {}
+      subject.blend = blendSober()
+      if (subject.status) subject.status.sobriety = sobrietyDerive({ intoxications: {} })
+    }
+    migrated.version = 2
+  }
+  return migrated
 }
 
 /**
@@ -124,7 +153,7 @@ export function useSave() {
         console.warn(`[save] Save "${id}" failed validation — discarding.`)
         return null
       }
-      return data
+      return saveMigrate({ save: data })
     } catch (e) {
       console.warn('[save] Failed to load save:', e)
       return null
@@ -214,7 +243,7 @@ export function useSave() {
 
     // Give it a fresh ID so it doesn't stomp an existing save
     const newId = crypto.randomUUID()
-    const importedData = { ...data, id: newId }
+    const importedData = { ...saveMigrate({ save: data }), id: newId }
 
     try {
       localStorage.setItem(SAVE_PREFIX + newId, JSON.stringify(importedData))

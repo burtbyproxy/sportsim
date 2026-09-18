@@ -1,0 +1,47 @@
+{
+  "id": "caffeine",
+  "display": "Caffeine",
+  "family": "stimulant",
+  "persona": {
+    "id": "yeller",
+    "display": "The yeller",
+    "compulsion": "Get shitloads done. All of it at once. At full volume. Then crash."
+  },
+  "decayPerTick": 2.5,
+  "habituationRate": 0.2,
+  "habituationDecayPerTick": 0.1,
+  "withdrawal": {
+    "habituationAtLeast": 40,
+    "intoxicationBelow": 5,
+    "persona": {
+      "id": "headache",
+      "display": "The headache",
+      "compulsion": "Find coffee. Speak to no one until then."
+    },
+    "modifiers": [
+      { "stat": "stamina", "value": -3 },
+      { "stat": "wits", "value": -2 },
+      { "stat": "toughness", "value": 1 }
+    ]
+  },
+  "bands": [
+    {
+      "atLeast": 15,
+      "modifiers": [
+        { "stat": "stamina", "value": 3 },
+        { "stat": "wits", "value": 2 },
+        { "stat": "charm", "value": -2 }
+      ]
+    },
+    {
+      "atLeast": 50,
+      "modifiers": [
+        { "stat": "stamina", "value": 5 },
+        { "stat": "wits", "value": 2 },
+        { "stat": "charm", "value": -5 },
+        { "stat": "creativity", "value": -2 },
+        { "stat": "toughness", "value": -1 }
+      ]
+    }
+  ]
+}

@@ -12,6 +12,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid'
+import { blendSober, sobrietyDerive } from '../engine/blend.js'
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -62,7 +63,7 @@ function defaultStats() {
 function defaultStatus() {
   return {
     hunger: 50,
-    sobriety: 80,
+    sobriety: sobrietyDerive({ intoxications: {} }),
     energy: 70,
     mood: 50,
     health: 100,
@@ -89,7 +90,12 @@ export function createCharacter(data) {
   const simulation = VALID_SIMULATION_TIERS.includes(data.simulation) ? data.simulation : 'fixed'
 
   // Status: null for fixed-tier characters unless explicitly provided
-  const status = simulation === 'fixed' ? (data.status ?? null) : (data.status ?? defaultStatus())
+  const intoxications = { ...(data.intoxications ?? {}) }
+  const habituations = { ...(data.habituations ?? {}) }
+  const rawStatus =
+    simulation === 'fixed' ? (data.status ?? null) : (data.status ?? defaultStatus())
+  // Sobriety is derived from intoxications, never declared.
+  const status = rawStatus ? { ...rawStatus, sobriety: sobrietyDerive({ intoxications }) } : null
 
   // decisionWeights: only meaningful for full-tier characters
   const decisionWeights = simulation === 'full' ? (data.decisionWeights ?? null) : null
@@ -104,6 +110,9 @@ export function createCharacter(data) {
     simulation,
     stats: data.stats ?? defaultStats(),
     status,
+    intoxications,
+    habituations,
+    blend: data.blend ?? blendSober(),
     psyche: data.psyche ?? {
       traumas: [],
       obsessions: [],

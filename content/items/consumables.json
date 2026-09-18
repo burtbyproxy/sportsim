@@ -7,10 +7,8 @@
     "value": 2,
     "stackable": true,
     "quantity": 1,
-    "effects": [
-      { "target": "sobriety", "value": -20, "duration": null },
-      { "target": "mood", "value": 8, "duration": null }
-    ]
+    "effects": [{ "target": "mood", "value": 8, "duration": null }],
+    "doses": [{ "substanceId": "beer", "value": 20 }]
   },
   {
     "id": "tallboy_pbr",
@@ -20,10 +18,8 @@
     "value": 2,
     "stackable": true,
     "quantity": 1,
-    "effects": [
-      { "target": "sobriety", "value": -20, "duration": null },
-      { "target": "mood", "value": 8, "duration": null }
-    ]
+    "effects": [{ "target": "mood", "value": 8, "duration": null }],
+    "doses": [{ "substanceId": "beer", "value": 20 }]
   },
   {
     "id": "pack_cigarettes",
@@ -37,7 +33,8 @@
       { "target": "mood", "value": 5, "duration": null },
       { "target": "energy", "value": -3, "duration": null },
       { "target": "health", "value": -1, "duration": null }
-    ]
+    ],
+    "doses": [{ "substanceId": "nicotine", "value": 25 }]
   },
   {
     "id": "plaid_hot_dog",
@@ -73,6 +70,7 @@
     "effects": [
       { "target": "energy", "value": 15, "duration": null },
       { "target": "mood", "value": 3, "duration": null }
-    ]
+    ],
+    "doses": [{ "substanceId": "caffeine", "value": 20 }]
   }
 ]

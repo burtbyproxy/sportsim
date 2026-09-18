@@ -144,8 +144,7 @@ describe('DECAY_CONFIG', () => {
     expect(DECAY_CONFIG).toBeDefined()
     expect(DECAY_CONFIG.hunger.ratePerTick).toBe(-1)
     expect(DECAY_CONFIG.energy.ratePerTick).toBe(-0.5)
-    expect(DECAY_CONFIG.sobriety.ratePerTick).toBe(1)
-    expect(DECAY_CONFIG.sobriety.baseline).toBe(80)
+    expect(DECAY_CONFIG.sobriety).toBeUndefined() // derived; substances decay in the blend engine
     expect(DECAY_CONFIG.mood.ratePerTick).toBe(-0.25)
     expect(DECAY_CONFIG.mood.baseline).toBe(40)
   })
@@ -182,37 +181,12 @@ describe('getStatDecayEffects', () => {
     expect(player.status.hunger + changes.hunger).toBeGreaterThanOrEqual(0)
   })
 
-  it('increases sobriety when below baseline (80)', () => {
+  it('never touches sobriety — it is derived from the blend', () => {
     const player = makePlayer({
       status: { hunger: 50, sobriety: 60, energy: 80, mood: 40, health: 100, money: 0 },
     })
-    const changes = getStatDecayEffects(player, 1)
-    expect(changes.sobriety).toBe(1) // +1/tick toward 80
-  })
-
-  it('does not change sobriety when at or above baseline (80)', () => {
-    const player = makePlayer({
-      status: { hunger: 50, sobriety: 80, energy: 80, mood: 40, health: 100, money: 0 },
-    })
-    const changes = getStatDecayEffects(player, 1)
+    const changes = getStatDecayEffects(player, 10)
     expect(changes.sobriety).toBeUndefined()
-  })
-
-  it('does not change sobriety when above baseline', () => {
-    // Sobriety above baseline (e.g. after caffeine) doesn't drift further — no downward drift implemented
-    const player = makePlayer({
-      status: { hunger: 50, sobriety: 95, energy: 80, mood: 40, health: 100, money: 0 },
-    })
-    const changes = getStatDecayEffects(player, 1)
-    expect(changes.sobriety).toBeUndefined()
-  })
-
-  it('caps sobriety recovery at baseline (80)', () => {
-    const player = makePlayer({
-      status: { hunger: 50, sobriety: 79, energy: 80, mood: 40, health: 100, money: 0 },
-    })
-    const changes = getStatDecayEffects(player, 5) // +5, but caps at 80
-    expect(79 + (changes.sobriety ?? 0)).toBeLessThanOrEqual(80)
   })
 
   it('drifts mood down toward baseline (40) when above it', () => {

@@ -17,11 +17,11 @@
   },
   "status": {
     "hunger": 35,
-    "sobriety": 60,
     "energy": 55,
     "mood": 70,
     "health": 75
   },
+  "intoxications": { "beer": 40 },
   "psyche": {
     "traumas": [],
     "obsessions": [

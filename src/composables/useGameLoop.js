@@ -110,6 +110,10 @@ export function useGameLoop({
       console.warn('[useGameLoop] simulation worker tick failed:', err)
     }
 
+    // 4b. Substances wear off — player and characters alike — and the blend
+    // snapshot every roll reads is recomputed.
+    game.applyBlendDecay({ ticksElapsed: ticks })
+
     // 5. Move if requested — the new scene's prose goes into a fresh log
     if (toLocationId) {
       game.moveTo(toLocationId)
@@ -252,6 +256,11 @@ export function useGameLoop({
     // Apply money change via store (keeps Pinia reactivity)
     if (outcome.moneyChange != null) {
       game.adjustMoney(outcome.moneyChange)
+    }
+
+    // Doses — what went into the player. Hidden doses roll here.
+    if (outcome.doses?.length > 0) {
+      game.applyDoses({ doses: outcome.doses, rng })
     }
 
     // Grant items — itemsGained is string[] (item IDs per contract)

@@ -17,6 +17,8 @@ const _actionFiles = import.meta.glob('/content/maps/*/actions/*.json', { eager:
 const _eventFiles = import.meta.glob('/content/maps/*/events/*.json', { eager: true })
 const _characterFiles = import.meta.glob('/content/characters/*.json', { eager: true })
 const _itemFiles = import.meta.glob('/content/items/*.json', { eager: true })
+const _substanceFiles = import.meta.glob('/content/substances/*.json', { eager: true })
+const _conditionFiles = import.meta.glob('/content/conditions/*.json', { eager: true })
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -128,4 +130,22 @@ export function loadCharacters() {
 export function loadItems() {
   const modules = _extractModules(_itemFiles)
   return _mergeById(modules, 'loadItems()')
+}
+
+/**
+ * Load all substances (global). One file per substance.
+ * @returns {Object<string, Object>}
+ */
+export function loadSubstances() {
+  const modules = _extractModules(_substanceFiles)
+  return _mergeById(modules, 'loadSubstances()')
+}
+
+/**
+ * Load all status-driven conditions (global). One file per condition.
+ * @returns {Object<string, Object>}
+ */
+export function loadConditions() {
+  const modules = _extractModules(_conditionFiles)
+  return _mergeById(modules, 'loadConditions()')
 }

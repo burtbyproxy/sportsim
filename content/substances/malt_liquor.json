@@ -1,0 +1,47 @@
+{
+  "id": "malt_liquor",
+  "display": "Malt liquor",
+  "family": "alcohol",
+  "persona": {
+    "id": "suburban_gangster",
+    "display": "The suburban gangster",
+    "compulsion": "Full gang posture and speech, from the least credible person in the county."
+  },
+  "decayPerTick": 2,
+  "habituationRate": 0.1,
+  "habituationDecayPerTick": 0.1,
+  "withdrawal": {
+    "habituationAtLeast": 60,
+    "intoxicationBelow": 5,
+    "persona": {
+      "id": "shakes",
+      "display": "The shakes",
+      "compulsion": "Get to a bar. Any bar."
+    },
+    "modifiers": [
+      { "stat": "toughness", "value": -3 },
+      { "stat": "charm", "value": -2 },
+      { "stat": "creativity", "value": 3 }
+    ]
+  },
+  "bands": [
+    {
+      "atLeast": 15,
+      "modifiers": [
+        { "stat": "toughness", "value": 3 },
+        { "stat": "reputation", "value": -2 },
+        { "stat": "wits", "value": -2 }
+      ]
+    },
+    {
+      "atLeast": 50,
+      "modifiers": [
+        { "stat": "toughness", "value": 5 },
+        { "stat": "luck", "value": 1 },
+        { "stat": "charm", "value": -3 },
+        { "stat": "reputation", "value": -4 },
+        { "stat": "wits", "value": -6 }
+      ]
+    }
+  ]
+}

@@ -703,3 +703,65 @@ describe('resilience — corrupted index', () => {
     expect(id).not.toBeNull()
   })
 })
+
+// ---------------------------------------------------------------------------
+// saveMigrate — v1 saves know only a sobriety number
+// ---------------------------------------------------------------------------
+
+import { saveMigrate } from '../src/composables/useSave.js'
+import { blendSober } from '../src/engine/blend.js'
+
+describe('saveMigrate', () => {
+  function makeV1Save() {
+    return {
+      ...makeValidSave({ version: 1 }),
+      player: {
+        id: 'p1',
+        name: 'Old Hand',
+        status: { hunger: 50, sobriety: 35, energy: 70, mood: 40, health: 100, money: 2 },
+        stats: {},
+        inventory: [],
+      },
+      characters: {
+        maurice: { id: 'maurice', status: { hunger: 35, sobriety: 60, energy: 55, mood: 70, health: 75 } },
+        fixed: { id: 'fixed', status: null },
+      },
+    }
+  }
+
+  it('brings a v1 save to the current version', () => {
+    const migrated = saveMigrate({ save: makeV1Save() })
+    expect(migrated.version).toBe(SAVE_VERSION)
+  })
+
+  it('gives the player empty intoxications, empty habituations, a sober blend, and derived sobriety', () => {
+    const migrated = saveMigrate({ save: makeV1Save() })
+    expect(migrated.player.intoxications).toEqual({})
+    expect(migrated.player.habituations).toEqual({})
+    expect(migrated.player.blend).toEqual(blendSober())
+    expect(migrated.player.status.sobriety).toBe(100)
+  })
+
+  it('does the same for every character that carries a status', () => {
+    const migrated = saveMigrate({ save: makeV1Save() })
+    expect(migrated.characters.maurice.intoxications).toEqual({})
+    expect(migrated.characters.maurice.status.sobriety).toBe(100)
+    expect(migrated.characters.fixed.status).toBeNull()
+    expect(migrated.characters.fixed.blend).toEqual(blendSober())
+  })
+
+  it('does not mutate the input', () => {
+    const v1 = makeV1Save()
+    saveMigrate({ save: v1 })
+    expect(v1.version).toBe(1)
+    expect(v1.player.status.sobriety).toBe(35)
+    expect(v1.player.intoxications).toBeUndefined()
+  })
+
+  it('returns a current-version save unchanged, as a copy', () => {
+    const current = makeValidSave()
+    const migrated = saveMigrate({ save: current })
+    expect(migrated).toEqual(current)
+    expect(migrated).not.toBe(current)
+  })
+})

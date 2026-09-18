@@ -9,6 +9,7 @@ import {
   checkModifier,
 } from './dice.js'
 import { seededRandom } from '../utils/random.js'
+import { blendSober } from './blend.js'
 
 // --- Helpers ---
 
@@ -31,8 +32,17 @@ function makePlayer(overrides = {}) {
       money: 0,
     },
     psyche: { traumas: [], obsessions: [], insanities: [], abilities: [] },
+    intoxications: {},
+    habituations: {},
+    blend: blendSober(),
     ...overrides,
   }
+}
+
+/** A blend snapshot carrying only the given stat modifiers. */
+function withBlend(player, modifiers) {
+  player.blend = { ...blendSober(), modifiers }
+  return player
 }
 
 // --- rollD20 ---
@@ -92,55 +102,37 @@ describe('statEffective', () => {
     expect(statEffective({ player: player, statName: 'charm' })).toBe(7)
   })
 
-  describe('altered state thresholds', () => {
-    it('applies wits penalty when sobriety < 30', () => {
-      const player = makePlayer({ status: { ...makePlayer().status, sobriety: 25 } })
-      // wits base = 12, sobriety < 30 applies wits -5
-      expect(statEffective({ player: player, statName: 'wits' })).toBe(7)
+  describe('blend modifiers', () => {
+    it('applies a penalty carried by the blend snapshot', () => {
+      const player = withBlend(makePlayer(), { wits: -5 })
+      expect(statEffective({ player, statName: 'wits' })).toBe(7)
     })
 
-    it('applies charm bonus when sobriety < 30', () => {
-      const player = makePlayer({ status: { ...makePlayer().status, sobriety: 25 } })
-      // charm base = 10, sobriety < 30 applies charm +3
-      expect(statEffective({ player: player, statName: 'charm' })).toBe(13)
+    it('applies a bonus carried by the blend snapshot', () => {
+      const player = withBlend(makePlayer(), { charm: 3 })
+      expect(statEffective({ player, statName: 'charm' })).toBe(13)
     })
 
-    it('applies override thresholds when sobriety < 15 (wits -10, not -5)', () => {
-      const player = makePlayer({ status: { ...makePlayer().status, sobriety: 10 } })
-      // sobriety < 15 OVERRIDES: wits -10
-      expect(statEffective({ player: player, statName: 'wits' })).toBe(2)
+    it('leaves stats the blend does not name alone', () => {
+      const player = withBlend(makePlayer(), { charm: 3 })
+      expect(statEffective({ player, statName: 'toughness' })).toBe(8)
     })
 
-    it('applies toughness bonus when sobriety < 15', () => {
-      const player = makePlayer({ status: { ...makePlayer().status, sobriety: 10 } })
-      // sobriety < 15: toughness +5
-      expect(statEffective({ player: player, statName: 'toughness' })).toBe(13)
+    it("stacks the blend with the stat's own modifiers", () => {
+      const player = withBlend(makePlayer(), { wits: -5 })
+      player.stats.wits.modifiers = [{ source: 'test', value: -3, duration: null }]
+      expect(statEffective({ player, statName: 'wits' })).toBe(4)
     })
 
-    it('applies physical stat penalties when energy < 20', () => {
-      const player = makePlayer({ status: { ...makePlayer().status, energy: 15 } })
-      // stamina base 10, energy < 20: stamina -3
-      expect(statEffective({ player: player, statName: 'stamina' })).toBe(7)
+    it('a player with no snapshot at all is sober', () => {
+      const player = makePlayer()
+      delete player.blend
+      expect(statEffective({ player, statName: 'wits' })).toBe(12)
     })
 
-    it('applies mood bonuses when mood > 80', () => {
-      const player = makePlayer({ status: { ...makePlayer().status, mood: 90 } })
-      // charm base 10, mood > 80: charm +3
-      expect(statEffective({ player: player, statName: 'charm' })).toBe(13)
-    })
-
-    it('applies mood penalties when mood < 20 (charm down, creativity up)', () => {
-      const player = makePlayer({ status: { ...makePlayer().status, mood: 15 } })
-      expect(statEffective({ player: player, statName: 'charm' })).toBe(5) // 10 - 5
-      expect(statEffective({ player: player, statName: 'creativity' })).toBe(13) // 10 + 3
-    })
-
-    it('stacks multiple altered state effects', () => {
-      const player = makePlayer({
-        status: { ...makePlayer().status, sobriety: 25, energy: 15 },
-      })
-      // wits: base 12, sobriety<30 wits-5, energy<20 wits-3 = 4
-      expect(statEffective({ player: player, statName: 'wits' })).toBe(4)
+    it('never reads status directly — the blend is the only door', () => {
+      const player = makePlayer({ status: { ...makePlayer().status, sobriety: 5, energy: 5 } })
+      expect(statEffective({ player, statName: 'wits' })).toBe(12)
     })
   })
 
@@ -300,10 +292,10 @@ describe('checkModifier', () => {
     expect(checkModifier({ player, statName: 'charm' })).toBe(10)
   })
 
-  it('altered state shifts the stat before conversion', () => {
+  it('the blend shifts the stat before conversion', () => {
     const player = withCharm(38)
     expect(checkModifier({ player, statName: 'charm' })).toBe(3)
-    player.status.sobriety = 20 // charm +3 while tipsy → 41 → +4
+    withBlend(player, { charm: 3 }) // 41 → +4
     expect(checkModifier({ player, statName: 'charm' })).toBe(4)
   })
 

@@ -1,0 +1,35 @@
+{
+  "id": "weed",
+  "display": "Weed",
+  "family": "cannabis",
+  "persona": {
+    "id": "telepath",
+    "display": "The telepath",
+    "compulsion": "Hear the thoughts of dogs, cats, and people. Freeze under the volume of them in public. Alone, everything you make is genius, and the worse it is the more genius it feels."
+  },
+  "decayPerTick": 3,
+  "habituationRate": 0.03,
+  "habituationDecayPerTick": 0.2,
+  "withdrawal": null,
+  "bands": [
+    {
+      "atLeast": 15,
+      "modifiers": [
+        { "stat": "creativity", "value": 4 },
+        { "stat": "wits", "value": 1 },
+        { "stat": "charm", "value": -3 },
+        { "stat": "stamina", "value": -1 }
+      ]
+    },
+    {
+      "atLeast": 50,
+      "modifiers": [
+        { "stat": "creativity", "value": 6 },
+        { "stat": "luck", "value": 2 },
+        { "stat": "charm", "value": -6 },
+        { "stat": "stamina", "value": -3 },
+        { "stat": "wits", "value": -2 }
+      ]
+    }
+  ]
+}
