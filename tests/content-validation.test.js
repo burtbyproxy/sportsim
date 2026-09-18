@@ -906,6 +906,42 @@ describe('content/mediums/*.json — Medium contract', () => {
   }
 });
 
+describe('content/game.json — what a new game is', () => {
+  const config = JSON.parse(readFileSync(join(CONTENT_ROOT, 'game.json'), 'utf-8'));
+
+  it('has the title screen\'s words', () => {
+    for (const field of ['title', 'tagline']) {
+      expect(typeof config[field], `game.json: ${field} must be string`).toBe('string');
+      expect(config[field].length).toBeGreaterThan(0);
+    }
+    expect(Array.isArray(config.bootLines)).toBe(true);
+    expect(config.bootLines.some(line => line.includes('{version}')), 'a boot line shows {version}').toBe(true);
+    expect(typeof config.menu?.new).toBe('string');
+    expect(typeof config.menu?.load).toBe('string');
+  });
+
+  it('names a map that exists and starts the player somewhere on it', () => {
+    const mapDir = join(CONTENT_ROOT, 'maps', config.mapId);
+    expect(existsSync(mapDir), `game.json: no map '${config.mapId}'`).toBe(true);
+    const locationIds = loadJsonFiles(join(mapDir, 'locations')).map(({ data }) => data.id);
+    expect(locationIds, `game.json: start.locationId '${config.start.locationId}' is not on the map`).toContain(config.start.locationId);
+  });
+
+  it('says who the player is and what they start with', () => {
+    const { start } = config;
+    expect(typeof start.playerName).toBe('string');
+    expect(typeof start.money).toBe('number');
+    expect(start.statRoll.min).toBeGreaterThanOrEqual(1);
+    expect(start.statRoll.max).toBeGreaterThanOrEqual(start.statRoll.min);
+    expect(start.statRoll.max).toBeLessThanOrEqual(100);
+    for (const key of VALID_STATUS_KEYS) {
+      expect(typeof start.status[key], `game.json: start.status.${key} must be number`).toBe('number');
+      expect(start.status[key]).toBeGreaterThanOrEqual(0);
+      expect(start.status[key]).toBeLessThanOrEqual(100);
+    }
+  });
+});
+
 describe('content/games/*.json — Minigame contract', () => {
   const files = loadJsonFiles(join(CONTENT_ROOT, 'games'));
   const gameIds = new Set(files.map(({ data }) => data.id));
@@ -1072,11 +1108,16 @@ describe('making — every medium can actually be made in', () => {
 
   // Every line the code asks the voices for is a line sober can say.
   const sober = JSON.parse(readFileSync(join(CONTENT_ROOT, 'voices', 'sober.json'), 'utf-8'));
-  const sources = ['src/composables/useGameLoop.js', 'src/stores/game.js', 'src/engine/describer.js'];
+  const sources = [
+    'src/composables/useGameLoop.js',
+    'src/stores/game.js',
+    'src/engine/describer.js',
+    'src/engine/actions.js',
+  ];
   const codes = new Set();
   for (const source of sources) {
     const text = readFileSync(resolve(source), 'utf-8');
-    for (const match of text.matchAll(/'((?:inspiration|scavenge|item|making|mark|piece|work)\.[a-z_.]+)'/g)) {
+    for (const match of text.matchAll(/'((?:inspiration|scavenge|item|making|mark|piece|work|requirement|menu)\.[a-z_.]+)'/g)) {
       codes.add(match[1]);
     }
   }

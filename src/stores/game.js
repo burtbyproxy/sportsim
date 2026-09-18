@@ -98,6 +98,9 @@ export const useGameStore = defineStore('game', {
     /** Minigame definitions, keyed by id. Loaded once at init from content/games. */
     games: {},
 
+    /** What a new game is: title words, map, starting point. Loaded once from content/game.json. */
+    config: null,
+
     /**
      * The making menu while the player is choosing what to make, or null.
      * { step: 'plan' } or { step: 'ingredient', plan }. Not saved: a load
@@ -553,6 +556,26 @@ export const useGameStore = defineStore('game', {
      */
     registerScavengeTable({ table }) {
       this.scavengeTables[table.id] = table
+    },
+
+    /**
+     * Register what a new game is. Called at init from loadGameConfig().
+     * @param {{ config: Object }} input
+     */
+    registerConfig({ config }) {
+      this.config = config
+    },
+
+    /**
+     * Why not, in words: an engine's refusal code and params, said by whoever
+     * is in charge. Ids a player should never read become the thing's name.
+     * @param {{ code: string, params?: Object<string, string> }} input
+     * @returns {string}
+     */
+    requirementReason({ code, params = {} }) {
+      const named = { ...params }
+      if (params.itemId) named.item = this.items[params.itemId]?.name ?? params.itemId
+      return this.voiceLine({ code, params: named })
     },
 
     /**

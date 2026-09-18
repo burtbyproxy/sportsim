@@ -177,8 +177,8 @@ if (!game.isRunning) {
 }
 
 // Load action and event registries from content/
-const actionRegistry = Object.values(loadActions('kenton'))
-const eventRegistry = Object.values(loadEvents('kenton'))
+const actionRegistry = Object.values(loadActions(game.config.mapId))
+const eventRegistry = Object.values(loadEvents(game.config.mapId))
 
 const narrative = useNarrative()
 provide('narrative', narrative)

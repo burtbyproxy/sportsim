@@ -80,10 +80,10 @@ export function locationRestore({ definition, saved }) {
  * Check whether the player meets an exit's requirements.
  * Exits share the requirement vocabulary of actions, so the same rules apply.
  * @param {{ exit: Object, player: Object, gameTime: Object }} input
- * @returns {{ meets: boolean, reason: string|null }}
+ * @returns {{ meets: boolean, reasonCode: string|null, reasonParams: Object<string, string> }}
  */
 export function exitMeetsRequirements({ exit, player, gameTime }) {
-  if (!exit.requirements) return { meets: true, reason: null }
+  if (!exit.requirements) return { meets: true, reasonCode: null, reasonParams: {} }
   return meetsRequirements(player, { requirements: exit.requirements }, gameTime)
 }
 

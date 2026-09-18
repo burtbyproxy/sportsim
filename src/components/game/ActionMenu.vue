@@ -83,7 +83,7 @@
 <script setup>
 import { computed, inject, ref, watch } from 'vue'
 import { useGameStore } from '../../stores/game.js'
-import { meetsRequirements } from '../../engine/actions.js'
+import { meetsRequirements, REQUIREMENT_CODES } from '../../engine/actions.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
 import { useKeyboardNav } from '../../composables/useKeyboardNav.js'
 import { isOpen, exitMeetsRequirements } from '../../models/location.js'
@@ -145,13 +145,20 @@ function canTravel(exit) {
 }
 
 function travelBlockReason(exit) {
-  if (game.makingActive) return 'you are in the middle of something'
+  if (game.makingActive) return game.requirementReason({ code: REQUIREMENT_CODES.BUSY })
   const dest = game.locations[exit.locationId]
-  if (!dest) return 'unknown destination'
+  if (!dest) return ''
   if (!isOpen(dest, game.time.hour)) {
-    return dest.availability?.closedMessage || 'closed'
+    return (
+      dest.availability?.closedMessage || game.requirementReason({ code: REQUIREMENT_CODES.CLOSED })
+    )
   }
-  return ''
+  const { meets, reasonCode, reasonParams } = exitMeetsRequirements({
+    exit,
+    player: game.player,
+    gameTime: game.time,
+  })
+  return meets ? '' : game.requirementReason({ code: reasonCode, params: reasonParams })
 }
 
 function choose(entry) {
@@ -179,11 +186,10 @@ async function executeAction(action) {
 }
 
 function disabledReason(action) {
-  if (!game.player) return 'not available'
+  if (!game.player) return ''
   if (action.unavailableReason) return action.unavailableReason
-  const { meets, reason } = meetsRequirements(game.player, action, game.time)
-  if (!meets && reason) return reason
-  return 'not available'
+  const { meets, reasonCode, reasonParams } = meetsRequirements(game.player, action, game.time)
+  return meets ? '' : game.requirementReason({ code: reasonCode, params: reasonParams })
 }
 
 // ── Keyboard navigation ──────────────────────────────────────────────────────

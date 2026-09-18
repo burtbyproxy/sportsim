@@ -446,9 +446,8 @@ export function generateLocationNarrative(location, player, gameTime) {
  * @returns {NarrativeText}
  */
 export function generateActionNarrative(actionResult) {
-  if (actionResult.requirementFailure) {
-    return toNarrativeText(actionResult.requirementFailure, { style: 'italic', color: '#888' })
-  }
+  // Why not is the loop's to say, in somebody's voice. There is no outcome to narrate.
+  if (actionResult.requirementFailure) return toNarrativeText('')
   const outcome = actionResult.outcome
   if (!outcome) return toNarrativeText('')
   if (outcome.narrative?.tokens) return outcome.narrative

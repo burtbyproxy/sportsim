@@ -54,9 +54,15 @@ describe('meetsRequirements', () => {
 
   it('fails when stat too low', () => {
     const action = makeAction({ requirements: { minStats: { charm: 20 } } })
-    const { meets, reason } = meetsRequirements(makePlayer(), action, makeGameTime())
+    const { meets, reasonCode, reasonParams } = meetsRequirements(
+      makePlayer(),
+      action,
+      makeGameTime()
+    )
     expect(meets).toBe(false)
-    expect(reason).toContain('charm')
+    // A code and what it is about. The sentence is content's, not the engine's.
+    expect(reasonCode).toBe('requirement.stat')
+    expect(reasonParams).toEqual({ stat: 'charm' })
   })
 
   it('passes when stat meets minimum', () => {
@@ -292,7 +298,8 @@ describe('meetsRequirements — money floor', () => {
   it('a broke player is refused and told the price', () => {
     const result = meetsRequirements(playerWith(1.5), action(3), gameTime)
     expect(result.meets).toBe(false)
-    expect(result.reason).toBe('Costs $3.00 (you have $1.50)')
+    expect(result.reasonCode).toBe('requirement.money')
+    expect(result.reasonParams).toEqual({ cost: '$3.00', money: '$1.50' })
   })
 
   it('a null floor costs nothing', () => {
@@ -314,7 +321,11 @@ describe('meetsRequirements — requiresInspiration', () => {
 
   it('refuses a player nothing is moving', () => {
     const result = meetsRequirements({ status: {}, inspirations: [] }, action, time)
-    expect(result).toEqual({ meets: false, reason: 'Nothing is moving you' })
+    expect(result).toEqual({
+      meets: false,
+      reasonCode: 'requirement.inspiration',
+      reasonParams: {},
+    })
   })
 
   it('refuses a player whose inspiration already ended', () => {
