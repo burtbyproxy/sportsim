@@ -52,6 +52,7 @@ import {
   loadItems,
   loadSubstances,
   loadConditions,
+  loadMediums,
 } from '../../data/loader.js'
 import { createPlayer } from '../../models/player.js'
 import { createCharacter } from '../../models/character.js'
@@ -76,6 +77,9 @@ for (const substance of Object.values(loadSubstances())) {
 for (const condition of Object.values(loadConditions())) {
   game.registerCondition({ condition })
 }
+for (const medium of Object.values(loadMediums())) {
+  game.registerMedium({ medium })
+}
 
 onMounted(() => {
   meta.load()
@@ -85,7 +89,7 @@ onMounted(() => {
 })
 
 const bootLines = [
-  'SPORTSIM v0.4.0',
+  'SPORTSIM v0.5.0',
   'Portland Art Scene Simulation Engine',
   'Loading city data...',
   'Generating despair...',

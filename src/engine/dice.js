@@ -37,54 +37,70 @@ export function rollD20(rng = Math.random) {
  */
 export const STAT_POINTS_PER_MODIFIER = 10
 
+/** Where a stat's modifier item came from. */
+export const STAT_ITEM_SOURCES = Object.freeze({
+  BASE: 'base',
+  MODIFIER: 'modifier',
+  ABILITY: 'ability',
+  TRAUMA: 'trauma',
+})
+
 /**
- * The effective value of a stat on the 1–100 scale, taking into account:
- * - Base stat value
- * - Active modifiers on the stat
- * - The blend's modifiers (substances, withdrawals, conditions)
- * - Active abilities' dice modifiers
- * - Trauma effects
+ * Everything that makes up a stat's effective value, itemized: the base,
+ * each temporary modifier, each persona in the blend that touches the stat,
+ * each active ability, each trauma. There is no cap on the count. The sum
+ * is the effective stat; the list is for the story.
+ *
+ * @param {{ player: Object, statName: string }} input
+ * @returns {{ source: string, sourceId: string, value: number }[]}
+ */
+export function statModifierItems({ player, statName }) {
+  const items = []
+
+  const statObj = player.stats?.[statName]
+  if (statObj) {
+    items.push({ source: STAT_ITEM_SOURCES.BASE, sourceId: statName, value: statObj.base })
+    for (const mod of statObj.modifiers ?? []) {
+      items.push({
+        source: STAT_ITEM_SOURCES.MODIFIER,
+        sourceId: mod.source ?? statName,
+        value: mod.value,
+      })
+    }
+  }
+
+  for (const entry of player.blend?.modifierSources ?? []) {
+    if (entry.stat !== statName) continue
+    items.push({ source: entry.source, sourceId: entry.personaId, value: entry.value })
+  }
+
+  for (const ability of player.psyche?.abilities ?? []) {
+    if (!ability.active) continue
+    const effect = ability.effects?.diceModifiers?.[statName]
+    if (effect !== undefined) {
+      items.push({ source: STAT_ITEM_SOURCES.ABILITY, sourceId: ability.id, value: effect })
+    }
+  }
+
+  for (const trauma of player.psyche?.traumas ?? []) {
+    const effect = trauma.effects?.statModifiers?.[statName]
+    if (effect !== undefined) {
+      items.push({ source: STAT_ITEM_SOURCES.TRAUMA, sourceId: trauma.id, value: effect })
+    }
+  }
+
+  return items
+}
+
+/**
+ * The effective value of a stat on the 1–100 scale: the sum of every item
+ * statModifierItems reports.
  *
  * @param {{ player: Object, statName: string }} input - player per data contract; stat e.g. "charm"
  * @returns {number}
  */
 export function statEffective({ player, statName }) {
-  let total = 0
-
-  // Base stat value
-  const statObj = player.stats?.[statName]
-  if (statObj) {
-    total += statObj.base
-
-    // Active modifiers on the stat
-    if (statObj.modifiers) {
-      for (const mod of statObj.modifiers) {
-        total += mod.value
-      }
-    }
-  }
-
-  // Blend modifiers
-  total += _blendModifier({ player, statName })
-
-  // Ability effects
-  if (player.psyche?.abilities) {
-    for (const ability of player.psyche.abilities) {
-      if (!ability.active) continue
-      const effect = ability.effects?.diceModifiers?.[statName]
-      if (effect !== undefined) total += effect
-    }
-  }
-
-  // Trauma effects
-  if (player.psyche?.traumas) {
-    for (const trauma of player.psyche.traumas) {
-      const effect = trauma.effects?.statModifiers?.[statName]
-      if (effect !== undefined) total += effect
-    }
-  }
-
-  return total
+  return statModifierItems({ player, statName }).reduce((sum, item) => sum + item.value, 0)
 }
 
 /**
@@ -96,15 +112,6 @@ export function statEffective({ player, statName }) {
 export function checkModifier({ player, statName }) {
   const effective = Math.max(0, Math.min(100, statEffective({ player, statName })))
   return Math.floor(effective / STAT_POINTS_PER_MODIFIER)
-}
-
-/**
- * The blend's modifier for a stat. A player with no snapshot is sober.
- * @param {{ player: Object, statName: string }} input
- * @returns {number}
- */
-function _blendModifier({ player, statName }) {
-  return player.blend?.modifiers?.[statName] ?? 0
 }
 
 /**
@@ -150,6 +157,11 @@ export function rollCheck(player, statName, modifiers, dc, rng = Math.random) {
     criticalSuccess: isCriticalSuccess(natural),
     criticalFailure: isCriticalFailure(natural),
     stat: statName,
+    // Everything behind the stat, itemized, plus each situational modifier.
+    modifierItems: [
+      ...statModifierItems({ player, statName }),
+      ...modifiers.map((value) => ({ source: 'situational', sourceId: null, value })),
+    ],
   }
 }
 

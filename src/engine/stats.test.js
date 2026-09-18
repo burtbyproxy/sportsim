@@ -4,6 +4,7 @@ import {
   calculateLevel,
   checkArchetypeThresholds,
   getStatDecayEffects,
+  statXpApply,
   DECAY_CONFIG,
 } from './stats.js'
 
@@ -77,6 +78,38 @@ describe('gainStatXP', () => {
     const original = player.stats.charm.xp
     gainStatXP(player, 'charm', 5)
     expect(player.stats.charm.xp).toBe(original)
+  })
+})
+
+// --- statXpApply ---
+
+describe('statXpApply', () => {
+  it('adds xp below the threshold without levelling', () => {
+    const { stat, leveledUp } = statXpApply({ stat: { base: 0, modifiers: [], xp: 0 }, amount: 9 })
+    expect(stat).toEqual({ base: 0, modifiers: [], xp: 9 })
+    expect(leveledUp).toBe(false)
+  })
+
+  it('levels as many times as the xp clears, carrying the remainder', () => {
+    // thresholds: base 0 → 10, base 1 → 12, base 2 → 14
+    const { stat, leveledUp } = statXpApply({ stat: { base: 0, modifiers: [], xp: 0 }, amount: 25 })
+    expect(stat.base).toBe(2)
+    expect(stat.xp).toBe(3)
+    expect(leveledUp).toBe(true)
+  })
+
+  it('caps at 100 and drops surplus xp there', () => {
+    const { stat } = statXpApply({ stat: { base: 99, modifiers: [], xp: 0 }, amount: 1000 })
+    expect(stat.base).toBe(100)
+    expect(stat.xp).toBe(0)
+  })
+
+  it('returns a new object and copies modifiers', () => {
+    const input = { base: 5, modifiers: [{ source: 'x', value: 1 }], xp: 0 }
+    const { stat } = statXpApply({ stat: input, amount: 1 })
+    expect(stat).not.toBe(input)
+    expect(stat.modifiers).not.toBe(input.modifiers)
+    expect(input.xp).toBe(0)
   })
 })
 

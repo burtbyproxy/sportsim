@@ -15,8 +15,33 @@ function _xpThreshold(currentBase) {
 }
 
 /**
- * Adds XP to a stat. If XP crosses the threshold, increments the stat base.
- * Returns the updated stat object (does NOT mutate input).
+ * Adds XP to a stat-shaped object ({ base, modifiers, xp }) and levels it
+ * for every threshold the XP clears, base capped at 100. Skills cells and
+ * player stats share this shape and this curve. Returns a new object.
+ *
+ * @param {{ stat: { base: number, modifiers?: Object[], xp: number }, amount: number }} input
+ * @returns {{ stat: Object, leveledUp: boolean }}
+ */
+export function statXpApply({ stat, amount }) {
+  const next = {
+    ...stat,
+    xp: stat.xp + amount,
+    modifiers: [...(stat.modifiers || [])],
+  }
+  let leveledUp = false
+  while (next.xp >= _xpThreshold(next.base)) {
+    next.xp -= _xpThreshold(next.base)
+    next.base = Math.min(next.base + 1, 100)
+    leveledUp = true
+    if (next.base === 100) break
+  }
+  if (next.base === 100 && next.xp >= _xpThreshold(100)) next.xp = 0
+  return { stat: next, leveledUp }
+}
+
+/**
+ * Adds XP to a player stat. Returns the updated stat object (does NOT
+ * mutate input).
  *
  * @param {Object} player
  * @param {string} statName
@@ -28,22 +53,7 @@ export function gainStatXP(player, statName, amount) {
   if (!stat) {
     return { updatedStat: null, leveledUp: false }
   }
-
-  const updatedStat = {
-    ...stat,
-    xp: stat.xp + amount,
-    modifiers: [...(stat.modifiers || [])],
-  }
-
-  const threshold = _xpThreshold(updatedStat.base)
-  let leveledUp = false
-
-  if (updatedStat.xp >= threshold) {
-    updatedStat.xp -= threshold
-    updatedStat.base = Math.min(updatedStat.base + 1, 100)
-    leveledUp = true
-  }
-
+  const { stat: updatedStat, leveledUp } = statXpApply({ stat, amount })
   return { updatedStat, leveledUp }
 }
 

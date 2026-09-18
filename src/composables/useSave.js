@@ -8,7 +8,7 @@ const SAVE_INDEX_KEY = 'sportsim_saves'
  * Current save format version.
  * Bump this whenever the save shape changes in a breaking way.
  */
-export const SAVE_VERSION = 2
+export const SAVE_VERSION = 3
 
 /**
  * Maximum number of save slots.
@@ -65,6 +65,7 @@ export function validateSave(data) {
  * v1 → v2: sobriety became derived from per-substance intoxications. A v1
  * save knows only a sobriety number, which cannot name what was drunk, so
  * everyone wakes up sober with an empty blend.
+ * v2 → v3: the skill grid. Nobody had trained anything, so it is empty.
  *
  * @param {{ save: Object }} input
  * @returns {Object}
@@ -81,6 +82,12 @@ export function saveMigrate({ save }) {
       if (subject.status) subject.status.sobriety = sobrietyDerive({ intoxications: {} })
     }
     migrated.version = 2
+  }
+  if (migrated.version < 3) {
+    for (const subject of [migrated.player, ...Object.values(migrated.characters ?? {})]) {
+      if (subject) subject.skills = {}
+    }
+    migrated.version = 3
   }
   return migrated
 }

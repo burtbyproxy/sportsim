@@ -18,6 +18,7 @@
  *   content/items/{id}.json                    — Item contract (array of items)
  *   content/substances/{id}.json               — Substance contract
  *   content/conditions/{id}.json               — Condition contract
+ *   content/mediums/{id}.json                  — Medium contract
  */
 
 import { describe, it, expect } from 'vitest';
@@ -404,6 +405,17 @@ function validateSubstance(data, file) {
   }
 }
 
+const MEDIUM_REQUIRED_FIELDS = ['id', 'display', 'stat', 'description'];
+
+function validateMedium(data, file) {
+  for (const field of MEDIUM_REQUIRED_FIELDS) {
+    expect(data, `${file}: missing field '${field}'`).toHaveProperty(field);
+  }
+  expect(VALID_STATS, `${file}: stat '${data.stat}' is not a stat`).toContain(data.stat);
+  expect(typeof data.description, `${file}: description must be string`).toBe('string');
+  expect(data.description.length, `${file}: description must not be empty`).toBeGreaterThan(0);
+}
+
 const CONDITION_REQUIRED_FIELDS = ['id', 'display', 'source', 'weight', 'persona', 'modifiers'];
 
 function validateCondition(data, file) {
@@ -631,6 +643,28 @@ describe('content/conditions/*.json — Condition contract', () => {
     it(`${file} — valid Condition`, () => {
       validateCondition(data, file);
       expect(ids.has(data.id), `${file}: duplicate condition id '${data.id}'`).toBe(false);
+      ids.add(data.id);
+    });
+  }
+});
+
+describe('content/mediums/*.json — Medium contract', () => {
+  const dir = join(CONTENT_ROOT, 'mediums');
+  const files = loadJsonFiles(dir);
+
+  it('content/mediums/ directory exists', () => {
+    expect(existsSync(dir)).toBe(true);
+  });
+
+  it('has at least one medium', () => {
+    expect(files.length).toBeGreaterThan(0);
+  });
+
+  const ids = new Set();
+  for (const { file, data } of files) {
+    it(`${file} — valid Medium`, () => {
+      validateMedium(data, file);
+      expect(ids.has(data.id), `${file}: duplicate medium id '${data.id}'`).toBe(false);
       ids.add(data.id);
     });
   }

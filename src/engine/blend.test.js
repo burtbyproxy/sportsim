@@ -112,6 +112,7 @@ describe('blendSober', () => {
       dominantPersonaId: SOBER_PERSONA_ID,
       soberWeight: 1,
       modifiers: {},
+      modifierSources: [],
       families: {},
     })
   })
@@ -209,6 +210,59 @@ describe('blendCompute', () => {
     const { data } = blendCompute({ player, substances, conditions })
     // whiskey: charm +3, wits -3; weed: creativity +4, charm -3; starving: wits -3, creativity +3
     expect(data.modifiers).toEqual({ charm: 0, wits: -6, creativity: 7 })
+  })
+
+  it('itemizes every modifier by the persona that brought it', () => {
+    const player = makePlayer({
+      intoxications: { whiskey: 20, weed: 20 },
+      habituations: {},
+      status: { hunger: 10 },
+    })
+    const { data } = blendCompute({ player, substances, conditions })
+    expect(data.modifierSources).toEqual([
+      { personaId: 'priest', source: 'substance', sourceId: 'whiskey', stat: 'charm', value: 3 },
+      { personaId: 'priest', source: 'substance', sourceId: 'whiskey', stat: 'wits', value: -3 },
+      {
+        personaId: 'telepath',
+        source: 'substance',
+        sourceId: 'weed',
+        stat: 'creativity',
+        value: 4,
+      },
+      { personaId: 'telepath', source: 'substance', sourceId: 'weed', stat: 'charm', value: -3 },
+      { personaId: 'hollow', source: 'condition', sourceId: 'starving', stat: 'wits', value: -3 },
+      {
+        personaId: 'hollow',
+        source: 'condition',
+        sourceId: 'starving',
+        stat: 'creativity',
+        value: 3,
+      },
+    ])
+    const summed = {}
+    for (const m of data.modifierSources) summed[m.stat] = (summed[m.stat] ?? 0) + m.value
+    expect(summed).toEqual(data.modifiers)
+  })
+
+  it('withdrawal modifiers are itemized under the withdrawal persona', () => {
+    const player = makePlayer({ habituations: { whiskey: 50 } })
+    const { data } = blendCompute({ player, substances, conditions })
+    expect(data.modifierSources).toEqual([
+      {
+        personaId: 'shakes',
+        source: 'withdrawal',
+        sourceId: 'whiskey',
+        stat: 'toughness',
+        value: -3,
+      },
+      {
+        personaId: 'shakes',
+        source: 'withdrawal',
+        sourceId: 'whiskey',
+        stat: 'creativity',
+        value: 2,
+      },
+    ])
   })
 
   it('names the heaviest persona dominant when it outweighs sober', () => {

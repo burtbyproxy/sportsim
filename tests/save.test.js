@@ -750,6 +750,13 @@ describe('saveMigrate', () => {
     expect(migrated.characters.fixed.blend).toEqual(blendSober())
   })
 
+  it('gives everyone an empty skill grid on the way to v3', () => {
+    const migrated = saveMigrate({ save: makeV1Save() })
+    expect(migrated.player.skills).toEqual({})
+    expect(migrated.characters.maurice.skills).toEqual({})
+    expect(migrated.characters.fixed.skills).toEqual({})
+  })
+
   it('does not mutate the input', () => {
     const v1 = makeV1Save()
     saveMigrate({ save: v1 })

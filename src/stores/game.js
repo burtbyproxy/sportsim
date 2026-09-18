@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { createClock, advanceClock } from '../engine/clock.js'
 import { blendCompute, blendDecay, dosesApply, sobrietyDerive } from '../engine/blend.js'
+import { skillGain } from '../engine/skills.js'
 
 /**
  * Add a map of deltas onto a map of levels, dropping any key that reaches zero.
@@ -56,6 +57,9 @@ export const useGameStore = defineStore('game', {
 
     /** Condition definitions, keyed by id. Loaded once at init from content/conditions. */
     conditions: {},
+
+    /** Medium definitions, keyed by id. Loaded once at init from content/mediums. */
+    mediums: {},
 
     /** Actions currently available at this location */
     availableActions: [],
@@ -349,6 +353,34 @@ export const useGameStore = defineStore('game', {
      */
     registerCondition({ condition }) {
       this.conditions[condition.id] = condition
+    },
+
+    /**
+     * Register a medium definition. Called at init from loadMediums().
+     * @param {{ medium: Object }} input
+     */
+    registerMedium({ medium }) {
+      this.mediums[medium.id] = medium
+    },
+
+    /**
+     * Practice a medium. Experience lands on the skill cells the current
+     * blend touches, split by weight.
+     * @param {{ mediumId: string, amount: number }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the skills engine's result
+     */
+    applySkillGain({ mediumId, amount }) {
+      if (!this.player) {
+        return { ok: false, data: null, error: { code: 'PLAYER_MISSING', message: 'No player' } }
+      }
+      const result = skillGain({ player: this.player, mediumId, mediums: this.mediums, amount })
+      if (!result.ok) {
+        console.warn(`[game] applySkillGain: ${result.error.code}`, result.error.message)
+        return result
+      }
+      this.player.skills ??= {}
+      this.player.skills[mediumId] = result.data.cells
+      return result
     },
 
     /**
