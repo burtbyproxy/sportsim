@@ -244,7 +244,11 @@ describe('inspiration pipeline', () => {
     expect(cold.ok).toBe(false)
     expect(cold.error.code).toBe('NONE_ACTIVE')
 
-    game.applyInspirationStrike({ source: { kind: 'event', id: 'test' }, strength: 50, ticksTotal: 5 })
+    game.applyInspirationStrike({
+      source: { kind: 'event', id: 'test' },
+      strength: 50,
+      ticksTotal: 5,
+    })
     const spent = game.applyInspirationSpend({ spentOn: { kind: 'piece', id: 'p1' } })
     expect(spent.ok).toBe(true)
     expect(game.player.inspirations[0]).toMatchObject({

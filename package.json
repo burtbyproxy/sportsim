@@ -8,17 +8,26 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest",
-    "lint": "eslint src --ext .js,.vue",
-    "format": "prettier --write \"src/**/*.{js,vue,scss}\"",
-    "format:check": "prettier --check \"src/**/*.{js,vue,scss}\"",
+    "lint": "eslint src tests --ext .js,.vue",
+    "format": "prettier --write \"{src,tests}/**/*.{js,vue,scss}\" \"content/**/*.json\" \"*.{js,cjs,json,md}\" \".github/**/*.yml\"",
+    "format:check": "prettier --check \"{src,tests}/**/*.{js,vue,scss}\" \"content/**/*.json\" \"*.{js,cjs,json,md}\" \".github/**/*.yml\"",
     "prepare": "husky"
   },
   "lint-staged": {
-    "src/**/*.{js,vue}": [
+    "{src,tests}/**/*.{js,vue}": [
       "eslint --fix",
       "prettier --write"
     ],
     "src/**/*.scss": [
+      "prettier --write"
+    ],
+    "content/**/*.json": [
+      "prettier --write"
+    ],
+    "*.{js,cjs,json,md}": [
+      "prettier --write"
+    ],
+    ".github/**/*.yml": [
       "prettier --write"
     ]
   },

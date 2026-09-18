@@ -375,9 +375,7 @@
       },
       "statChanges": null,
       "moneyChange": null,
-      "itemsGained": [
-        "church_pantry_bag"
-      ],
+      "itemsGained": ["church_pantry_bag"],
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,

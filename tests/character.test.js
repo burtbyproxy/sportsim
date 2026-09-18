@@ -1,7 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  createCharacter,
-} from '../src/models/character.js';
+import { describe, it, expect } from 'vitest'
+import { createCharacter } from '../src/models/character.js'
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -25,7 +23,7 @@ function makeFixedCharacter(overrides = {}) {
     fear: 'The 2am crowd.',
     level: 2,
     ...overrides,
-  });
+  })
 }
 
 function makeRoutineCharacter(overrides = {}) {
@@ -39,13 +37,19 @@ function makeRoutineCharacter(overrides = {}) {
     schedule: {
       entries: [
         { locationId: 'mocks_crest', startHour: 11, endHour: 23, probability: 0.9, days: ['all'] },
-        { locationId: 'ainsworth_plaid', startHour: 23, endHour: 0, probability: 0.7, days: ['all'] },
+        {
+          locationId: 'ainsworth_plaid',
+          startHour: 23,
+          endHour: 0,
+          probability: 0.7,
+          days: ['all'],
+        },
       ],
     },
     want: 'To be right about something.',
     fear: 'Being ignored.',
     ...overrides,
-  });
+  })
 }
 
 function makeFullCharacter(overrides = {}) {
@@ -64,7 +68,7 @@ function makeFullCharacter(overrides = {}) {
       low_energy: null,
     },
     ...overrides,
-  });
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -73,89 +77,95 @@ function makeFullCharacter(overrides = {}) {
 
 describe('createCharacter', () => {
   it('maps all fields for a fixed character', () => {
-    const c = makeFixedCharacter();
-    expect(c.id).toBe('bartender_parrot');
-    expect(c.name).toBe('The Bartender');
-    expect(c.simulation).toBe('fixed');
-    expect(c.level).toBe(2);
-    expect(c.want).toBe('To close on time.');
-    expect(c.fear).toBe('The 2am crowd.');
-  });
+    const c = makeFixedCharacter()
+    expect(c.id).toBe('bartender_parrot')
+    expect(c.name).toBe('The Bartender')
+    expect(c.simulation).toBe('fixed')
+    expect(c.level).toBe(2)
+    expect(c.want).toBe('To close on time.')
+    expect(c.fear).toBe('The 2am crowd.')
+  })
 
   it('fixed tier has null status by default', () => {
-    const c = makeFixedCharacter();
-    expect(c.status).toBeNull();
-  });
+    const c = makeFixedCharacter()
+    expect(c.status).toBeNull()
+  })
 
   it('fixed tier retains explicit status if provided', () => {
-    const c = makeFixedCharacter({ status: { hunger: 50, sobriety: 80, energy: 70, mood: 50, health: 100 } });
-    expect(c.status).not.toBeNull();
-    expect(c.status.hunger).toBe(50);
-  });
+    const c = makeFixedCharacter({
+      status: { hunger: 50, sobriety: 80, energy: 70, mood: 50, health: 100 },
+    })
+    expect(c.status).not.toBeNull()
+    expect(c.status.hunger).toBe(50)
+  })
 
   it('routine tier gets default status when not provided', () => {
-    const c = makeRoutineCharacter();
-    expect(c.status).not.toBeNull();
-    expect(c.status.sobriety).toBe(100);
-  });
+    const c = makeRoutineCharacter()
+    expect(c.status).not.toBeNull()
+    expect(c.status.sobriety).toBe(100)
+  })
 
   it('full tier gets default status when not provided', () => {
-    const c = createCharacter({ name: 'X', simulation: 'full' });
-    expect(c.status).not.toBeNull();
-  });
+    const c = createCharacter({ name: 'X', simulation: 'full' })
+    expect(c.status).not.toBeNull()
+  })
 
   it('full tier retains decisionWeights', () => {
-    const c = makeFullCharacter();
-    expect(c.decisionWeights).not.toBeNull();
-    expect(c.decisionWeights.low_sobriety.bias).toBe('bar');
-    expect(c.decisionWeights.low_energy).toBeNull();
-  });
+    const c = makeFullCharacter()
+    expect(c.decisionWeights).not.toBeNull()
+    expect(c.decisionWeights.low_sobriety.bias).toBe('bar')
+    expect(c.decisionWeights.low_energy).toBeNull()
+  })
 
   it('non-full tiers have null decisionWeights', () => {
-    expect(makeFixedCharacter().decisionWeights).toBeNull();
-    expect(makeRoutineCharacter().decisionWeights).toBeNull();
-  });
+    expect(makeFixedCharacter().decisionWeights).toBeNull()
+    expect(makeRoutineCharacter().decisionWeights).toBeNull()
+  })
 
   it('invalid simulation tier defaults to fixed', () => {
-    const c = createCharacter({ name: 'X', simulation: 'turbo' });
-    expect(c.simulation).toBe('fixed');
-  });
+    const c = createCharacter({ name: 'X', simulation: 'turbo' })
+    expect(c.simulation).toBe('fixed')
+  })
 
   it('missing simulation defaults to fixed', () => {
-    const c = createCharacter({ name: 'X' });
-    expect(c.simulation).toBe('fixed');
-  });
+    const c = createCharacter({ name: 'X' })
+    expect(c.simulation).toBe('fixed')
+  })
 
   it('generates id when not provided', () => {
-    const c = createCharacter({ name: 'X' });
-    expect(c.id).toBeTruthy();
-  });
+    const c = createCharacter({ name: 'X' })
+    expect(c.id).toBeTruthy()
+  })
 
   it('applies default stat values when stats not provided', () => {
-    const c = createCharacter({ name: 'X' });
-    expect(c.stats.charm.base).toBe(10);
-    expect(c.stats.stamina.modifiers).toEqual([]);
-  });
+    const c = createCharacter({ name: 'X' })
+    expect(c.stats.charm.base).toBe(10)
+    expect(c.stats.stamina.modifiers).toEqual([])
+  })
 
   it('does not share schedule entry references with source', () => {
-    const raw = { name: 'X', schedule: { entries: [{ locationId: 'y', startHour: 0, endHour: 24, probability: 1, days: ['all'] }] } };
-    const c = createCharacter(raw);
-    c.schedule.entries[0].locationId = 'CHANGED';
-    expect(raw.schedule.entries[0].locationId).toBe('y');
-  });
+    const raw = {
+      name: 'X',
+      schedule: {
+        entries: [{ locationId: 'y', startHour: 0, endHour: 24, probability: 1, days: ['all'] }],
+      },
+    }
+    const c = createCharacter(raw)
+    c.schedule.entries[0].locationId = 'CHANGED'
+    expect(raw.schedule.entries[0].locationId).toBe('y')
+  })
 
   it('does not share dialogueTreeIds array reference', () => {
-    const raw = { name: 'X', dialogueTreeIds: ['intro'] };
-    const c = createCharacter(raw);
-    c.dialogueTreeIds.push('extra');
-    expect(raw.dialogueTreeIds).toHaveLength(1);
-  });
+    const raw = { name: 'X', dialogueTreeIds: ['intro'] }
+    const c = createCharacter(raw)
+    c.dialogueTreeIds.push('extra')
+    expect(raw.dialogueTreeIds).toHaveLength(1)
+  })
 
   it('serializes cleanly to JSON', () => {
-    const c = makeFullCharacter();
-    const restored = JSON.parse(JSON.stringify(c));
-    expect(restored.simulation).toBe('full');
-    expect(restored.decisionWeights.low_sobriety.weight).toBe(0.7);
-  });
-});
-
+    const c = makeFullCharacter()
+    const restored = JSON.parse(JSON.stringify(c))
+    expect(restored.simulation).toBe('full')
+    expect(restored.decisionWeights.low_sobriety.weight).toBe(0.7)
+  })
+})

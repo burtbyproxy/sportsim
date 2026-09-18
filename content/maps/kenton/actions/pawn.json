@@ -6,9 +6,7 @@
     "timeCost": 1,
     "requirements": {
       "minStats": null,
-      "requiredItems": [
-        "karaoke_tape"
-      ],
+      "requiredItems": ["karaoke_tape"],
       "minSobriety": null,
       "maxSobriety": null,
       "minHour": 9,
@@ -46,9 +44,7 @@
       "statChanges": null,
       "moneyChange": 3,
       "itemsGained": null,
-      "itemsLost": [
-        "karaoke_tape"
-      ],
+      "itemsLost": ["karaoke_tape"],
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,

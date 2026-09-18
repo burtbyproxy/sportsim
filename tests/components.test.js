@@ -72,7 +72,10 @@ describe('NarrativeLog', () => {
       { id: 2, tokens: [{ rendered: 'Dave watches.' }] },
     ]
     const entries = mount(NarrativeLog, { props: { log } }).findAll('.narrative-entry')
-    expect(entries.map((e) => e.text())).toEqual(["You eat the cheese. It's fine.", 'Dave watches.'])
+    expect(entries.map((e) => e.text())).toEqual([
+      "You eat the cheese. It's fine.",
+      'Dave watches.',
+    ])
   })
 
   it('a click skips only while something is animating', async () => {

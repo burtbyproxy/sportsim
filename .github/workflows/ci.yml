@@ -25,4 +25,4 @@ jobs:
       - run: npm run format:check
       - run: npx vitest run
       - run: go install codeberg.org/galaxi/boundary-first-development/cmd/bfd@latest
-      - run: "$(go env GOPATH)/bin/bfd conform"
+      - run: '$(go env GOPATH)/bin/bfd conform'

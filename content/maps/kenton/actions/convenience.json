@@ -41,9 +41,7 @@
       "statusChanges": null,
       "statChanges": null,
       "moneyChange": -0.89,
-      "itemsGained": [
-        "coffee_711"
-      ],
+      "itemsGained": ["coffee_711"],
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,
@@ -208,9 +206,7 @@
       "statusChanges": null,
       "statChanges": null,
       "moneyChange": -1,
-      "itemsGained": [
-        "corn_dog"
-      ],
+      "itemsGained": ["corn_dog"],
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,
@@ -373,9 +369,7 @@
       "statusChanges": null,
       "statChanges": null,
       "moneyChange": -1.49,
-      "itemsGained": [
-        "plaid_hot_dog"
-      ],
+      "itemsGained": ["plaid_hot_dog"],
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,
@@ -439,9 +433,7 @@
       "statusChanges": null,
       "statChanges": null,
       "moneyChange": -0.5,
-      "itemsGained": [
-        "pack_cigarettes"
-      ],
+      "itemsGained": ["pack_cigarettes"],
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,

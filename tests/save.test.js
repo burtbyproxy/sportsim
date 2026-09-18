@@ -602,7 +602,6 @@ describe('resilience — corrupted index', () => {
 // saveMigrate — v1 saves know only a sobriety number
 // ---------------------------------------------------------------------------
 
-
 describe('saveMigrate', () => {
   function makeV1Save() {
     return {
@@ -615,7 +614,10 @@ describe('saveMigrate', () => {
         inventory: [],
       },
       characters: {
-        maurice: { id: 'maurice', status: { hunger: 35, sobriety: 60, energy: 55, mood: 70, health: 75 } },
+        maurice: {
+          id: 'maurice',
+          status: { hunger: 35, sobriety: 60, energy: 55, mood: 70, health: 75 },
+        },
         fixed: { id: 'fixed', status: null },
       },
     }

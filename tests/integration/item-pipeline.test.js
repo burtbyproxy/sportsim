@@ -82,7 +82,9 @@ describe('item pipeline', () => {
     expect(game.player.intoxications.beer).toBe(18) // 20 in, 2 off over the tick
     expect(game.player.status.sobriety).toBe(82)
     expect(game.player.status.mood).toBeGreaterThan(moodBefore)
-    expect(game.playerInventory).toEqual([expect.objectContaining({ id: 'tallboy_oly', quantity: 1 })])
+    expect(game.playerInventory).toEqual([
+      expect.objectContaining({ id: 'tallboy_oly', quantity: 1 }),
+    ])
     expect(game.time.tick).toBe(1)
     expect(entries.at(-1)).toBe(
       voice('sober', 'item.used').replace('{item}', game.getItem('tallboy_oly').name)

@@ -72,7 +72,12 @@ describe('blend pipeline', () => {
     expect(game.player.intoxications).toEqual({ beer: 40 })
     expect(game.player.status.sobriety).toBe(60)
     expect(game.player.blend.weights).toEqual([
-      { personaId: 'one_of_the_guys', weight: 0.4, source: PERSONA_SOURCES.SUBSTANCE, sourceId: 'beer' },
+      {
+        personaId: 'one_of_the_guys',
+        weight: 0.4,
+        source: PERSONA_SOURCES.SUBSTANCE,
+        sourceId: 'beer',
+      },
     ])
     expect(game.player.blend.families).toEqual({ alcohol: 0.4 })
     // beer band 15: charm +3, luck +1, stamina -2, wits -2

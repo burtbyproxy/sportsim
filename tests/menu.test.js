@@ -8,12 +8,7 @@
  * @vitest-environment node
  */
 import { describe, it, expect } from 'vitest'
-import {
-  menuEntriesBuild,
-  EXIT_KEYS,
-  exitKeyFor,
-  shortcutLabelParts,
-} from '../src/utils/menu.js'
+import { menuEntriesBuild, EXIT_KEYS, exitKeyFor, shortcutLabelParts } from '../src/utils/menu.js'
 
 const actions = [
   { id: 'raid_fridge', label: 'Raid the fridge', available: true },
@@ -62,8 +57,15 @@ describe('menuEntriesBuild', () => {
   })
 
   it('actions past the ninth and exits past the twenty-sixth get no key', () => {
-    const many = Array.from({ length: 10 }, (_, i) => ({ id: `a${i}`, label: `A${i}`, available: true }))
-    const manyExits = Array.from({ length: 27 }, (_, i) => ({ locationId: `l${i}`, label: `L${i}` }))
+    const many = Array.from({ length: 10 }, (_, i) => ({
+      id: `a${i}`,
+      label: `A${i}`,
+      available: true,
+    }))
+    const manyExits = Array.from({ length: 27 }, (_, i) => ({
+      locationId: `l${i}`,
+      label: `L${i}`,
+    }))
     const entries = menuEntriesBuild({ actions: many, exits: manyExits, exitAvailable: allOpen })
     expect(entries[9].key).toBe('')
     expect(entries[10 + 25].key).toBe(EXIT_KEYS[25])
@@ -120,7 +122,7 @@ describe('shortcutLabelParts', () => {
     ])
   })
 
-  it('brackets a shortcut letter in the middle, keeping the label\'s own case', () => {
+  it("brackets a shortcut letter in the middle, keeping the label's own case", () => {
     expect(shortcutLabelParts({ label: 'Quit', shortcut: 'i' })).toEqual([
       { text: 'Qu', isKey: false },
       { text: '[i]', isKey: true },

@@ -1,31 +1,43 @@
 // @vitest-environment node
-import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync, existsSync } from 'fs';
-import { join, resolve } from 'path';
-import { createLocation, isOpen } from '../src/models/location.js';
-import { createPlayer } from '../src/models/player.js';
-import { generateLocationNarrative } from '../src/composables/useNarrative.js';
+import { describe, it, expect } from 'vitest'
+import { readFileSync, readdirSync, existsSync } from 'fs'
+import { join, resolve } from 'path'
+import { createLocation, isOpen } from '../src/models/location.js'
+import { createPlayer } from '../src/models/player.js'
+import { generateLocationNarrative } from '../src/composables/useNarrative.js'
 
 // Load Kenton locations from content/ (keyed by ID)
-const locDir = resolve('content/maps/kenton/locations');
+const locDir = resolve('content/maps/kenton/locations')
 const kentonLocations = existsSync(locDir)
   ? Object.fromEntries(
       readdirSync(locDir)
-        .filter(f => f.endsWith('.json'))
-        .map(f => {
-          const data = JSON.parse(readFileSync(join(locDir, f), 'utf-8'));
-          return [data.id, data];
+        .filter((f) => f.endsWith('.json'))
+        .map((f) => {
+          const data = JSON.parse(readFileSync(join(locDir, f), 'utf-8'))
+          return [data.id, data]
         })
     )
-  : {};
+  : {}
 
 const EXPECTED_IDS = [
-  'moms_house', 'blue_parrot', 'mocks_crest', 'columbia_park',
-  'mouse_trap', 'arbys', 'toads_express', 'ainsworth_plaid',
-  'denver_711', 'greeley_711', 'greeley_plaid', 'glitters',
-  'dancin_bare', 'liquor', 'lombard_dental', 'chief_joseph',
+  'moms_house',
+  'blue_parrot',
+  'mocks_crest',
+  'columbia_park',
+  'mouse_trap',
+  'arbys',
+  'toads_express',
+  'ainsworth_plaid',
+  'denver_711',
+  'greeley_711',
+  'greeley_plaid',
+  'glitters',
+  'dancin_bare',
+  'liquor',
+  'lombard_dental',
+  'chief_joseph',
   'abundant_life',
-];
+]
 
 // ---------------------------------------------------------------------------
 // Data integrity — all 17 locations present
@@ -33,109 +45,114 @@ const EXPECTED_IDS = [
 
 describe('kentonLocations data integrity', () => {
   it('contains exactly 17 locations', () => {
-    expect(Object.keys(kentonLocations)).toHaveLength(17);
-  });
+    expect(Object.keys(kentonLocations)).toHaveLength(17)
+  })
 
   it('contains all expected location IDs', () => {
     for (const id of EXPECTED_IDS) {
-      expect(kentonLocations).toHaveProperty(id);
+      expect(kentonLocations).toHaveProperty(id)
     }
-  });
+  })
 
   it('every location has required fields', () => {
     for (const id of EXPECTED_IDS) {
-      const loc = kentonLocations[id];
-      expect(loc.id, `${id}: missing id`).toBeTruthy();
-      expect(loc.type, `${id}: missing type`).toBeTruthy();
-      expect(loc.display, `${id}: missing display`).toBeTruthy();
-      expect(loc.descriptions, `${id}: missing descriptions`).toBeDefined();
-      expect(loc.descriptions.default, `${id}: missing default description`).toBeTruthy();
-      expect(Array.isArray(loc.exits), `${id}: exits must be array`).toBe(true);
-      expect(Array.isArray(loc.npcSlots), `${id}: npcSlots must be array`).toBe(true);
-      expect(Array.isArray(loc.actionIds), `${id}: actionIds must be array`).toBe(true);
-      expect(loc.availability, `${id}: missing availability`).toBeDefined();
-      expect(typeof loc.availability.openHour, `${id}: openHour must be number`).toBe('number');
-      expect(typeof loc.availability.closeHour, `${id}: closeHour must be number`).toBe('number');
+      const loc = kentonLocations[id]
+      expect(loc.id, `${id}: missing id`).toBeTruthy()
+      expect(loc.type, `${id}: missing type`).toBeTruthy()
+      expect(loc.display, `${id}: missing display`).toBeTruthy()
+      expect(loc.descriptions, `${id}: missing descriptions`).toBeDefined()
+      expect(loc.descriptions.default, `${id}: missing default description`).toBeTruthy()
+      expect(Array.isArray(loc.exits), `${id}: exits must be array`).toBe(true)
+      expect(Array.isArray(loc.npcSlots), `${id}: npcSlots must be array`).toBe(true)
+      expect(Array.isArray(loc.actionIds), `${id}: actionIds must be array`).toBe(true)
+      expect(loc.availability, `${id}: missing availability`).toBeDefined()
+      expect(typeof loc.availability.openHour, `${id}: openHour must be number`).toBe('number')
+      expect(typeof loc.availability.closeHour, `${id}: closeHour must be number`).toBe('number')
     }
-  });
+  })
 
   it('every exit has required fields', () => {
     for (const id of EXPECTED_IDS) {
-      const loc = kentonLocations[id];
+      const loc = kentonLocations[id]
       for (const exit of loc.exits) {
-        expect(exit.locationId, `${id} exit: missing locationId`).toBeTruthy();
-        expect(exit.label, `${id} exit: missing label`).toBeTruthy();
-        expect(typeof exit.travelTime, `${id} exit: travelTime must be number`).toBe('number');
-        expect(exit.travelTime, `${id} exit: travelTime must be >= 1`).toBeGreaterThanOrEqual(1);
+        expect(exit.locationId, `${id} exit: missing locationId`).toBeTruthy()
+        expect(exit.label, `${id} exit: missing label`).toBeTruthy()
+        expect(typeof exit.travelTime, `${id} exit: travelTime must be number`).toBe('number')
+        expect(exit.travelTime, `${id} exit: travelTime must be >= 1`).toBeGreaterThanOrEqual(1)
       }
     }
-  });
+  })
 
   it('exits reference valid location IDs within kenton (or are acknowledged cross-neighborhood)', () => {
     // All exits within Kenton should reference a real Kenton location ID.
     // This catches typos.
     for (const id of EXPECTED_IDS) {
-      const loc = kentonLocations[id];
+      const loc = kentonLocations[id]
       for (const exit of loc.exits) {
-        expect(EXPECTED_IDS, `${id} has exit to unknown location: ${exit.locationId}`)
-          .toContain(exit.locationId);
+        expect(EXPECTED_IDS, `${id} has exit to unknown location: ${exit.locationId}`).toContain(
+          exit.locationId
+        )
       }
     }
-  });
+  })
 
   it('availability hours are valid (0-23)', () => {
     for (const id of EXPECTED_IDS) {
-      const loc = kentonLocations[id];
-      expect(loc.availability.openHour).toBeGreaterThanOrEqual(0);
-      expect(loc.availability.openHour).toBeLessThanOrEqual(23);
-      expect(loc.availability.closeHour).toBeGreaterThanOrEqual(0);
-      expect(loc.availability.closeHour).toBeLessThanOrEqual(23);
+      const loc = kentonLocations[id]
+      expect(loc.availability.openHour).toBeGreaterThanOrEqual(0)
+      expect(loc.availability.openHour).toBeLessThanOrEqual(23)
+      expect(loc.availability.closeHour).toBeGreaterThanOrEqual(0)
+      expect(loc.availability.closeHour).toBeLessThanOrEqual(23)
     }
-  });
+  })
 
   it('moms_house is always open', () => {
-    const loc = kentonLocations['moms_house'];
-    expect(loc.availability.openHour).toBe(0);
-    expect(loc.availability.closeHour).toBe(23);
-  });
+    const loc = kentonLocations['moms_house']
+    expect(loc.availability.openHour).toBe(0)
+    expect(loc.availability.closeHour).toBe(23)
+  })
 
   it('columbia_park is always open', () => {
-    const loc = kentonLocations['columbia_park'];
-    expect(loc.availability.openHour).toBe(0);
-    expect(loc.availability.closeHour).toBe(23);
-  });
+    const loc = kentonLocations['columbia_park']
+    expect(loc.availability.openHour).toBe(0)
+    expect(loc.availability.closeHour).toBe(23)
+  })
 
   it('bars are not open at 6am', () => {
-    const bars = ['blue_parrot', 'mocks_crest', 'mouse_trap', 'dancin_bare'];
+    const bars = ['blue_parrot', 'mocks_crest', 'mouse_trap', 'dancin_bare']
     for (const id of bars) {
-      const loc = createLocation(kentonLocations[id]);
-      expect(isOpen(loc, 6), `${id} should be closed at 6am`).toBe(false);
+      const loc = createLocation(kentonLocations[id])
+      expect(isOpen(loc, 6), `${id} should be closed at 6am`).toBe(false)
     }
-  });
+  })
 
   it('chief_joseph is accessible (open 24h)', () => {
     // School grounds are accessible; building is closed but the zone is walkable
-    const loc = kentonLocations['chief_joseph'];
+    const loc = kentonLocations['chief_joseph']
     // availability should be 0-23 (always accessible as a zone)
-    expect(loc.availability.openHour).toBe(0);
-    expect(loc.availability.closeHour).toBe(23);
-  });
+    expect(loc.availability.openHour).toBe(0)
+    expect(loc.availability.closeHour).toBe(23)
+  })
 
   it('all locations serialize cleanly through createLocation', () => {
     for (const id of EXPECTED_IDS) {
-      const loc = createLocation(kentonLocations[id]);
-      const serialized = JSON.parse(JSON.stringify(loc));
-      expect(serialized.id).toBe(id);
+      const loc = createLocation(kentonLocations[id])
+      const serialized = JSON.parse(JSON.stringify(loc))
+      expect(serialized.id).toBe(id)
     }
-  });
+  })
 
   it('every location narrates its own default description to a fresh arrival', () => {
-    const player = createPlayer('Test');
-    const morning = { period: 'morning', hour: 9 };
+    const player = createPlayer('Test')
+    const morning = { period: 'morning', hour: 9 }
     for (const id of EXPECTED_IDS) {
-      const loc = createLocation(kentonLocations[id]);
-      const text = generateLocationNarrative(loc, player, morning).tokens.map((t) => t.text).join('');
-      expect(text, `${id}: narrated description`).toContain(kentonLocations[id].descriptions.default.slice(0, 40));
+      const loc = createLocation(kentonLocations[id])
+      const text = generateLocationNarrative(loc, player, morning)
+        .tokens.map((t) => t.text)
+        .join('')
+      expect(text, `${id}: narrated description`).toContain(
+        kentonLocations[id].descriptions.default.slice(0, 40)
+      )
     }
-  });
-});
+  })
+})
