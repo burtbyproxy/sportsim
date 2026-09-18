@@ -21,6 +21,7 @@
  *   content/mediums/{id}.json                  — Medium contract
  *   content/voices/{personaId}.json            — Voice catalog contract
  *   content/scavenge/{id}.json                 — Scavenge loot table contract
+ *   content/games/{id}.json                    — Minigame contract
  */
 
 import { describe, it, expect } from 'vitest';
@@ -229,6 +230,16 @@ function validateLocation(data, file) {
     surfaceIds.add(surface.id);
     expect(Array.isArray(surface.mediumIds), `${file} '${surface.id}': mediumIds must be array`).toBe(true);
     expect(surface.mediumIds.length, `${file} '${surface.id}': a surface must take at least one medium`).toBeGreaterThan(0);
+    if (surface.portable !== undefined) {
+      expect(typeof surface.portable, `${file} '${surface.id}': portable must be boolean`).toBe('boolean');
+    }
+    if (surface.hours !== undefined) {
+      for (const key of ['openHour', 'closeHour']) {
+        expect(Number.isInteger(surface.hours[key]), `${file} '${surface.id}': hours.${key} must be a whole number`).toBe(true);
+        expect(surface.hours[key], `${file} '${surface.id}': hours.${key} 0-23`).toBeGreaterThanOrEqual(0);
+        expect(surface.hours[key], `${file} '${surface.id}': hours.${key} 0-23`).toBeLessThanOrEqual(23);
+      }
+    }
   }
 
   // availability
@@ -523,6 +534,7 @@ function validateMedium(data, file) {
   expect(data.pieceAs.length, `${file}: pieceAs must not be empty`).toBeGreaterThan(0);
 
   const making = data.making;
+  expect(typeof making.gameId, `${file}: making.gameId must be string — every form is played somehow`).toBe('string');
   expect(Number.isInteger(making.ticksTotal), `${file}: making.ticksTotal must be a whole number`).toBe(true);
   expect(making.ticksTotal, `${file}: making.ticksTotal must be >= 1`).toBeGreaterThanOrEqual(1);
   expect(typeof making.dc, `${file}: making.dc must be number`).toBe('number');
@@ -866,6 +878,101 @@ describe('content/mediums/*.json — Medium contract', () => {
   }
 });
 
+describe('content/games/*.json — Minigame contract', () => {
+  const files = loadJsonFiles(join(CONTENT_ROOT, 'games'));
+  const gameIds = new Set(files.map(({ data }) => data.id));
+  const personaIds = new Set(['sober']);
+  for (const { data } of loadJsonFiles(join(CONTENT_ROOT, 'substances'))) {
+    personaIds.add(data.persona?.id);
+    if (data.withdrawal) personaIds.add(data.withdrawal.persona?.id);
+  }
+  for (const { data } of loadJsonFiles(join(CONTENT_ROOT, 'conditions'))) personaIds.add(data.persona?.id);
+
+  const SHAPES = {
+    steady: { choices: ['work'], lines: ['work'], params: [] },
+    push_luck: {
+      choices: ['press', 'stop'],
+      lines: ['pressed', 'busted', 'stopped'],
+      params: ['riskBase', 'riskStep', 'skillRelief', 'bankCap', 'bustModifier', 'timidModifier'],
+    },
+    word_pick: { choices: [], lines: ['picked'], params: ['picksPerRound', 'voiceCap', 'mushModifier', 'registers'] },
+    read_room: {
+      choices: ['push', 'hold', 'bow'],
+      lines: ['pushed', 'held', 'bowed', 'crowd'],
+      params: ['crowdStart', 'scoreCap', 'transitions'],
+    },
+  };
+
+  for (const { file, data } of files) {
+    it(`${file} — valid game`, () => {
+      expect(file.endsWith(`${data.id}.json`), `${file}: file name must match id '${data.id}'`).toBe(true);
+      const shape = SHAPES[data.shape];
+      expect(shape, `${file}: unknown shape '${data.shape}'`).toBeTruthy();
+      expect(Number.isInteger(data.sittingTicks) && data.sittingTicks >= 1, `${file}: sittingTicks must be a whole number >= 1`).toBe(true);
+      expect(typeof data.description, `${file}: description must be string`).toBe('string');
+      for (const id of shape.choices) {
+        expect(typeof data.choices?.[id]?.label, `${file}: choice '${id}' needs a label`).toBe('string');
+      }
+      for (const key of shape.lines) expect(data.lines, `${file}: lines.${key} missing`).toHaveProperty(key);
+      for (const key of shape.params) expect(data.params, `${file}: params.${key} missing`).toHaveProperty(key);
+
+      for (const compulsion of data.compulsions ?? []) {
+        expect(personaIds.has(compulsion.personaId), `${file}: compulsion names unknown persona '${compulsion.personaId}'`).toBe(true);
+        expect(shape.choices, `${file}: compulsion forbids unknown choice '${compulsion.choiceId}'`).toContain(compulsion.choiceId);
+        expect(typeof compulsion.reason, `${file}: a compulsion says why`).toBe('string');
+      }
+      // No persona may be left with nothing to choose in any round.
+      for (const personaId of new Set((data.compulsions ?? []).map(c => c.personaId))) {
+        for (let round = 1; round <= 12; round++) {
+          const forbidden = (data.compulsions ?? []).filter(
+            c => c.personaId === personaId && round >= (c.fromRound ?? 1) && round <= (c.toRound ?? Infinity)
+          );
+          expect(forbidden.length, `${file}: '${personaId}' has no choice left in round ${round}`).toBeLessThan(shape.choices.length);
+        }
+      }
+
+      if (data.shape === 'word_pick') {
+        const registers = Object.entries(data.params.registers);
+        expect(registers.length, `${file}: needs at least picksPerRound registers`).toBeGreaterThanOrEqual(data.params.picksPerRound);
+        const seen = new Set();
+        for (const [register, words] of registers) {
+          expect(words.length, `${file}: register '${register}' is too thin to draw from all game`).toBeGreaterThanOrEqual(8);
+          for (const word of words) {
+            expect(seen.has(word), `${file}: '${word}' is in two registers`).toBe(false);
+            seen.add(word);
+          }
+        }
+        for (const [personaId, register] of Object.entries(data.params.personaLean ?? {})) {
+          expect(personaIds.has(personaId), `${file}: personaLean names unknown persona '${personaId}'`).toBe(true);
+          expect(data.params.registers, `${file}: '${personaId}' leans on unknown register '${register}'`).toHaveProperty(register);
+        }
+      }
+      if (data.shape === 'read_room') {
+        const crowds = Object.keys(data.lines.crowd);
+        expect(crowds, `${file}: crowdStart must be a crowd`).toContain(data.params.crowdStart);
+        for (const crowd of crowds) {
+          for (const choiceId of ['push', 'hold']) {
+            const move = data.params.transitions[crowd]?.[choiceId];
+            expect(move, `${file}: no transition for ${choiceId} when ${crowd}`).toBeTruthy();
+            expect(typeof move.score, `${file}: ${crowd}.${choiceId}.score must be number`).toBe('number');
+            expect(move.to.length, `${file}: ${crowd}.${choiceId} leads nowhere`).toBeGreaterThan(0);
+            for (const target of move.to) {
+              expect(crowds, `${file}: ${crowd}.${choiceId} leads to unknown crowd '${target.crowd}'`).toContain(target.crowd);
+              expect(target.weight, `${file}: weights must be > 0`).toBeGreaterThan(0);
+            }
+          }
+        }
+      }
+    });
+  }
+
+  for (const { file, data } of loadJsonFiles(join(CONTENT_ROOT, 'mediums'))) {
+    it(`${file}: gameId '${data.making?.gameId}' is a game`, () => {
+      expect(gameIds.has(data.making?.gameId), `${file}: unknown game '${data.making?.gameId}'`).toBe(true);
+    });
+  }
+});
+
 describe('making — every medium can actually be made in', () => {
   const mediums = loadJsonFiles(join(CONTENT_ROOT, 'mediums')).map(({ data }) => data);
   const mediumIds = new Set(mediums.map(m => m.id));
@@ -893,8 +1000,8 @@ describe('making — every medium can actually be made in', () => {
       }
       const surfaces = [...items.filter(i => i.type === 'surface'), ...locationSurfaces].filter(takes);
       expect(surfaces.length, `nothing anywhere is a surface for ${medium.id}`).toBeGreaterThan(0);
-      if (!medium.making.leavesArtifact) {
-        // Nothing to carry away, so there is nothing to carry in: it happens at a place.
+      if (!medium.making.toolRequired) {
+        // Nothing in the hands, so it happens at a place.
         expect(locationSurfaces.some(takes), `no location offers a place for ${medium.id}`).toBe(true);
       }
     });
@@ -911,6 +1018,11 @@ describe('making — every medium can actually be made in', () => {
     }
   }
   for (const tier of ['botched', 'rough', 'solid', 'inspired']) codes.add(`piece.artist.${tier}`);
+  // ...and every line a game says it will speak.
+  const gameLineCodes = value => (typeof value === 'string' ? [value] : Object.values(value).flatMap(gameLineCodes));
+  for (const { data } of loadJsonFiles(join(CONTENT_ROOT, 'games'))) {
+    for (const code of gameLineCodes(data.lines ?? {})) codes.add(code);
+  }
 
   it('finds the voice codes the code uses', () => {
     expect(codes.size).toBeGreaterThan(20);

@@ -1,0 +1,41 @@
+{
+  "id": "nerve",
+  "shape": "push_luck",
+  "description": "A tag is nerve. Every beat it gets bigger and the street gets likelier.",
+  "sittingTicks": 1,
+  "params": {
+    "riskBase": 0.1,
+    "riskStep": 0.15,
+    "skillRelief": 0.003,
+    "bankCap": 3,
+    "bustModifier": -4,
+    "timidModifier": -1
+  },
+  "choices": {
+    "press": {
+      "label": "Keep going. Bigger"
+    },
+    "stop": {
+      "label": "That's enough. Cap it and walk"
+    }
+  },
+  "lines": {
+    "pressed": "game.nerve.pressed",
+    "busted": "game.nerve.busted",
+    "stopped": "game.nerve.stopped"
+  },
+  "compulsions": [
+    {
+      "personaId": "suburban_gangster",
+      "choiceId": "stop",
+      "toRound": 2,
+      "reason": "Stop? It's not even big yet"
+    },
+    {
+      "personaId": "telepath",
+      "choiceId": "press",
+      "fromRound": 3,
+      "reason": "Everyone on this street knows exactly what you're doing"
+    }
+  ]
+}

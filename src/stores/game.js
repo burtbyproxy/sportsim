@@ -23,6 +23,8 @@ import {
   marksCover,
 } from '../engine/making.js'
 import { pieceDescribe } from '../engine/describer.js'
+import { gameStart, gameRoundResolve, gameScore } from '../engine/minigame.js'
+import { skillEffective } from '../engine/skills.js'
 import { addItem, removeItem, addModifier, incrementCounter } from '../models/player.js'
 import { incrementVisitCount, locationRestore } from '../models/location.js'
 import { itemUseResolve } from '../engine/items.js'
@@ -91,6 +93,9 @@ export const useGameStore = defineStore('game', {
 
     /** Scavenge loot tables, keyed by id. Loaded once at init from content/scavenge. */
     scavengeTables: {},
+
+    /** Minigame definitions, keyed by id. Loaded once at init from content/games. */
+    games: {},
 
     /**
      * The making menu while the player is choosing what to make, or null.
@@ -532,6 +537,14 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
+     * Register a minigame definition. Called at init from loadGames().
+     * @param {{ game: Object }} input
+     */
+    registerGame({ game }) {
+      this.games[game.id] = game
+    },
+
+    /**
      * Look around the current location. A find goes into the inventory, is
      * remembered in the counters, and works the spot over.
      * @param {{ rng?: () => number }} input
@@ -690,17 +703,29 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
-     * Begin a piece of work here. What the work uses up leaves the inventory.
-     * @param {{ plan: Object }} input
-     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the making engine's result
+     * Begin a piece of work here: the medium's game is dealt, and what the
+     * work uses up leaves the inventory.
+     * @param {{ plan: Object, rng?: () => number }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the making engine's
+     *   result, with the game's opening promptCode
      */
-    applyMakingStart({ plan }) {
+    applyMakingStart({ plan, rng = Math.random }) {
+      const dealt = gameStart({
+        game: this.games[this.mediums[plan?.mediumId]?.making?.gameId],
+        personaId: this.personaInCharge,
+        rng,
+      })
+      if (!dealt.ok) {
+        console.warn(`[game] applyMakingStart: ${dealt.error.code}`, dealt.error.message)
+        return dealt
+      }
       const result = makingStart({
         player: this.player,
         location: this.currentLocation,
         items: this.items,
         mediums: this.mediums,
         plan,
+        gameState: dealt.data.state,
         gameTime: this.time,
       })
       if (!result.ok) {
@@ -709,22 +734,58 @@ export const useGameStore = defineStore('game', {
       }
       this.player.makings = result.data.makings
       for (const itemId of result.data.itemIdsConsumed) removeItem(this.player, itemId)
-      return result
+      return { ...result, data: { ...result.data, promptCode: dealt.data.promptCode } }
     },
 
     /**
-     * A sitting's worth of work goes into the piece.
-     * @param {{ ticksWorked: number }} input
-     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the making engine's result
+     * A sitting: the player's choice is played against the round on offer,
+     * and a sitting's worth of work goes into the piece.
+     * @param {{ choiceId: string, rng?: () => number }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the making engine's
+     *   result, with the round's lineCode, lineParams, promptCode and ticksWorked
      */
-    applyMakingWork({ ticksWorked }) {
-      const result = makingWork({ player: this.player, ticksWorked, gameTime: this.time })
+    applyMakingRound({ choiceId, rng = Math.random }) {
+      const making = this.makingActive
+      if (!making) {
+        return {
+          ok: false,
+          data: null,
+          error: { code: 'NONE_IN_PROGRESS', message: 'The player is not making anything' },
+        }
+      }
+      const minigame = this.games[making.game.id]
+      const skill = skillEffective({
+        player: this.player,
+        mediumId: making.mediumId,
+        mediums: this.mediums,
+      })
+      const round = gameRoundResolve({
+        game: minigame,
+        state: making.game.state,
+        choiceId,
+        personaId: this.personaInCharge,
+        skillValue: skill.ok ? skill.data.value : 0,
+        rng,
+      })
+      if (!round.ok) {
+        console.warn(`[game] applyMakingRound: ${round.error.code}`, round.error.message)
+        return round
+      }
+      const ticksWorked = Math.min(minigame.sittingTicks, making.ticksTotal - making.ticksDone)
+      const result = makingWork({
+        player: this.player,
+        ticksWorked,
+        gameState: round.data.state,
+        workDone: round.data.workDone,
+        gameTime: this.time,
+      })
       if (!result.ok) {
-        console.warn(`[game] applyMakingWork: ${result.error.code}`, result.error.message)
+        console.warn(`[game] applyMakingRound: ${result.error.code}`, result.error.message)
         return result
       }
       this.player.makings = result.data.makings
-      return result
+      const { lineCode, lineParams, promptCode } = round.data
+      return { ...result, data: { ...result.data, lineCode, lineParams, promptCode, ticksWorked } }
     },
 
     /**
@@ -738,10 +799,17 @@ export const useGameStore = defineStore('game', {
      */
     applyMakingFinish({ rng = Math.random } = {}) {
       const location = this.currentLocation
+      const active = this.makingActive
+      const played = gameScore({ game: this.games[active?.game?.id], state: active?.game?.state })
+      if (!played.ok) {
+        console.warn(`[game] applyMakingFinish: ${played.error.code}`, played.error.message)
+        return played
+      }
       const result = makingFinish({
         player: this.player,
         location,
         mediums: this.mediums,
+        modifiers: [played.data.modifier],
         gameTime: this.time,
         rng,
       })
@@ -759,6 +827,7 @@ export const useGameStore = defineStore('game', {
             ? this.items[making.surfaceId]
             : (location.surfaces ?? []).find((s) => s.id === making.surfaceId),
         ingredient: making.ingredientItemId ? this.items[making.ingredientItemId] : null,
+        words: played.data.words,
         personaId: this.personaInCharge,
         voices: this.voices,
       })
@@ -770,6 +839,7 @@ export const useGameStore = defineStore('game', {
         if (!record) continue
         record.workText = words.data.workText
         record.artistText = words.data.artistText
+        record.words = played.data.words
       }
 
       this.player.makings = result.data.makings

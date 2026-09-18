@@ -5,6 +5,7 @@
   "description": "Wood, mostly. Swords, mostly. It takes hands more than ideas.",
   "pieceAs": "a carving",
   "making": {
+    "gameId": "cut",
     "ticksTotal": 8,
     "dc": 13,
     "xp": 14,

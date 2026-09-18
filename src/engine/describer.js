@@ -42,11 +42,13 @@ function _fail(code, message) {
  *   tool: { pieceAs: string }|null,
  *   surface: { pieceAs: string },
  *   ingredient: { pieceAs: string }|null,
+ *   words?: string[],
  *   personaId: string,
  *   voices: Object<string, Object>,
  * }} input
  * @returns {{ ok: boolean, data: { workText: string, artistText: string, personaId: string }|null, error: Object|null }}
- *   workText — the piece as a noun phrase; artistText — the full line.
+ *   workText — the piece as a noun phrase; artistText — the full line, and
+ *   what the piece says when it is made of words the maker chose.
  */
 export function pieceDescribe({
   tier,
@@ -54,6 +56,7 @@ export function pieceDescribe({
   tool = null,
   surface,
   ingredient = null,
+  words = [],
   personaId,
   voices,
 }) {
@@ -91,11 +94,23 @@ export function pieceDescribe({
   })
   if (!artist.ok) return _fail(DESCRIBER_ERROR_CODES.LINE_MISSING, artist.error.message)
 
+  let artistText = artist.data.text
+  if (words.length > 0) {
+    const said = voiceLine({
+      code: 'piece.words',
+      personaId,
+      voices,
+      params: { words: words.join(', ') },
+    })
+    if (!said.ok) return _fail(DESCRIBER_ERROR_CODES.LINE_MISSING, said.error.message)
+    artistText = `${artistText} ${said.data.text}`
+  }
+
   return {
     ok: true,
     data: {
       workText: work.data.text,
-      artistText: artist.data.text,
+      artistText,
       personaId: artist.data.personaId,
     },
     error: null,

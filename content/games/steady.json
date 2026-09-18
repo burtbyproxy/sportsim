@@ -1,0 +1,16 @@
+{
+  "id": "steady",
+  "shape": "steady",
+  "description": "You keep at it. No trick to it yet.",
+  "sittingTicks": 2,
+  "params": {},
+  "choices": {
+    "work": {
+      "label": "Keep at it"
+    }
+  },
+  "lines": {
+    "work": "making.working"
+  },
+  "compulsions": []
+}

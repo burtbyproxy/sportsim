@@ -26,6 +26,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { blendSober } from './blend.js'
 import { inspirationActive } from './inspiration.js'
 import { skillCheckRoll } from './skills.js'
+import { isOpen } from '../models/location.js'
 
 /** Enumerated error codes for every making result. The code is the contract. */
 export const MAKING_ERROR_CODES = Object.freeze({
@@ -81,8 +82,12 @@ export const ARTIFACT_STATUSES = Object.freeze({
 /** The one state an experience has until somebody starts telling it. */
 export const EXPERIENCE_STATUS_REMEMBERED = 'remembered'
 
-/** Ticks worked per sitting. The world gets a look in between sittings. */
-export const MAKING_SESSION_TICKS = 2
+/**
+ * Absorbed in the work, the world has a harder time getting in: while a
+ * making is in progress, random events roll at this fraction of their odds.
+ * Triggered events — hunger, exhaustion — are not impressed and barge in anyway.
+ */
+export const MAKING_FOCUS_EVENT_FACTOR = 0.25
 
 /** Inspiration strength per point on the die. */
 export const MAKING_STRENGTH_PER_MODIFIER = 20
@@ -111,6 +116,7 @@ function _fail(code, message) {
 function _copies(player) {
   return (player.makings ?? []).map((record) => ({
     ...record,
+    game: record.game ? JSON.parse(JSON.stringify(record.game)) : null,
     endedBy: record.endedBy ? { ...record.endedBy } : null,
   }))
 }
@@ -136,7 +142,13 @@ function _takesMedium({ thing, mediumId }) {
   return (thing.mediumIds ?? []).includes(mediumId)
 }
 
-function _surfaceFind({ player, location, items, surfaceKind, surfaceId }) {
+/** A surface the place only offers at certain hours: the karaoke machine, say. */
+function _surfaceOpen({ surface, gameTime }) {
+  if (!surface.hours) return true
+  return isOpen({ availability: surface.hours }, gameTime?.hour ?? 0)
+}
+
+function _surfaceFind({ player, location, items, surfaceKind, surfaceId, gameTime }) {
   if (surfaceKind === MAKING_SURFACE_KINDS.ITEM) {
     const definition = items[surfaceId]
     if (!definition || definition.type !== 'surface' || !_carried({ player, itemId: surfaceId })) {
@@ -145,7 +157,8 @@ function _surfaceFind({ player, location, items, surfaceKind, surfaceId }) {
     return definition
   }
   if (surfaceKind === MAKING_SURFACE_KINDS.LOCATION) {
-    return (location.surfaces ?? []).find((s) => s.id === surfaceId) ?? null
+    const surface = (location.surfaces ?? []).find((s) => s.id === surfaceId) ?? null
+    return surface && _surfaceOpen({ surface, gameTime }) ? surface : null
   }
   return null
 }
@@ -177,13 +190,13 @@ export function makingActive({ player }) {
  * medium the idea asked for come first. A plan the idea will not outlast is
  * listed with enoughTime false.
  *
- * @param {{ player: Object, location: Object, items: Object<string, Object>, mediums: Object<string, Object> }} input
+ * @param {{ player: Object, location: Object, items: Object<string, Object>, mediums: Object<string, Object>, gameTime: { hour: number } }} input
  * @returns {{ ok: boolean, data: {
  *   plans: { mediumId: string, toolItemId: string|null, surfaceKind: string, surfaceId: string, ticksTotal: number, enoughTime: boolean }[],
  *   ingredientItemIds: string[],
  * }|null, error: Object|null }}
  */
-export function makingOptions({ player, location, items = {}, mediums = {} }) {
+export function makingOptions({ player, location, items = {}, mediums = {}, gameTime }) {
   if (!player || typeof player !== 'object') {
     return _fail(MAKING_ERROR_CODES.PLAYER_MISSING, 'makingOptions needs a player')
   }
@@ -209,6 +222,7 @@ export function makingOptions({ player, location, items = {}, mediums = {} }) {
         .map((s) => ({ surfaceKind: MAKING_SURFACE_KINDS.ITEM, surfaceId: s.id })),
       ...(location.surfaces ?? [])
         .filter((s) => _takesMedium({ thing: s, mediumId: medium.id }))
+        .filter((s) => _surfaceOpen({ surface: s, gameTime }))
         .map((s) => ({ surfaceKind: MAKING_SURFACE_KINDS.LOCATION, surfaceId: s.id })),
     ]
     for (const toolItemId of toolIds) {
@@ -244,11 +258,21 @@ export function makingOptions({ player, location, items = {}, mediums = {} }) {
  *   items: Object<string, Object>,
  *   mediums: Object<string, Object>,
  *   plan: { mediumId: string, toolItemId: string|null, surfaceKind: string, surfaceId: string, ingredientItemId?: string|null },
- *   gameTime: { tick: number },
+ *   gameState: Object,
+ *   gameTime: { tick: number, hour: number },
  * }} input
+ *   gameState — the opening state of the medium's game (engine/minigame.js), kept on the record.
  * @returns {{ ok: boolean, data: { makings: Object[], making: Object, itemIdsConsumed: string[] }|null, error: Object|null }}
  */
-export function makingStart({ player, location, items = {}, mediums = {}, plan, gameTime }) {
+export function makingStart({
+  player,
+  location,
+  items = {},
+  mediums = {},
+  plan,
+  gameState,
+  gameTime,
+}) {
   if (!player || typeof player !== 'object') {
     return _fail(MAKING_ERROR_CODES.PLAYER_MISSING, 'makingStart needs a player')
   }
@@ -288,7 +312,7 @@ export function makingStart({ player, location, items = {}, mediums = {}, plan, 
     return _fail(MAKING_ERROR_CODES.TOOL_INVALID, `${medium.id} takes no tool`)
   }
 
-  const surface = _surfaceFind({ player, location, items, surfaceKind, surfaceId })
+  const surface = _surfaceFind({ player, location, items, surfaceKind, surfaceId, gameTime })
   if (!surface || !_takesMedium({ thing: surface, mediumId: medium.id })) {
     return _fail(
       MAKING_ERROR_CODES.SURFACE_INVALID,
@@ -328,6 +352,7 @@ export function makingStart({ player, location, items = {}, mediums = {}, plan, 
     locationId: location.id,
     ticksTotal: medium.making.ticksTotal,
     ticksDone: 0,
+    game: { id: medium.making.gameId, state: gameState },
     startedAtTick: tick,
     experienceId: null,
     endedBy: null,
@@ -341,12 +366,15 @@ export function makingStart({ player, location, items = {}, mediums = {}, plan, 
 }
 
 /**
- * A sitting. The work moves forward by the ticks put in, never past done.
+ * A sitting. The work moves forward by the ticks put in, never past done,
+ * and the round of the game that was played is kept on the record. A game
+ * can end the work early — the player stopped, or it went wrong — and then
+ * the work done so far is all the work there is.
  *
- * @param {{ player: Object, ticksWorked: number, gameTime: { tick: number } }} input
+ * @param {{ player: Object, ticksWorked: number, gameState: Object, workDone?: boolean, gameTime: { tick: number } }} input
  * @returns {{ ok: boolean, data: { makings: Object[], making: Object, workDone: boolean }|null, error: Object|null }}
  */
-export function makingWork({ player, ticksWorked, gameTime }) {
+export function makingWork({ player, ticksWorked, gameState, workDone = false, gameTime }) {
   if (!player || typeof player !== 'object') {
     return _fail(MAKING_ERROR_CODES.PLAYER_MISSING, 'makingWork needs a player')
   }
@@ -362,6 +390,8 @@ export function makingWork({ player, ticksWorked, gameTime }) {
     return _fail(MAKING_ERROR_CODES.NONE_IN_PROGRESS, 'The player is not making anything')
   }
   making.ticksDone = Math.min(making.ticksTotal, making.ticksDone + ticksWorked)
+  if (workDone) making.ticksTotal = making.ticksDone
+  making.game = { ...making.game, state: gameState }
   making.updatedAtTick = gameTime?.tick ?? making.updatedAtTick
   return _ok({ makings, making: { ...making }, workDone: making.ticksDone >= making.ticksTotal })
 }
@@ -379,9 +409,11 @@ export function makingWork({ player, ticksWorked, gameTime }) {
  *   player: Object,
  *   location: Object,
  *   mediums: Object<string, Object>,
+ *   modifiers?: { sourceId: string, value: number }[],
  *   gameTime: { tick: number },
  *   rng?: () => number,
  * }} input
+ *   modifiers — what else bears on the check: how the game went.
  * @returns {{ ok: boolean, data: {
  *   makings: Object[],
  *   making: Object,
@@ -392,7 +424,14 @@ export function makingWork({ player, ticksWorked, gameTime }) {
  *   markIdsCovered: string[],
  * }|null, error: Object|null }}
  */
-export function makingFinish({ player, location, mediums = {}, gameTime, rng = Math.random }) {
+export function makingFinish({
+  player,
+  location,
+  mediums = {},
+  modifiers: modifiersExtra = [],
+  gameTime,
+  rng = Math.random,
+}) {
   if (!player || typeof player !== 'object') {
     return _fail(MAKING_ERROR_CODES.PLAYER_MISSING, 'makingFinish needs a player')
   }
@@ -431,6 +470,7 @@ export function makingFinish({ player, location, mediums = {}, gameTime, rng = M
       value: MAKING_WRONG_MEDIUM_PENALTY,
     })
   }
+  modifiers.push(...modifiersExtra.map((m) => ({ sourceId: m.sourceId, value: m.value })))
   const rolled = skillCheckRoll({
     player,
     mediumId: medium.id,
@@ -447,7 +487,10 @@ export function makingFinish({ player, location, mediums = {}, gameTime, rng = M
   const blend = player.blend ?? blendSober()
   const experienceId = uuidv4()
   const leavesArtifact = medium.making.leavesArtifact && tier !== MAKING_TIERS.BOTCHED
-  const fixed = making.surfaceKind === MAKING_SURFACE_KINDS.LOCATION
+  // A wall keeps what is made on it. A surface the place marks portable hands
+  // you something to carry: the tape from the recorder over the karaoke machine.
+  const placed = (location.surfaces ?? []).find((s) => s.id === making.surfaceId)
+  const fixed = making.surfaceKind === MAKING_SURFACE_KINDS.LOCATION && !placed?.portable
 
   const artifact = leavesArtifact
     ? {

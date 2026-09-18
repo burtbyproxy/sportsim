@@ -54,6 +54,7 @@ import {
   loadMediums,
   loadVoices,
   loadScavengeTables,
+  loadGames,
 } from '../../data/loader.js'
 import { createPlayer } from '../../models/player.js'
 import { createCharacter } from '../../models/character.js'
@@ -89,6 +90,9 @@ for (const voice of Object.values(loadVoices())) {
 for (const table of Object.values(loadScavengeTables())) {
   game.registerScavengeTable({ table })
 }
+for (const minigame of Object.values(loadGames())) {
+  game.registerGame({ game: minigame })
+}
 
 onMounted(() => {
   hasSave.value = save.listSaves().length > 0
@@ -97,7 +101,7 @@ onMounted(() => {
 })
 
 const bootLines = [
-  'SPORTSIM v0.9.0',
+  'SPORTSIM v0.10.0',
   'Portland Art Scene Simulation Engine',
   'Loading city data...',
   'Generating despair...',

@@ -5,6 +5,7 @@
   "description": "Paint on something. Grandma's set, a found board, whatever holds still.",
   "pieceAs": "a painting",
   "making": {
+    "gameId": "steady",
     "ticksTotal": 6,
     "dc": 12,
     "xp": 12,

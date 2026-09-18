@@ -5,7 +5,8 @@
   "description": "Writing on things that are not yours. The nerve is the medium.",
   "pieceAs": "a tag",
   "making": {
-    "ticksTotal": 1,
+    "gameId": "nerve",
+    "ticksTotal": 4,
     "dc": 12,
     "xp": 5,
     "toolRequired": true,

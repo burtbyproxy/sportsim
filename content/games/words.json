@@ -1,0 +1,69 @@
+{
+  "id": "words",
+  "shape": "word_pick",
+  "description": "A few lines are the words you pick. Words that belong together are a voice. One of everything is mush.",
+  "sittingTicks": 1,
+  "params": {
+    "picksPerRound": 3,
+    "voiceCap": 2,
+    "mushModifier": -1,
+    "registers": {
+      "plain": [
+        "rain",
+        "bus",
+        "sock",
+        "fridge",
+        "Tuesday",
+        "gravel",
+        "receipt",
+        "dishwater",
+        "porch",
+        "bleach"
+      ],
+      "purple": [
+        "gossamer",
+        "eternal",
+        "velvet",
+        "abyss",
+        "luminous",
+        "sorrow",
+        "infinite",
+        "ache",
+        "cathedral",
+        "ember"
+      ],
+      "holy": [
+        "forgive",
+        "lamb",
+        "mercy",
+        "ash",
+        "kneel",
+        "wine",
+        "father",
+        "amen",
+        "sinner",
+        "bread"
+      ],
+      "animal": [
+        "kibble",
+        "squirrel",
+        "outside",
+        "the big dog",
+        "warm spot",
+        "vacuum",
+        "mine",
+        "window bird",
+        "again",
+        "tail"
+      ]
+    },
+    "personaLean": {
+      "priest": "holy",
+      "telepath": "animal"
+    }
+  },
+  "lines": {
+    "picked": "game.words.picked"
+  },
+  "compulsions": []
+}

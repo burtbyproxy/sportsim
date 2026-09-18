@@ -30,7 +30,7 @@ import {
   incrementCounter,
 } from '../models/player.js'
 import {
-  MAKING_SESSION_TICKS,
+  MAKING_FOCUS_EVENT_FACTOR,
   MAKING_SURFACE_KINDS,
   ARTIFACT_STATUSES,
   makingOptions,
@@ -175,10 +175,18 @@ export function useGameLoop({
    */
   function _eventsCheck() {
     if (game.activeEvent || !game.player || !game.currentLocation) return
-    const args = [game.player, game.currentLocation, game.time, eventRegistry, game.firedEventIds]
-    const [event] = [...checkTriggeredEvents(...args), ...checkRandomEvents(...args, rng)]
-    if (!event) return
-    _eventStart(event)
+    const base = [game.player, game.currentLocation, game.time]
+    // Head down over the work, chance has a harder time finding you.
+    const focus = game.makingActive ? MAKING_FOCUS_EVENT_FACTOR : 1
+    const odds = eventRegistry.map((e) =>
+      e.type === 'random' ? { ...e, probability: (e.probability ?? 0) * focus } : e
+    )
+    const [hit] = [
+      ...checkTriggeredEvents(...base, eventRegistry, game.firedEventIds),
+      ...checkRandomEvents(...base, odds, game.firedEventIds, rng),
+    ]
+    if (!hit) return
+    _eventStart(eventRegistry.find((e) => e.id === hit.id))
   }
 
   function _eventStart(event) {
@@ -329,14 +337,23 @@ export function useGameLoop({
   function _makingMenu() {
     const making = game.makingActive
     if (making) {
-      const ticks = Math.min(MAKING_SESSION_TICKS, making.ticksTotal - making.ticksDone)
+      // The round on offer is the menu: the medium's game, one sitting a choice.
+      // A game that has ended the work offers nothing; the last sitting is closing.
+      const sittingTicks = game.games[making.game.id].sittingTicks
+      const ticks = Math.min(sittingTicks, making.ticksTotal - making.ticksDone)
+      const choices = making.game.state.offer?.choices ?? []
       return [
-        _makingEntry({
-          id: 'making_continue',
-          label: 'Keep at it',
-          kind: 'making_continue',
-          timeCost: ticks,
-        }),
+        ...choices.map((choice) =>
+          _makingEntry({
+            id: `making_choice_${choice.id}`,
+            label: choice.label,
+            kind: 'making_choice',
+            timeCost: ticks,
+            available: choice.available,
+            reason: choice.reason,
+            data: { choiceId: choice.id },
+          })
+        ),
         _makingEntry({ id: 'making_abandon', label: 'Walk away from it', kind: 'making_abandon' }),
       ]
     }
@@ -347,6 +364,7 @@ export function useGameLoop({
       location: game.currentLocation,
       items: game.items,
       mediums: game.mediums,
+      gameTime: game.time,
     })
     if (!options.ok) {
       // The idea went while the menu was open; there is nothing to choose.
@@ -397,6 +415,7 @@ export function useGameLoop({
       location: game.currentLocation,
       items: game.items,
       mediums: game.mediums,
+      gameTime: game.time,
     })
     if (!options.ok) return
     if (options.data.plans.length === 0) {
@@ -406,32 +425,34 @@ export function useGameLoop({
     game.makingPickerSet({ picker: { step: 'plan' } })
   }
 
-  /** Start the work and put in the first sitting. */
-  async function _makingBegin({ plan }) {
+  /** Start the work. The medium's game deals its first round onto the menu. */
+  function _makingBegin({ plan }) {
     game.makingPickerSet({ picker: null })
-    const started = game.applyMakingStart({ plan })
+    const started = game.applyMakingStart({ plan, rng })
     if (!started.ok) return
     _voiceEnqueue({ code: 'making.started' })
-    await _makingSitting()
+    if (started.data.promptCode) _voiceEnqueue({ code: started.data.promptCode })
   }
 
   /**
-   * One sitting: the work moves, the time passes, the world gets its look
-   * in. If the idea is still there when the work is done, the piece is made.
+   * One sitting: the player's choice is played against the round on offer,
+   * the work moves, the time passes, the world gets its look in. If the idea
+   * is still there when the work is done, the piece is made.
+   * @param {{ choiceId: string }} input
    */
-  async function _makingSitting() {
+  async function _makingSitting({ choiceId }) {
     const before = game.makingActive
-    const ticks = Math.min(MAKING_SESSION_TICKS, before.ticksTotal - before.ticksDone)
-    const worked = game.applyMakingWork({ ticksWorked: ticks })
-    if (!worked.ok) return
+    const played = game.applyMakingRound({ choiceId, rng })
+    if (!played.ok) return
+    _voiceEnqueue({ code: played.data.lineCode, params: played.data.lineParams })
     const cost = game.mediums[before.mediumId].making.statusChanges
     if (cost) game.applyStatusChanges(cost)
-    await tick(ticks)
+    await tick(played.data.ticksWorked)
 
     const after = game.makingActive
     if (!after) return
     if (after.ticksDone < after.ticksTotal) {
-      _voiceEnqueue({ code: 'making.working' })
+      if (played.data.promptCode) _voiceEnqueue({ code: played.data.promptCode })
       return
     }
     const finished = game.applyMakingFinish({ rng })
@@ -455,20 +476,21 @@ export function useGameLoop({
         location: game.currentLocation,
         items: game.items,
         mediums: game.mediums,
+        gameTime: game.time,
       })
       const offer =
         entry.ingredientsOffered && ingredients.ok && ingredients.data.ingredientItemIds.length > 0
       if (offer) {
         game.makingPickerSet({ picker: { step: 'ingredient', plan: entry.plan } })
       } else {
-        await _makingBegin({ plan: entry.plan })
+        _makingBegin({ plan: entry.plan })
       }
     } else if (entry.kind === 'making_ingredient') {
-      await _makingBegin({
+      _makingBegin({
         plan: { ...game.makingPicker.plan, ingredientItemId: entry.ingredientItemId },
       })
-    } else if (entry.kind === 'making_continue') {
-      await _makingSitting()
+    } else if (entry.kind === 'making_choice') {
+      await _makingSitting({ choiceId: entry.choiceId })
     } else if (entry.kind === 'making_abandon') {
       const result = game.applyMakingAbandon({ reason: { kind: 'player', id: 'walked_away' } })
       if (result.ok && result.data.abandoned) {
