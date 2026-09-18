@@ -4,7 +4,7 @@
  * Safe for JSON serialization (localStorage saves).
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid'
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -18,7 +18,7 @@ import { v4 as uuidv4 } from 'uuid';
  * @returns {number}
  */
 function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
+  return Math.max(min, Math.min(max, value))
 }
 
 /**
@@ -28,7 +28,7 @@ function clamp(value, min, max) {
  * @returns {number}
  */
 function randInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
 /**
@@ -37,7 +37,7 @@ function randInt(min, max) {
  * @returns {import('./types').Stat}
  */
 function createStat(base) {
-  return { base, modifiers: [], xp: 0 };
+  return { base, modifiers: [], xp: 0 }
 }
 
 // ---------------------------------------------------------------------------
@@ -56,28 +56,28 @@ export function createPlayer(name) {
     id: uuidv4(),
     name,
     stats: {
-      stamina:    createStat(randInt(10, 20)),
-      toughness:  createStat(randInt(10, 20)),
-      wits:       createStat(randInt(10, 20)),
+      stamina: createStat(randInt(10, 20)),
+      toughness: createStat(randInt(10, 20)),
+      wits: createStat(randInt(10, 20)),
       creativity: createStat(randInt(10, 20)),
-      charm:      createStat(randInt(10, 20)),
+      charm: createStat(randInt(10, 20)),
       reputation: createStat(randInt(10, 20)),
-      luck:       createStat(randInt(10, 20)),
-      karma:      createStat(randInt(10, 20)),
+      luck: createStat(randInt(10, 20)),
+      karma: createStat(randInt(10, 20)),
     },
     status: {
-      hunger:   50,
+      hunger: 50,
       sobriety: 80,
-      energy:   70,
-      mood:     40,
-      health:   100,
-      money:    0,
+      energy: 70,
+      mood: 40,
+      health: 100,
+      money: 0,
     },
     psyche: {
-      traumas:    [],
+      traumas: [],
       obsessions: [],
       insanities: [],
-      abilities:  [],
+      abilities: [],
     },
     inventory: [],
     currentLocationId: 'moms_house',
@@ -85,7 +85,7 @@ export function createPlayer(name) {
     counters: {},
     level: 1,
     xp: 0,
-  };
+  }
 }
 
 /**
@@ -97,10 +97,10 @@ export function createPlayer(name) {
  * @returns {number}
  */
 export function getEffectiveStat(player, statName) {
-  const stat = player.stats[statName];
-  if (!stat) return 0;
-  const total = stat.modifiers.reduce((sum, mod) => sum + mod.value, stat.base);
-  return clamp(total, 0, 100);
+  const stat = player.stats[statName]
+  if (!stat) return 0
+  const total = stat.modifiers.reduce((sum, mod) => sum + mod.value, stat.base)
+  return clamp(total, 0, 100)
 }
 
 /**
@@ -112,13 +112,13 @@ export function getEffectiveStat(player, statName) {
  */
 export function tickModifiers(player) {
   for (const statName of Object.keys(player.stats)) {
-    const stat = player.stats[statName];
+    const stat = player.stats[statName]
     stat.modifiers = stat.modifiers
-      .map(mod => {
-        if (mod.duration === null) return mod; // permanent
-        return { ...mod, duration: mod.duration - 1 };
+      .map((mod) => {
+        if (mod.duration === null) return mod // permanent
+        return { ...mod, duration: mod.duration - 1 }
       })
-      .filter(mod => mod.duration === null || mod.duration > 0);
+      .filter((mod) => mod.duration === null || mod.duration > 0)
   }
 }
 
@@ -132,9 +132,9 @@ export function tickModifiers(player) {
  * @returns {void}
  */
 export function addModifier(player, statName, modifier) {
-  const stat = player.stats[statName];
-  if (!stat) return;
-  stat.modifiers.push({ ...modifier });
+  const stat = player.stats[statName]
+  if (!stat) return
+  stat.modifiers.push({ ...modifier })
 }
 
 /**
@@ -148,13 +148,13 @@ export function addModifier(player, statName, modifier) {
  */
 export function addItem(player, item) {
   if (item.stackable) {
-    const existing = player.inventory.find(i => i.id === item.id);
+    const existing = player.inventory.find((i) => i.id === item.id)
     if (existing) {
-      existing.quantity += item.quantity;
-      return;
+      existing.quantity += item.quantity
+      return
     }
   }
-  player.inventory.push({ ...item });
+  player.inventory.push({ ...item })
 }
 
 /**
@@ -166,13 +166,13 @@ export function addItem(player, item) {
  * @returns {void}
  */
 export function removeItem(player, itemId) {
-  const idx = player.inventory.findIndex(i => i.id === itemId);
-  if (idx === -1) return;
-  const item = player.inventory[idx];
+  const idx = player.inventory.findIndex((i) => i.id === itemId)
+  if (idx === -1) return
+  const item = player.inventory[idx]
   if (item.stackable && item.quantity > 1) {
-    item.quantity -= 1;
+    item.quantity -= 1
   } else {
-    player.inventory.splice(idx, 1);
+    player.inventory.splice(idx, 1)
   }
 }
 
@@ -185,7 +185,7 @@ export function removeItem(player, itemId) {
  * @returns {boolean}
  */
 export function hasItem(player, itemId) {
-  return player.inventory.some(i => i.id === itemId);
+  return player.inventory.some((i) => i.id === itemId)
 }
 
 /**
@@ -202,11 +202,11 @@ export function hasItem(player, itemId) {
  */
 export function adjustStatus(player, statusName, delta) {
   if (statusName === 'money') {
-    adjustMoney(player, delta);
-    return;
+    adjustMoney(player, delta)
+    return
   }
-  if (!(statusName in player.status)) return;
-  player.status[statusName] = clamp(player.status[statusName] + delta, 0, 100);
+  if (!(statusName in player.status)) return
+  player.status[statusName] = clamp(player.status[statusName] + delta, 0, 100)
 }
 
 /**
@@ -219,7 +219,7 @@ export function adjustStatus(player, statusName, delta) {
  * @returns {void}
  */
 export function adjustMoney(player, delta) {
-  player.status.money += delta;
+  player.status.money += delta
 }
 
 /**
@@ -231,7 +231,7 @@ export function adjustMoney(player, delta) {
  * @returns {void}
  */
 export function addTrauma(player, trauma) {
-  player.psyche.traumas.push({ ...trauma });
+  player.psyche.traumas.push({ ...trauma })
 }
 
 /**
@@ -245,9 +245,9 @@ export function addTrauma(player, trauma) {
  * @returns {void}
  */
 export function feedObsession(player, obsessionId, amount) {
-  const obs = player.psyche.obsessions.find(o => o.id === obsessionId);
-  if (!obs) return;
-  obs.strength = clamp(obs.strength + amount, 0, 100);
+  const obs = player.psyche.obsessions.find((o) => o.id === obsessionId)
+  if (!obs) return
+  obs.strength = clamp(obs.strength + amount, 0, 100)
 }
 
 /**
@@ -262,9 +262,9 @@ export function feedObsession(player, obsessionId, amount) {
  */
 export function updateArchetypeScore(player, archetypeId, delta) {
   if (!(archetypeId in player.archetypeScores)) {
-    player.archetypeScores[archetypeId] = 0;
+    player.archetypeScores[archetypeId] = 0
   }
-  player.archetypeScores[archetypeId] += delta;
+  player.archetypeScores[archetypeId] += delta
 }
 
 /**
@@ -279,7 +279,7 @@ export function updateArchetypeScore(player, archetypeId, delta) {
  */
 export function incrementCounter(player, counterName, delta = 1) {
   if (!(counterName in player.counters)) {
-    player.counters[counterName] = 0;
+    player.counters[counterName] = 0
   }
-  player.counters[counterName] += delta;
+  player.counters[counterName] += delta
 }

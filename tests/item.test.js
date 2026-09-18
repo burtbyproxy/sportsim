@@ -74,7 +74,7 @@ describe('applyEffects', () => {
   });
 
   it('returns a copy of all effects', () => {
-    const effects = applyEffects(item, {});
+    const effects = applyEffects(item);
     expect(effects).toHaveLength(2);
     expect(effects[0].target).toBe('sobriety');
     expect(effects[0].value).toBe(-10);
@@ -83,19 +83,19 @@ describe('applyEffects', () => {
   });
 
   it('does not mutate the item', () => {
-    const effects = applyEffects(item, {});
+    const effects = applyEffects(item);
     effects[0].value = 999;
     expect(item.effects[0].value).toBe(-10);
   });
 
   it('returns empty array for item with no effects', () => {
     const noEffect = createItem({ id: 'rock', name: 'Rock' });
-    expect(applyEffects(noEffect, {})).toEqual([]);
+    expect(applyEffects(noEffect)).toEqual([]);
   });
 
   it('does not mutate the player argument', () => {
     const player = { status: { sobriety: 80 } };
-    applyEffects(item, player);
+    applyEffects(item);
     expect(player.status.sobriety).toBe(80);
   });
 });

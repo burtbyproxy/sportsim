@@ -55,7 +55,14 @@ function makeFull(id, statusOverrides = {}) {
     },
     schedule: makeSchedule([
       { locationId: 'home', startHour: 0, endHour: 11, probability: 0.9, days: ['all'] },
-      { locationId: 'bar', startHour: 17, endHour: 2, probability: 0.85, days: ['all'], type: 'bar' },
+      {
+        locationId: 'bar',
+        startHour: 17,
+        endHour: 2,
+        probability: 0.85,
+        days: ['all'],
+        type: 'bar',
+      },
     ]),
     decisionWeights: {
       low_sobriety: { bias: 'bar', weight: 0.7 },
@@ -185,11 +192,7 @@ describe('simulateTick — full tier', () => {
 
 describe('simulateTick — multiple characters', () => {
   it('handles all three tiers in one call', () => {
-    const chars = [
-      makeFixed('bartender'),
-      makeRoutine('carl'),
-      makeFull('protagonist'),
-    ]
+    const chars = [makeFixed('bartender'), makeRoutine('carl'), makeFull('protagonist')]
     const gameTime = makeGameTime(20)
     const updates = simulateTick(chars, gameTime, seededRandom(42))
     expect(updates).toHaveLength(3)

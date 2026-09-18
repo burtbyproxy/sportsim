@@ -12,14 +12,7 @@
 
 import { resolveSchedule, isInTransit, getTransitDestination } from './schedule.js'
 import { getStatDecayEffects } from './stats.js'
-import { chance, weightedPick } from '../utils/random.js'
-
-/**
- * Location type tags used by full-sim decision weights.
- * Characters don't know the full location graph — they bias toward location types.
- * The simulation picks a matching location from the character's schedule.
- */
-const BIAS_TYPES = ['bar', 'food', 'alone', 'home']
+import { chance } from '../utils/random.js'
 
 // ---------------------------------------------------------------------------
 // Tier: fixed
@@ -157,7 +150,7 @@ function _simulateFull(character, gameTime, rng) {
 
   // Apply stat decay (same rates as player — they're playing the same game)
   const statusChanges = character.status
-    ? getStatDecayEffects(character, 1)  // one tick
+    ? getStatDecayEffects(character, 1) // one tick
     : undefined
 
   // Check status bias first

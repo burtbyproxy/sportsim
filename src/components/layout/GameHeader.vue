@@ -1,7 +1,7 @@
 <template>
   <header class="game-header">
     <span class="header-title">SportSim</span>
-    <span class="header-location" v-if="currentLocation">
+    <span v-if="currentLocation" class="header-location">
       <span class="header-sep">·</span>
       {{ currentLocation }}
     </span>

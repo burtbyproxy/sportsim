@@ -37,7 +37,9 @@ describe('buildCharacterRegistry', () => {
   })
 
   it('unknown tier falls into fixed', () => {
-    const chars = [{ id: 'mystery', simulation: 'unknown', currentLocationId: null, schedule: { entries: [] } }]
+    const chars = [
+      { id: 'mystery', simulation: 'unknown', currentLocationId: null, schedule: { entries: [] } },
+    ]
     const registry = buildCharacterRegistry(chars)
     expect(registry.byTier.fixed).toHaveLength(1)
   })

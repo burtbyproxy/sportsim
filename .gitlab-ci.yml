@@ -1,0 +1,25 @@
+# The gates that guard every path to production (BFD-33): lint, tests, conform.
+stages:
+  - gates
+
+variables:
+  GIT_DEPTH: 0
+
+lint-and-test:
+  stage: gates
+  image: node:24
+  cache:
+    key: npm
+    paths: [.npm/]
+  script:
+    - npm ci --cache .npm --prefer-offline
+    - npm run lint
+    - npm run format:check
+    - npx vitest run
+
+conform:
+  stage: gates
+  image: golang:1.25
+  script:
+    - go install codeberg.org/galaxi/boundary-first-development/cmd/bfd@latest
+    - "$(go env GOPATH)/bin/bfd conform"

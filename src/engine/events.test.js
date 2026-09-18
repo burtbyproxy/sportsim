@@ -41,7 +41,12 @@ describe('checkRandomEvents', () => {
   it('returns events that pass conditions and probability', () => {
     const event = makeEvent({ probability: 1.0 })
     const result = checkRandomEvents(
-      makePlayer(), makeLocation(), makeGameTime(), [event], [], seededRandom(1)
+      makePlayer(),
+      makeLocation(),
+      makeGameTime(),
+      [event],
+      [],
+      seededRandom(1)
     )
     expect(result).toHaveLength(1)
     expect(result[0].id).toBe('test_event')
@@ -50,7 +55,12 @@ describe('checkRandomEvents', () => {
   it('never returns events with probability 0', () => {
     const event = makeEvent({ probability: 0 })
     const result = checkRandomEvents(
-      makePlayer(), makeLocation(), makeGameTime(), [event], [], seededRandom(1)
+      makePlayer(),
+      makeLocation(),
+      makeGameTime(),
+      [event],
+      [],
+      seededRandom(1)
     )
     expect(result).toHaveLength(0)
   })
@@ -58,7 +68,12 @@ describe('checkRandomEvents', () => {
   it('does not return triggered events', () => {
     const event = makeEvent({ type: 'triggered', probability: 1.0 })
     const result = checkRandomEvents(
-      makePlayer(), makeLocation(), makeGameTime(), [event], [], seededRandom(1)
+      makePlayer(),
+      makeLocation(),
+      makeGameTime(),
+      [event],
+      [],
+      seededRandom(1)
     )
     expect(result).toHaveLength(0)
   })
@@ -66,7 +81,12 @@ describe('checkRandomEvents', () => {
   it('skips one-time events that already fired', () => {
     const event = makeEvent({ oneTime: true, probability: 1.0 })
     const result = checkRandomEvents(
-      makePlayer(), makeLocation(), makeGameTime(), [event], ['test_event'], seededRandom(1)
+      makePlayer(),
+      makeLocation(),
+      makeGameTime(),
+      [event],
+      ['test_event'],
+      seededRandom(1)
     )
     expect(result).toHaveLength(0)
   })
@@ -74,7 +94,12 @@ describe('checkRandomEvents', () => {
   it('includes one-time events that have not fired', () => {
     const event = makeEvent({ oneTime: true, probability: 1.0 })
     const result = checkRandomEvents(
-      makePlayer(), makeLocation(), makeGameTime(), [event], [], seededRandom(1)
+      makePlayer(),
+      makeLocation(),
+      makeGameTime(),
+      [event],
+      [],
+      seededRandom(1)
     )
     expect(result).toHaveLength(1)
   })
@@ -84,8 +109,22 @@ describe('checkRandomEvents', () => {
     const wrongLocation = makeLocation('wrong_place')
     const rightLocation = makeLocation('specific_bar')
 
-    const wrongResult = checkRandomEvents(makePlayer(), wrongLocation, makeGameTime(), [event], [], seededRandom(1))
-    const rightResult = checkRandomEvents(makePlayer(), rightLocation, makeGameTime(), [event], [], seededRandom(1))
+    const wrongResult = checkRandomEvents(
+      makePlayer(),
+      wrongLocation,
+      makeGameTime(),
+      [event],
+      [],
+      seededRandom(1)
+    )
+    const rightResult = checkRandomEvents(
+      makePlayer(),
+      rightLocation,
+      makeGameTime(),
+      [event],
+      [],
+      seededRandom(1)
+    )
 
     expect(wrongResult).toHaveLength(0)
     expect(rightResult).toHaveLength(1)
@@ -93,19 +132,40 @@ describe('checkRandomEvents', () => {
 
   it('filters by time of day', () => {
     const event = makeEvent({ conditions: { minHour: 20, maxHour: 24 }, probability: 1.0 })
-    const daytimeResult = checkRandomEvents(makePlayer(), makeLocation(), makeGameTime(14), [event], [], seededRandom(1))
-    const nightResult = checkRandomEvents(makePlayer(), makeLocation(), makeGameTime(21), [event], [], seededRandom(1))
+    const daytimeResult = checkRandomEvents(
+      makePlayer(),
+      makeLocation(),
+      makeGameTime(14),
+      [event],
+      [],
+      seededRandom(1)
+    )
+    const nightResult = checkRandomEvents(
+      makePlayer(),
+      makeLocation(),
+      makeGameTime(21),
+      [event],
+      [],
+      seededRandom(1)
+    )
     expect(daytimeResult).toHaveLength(0)
     expect(nightResult).toHaveLength(1)
   })
 
   it('filters by player status', () => {
-    const event = makeEvent({ conditions: { minStatus: { sobriety: 0 }, maxStatus: { sobriety: 29 } }, probability: 1.0 })
+    const event = makeEvent({
+      conditions: { minStatus: { sobriety: 0 }, maxStatus: { sobriety: 29 } },
+      probability: 1.0,
+    })
     const soberPlayer = makePlayer({ sobriety: 80 })
     const drunkPlayer = makePlayer({ sobriety: 15 })
 
-    expect(checkRandomEvents(soberPlayer, makeLocation(), makeGameTime(), [event], [], seededRandom(1))).toHaveLength(0)
-    expect(checkRandomEvents(drunkPlayer, makeLocation(), makeGameTime(), [event], [], seededRandom(1))).toHaveLength(1)
+    expect(
+      checkRandomEvents(soberPlayer, makeLocation(), makeGameTime(), [event], [], seededRandom(1))
+    ).toHaveLength(0)
+    expect(
+      checkRandomEvents(drunkPlayer, makeLocation(), makeGameTime(), [event], [], seededRandom(1))
+    ).toHaveLength(1)
   })
 })
 
@@ -126,7 +186,13 @@ describe('checkTriggeredEvents', () => {
 
   it('skips one-time triggered events already fired', () => {
     const event = makeEvent({ type: 'triggered', oneTime: true })
-    const result = checkTriggeredEvents(makePlayer(), makeLocation(), makeGameTime(), [event], ['test_event'])
+    const result = checkTriggeredEvents(
+      makePlayer(),
+      makeLocation(),
+      makeGameTime(),
+      [event],
+      ['test_event']
+    )
     expect(result).toHaveLength(0)
   })
 })
@@ -146,7 +212,11 @@ describe('resolveEvent', () => {
     const event = makeEvent({
       choices: [
         { label: 'Run', check: null, outcome: choiceOutcome },
-        { label: 'Fight', check: null, outcome: { narrative: 'You chose violence.', statChanges: null } },
+        {
+          label: 'Fight',
+          check: null,
+          outcome: { narrative: 'You chose violence.', statChanges: null },
+        },
       ],
     })
     const { outcome, diceResult } = resolveEvent(event, makePlayer(), 0)
@@ -174,7 +244,9 @@ describe('resolveEvent', () => {
 
   it('falls back to automatic outcome for invalid choice index', () => {
     const event = makeEvent({
-      choices: [{ label: 'Only choice', check: null, outcome: { narrative: 'A', statChanges: null } }],
+      choices: [
+        { label: 'Only choice', check: null, outcome: { narrative: 'A', statChanges: null } },
+      ],
     })
     // Index 99 is invalid
     const { outcome } = resolveEvent(event, makePlayer(), 99)

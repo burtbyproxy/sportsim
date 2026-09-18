@@ -6,7 +6,6 @@ const SAVE_INDEX_KEY = 'sportsim_saves'
 /**
  * Current save format version.
  * Bump this whenever the save shape changes in a breaking way.
- * Old Gregg will know. Old Gregg always knows.
  */
 export const SAVE_VERSION = 1
 
@@ -60,10 +59,7 @@ export function validateSave(data) {
  * Saves full game state to localStorage.
  * Each save has its own key: sportsim_save_{id}
  * An index of saves is kept at sportsim_saves.
- *
- * Do you love the save system, Howard? Are you playing your love games with it?
- * It's got validation now. It's got versioning. It's got export/import.
- * It's beautiful. Like a watercolour. But it works.
+ * Saves are validated and versioned, and can be exported and imported.
  */
 export function useSave() {
   const game = useGameStore()
@@ -175,7 +171,6 @@ export function useSave() {
   /**
    * Export a save as a JSON string.
    * Useful for players to back up their games or move between browsers.
-   * Old Gregg approves of backup strategies.
    * @param {string} id
    * @returns {string|null} JSON string, or null if save not found/invalid
    */

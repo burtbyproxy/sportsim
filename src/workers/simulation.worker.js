@@ -1,7 +1,7 @@
 /**
  * Simulation Worker
  *
- * Runs in a Web Worker thread. Receives game state each tick, runs Bones'
+ * Runs in a Web Worker thread. Receives game state each tick, runs the
  * three-tier simulation engine, returns character updates.
  *
  * Tier routing is handled inside simulateTick() — this worker just calls it.

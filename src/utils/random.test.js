@@ -64,7 +64,7 @@ describe('weightedPick', () => {
     const items = ['a', 'b', 'c']
     const rng = seededRandom(1)
     for (let i = 0; i < 20; i++) {
-      const result = weightedPick(items, (item) => item === 'b' ? 1 : 0, rng)
+      const result = weightedPick(items, (item) => (item === 'b' ? 1 : 0), rng)
       expect(result).toBe('b')
     }
   })
@@ -73,11 +73,7 @@ describe('weightedPick', () => {
     const rng = seededRandom(42)
     const counts = { low: 0, high: 0 }
     for (let i = 0; i < 1000; i++) {
-      const result = weightedPick(
-        ['low', 'high'],
-        (item) => item === 'high' ? 9 : 1,
-        rng
-      )
+      const result = weightedPick(['low', 'high'], (item) => (item === 'high' ? 9 : 1), rng)
       counts[result]++
     }
     // high should be picked ~90% of the time

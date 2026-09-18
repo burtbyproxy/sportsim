@@ -4,7 +4,7 @@
  *
  * Validates all JSON files in content/ against their data contracts.
  * These tests are generic — they load every file in the relevant directories
- * and check structure. When Uhura adds new files, they are automatically validated.
+ * and check structure. New files are validated automatically.
  *
  * Tests pass with 0 content files (empty directories). They also pass when
  * files are valid. They FAIL when files violate their contract.
@@ -272,7 +272,7 @@ describe('content/characters/*.json — Character contract', () => {
   });
 
   if (files.length === 0) {
-    it('(no character files yet — validation will run when Uhura adds them)', () => {
+    it('(no character files yet — validation will run when files are added)', () => {
       expect(true).toBe(true);
     });
   }
@@ -306,7 +306,7 @@ describe('content/maps/*/locations/*.json — Location contract', () => {
   });
 
   if (allFiles.length === 0) {
-    it('(no location files yet — validation will run when Uhura adds them)', () => {
+    it('(no location files yet — validation will run when files are added)', () => {
       expect(true).toBe(true);
     });
   }
@@ -329,7 +329,7 @@ describe('content/maps/*/actions/*.json — Action contract', () => {
   );
 
   if (allFiles.length === 0) {
-    it('(no action files yet — validation will run when Uhura adds them)', () => {
+    it('(no action files yet — validation will run when files are added)', () => {
       expect(true).toBe(true);
     });
   }
@@ -360,7 +360,7 @@ describe('content/items/*.json — Item contract', () => {
   });
 
   if (files.length === 0) {
-    it('(no item files yet — validation will run when Uhura adds them)', () => {
+    it('(no item files yet — validation will run when files are added)', () => {
       expect(true).toBe(true);
     });
   }
@@ -403,7 +403,7 @@ describe('cross-reference validation', () => {
   );
 
   if (characterFiles.length === 0 && locationFiles.length === 0) {
-    it('(no content files yet — cross-reference validation will run when Uhura adds them)', () => {
+    it('(no content files yet — cross-reference validation will run when files are added)', () => {
       expect(true).toBe(true);
     });
   }

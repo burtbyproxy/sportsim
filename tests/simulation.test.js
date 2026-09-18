@@ -205,7 +205,7 @@ describe('simulateTick — full tier — bias fires, entry found', () => {
 })
 
 // ---------------------------------------------------------------------------
-// simulateTick — full tier — BIAS FALLTHROUGH (the gap Bones identified)
+// simulateTick — full tier — BIAS FALLTHROUGH
 // ---------------------------------------------------------------------------
 
 describe('simulateTick — full tier — bias fallthrough', () => {

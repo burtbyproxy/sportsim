@@ -1,9 +1,6 @@
 /**
  * useKeyboard composable tests
  *
- * Bollo wrote these. Bollo not happy that Gregg left no tests.
- * Bollo fix. Bollo always fix.
- *
  * Tests: input exclusion, repeat filtering, binding dispatch, cleanup on unmount.
  *
  * @vitest-environment jsdom

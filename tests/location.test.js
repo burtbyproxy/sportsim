@@ -4,6 +4,7 @@ import {
   getDescription,
   getAvailableExits,
   isOpen,
+  exitMeetsRequirements,
   incrementVisitCount,
 } from '../src/models/location.js';
 
@@ -216,5 +217,49 @@ describe('incrementVisitCount', () => {
     incrementVisitCount(loc);
     incrementVisitCount(loc);
     expect(loc.visitCount).toBe(3);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// exitMeetsRequirements
+// ---------------------------------------------------------------------------
+
+describe('exitMeetsRequirements', () => {
+  const gameTime = { hour: 14 };
+  const player = {
+    stats: { charisma: { base: 3 } },
+    status: { sobriety: 80 },
+    inventory: [{ id: 'bus_pass', quantity: 1 }],
+    psyche: { traumas: [], abilities: [] },
+  };
+
+  it('an exit with no requirements is always open', () => {
+    const exit = { locationId: 'park', requirements: null };
+    expect(exitMeetsRequirements({ exit, player, gameTime })).toEqual({ meets: true, reason: null });
+  });
+
+  it('an item requirement the player satisfies passes', () => {
+    const exit = { locationId: 'downtown', requirements: { requiredItems: ['bus_pass'] } };
+    expect(exitMeetsRequirements({ exit, player, gameTime }).meets).toBe(true);
+  });
+
+  it('an item requirement the player lacks fails with a reason', () => {
+    const exit = { locationId: 'downtown', requirements: { requiredItems: ['car_keys'] } };
+    const result = exitMeetsRequirements({ exit, player, gameTime });
+    expect(result.meets).toBe(false);
+    expect(result.reason).toContain('car_keys');
+  });
+
+  it('a stat requirement is judged against the base stat', () => {
+    const tooHigh = { locationId: 'gallery', requirements: { minStats: { charisma: 5 } } };
+    const justRight = { locationId: 'gallery', requirements: { minStats: { charisma: 3 } } };
+    expect(exitMeetsRequirements({ exit: tooHigh, player, gameTime }).meets).toBe(false);
+    expect(exitMeetsRequirements({ exit: justRight, player, gameTime }).meets).toBe(true);
+  });
+
+  it('a time-of-day window is honoured', () => {
+    const nightOnly = { locationId: 'club', requirements: { minHour: 21 } };
+    expect(exitMeetsRequirements({ exit: nightOnly, player, gameTime }).meets).toBe(false);
+    expect(exitMeetsRequirements({ exit: nightOnly, player, gameTime: { hour: 22 } }).meets).toBe(true);
   });
 });
