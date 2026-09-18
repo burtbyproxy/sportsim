@@ -23,6 +23,7 @@ const _mediumFiles = import.meta.glob('/content/mediums/*.json', { eager: true }
 const _voiceFiles = import.meta.glob('/content/voices/*.json', { eager: true })
 const _scavengeFiles = import.meta.glob('/content/scavenge/*.json', { eager: true })
 const _gameFiles = import.meta.glob('/content/games/*.json', { eager: true })
+const _configFiles = import.meta.glob('/content/game.json', { eager: true })
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -179,6 +180,16 @@ export function loadVoices() {
 export function loadScavengeTables() {
   const modules = _extractModules(_scavengeFiles)
   return _mergeById(modules, 'loadScavengeTables()')
+}
+
+/**
+ * Load what a new game is (content/game.json): the title screen's words, the
+ * map, and where, as whom, and with what the player starts.
+ * @returns {Object}
+ */
+export function loadGameConfig() {
+  const [config] = _extractModules(_configFiles)
+  return config
 }
 
 /**

@@ -12,10 +12,8 @@
       </div>
     </div>
 
-    <h1 class="title-screen__title">SportSim</h1>
-    <p class="title-screen__subtitle">
-      Portland, Oregon. 2001. You are broke. You are talentless. You are in your mom's basement.
-    </p>
+    <h1 class="title-screen__title">{{ config.title }}</h1>
+    <p class="title-screen__subtitle">{{ config.tagline }}</p>
 
     <nav ref="menuEl" class="title-screen__menu" aria-label="Main menu" tabindex="0">
       <button
@@ -55,12 +53,14 @@ import {
   loadVoices,
   loadScavengeTables,
   loadGames,
+  loadGameConfig,
 } from '../../data/loader.js'
 import { createPlayer } from '../../models/player.js'
 import { createCharacter } from '../../models/character.js'
 import { createLocation } from '../../models/location.js'
 import { createItem } from '../../models/item.js'
 import { shortcutLabelParts } from '../../utils/menu.js'
+import { version } from '../../../package.json'
 
 const router = useRouter()
 const game = useGameStore()
@@ -68,6 +68,10 @@ const save = useSave()
 const menuEl = ref(null)
 
 const hasSave = ref(false)
+
+// What a new game is — its words, its map, where and as whom you start — is content.
+const config = loadGameConfig()
+game.registerConfig({ config })
 
 // Load item, substance, and condition registries once at startup — they
 // are definitions, not run state, and persist across game resets.
@@ -100,22 +104,14 @@ onMounted(() => {
   menuEl.value?.focus()
 })
 
-const bootLines = [
-  'SPORTSIM v0.14.0',
-  'Portland Art Scene Simulation Engine',
-  'Loading city data...',
-  'Generating despair...',
-  'Calibrating poverty thresholds...',
-  'Ready.',
-  '',
-]
+const bootLines = config.bootLines.map((line) => line.replace('{version}', version))
 
 function startNewGame() {
-  const player = createPlayer('You')
-  game.startNewGame(player, 'moms_house')
+  const player = createPlayer(config.start.playerName, config.start)
+  game.startNewGame(player, config.start.locationId)
 
-  // Register all Kenton locations from content/
-  const locations = loadLocations('kenton')
+  // Register the map's locations from content/
+  const locations = loadLocations(config.mapId)
   for (const location of Object.values(locations)) {
     game.registerLocation(createLocation(location))
   }
@@ -138,14 +134,20 @@ function loadGame() {
   if (saveData) {
     game.loadSave(saveData)
     // What a place is comes from content; the save only knows what happened there.
-    game.locationsRestore({ definitions: loadLocations('kenton') })
+    game.locationsRestore({ definitions: loadLocations(config.mapId) })
     router.push('/game')
   }
 }
 
 const menuItems = computed(() => [
-  { id: 'new', label: 'New Game', shortcut: 'n', disabled: false, action: startNewGame },
-  { id: 'load', label: 'Load Game', shortcut: 'l', disabled: !hasSave.value, action: loadGame },
+  { id: 'new', label: config.menu.new, shortcut: 'n', disabled: false, action: startNewGame },
+  {
+    id: 'load',
+    label: config.menu.load,
+    shortcut: 'l',
+    disabled: !hasSave.value,
+    action: loadGame,
+  },
 ])
 
 const { selectedIndex, onKeydown: navKeydown } = useKeyboardNav(menuItems, {

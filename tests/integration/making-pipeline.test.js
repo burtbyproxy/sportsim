@@ -970,6 +970,68 @@ describe('making pipeline', () => {
     expect(await at(13 * 4)).toMatchObject({ mediumId: 'karaoke', sourceKind: 'event' })
   })
 
+  // ── Every sentence the player reads is content ────────────────────────────
+
+  it('why not is a line from the voices, names the thing and never its id, and is said by whoever is in charge', async () => {
+    const ctx = karaokeNight({ money: 2 })
+    const { game } = ctx
+    const needsPaints = game.requirementReason({
+      code: 'requirement.item',
+      params: { itemId: 'grandmas_paints' },
+    })
+    expect(needsPaints).toBe(
+      voice('sober', 'requirement.item').replace('{item}', "Grandma's Watercolours")
+    )
+    expect(needsPaints).not.toContain('grandmas_paints')
+
+    // Drunk and broke at the machine: the price is quoted by the gangster, not by the engine.
+    const malt = karaokeNight({ doses: [{ substanceId: 'vodka', value: 80 }], money: 2 })
+    await pick(malt, 'Make something')
+    expect(entry(malt.game, 'tape rolling').unavailableReason).toBe(
+      voice('sober', 'requirement.money').replace('{cost}', '$5.00').replace('{money}', '$2.00')
+    )
+    const gangster = startGame({ at: 'lombard_dental' })
+    gangster.game.applyDoses({ doses: [{ substanceId: 'malt_liquor', value: 80 }] })
+    expect(
+      gangster.game.requirementReason({
+        code: 'requirement.money',
+        params: { cost: '$5.00', money: '$2.00' },
+      })
+    ).toBe(
+      voice('suburban_gangster', 'requirement.money')
+        .replace('{cost}', '$5.00')
+        .replace('{money}', '$2.00')
+    )
+  })
+
+  it('an action forced past a greyed-out menu says why in the log, in words from the voices', async () => {
+    const ctx = startGame()
+    const make = ctx.game.availableActions.find((a) => a.id === 'make_something')
+    expect(make.available).toBe(false)
+    await ctx.loop.resolvePlayerAction(make)
+    expect(await logOf(ctx.narrative)).toContain(voice('sober', 'requirement.inspiration'))
+    expect(ctx.game.makingPicker).toBeNull()
+  })
+
+  it('a new game is what content/game.json says it is', () => {
+    const config = JSON.parse(readFileSync(resolve('content/game.json'), 'utf-8'))
+    const player = createPlayer(config.start.playerName, {
+      ...config.start,
+      money: 11,
+      locationId: 'blue_parrot',
+      statRoll: { min: 33, max: 33 },
+      status: { hunger: 1, energy: 2, mood: 3, health: 4 },
+    })
+    expect(player.name).toBe(config.start.playerName)
+    expect(player.status).toMatchObject({ money: 11, hunger: 1, energy: 2, mood: 3, health: 4 })
+    expect(player.currentLocationId).toBe('blue_parrot')
+    expect(Object.values(player.stats).every((stat) => stat.base === 33)).toBe(true)
+    // And the file itself is the basement with a couple of bucks.
+    const shipped = createPlayer(config.start.playerName, config.start)
+    expect(shipped.status.money).toBe(config.start.money)
+    expect(shipped.currentLocationId).toBe(config.start.locationId)
+  })
+
   it('work caught mid-stroke by an older save is abandoned on load, not left unplayable', () => {
     const player = createPlayer('Old')
     player.makings = [

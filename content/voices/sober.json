@@ -61,6 +61,27 @@
     "game.singing.crowd.turning": "Somebody looks over the way you look at a car alarm.",
     "game.singing.pushed": "You let it out. It's louder than you expected. It's yours, though.",
     "game.singing.held": "You keep it under your breath, where it's safe and where it's still a song.",
-    "game.singing.bowed": "You trail off, and the quiet comes back like it was only waiting its turn."
+    "game.singing.bowed": "You trail off, and the quiet comes back like it was only waiting its turn.",
+    "requirement.stat": "That takes more {stat} than you've got.",
+    "requirement.item": "You'd need the {item} for that, and you don't have it.",
+    "requirement.money": "That's {cost}. You have {money}.",
+    "requirement.sobriety.min": "Not in this state.",
+    "requirement.sobriety.max": "You're far too sober for that.",
+    "requirement.hour.early": "Too early for that.",
+    "requirement.hour.late": "Too late for that.",
+    "requirement.visits": "Come back more often first.",
+    "requirement.trauma": "You haven't been through what that takes.",
+    "requirement.ability": "You don't know how. Yet.",
+    "requirement.inspiration": "Nothing is moving you.",
+    "requirement.time": "There isn't enough of the idea left for that.",
+    "requirement.busy": "You're in the middle of something.",
+    "requirement.closed": "Closed.",
+    "menu.making.abandon": "Walk away from it",
+    "menu.making.cancel": "Never mind",
+    "menu.making.ingredient.none": "Just that",
+    "menu.making.ingredient": "Work in the {ingredient}",
+    "menu.making.place": "right here",
+    "menu.making.plan": "{medium}: {tool}, {surface}",
+    "menu.making.plan.bare": "{medium}: {surface}"
   }
 }

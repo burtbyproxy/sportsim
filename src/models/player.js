@@ -45,37 +45,52 @@ function createStat(base) {
 // Public API
 // ---------------------------------------------------------------------------
 
+/**
+ * What a new player starts with when nobody says otherwise. The game itself
+ * says otherwise: content/game.json `start` is what a real new game uses.
+ */
+export const PLAYER_START_DEFAULTS = Object.freeze({
+  locationId: 'moms_house',
+  money: 2,
+  statRoll: Object.freeze({ min: 10, max: 20 }),
+  status: Object.freeze({ hunger: 50, energy: 70, mood: 40, health: 100 }),
+})
+
 /** A couple of bucks — what you have when you wake up in the basement. */
-export const START_MONEY = 2
+export const START_MONEY = PLAYER_START_DEFAULTS.money
 
 /**
  * Create a new Player with default starting values.
  * Stats are randomized slightly around starting ranges.
  *
  * @param {string} name
+ * @param {{ locationId?: string, money?: number, statRoll?: { min: number, max: number }, status?: Object<string, number> }} [start]
+ *   where, and with what, the player begins (content/game.json `start`)
  * @returns {import('./types').Player}
  */
-export function createPlayer(name) {
+export function createPlayer(name, start = PLAYER_START_DEFAULTS) {
+  const begin = { ...PLAYER_START_DEFAULTS, ...start }
+  const roll = () => createStat(randInt(begin.statRoll.min, begin.statRoll.max))
   return {
     id: uuidv4(),
     name,
     stats: {
-      stamina: createStat(randInt(10, 20)),
-      toughness: createStat(randInt(10, 20)),
-      wits: createStat(randInt(10, 20)),
-      creativity: createStat(randInt(10, 20)),
-      charm: createStat(randInt(10, 20)),
-      reputation: createStat(randInt(10, 20)),
-      luck: createStat(randInt(10, 20)),
-      karma: createStat(randInt(10, 20)),
+      stamina: roll(),
+      toughness: roll(),
+      wits: roll(),
+      creativity: roll(),
+      charm: roll(),
+      reputation: roll(),
+      luck: roll(),
+      karma: roll(),
     },
     status: {
-      hunger: 50,
+      hunger: begin.status.hunger,
       sobriety: sobrietyDerive({ intoxications: {} }),
-      energy: 70,
-      mood: 40,
-      health: 100,
-      money: START_MONEY,
+      energy: begin.status.energy,
+      mood: begin.status.mood,
+      health: begin.status.health,
+      money: begin.money,
     },
     /** Per-substance levels, 0–100, keyed by substance id. The source of truth for sobriety. */
     intoxications: {},
@@ -100,7 +115,7 @@ export function createPlayer(name) {
       abilities: [],
     },
     inventory: [],
-    currentLocationId: 'moms_house',
+    currentLocationId: begin.locationId,
     archetypeScores: {},
     counters: {},
     level: 1,

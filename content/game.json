@@ -1,0 +1,34 @@
+{
+  "id": "game",
+  "title": "SportSim",
+  "tagline": "Portland, Oregon. 2001. You are broke. You are talentless. You are in your mom's basement.",
+  "bootLines": [
+    "SPORTSIM v{version}",
+    "Portland Art Scene Simulation Engine",
+    "Loading city data...",
+    "Generating despair...",
+    "Calibrating poverty thresholds...",
+    "Ready.",
+    ""
+  ],
+  "menu": {
+    "new": "New Game",
+    "load": "Load Game"
+  },
+  "mapId": "kenton",
+  "start": {
+    "playerName": "You",
+    "locationId": "moms_house",
+    "money": 2,
+    "statRoll": {
+      "min": 10,
+      "max": 20
+    },
+    "status": {
+      "hunger": 50,
+      "energy": 70,
+      "mood": 40,
+      "health": 100
+    }
+  }
+}

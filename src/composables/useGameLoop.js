@@ -15,7 +15,12 @@
  */
 
 import { useGameStore } from '../stores/game.js'
-import { resolveAction, getAvailableActions, actionApplies } from '../engine/actions.js'
+import {
+  REQUIREMENT_CODES,
+  resolveAction,
+  getAvailableActions,
+  actionApplies,
+} from '../engine/actions.js'
 import {
   getStatDecayEffects,
   STAT_XP_CHECK_SUCCESS,
@@ -325,7 +330,9 @@ export function useGameLoop({
   /** What a thing is called on the menu. */
   function _surfaceName(plan) {
     if (plan.surfaceKind === MAKING_SURFACE_KINDS.ITEM) return game.getItem(plan.surfaceId).name
-    if (plan.surfaceKind === MAKING_SURFACE_KINDS.PLACE) return 'right here'
+    if (plan.surfaceKind === MAKING_SURFACE_KINDS.PLACE) {
+      return game.voiceLine({ code: 'menu.making.place' })
+    }
     return game.currentLocation.surfaces.find((s) => s.id === plan.surfaceId).name
   }
 
@@ -333,9 +340,12 @@ export function useGameLoop({
   function _planBlocked(plan) {
     if (plan.refusedReason) return plan.refusedReason
     if (!plan.affordable) {
-      return `Costs $${plan.cost.toFixed(2)} (you have $${game.playerMoney.toFixed(2)})`
+      return game.requirementReason({
+        code: REQUIREMENT_CODES.MONEY,
+        params: { cost: `$${plan.cost.toFixed(2)}`, money: `$${game.playerMoney.toFixed(2)}` },
+      })
     }
-    return plan.enoughTime ? null : 'There is not enough of the idea left for that'
+    return plan.enoughTime ? null : game.requirementReason({ code: REQUIREMENT_CODES.TIME })
   }
 
   /** A menu entry that is not a content action: the loop resolves it by kind. */
@@ -368,7 +378,11 @@ export function useGameLoop({
             data: { choiceId: choice.id },
           })
         ),
-        _makingEntry({ id: 'making_abandon', label: 'Walk away from it', kind: 'making_abandon' }),
+        _makingEntry({
+          id: 'making_abandon',
+          label: game.voiceLine({ code: 'menu.making.abandon' }),
+          kind: 'making_abandon',
+        }),
       ]
     }
     const picker = game.makingPicker
@@ -385,7 +399,11 @@ export function useGameLoop({
       game.makingPickerSet({ picker: null })
       return null
     }
-    const cancel = _makingEntry({ id: 'making_cancel', label: 'Never mind', kind: 'making_cancel' })
+    const cancel = _makingEntry({
+      id: 'making_cancel',
+      label: game.voiceLine({ code: 'menu.making.cancel' }),
+      kind: 'making_cancel',
+    })
 
     if (picker.step === 'ingredient') {
       const choose = (ingredientItemId, label) =>
@@ -396,9 +414,15 @@ export function useGameLoop({
           data: { ingredientItemId },
         })
       return [
-        choose(null, 'Just that'),
+        choose(null, game.voiceLine({ code: 'menu.making.ingredient.none' })),
         ...options.data.ingredientItemIds.map((itemId) =>
-          choose(itemId, `Work in the ${game.getItem(itemId).name}`)
+          choose(
+            itemId,
+            game.voiceLine({
+              code: 'menu.making.ingredient',
+              params: { ingredient: game.getItem(itemId).name },
+            })
+          )
         ),
         cancel,
       ]
@@ -407,10 +431,17 @@ export function useGameLoop({
     return [
       ...options.data.plans.map((plan) => {
         const medium = game.mediums[plan.mediumId]
-        const tool = plan.toolItemId ? `${game.getItem(plan.toolItemId).name}, ` : ''
+        const label = game.voiceLine({
+          code: plan.toolItemId ? 'menu.making.plan' : 'menu.making.plan.bare',
+          params: {
+            medium: medium.display,
+            tool: plan.toolItemId ? game.getItem(plan.toolItemId).name : '',
+            surface: _surfaceName(plan),
+          },
+        })
         return _makingEntry({
           id: `making_plan_${plan.mediumId}_${plan.toolItemId ?? 'none'}_${plan.surfaceKind}_${plan.surfaceId}`,
-          label: `${medium.display}: ${tool}${_surfaceName(plan)}`,
+          label,
           kind: 'making_plan',
           timeCost: plan.ticksTotal,
           available: !_planBlocked(plan),
@@ -549,7 +580,9 @@ export function useGameLoop({
     _narrativeEnqueue(generateActionNarrative(result))
 
     if (!result.success && result.requirementFailure) {
-      // Requirements not met — shouldn't happen if menu is correct, but handle gracefully
+      // Requirements not met — shouldn't happen if the menu is correct, but say why.
+      const why = game.requirementReason(result.requirementFailure)
+      if (narrative && why) _narrativeEnqueue(toNarrativeText(why, { style: 'italic' }))
       return
     }
 

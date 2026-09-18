@@ -142,7 +142,11 @@ describe('exitMeetsRequirements', () => {
 
   it('an exit with no requirements is always open', () => {
     const exit = { locationId: 'park', requirements: null };
-    expect(exitMeetsRequirements({ exit, player, gameTime })).toEqual({ meets: true, reason: null });
+    expect(exitMeetsRequirements({ exit, player, gameTime })).toEqual({
+      meets: true,
+      reasonCode: null,
+      reasonParams: {},
+    });
   });
 
   it('an item requirement the player satisfies passes', () => {
@@ -154,7 +158,8 @@ describe('exitMeetsRequirements', () => {
     const exit = { locationId: 'downtown', requirements: { requiredItems: ['car_keys'] } };
     const result = exitMeetsRequirements({ exit, player, gameTime });
     expect(result.meets).toBe(false);
-    expect(result.reason).toContain('car_keys');
+    expect(result.reasonCode).toBe('requirement.item');
+    expect(result.reasonParams).toEqual({ itemId: 'car_keys' });
   });
 
   it('a stat requirement is judged against the base stat', () => {

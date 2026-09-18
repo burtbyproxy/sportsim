@@ -7,22 +7,50 @@ import { rollCheck, rollContested } from './dice.js'
 import { inspirationActive } from './inspiration.js'
 
 /**
+ * Why an action cannot be taken. Each is a voice code: the sentence the
+ * player reads lives in content/voices, in the voice of whoever is in charge.
+ */
+export const REQUIREMENT_CODES = Object.freeze({
+  STAT: 'requirement.stat',
+  ITEM: 'requirement.item',
+  MONEY: 'requirement.money',
+  SOBRIETY_MIN: 'requirement.sobriety.min',
+  SOBRIETY_MAX: 'requirement.sobriety.max',
+  HOUR_EARLY: 'requirement.hour.early',
+  HOUR_LATE: 'requirement.hour.late',
+  VISITS: 'requirement.visits',
+  TRAUMA: 'requirement.trauma',
+  ABILITY: 'requirement.ability',
+  INSPIRATION: 'requirement.inspiration',
+  TIME: 'requirement.time',
+  BUSY: 'requirement.busy',
+  CLOSED: 'requirement.closed',
+})
+
+const _MET = Object.freeze({ meets: true, reasonCode: null, reasonParams: {} })
+
+function _refuse(reasonCode, reasonParams = {}) {
+  return { meets: false, reasonCode, reasonParams }
+}
+
+/**
  * Checks whether a player meets the requirements for an action.
  * @param {Object} player - Player per data contract
  * @param {Object} action - Action per data contract
  * @param {Object} gameTime - GameTime per data contract
- * @returns {{ meets: boolean, reason: string|null }}
+ * @returns {{ meets: boolean, reasonCode: string|null, reasonParams: Object<string, string> }}
+ *   reasonCode — a voice code (content/voices) for why not; the words are content, never this module's.
  */
 export function meetsRequirements(player, action, gameTime) {
   const req = action.requirements
-  if (!req) return { meets: true, reason: null }
+  if (!req) return _MET
 
   // Stat requirements
   if (req.minStats) {
     for (const [stat, minVal] of Object.entries(req.minStats)) {
       const base = player.stats?.[stat]?.base ?? 0
       if (base < minVal) {
-        return { meets: false, reason: `Requires ${stat} ${minVal} (you have ${base})` }
+        return _refuse(REQUIREMENT_CODES.STAT, { stat })
       }
     }
   }
@@ -32,7 +60,7 @@ export function meetsRequirements(player, action, gameTime) {
     for (const itemId of req.requiredItems) {
       const hasItem = player.inventory?.some((i) => i.id === itemId && i.quantity > 0)
       if (!hasItem) {
-        return { meets: false, reason: `Requires item: ${itemId}` }
+        return _refuse(REQUIREMENT_CODES.ITEM, { itemId })
       }
     }
   }
@@ -41,28 +69,28 @@ export function meetsRequirements(player, action, gameTime) {
   if (req.minMoney !== null && req.minMoney !== undefined) {
     const money = player.status?.money ?? 0
     if (money < req.minMoney) {
-      return {
-        meets: false,
-        reason: `Costs $${req.minMoney.toFixed(2)} (you have $${money.toFixed(2)})`,
-      }
+      return _refuse(REQUIREMENT_CODES.MONEY, {
+        cost: `$${req.minMoney.toFixed(2)}`,
+        money: `$${money.toFixed(2)}`,
+      })
     }
   }
 
   // Sobriety requirements
   const sobriety = player.status?.sobriety ?? 100
   if (req.minSobriety !== null && req.minSobriety !== undefined && sobriety < req.minSobriety) {
-    return { meets: false, reason: `Requires sobriety at least ${req.minSobriety}` }
+    return _refuse(REQUIREMENT_CODES.SOBRIETY_MIN)
   }
   if (req.maxSobriety !== null && req.maxSobriety !== undefined && sobriety > req.maxSobriety) {
-    return { meets: false, reason: `Requires sobriety no more than ${req.maxSobriety}` }
+    return _refuse(REQUIREMENT_CODES.SOBRIETY_MAX)
   }
 
   // Time of day requirements
   if (req.minHour !== null && req.minHour !== undefined && gameTime.hour < req.minHour) {
-    return { meets: false, reason: `Not available before ${req.minHour}:00` }
+    return _refuse(REQUIREMENT_CODES.HOUR_EARLY)
   }
   if (req.maxHour !== null && req.maxHour !== undefined && gameTime.hour >= req.maxHour) {
-    return { meets: false, reason: `Not available after ${req.maxHour}:00` }
+    return _refuse(REQUIREMENT_CODES.HOUR_LATE)
   }
 
   // Visit count requirements
@@ -70,7 +98,7 @@ export function meetsRequirements(player, action, gameTime) {
     const locationData = player._locationData // visit counts injected by store if needed
     const visits = locationData?.visitCount ?? 0
     if (visits < req.minVisits) {
-      return { meets: false, reason: `Come back more often first` }
+      return _refuse(REQUIREMENT_CODES.VISITS)
     }
   }
 
@@ -79,14 +107,14 @@ export function meetsRequirements(player, action, gameTime) {
     const playerTraumaIds = player.psyche?.traumas?.map((t) => t.id) ?? []
     for (const traumaId of req.requiredTraumas) {
       if (!playerTraumaIds.includes(traumaId)) {
-        return { meets: false, reason: `Requires trauma: ${traumaId}` }
+        return _refuse(REQUIREMENT_CODES.TRAUMA, { traumaId })
       }
     }
   }
 
   // Inspiration — some things cannot be done cold
   if (req.requiresInspiration && !inspirationActive({ player })) {
-    return { meets: false, reason: 'Nothing is moving you' }
+    return _refuse(REQUIREMENT_CODES.INSPIRATION)
   }
 
   // Ability requirements
@@ -94,12 +122,12 @@ export function meetsRequirements(player, action, gameTime) {
     const playerAbilityIds = player.psyche?.abilities?.map((a) => a.id) ?? []
     for (const abilityId of req.requiredAbilities) {
       if (!playerAbilityIds.includes(abilityId)) {
-        return { meets: false, reason: `Requires ability: ${abilityId}` }
+        return _refuse(REQUIREMENT_CODES.ABILITY, { abilityId })
       }
     }
   }
 
-  return { meets: true, reason: null }
+  return _MET
 }
 
 /**
@@ -197,17 +225,17 @@ function _selectOutcome(action, diceResult) {
  * @param {Object} gameTime
  * @param {Object[]} npcs - NPCs present at the location
  * @param {(() => number)} [rng=Math.random]
- * @returns {{ success: boolean, outcome: Object, diceResult: Object|null, requirementFailure: string|null }}
+ * @returns {{ success: boolean, outcome: Object, diceResult: Object|null, requirementFailure: { code: string, params: Object }|null }}
  */
 export function resolveAction(player, action, gameTime, npcs = [], rng = Math.random) {
   // Check requirements first
-  const { meets, reason } = meetsRequirements(player, action, gameTime)
+  const { meets, reasonCode, reasonParams } = meetsRequirements(player, action, gameTime)
   if (!meets) {
     return {
       success: false,
       outcome: null,
       diceResult: null,
-      requirementFailure: reason,
+      requirementFailure: { code: reasonCode, params: reasonParams },
     }
   }
 
