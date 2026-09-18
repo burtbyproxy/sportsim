@@ -8,6 +8,17 @@
  */
 import { wrap } from 'comlink'
 
+/**
+ * Strip reactive proxies, getters, and functions so the value can cross the
+ * structured-clone boundary into the worker. The store hands us Pinia proxies;
+ * postMessage refuses them with DataCloneError and the whole tick is lost.
+ * @param {unknown} value
+ * @returns {unknown} a plain, clone-safe copy
+ */
+export function toPlainSnapshot(value) {
+  return JSON.parse(JSON.stringify(value))
+}
+
 let _worker = null
 let _sim = null
 
@@ -32,7 +43,7 @@ export const sim = {
    * }>}
    */
   tick(gameTime, characters = []) {
-    return getWorker().tick(gameTime, characters)
+    return getWorker().tick(toPlainSnapshot(gameTime), toPlainSnapshot(characters))
   },
 
   /**
