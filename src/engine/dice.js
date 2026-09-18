@@ -78,19 +78,33 @@ export function rollD20(rng = Math.random) {
 }
 
 /**
- * Calculates the total modifier for a stat check, taking into account:
+ * Stats live on a 1–100 scale: a starting player rolls 10–20, the locals
+ * sit anywhere from 25 to 85, and 100 is mastery. A check adds one point
+ * of modifier to a d20 for every ten points of effective stat, so the
+ * difficulty scale reads like any d20 game:
+ *
+ *   DC  5  trivial      DC 10  easy for anyone
+ *   DC 15  hard for a beginner, routine for a pro
+ *   DC 20  a pro's good day     DC 25  legendary
+ *
+ * A fresh player (+1 or +2) passes DC 10 a little over half the time and
+ * DC 15 about a third of the time. Maurice's charm (85, so +8) passes
+ * DC 15 seven times in ten.
+ */
+export const STAT_POINTS_PER_MODIFIER = 10
+
+/**
+ * The effective value of a stat on the 1–100 scale, taking into account:
  * - Base stat value
  * - Active modifiers on the stat
  * - Altered state effects (drunk, exhausted, starving, etc.)
  * - Active abilities' dice modifiers
  * - Trauma effects
  *
- * @param {import('../utils/text.js')} _ - unused, typed for context
- * @param {Object} player - Player object per data contract
- * @param {string} statName - e.g. "charm", "wits"
+ * @param {{ player: Object, statName: string }} input - player per data contract; stat e.g. "charm"
  * @returns {number}
  */
-export function calculateModifier(player, statName) {
+export function statEffective({ player, statName }) {
   let total = 0
 
   // Base stat value
@@ -127,6 +141,17 @@ export function calculateModifier(player, statName) {
   }
 
   return total
+}
+
+/**
+ * The number added to a d20 for a check on this stat: one per ten points of
+ * effective stat, on the 1–100 scale, never below 0 or above 10.
+ * @param {{ player: Object, statName: string }} input
+ * @returns {number}
+ */
+export function checkModifier({ player, statName }) {
+  const effective = Math.max(0, Math.min(100, statEffective({ player, statName })))
+  return Math.floor(effective / STAT_POINTS_PER_MODIFIER)
 }
 
 /**
@@ -204,7 +229,7 @@ export function isCriticalFailure(natural) {
  */
 export function rollCheck(player, statName, modifiers, dc, rng = Math.random) {
   const natural = rollD20(rng)
-  const statModifier = calculateModifier(player, statName)
+  const statModifier = checkModifier({ player, statName })
   const extraModifiers = modifiers.reduce((sum, m) => sum + m, 0)
   const totalModifier = statModifier + extraModifiers
   const total = natural + totalModifier
