@@ -627,34 +627,94 @@ describe('making pipeline', () => {
     )
   })
 
-  it('karaoke is only on at karaoke night, and the machine hands you a tape', async () => {
+  /** At the Blue Parrot at nine on karaoke night, moved to sing, with this in you and this in your pocket. */
+  function karaokeNight({ doses = [], money = 0, rng = sequence(die(15)) } = {}) {
+    const ctx = startGame({ at: 'blue_parrot', rng })
+    ctx.game.advanceTime(13 * 4)
+    ctx.game.player.status.money = money
+    if (doses.length > 0) ctx.game.applyDoses({ doses })
+    strike(ctx.game, { mediumId: 'karaoke', ticksTotal: 8 })
+    ctx.loop.onLocationEntered()
+    return ctx
+  }
+  const entry = (game, text) => game.availableActions.find((a) => a.label.includes(text))
+
+  it('karaoke is only on at karaoke night', async () => {
     const ctx = startGame({ at: 'blue_parrot' })
-    const { game } = ctx
-    strike(game, { mediumId: 'karaoke', ticksTotal: 8 })
+    strike(ctx.game, { mediumId: 'karaoke', ticksTotal: 8 })
     ctx.loop.onLocationEntered()
     await pick(ctx, 'Make something')
     // Eight in the morning: the corner by the jukebox, but no machine.
-    expect(labels(game)).toContain('Performance')
-    expect(labels(game)).not.toContain('Karaoke')
-    await pick(ctx, 'Never mind')
+    expect(labels(ctx.game)).toContain('Performance')
+    expect(labels(ctx.game)).not.toContain('Karaoke')
 
-    game.advanceTime(13 * 4)
-    expect(game.time.hour).toBe(21)
-    strike(game, { mediumId: 'karaoke', ticksTotal: 8 })
-    ctx.loop.onLocationEntered()
+    const night = karaokeNight()
+    expect(night.game.time.hour).toBe(21)
+    await pick(night, 'Make something')
+    expect(labels(night.game)).toContain('Karaoke: the karaoke machine')
+  })
+
+  it('sober, nobody is getting you up there: it is on the menu, greyed out, and says so', async () => {
+    const ctx = karaokeNight({ money: 20 })
+    expect(ctx.game.personaInCharge).toBe('sober')
     await pick(ctx, 'Make something')
-    await pick(ctx, 'Karaoke: the karaoke machine')
-    // The room starts warm, and you are told so.
-    expect(await logOf(ctx.narrative)).toContain(voice('sober', 'game.karaoke.crowd.warm'))
-    await pick(ctx, 'Go for the big note')
-    await pick(ctx, 'Hand back the mic')
+    const refusal = medium('karaoke').making.refusals.find((r) => r.personaId === 'sober').reason
+    for (const plan of ctx.game.availableActions.filter((a) => a.label.startsWith('Karaoke'))) {
+      expect(plan.available).toBe(false)
+      expect(plan.unavailableReason).toBe(refusal)
+    }
+    // Refused at the boundary too: forcing the entry starts nothing and costs nothing.
+    await ctx.loop.resolvePlayerAction(entry(ctx.game, 'tape rolling'))
+    expect(ctx.game.makingActive).toBeNull()
+    expect(ctx.game.playerMoney).toBe(20)
+  })
 
-    expect(game.locations.blue_parrot.marks).toHaveLength(0)
-    expect(game.player.portfolio).toHaveLength(1)
-    expect(game.player.portfolio[0]).toMatchObject({ mediumId: 'karaoke', kind: 'portable' })
-    expect(game.player.portfolio[0].workText).toContain('a karaoke number')
-    const played = game.player.experiences[0].check.modifierItems.find((m) => m.sourceId === 'game')
-    expect(played.value).toBe(1)
+  it('the tape is five bucks up front, and broke you sing for nothing', async () => {
+    const vodka = [{ substanceId: 'vodka', value: 80 }]
+    const broke = karaokeNight({ doses: vodka, money: 2 })
+    await pick(broke, 'Make something')
+    expect(entry(broke.game, 'tape rolling').available).toBe(false)
+    expect(entry(broke.game, 'tape rolling').unavailableReason).toContain('5.00')
+    await pick(broke, 'Karaoke: the karaoke machine')
+    await pick(broke, 'Hand back the mic')
+    // You did it. There is nothing to show for it, on the wall or in your pockets.
+    expect(broke.game.player.experiences).toHaveLength(1)
+    expect(broke.game.player.portfolio).toHaveLength(0)
+    expect(broke.game.locations.blue_parrot.marks).toHaveLength(0)
+    expect(broke.game.playerMoney).toBe(2)
+
+    const flush = karaokeNight({ doses: vodka, money: 7 })
+    await pick(flush, 'Make something')
+    await pick(flush, 'tape rolling')
+    expect(flush.game.playerMoney).toBe(2)
+    await pick(flush, 'Hand back the mic')
+    expect(flush.game.player.portfolio).toHaveLength(1)
+    expect(flush.game.player.portfolio[0]).toMatchObject({ mediumId: 'karaoke', kind: 'portable' })
+    expect(flush.game.player.portfolio[0].workText).toContain('on a tape of a tape of a tape')
+    expect(flush.game.locations.blue_parrot.marks).toHaveLength(0)
+  })
+
+  it('in your head it is always sing song real good; the room reports what whoever you are actually did', async () => {
+    const heard = async (substanceId) => {
+      const ctx = karaokeNight({ doses: [{ substanceId, value: 80 }] })
+      await pick(ctx, 'Make something')
+      await pick(ctx, 'Karaoke: the karaoke machine')
+      // The menu is the inner mind, whoever is in charge.
+      expect(labels(ctx.game)).toContain('Sing song real good')
+      const persona = ctx.game.personaInCharge
+      await ctx.loop.resolvePlayerAction(entry(ctx.game, 'Sing song real good'))
+      return { persona, log: await logOf(ctx.narrative) }
+    }
+    const vodka = await heard('vodka')
+    expect(vodka.persona).toBe('host')
+    expect(vodka.log).toContain(voice('host', 'game.karaoke.pushed'))
+    const beer = await heard('beer')
+    expect(beer.persona).toBe('one_of_the_guys')
+    expect(beer.log).toContain(voice('one_of_the_guys', 'game.karaoke.pushed'))
+    const malt = await heard('malt_liquor')
+    expect(malt.persona).toBe('suburban_gangster')
+    expect(malt.log).toContain(voice('suburban_gangster', 'game.karaoke.pushed'))
+    expect(new Set([vodka.log, beer.log, malt.log]).size).toBe(3)
   })
 
   it('DLC: mime arrives as content alone — a medium, a game, a place to do it, and nothing else', async () => {

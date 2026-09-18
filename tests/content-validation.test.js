@@ -230,8 +230,12 @@ function validateLocation(data, file) {
     surfaceIds.add(surface.id);
     expect(Array.isArray(surface.mediumIds), `${file} '${surface.id}': mediumIds must be array`).toBe(true);
     expect(surface.mediumIds.length, `${file} '${surface.id}': a surface must take at least one medium`).toBeGreaterThan(0);
-    if (surface.portable !== undefined) {
-      expect(typeof surface.portable, `${file} '${surface.id}': portable must be boolean`).toBe('boolean');
+    if (surface.artifact !== undefined) {
+      expect(['fixed', 'portable', 'none'], `${file} '${surface.id}': artifact '${surface.artifact}'`).toContain(surface.artifact);
+    }
+    if (surface.cost !== undefined) {
+      expect(typeof surface.cost, `${file} '${surface.id}': cost must be number`).toBe('number');
+      expect(surface.cost, `${file} '${surface.id}': cost must be > 0`).toBeGreaterThan(0);
     }
     if (surface.hours !== undefined) {
       for (const key of ['openHour', 'closeHour']) {
@@ -544,6 +548,11 @@ function validateMedium(data, file) {
   }
   if (making.takesIngredient) {
     expect(making.toolRequired, `${file}: an ingredient needs a tool to work it in`).toBe(true);
+  }
+  for (const refusal of making.refusals ?? []) {
+    expect(typeof refusal.personaId, `${file}: refusal.personaId must be string`).toBe('string');
+    expect(typeof refusal.reason, `${file}: a refusal says why`).toBe('string');
+    expect(refusal.reason.length, `${file}: a refusal says why`).toBeGreaterThan(0);
   }
   for (const [key, delta] of Object.entries(making.statusChanges ?? {})) {
     expect(VALID_STATUS_KEYS, `${file}: making.statusChanges '${key}' is not a status`).toContain(key);
@@ -969,6 +978,9 @@ describe('content/games/*.json — Minigame contract', () => {
   for (const { file, data } of loadJsonFiles(join(CONTENT_ROOT, 'mediums'))) {
     it(`${file}: gameId '${data.making?.gameId}' is a game`, () => {
       expect(gameIds.has(data.making?.gameId), `${file}: unknown game '${data.making?.gameId}'`).toBe(true);
+      for (const refusal of data.making?.refusals ?? []) {
+        expect(personaIds.has(refusal.personaId), `${file}: refusal names unknown persona '${refusal.personaId}'`).toBe(true);
+      }
     });
   }
 });

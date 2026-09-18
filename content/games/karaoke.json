@@ -1,7 +1,7 @@
 {
   "id": "karaoke",
   "shape": "read_room",
-  "description": "Karaoke is a song everybody knows and a room deciding about you. Go for the big note when they're with you.",
+  "description": "In your head it is always the same plan: sing song real good. The room reports what actually happened.",
   "sittingTicks": 1,
   "params": {
     "crowdStart": "warm",
@@ -115,10 +115,10 @@
   },
   "choices": {
     "push": {
-      "label": "Go for the big note"
+      "label": "Sing song real good"
     },
     "hold": {
-      "label": "Stay in your range"
+      "label": "Sing song real good lol"
     },
     "bow": {
       "label": "Hand back the mic"

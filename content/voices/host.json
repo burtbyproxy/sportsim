@@ -1,0 +1,7 @@
+{
+  "id": "host",
+  "lines": {
+    "game.karaoke.pushed": "You've left the stage. You're working the room with the mic, asking people how their night's going while the song plays on without you. The cord runs out at the pool table.",
+    "game.karaoke.held": "You hold the mic out to a booth so they can sing it. They don't want to. You wait. The song doesn't."
+  }
+}

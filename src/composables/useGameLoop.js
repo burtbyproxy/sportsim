@@ -324,6 +324,15 @@ export function useGameLoop({
     return game.currentLocation.surfaces.find((s) => s.id === plan.surfaceId).name
   }
 
+  /** Why a plan cannot be started, or null when it can. */
+  function _planBlocked(plan) {
+    if (plan.refusedReason) return plan.refusedReason
+    if (!plan.affordable) {
+      return `Costs $${plan.cost.toFixed(2)} (you have $${game.playerMoney.toFixed(2)})`
+    }
+    return plan.enoughTime ? null : 'There is not enough of the idea left for that'
+  }
+
   /** A menu entry that is not a content action: the loop resolves it by kind. */
   function _makingEntry({ id, label, kind, timeCost = 0, available = true, reason = null, data }) {
     return { id, label, kind, timeCost, weight: 0, available, unavailableReason: reason, ...data }
@@ -399,8 +408,8 @@ export function useGameLoop({
           label: `${medium.display}: ${tool}${_surfaceName(plan)}`,
           kind: 'making_plan',
           timeCost: plan.ticksTotal,
-          available: plan.enoughTime,
-          reason: plan.enoughTime ? null : 'There is not enough of the idea left for that',
+          available: !_planBlocked(plan),
+          reason: _planBlocked(plan),
           data: { plan, ingredientsOffered: medium.making.takesIngredient },
         })
       }),

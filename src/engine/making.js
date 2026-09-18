@@ -40,6 +40,8 @@ export const MAKING_ERROR_CODES = Object.freeze({
   SURFACE_INVALID: 'SURFACE_INVALID',
   INGREDIENT_INVALID: 'INGREDIENT_INVALID',
   TIME_SHORT: 'TIME_SHORT',
+  MONEY_SHORT: 'MONEY_SHORT',
+  PERSONA_REFUSES: 'PERSONA_REFUSES',
   TICKS_INVALID: 'TICKS_INVALID',
   WORK_UNFINISHED: 'WORK_UNFINISHED',
   REASON_INVALID: 'REASON_INVALID',
@@ -56,6 +58,17 @@ export const MAKING_STATUSES = Object.freeze({
 export const MAKING_SURFACE_KINDS = Object.freeze({
   ITEM: 'item',
   LOCATION: 'location',
+})
+
+/**
+ * What working on a surface the place offers leaves behind. A wall keeps the
+ * piece (fixed, the default). Some hand you something to carry: the tape from
+ * the recorder over the karaoke machine. Some keep nothing at all.
+ */
+export const SURFACE_ARTIFACTS = Object.freeze({
+  FIXED: 'fixed',
+  PORTABLE: 'portable',
+  NONE: 'none',
 })
 
 /** How a finished piece came out. Words, never a number. */
@@ -163,6 +176,16 @@ function _surfaceFind({ player, location, items, surfaceKind, surfaceId, gameTim
   return null
 }
 
+/**
+ * Whoever is in charge may flatly refuse a form: sober, nobody is getting you
+ * up there. Returns the reason, or null.
+ */
+function _refusal({ player, medium }) {
+  const personaId = (player.blend ?? blendSober()).dominantPersonaId
+  const refusal = (medium.making.refusals ?? []).find((r) => r.personaId === personaId)
+  return refusal ? refusal.reason : null
+}
+
 function _tierFrom(check) {
   if (check.criticalFailure) return MAKING_TIERS.BOTCHED
   if (check.criticalSuccess) return MAKING_TIERS.INSPIRED
@@ -187,12 +210,14 @@ export function makingActive({ player }) {
  * Everything the player could make right here, right now: one plan per
  * medium × tool × surface that fit together, from what they carry and what
  * the place offers, and the ingredients they could work in. Plans in the
- * medium the idea asked for come first. A plan the idea will not outlast is
- * listed with enoughTime false.
+ * medium the idea asked for come first. A plan that cannot be started is
+ * still listed, and says why: the idea will not outlast it (enoughTime), the
+ * place wants money the player does not have (affordable), or whoever is in
+ * charge refuses the form outright (refusedReason).
  *
  * @param {{ player: Object, location: Object, items: Object<string, Object>, mediums: Object<string, Object>, gameTime: { hour: number } }} input
  * @returns {{ ok: boolean, data: {
- *   plans: { mediumId: string, toolItemId: string|null, surfaceKind: string, surfaceId: string, ticksTotal: number, enoughTime: boolean }[],
+ *   plans: { mediumId: string, toolItemId: string|null, surfaceKind: string, surfaceId: string, ticksTotal: number, enoughTime: boolean, cost: number, affordable: boolean, refusedReason: string|null }[],
  *   ingredientItemIds: string[],
  * }|null, error: Object|null }}
  */
@@ -223,16 +248,26 @@ export function makingOptions({ player, location, items = {}, mediums = {}, game
       ...(location.surfaces ?? [])
         .filter((s) => _takesMedium({ thing: s, mediumId: medium.id }))
         .filter((s) => _surfaceOpen({ surface: s, gameTime }))
-        .map((s) => ({ surfaceKind: MAKING_SURFACE_KINDS.LOCATION, surfaceId: s.id })),
+        .map((s) => ({
+          surfaceKind: MAKING_SURFACE_KINDS.LOCATION,
+          surfaceId: s.id,
+          cost: s.cost ?? 0,
+        })),
     ]
+    const refusedReason = _refusal({ player, medium })
     for (const toolItemId of toolIds) {
       for (const surface of surfaces) {
+        const cost = surface.cost ?? 0
         plans.push({
           mediumId: medium.id,
           toolItemId,
-          ...surface,
+          surfaceKind: surface.surfaceKind,
+          surfaceId: surface.surfaceId,
           ticksTotal: medium.making.ticksTotal,
           enoughTime: inspiration.ticksRemaining > medium.making.ticksTotal,
+          cost,
+          affordable: (player.status?.money ?? 0) >= cost,
+          refusedReason,
         })
       }
     }
@@ -262,7 +297,8 @@ export function makingOptions({ player, location, items = {}, mediums = {}, game
  *   gameTime: { tick: number, hour: number },
  * }} input
  *   gameState — the opening state of the medium's game (engine/minigame.js), kept on the record.
- * @returns {{ ok: boolean, data: { makings: Object[], making: Object, itemIdsConsumed: string[] }|null, error: Object|null }}
+ * @returns {{ ok: boolean, data: { makings: Object[], making: Object, itemIdsConsumed: string[], moneyCost: number }|null, error: Object|null }}
+ *   moneyCost — what the surface charges, paid up front: five bucks to have the tape rolling.
  */
 export function makingStart({
   player,
@@ -338,6 +374,12 @@ export function makingStart({
   if (inspiration.ticksRemaining <= medium.making.ticksTotal) {
     return _fail(MAKING_ERROR_CODES.TIME_SHORT, 'The idea will not last as long as the work')
   }
+  const refusedReason = _refusal({ player, medium })
+  if (refusedReason) return _fail(MAKING_ERROR_CODES.PERSONA_REFUSES, refusedReason)
+  const moneyCost = surfaceKind === MAKING_SURFACE_KINDS.LOCATION ? (surface.cost ?? 0) : 0
+  if ((player.status?.money ?? 0) < moneyCost) {
+    return _fail(MAKING_ERROR_CODES.MONEY_SHORT, `That costs ${moneyCost} and the player is short`)
+  }
 
   const tick = gameTime?.tick ?? 0
   const making = {
@@ -362,7 +404,12 @@ export function makingStart({
   if (surfaceKind === MAKING_SURFACE_KINDS.ITEM) itemIdsConsumed.push(surfaceId)
   if (ingredientItemId !== null) itemIdsConsumed.push(ingredientItemId)
 
-  return _ok({ makings: [..._copies(player), making], making: { ...making }, itemIdsConsumed })
+  return _ok({
+    makings: [..._copies(player), making],
+    making: { ...making },
+    itemIdsConsumed,
+    moneyCost,
+  })
 }
 
 /**
@@ -486,11 +533,19 @@ export function makingFinish({
   const tick = gameTime?.tick ?? 0
   const blend = player.blend ?? blendSober()
   const experienceId = uuidv4()
-  const leavesArtifact = medium.making.leavesArtifact && tier !== MAKING_TIERS.BOTCHED
-  // A wall keeps what is made on it. A surface the place marks portable hands
-  // you something to carry: the tape from the recorder over the karaoke machine.
+  // Something carried is carried away. What a place offers decides for itself
+  // what it leaves: a wall keeps the piece, the karaoke machine with the tape
+  // rolling hands you a tape, and the machine on its own keeps nothing.
   const placed = (location.surfaces ?? []).find((s) => s.id === making.surfaceId)
-  const fixed = making.surfaceKind === MAKING_SURFACE_KINDS.LOCATION && !placed?.portable
+  const leaves =
+    making.surfaceKind === MAKING_SURFACE_KINDS.ITEM
+      ? SURFACE_ARTIFACTS.PORTABLE
+      : (placed?.artifact ?? SURFACE_ARTIFACTS.FIXED)
+  const fixed = leaves === SURFACE_ARTIFACTS.FIXED
+  const leavesArtifact =
+    medium.making.leavesArtifact &&
+    leaves !== SURFACE_ARTIFACTS.NONE &&
+    tier !== MAKING_TIERS.BOTCHED
 
   const artifact = leavesArtifact
     ? {

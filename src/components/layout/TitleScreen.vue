@@ -101,7 +101,7 @@ onMounted(() => {
 })
 
 const bootLines = [
-  'SPORTSIM v0.10.0',
+  'SPORTSIM v0.11.0',
   'Portland Art Scene Simulation Engine',
   'Loading city data...',
   'Generating despair...',
