@@ -3,6 +3,7 @@
   "type": "bar",
   "variant": "tavern",
   "display": "Mock's Crest Tavern",
+  "pieceAs": "at Mock's Crest",
   "descriptions": {
     "default": "Mock's Crest is always busier than it has any right to be. The drinks cost a little more than the Parrot but they pour heavy and nobody tracks how many you've had. There's a taxidermied elk head above the bar that somebody put a Santa hat on around 1994. The hat is still there. The bar is lined with video poker machines that blink and chirp and eat money with a patience that borders on malice. The food is good. The service is good. This is a professional operation.",
     "night": "By ten o'clock the volume has reached a point where conversation is a theory. Everybody is shouting. Nobody is listening. The video poker machines don't care. The elk watches all of it with the same expression. Poker night fills the back tables. The regulars have nicknames — not the ones they gave themselves, the ones Dale put in the register.",

@@ -58,6 +58,8 @@ export const MAKING_STATUSES = Object.freeze({
 export const MAKING_SURFACE_KINDS = Object.freeze({
   ITEM: 'item',
   LOCATION: 'location',
+  /** No surface but where you are standing: a form that can be done anywhere. */
+  PLACE: 'place',
 })
 
 /**
@@ -254,6 +256,10 @@ export function makingOptions({ player, location, items = {}, mediums = {}, game
           cost: s.cost ?? 0,
         })),
     ]
+    // A form that can be done anywhere needs nothing but the ground under you.
+    if (medium.making.anywhere) {
+      surfaces.push({ surfaceKind: MAKING_SURFACE_KINDS.PLACE, surfaceId: location.id, cost: 0 })
+    }
     const refusedReason = _refusal({ player, medium })
     for (const toolItemId of toolIds) {
       for (const surface of surfaces) {
@@ -348,7 +354,12 @@ export function makingStart({
     return _fail(MAKING_ERROR_CODES.TOOL_INVALID, `${medium.id} takes no tool`)
   }
 
-  const surface = _surfaceFind({ player, location, items, surfaceKind, surfaceId, gameTime })
+  const surface =
+    surfaceKind === MAKING_SURFACE_KINDS.PLACE
+      ? medium.making.anywhere && surfaceId === location.id
+        ? { id: location.id, mediumIds: [medium.id] }
+        : null
+      : _surfaceFind({ player, location, items, surfaceKind, surfaceId, gameTime })
   if (!surface || !_takesMedium({ thing: surface, mediumId: medium.id })) {
     return _fail(
       MAKING_ERROR_CODES.SURFACE_INVALID,
@@ -469,7 +480,10 @@ export function makingWork({ player, ticksWorked, gameState, workDone = false, g
  *   experience: Object,
  *   artifact: Object|null,
  *   markIdsCovered: string[],
+ *   encore: { mediumId: string, strength: number, ticksTotal: number }|null,
  * }|null, error: Object|null }}
+ *   encore — some forms feed themselves: finishing one can be the idea for the
+ *   next. Returned for the caller to strike once this idea is spent.
  */
 export function makingFinish({
   player,
@@ -537,10 +551,10 @@ export function makingFinish({
   // what it leaves: a wall keeps the piece, the karaoke machine with the tape
   // rolling hands you a tape, and the machine on its own keeps nothing.
   const placed = (location.surfaces ?? []).find((s) => s.id === making.surfaceId)
-  const leaves =
-    making.surfaceKind === MAKING_SURFACE_KINDS.ITEM
-      ? SURFACE_ARTIFACTS.PORTABLE
-      : (placed?.artifact ?? SURFACE_ARTIFACTS.FIXED)
+  let leaves = placed?.artifact ?? SURFACE_ARTIFACTS.FIXED
+  if (making.surfaceKind === MAKING_SURFACE_KINDS.ITEM) leaves = SURFACE_ARTIFACTS.PORTABLE
+  // Done on nothing but the spot you stood on, it leaves nothing on it.
+  if (making.surfaceKind === MAKING_SURFACE_KINDS.PLACE) leaves = SURFACE_ARTIFACTS.NONE
   const fixed = leaves === SURFACE_ARTIFACTS.FIXED
   const leavesArtifact =
     medium.making.leavesArtifact &&
@@ -600,7 +614,22 @@ export function makingFinish({
           .map((m) => m.id)
       : []
 
-  return _ok({ makings, making: { ...making }, check, tier, experience, artifact, markIdsCovered })
+  const again = medium.making.encore
+  const encore =
+    again && rng() < again.chance
+      ? { mediumId: medium.id, strength: again.strength, ticksTotal: again.ticksTotal }
+      : null
+
+  return _ok({
+    makings,
+    making: { ...making },
+    check,
+    tier,
+    experience,
+    artifact,
+    markIdsCovered,
+    encore,
+  })
 }
 
 /**

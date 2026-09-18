@@ -5,7 +5,15 @@
   "persona": {
     "id": "suburban_gangster",
     "display": "The suburban gangster",
-    "compulsion": "Full gang posture and speech, from the least credible person in the county."
+    "compulsion": "Full gang posture and speech, from the least credible person in the county.",
+    "urges": [
+      {
+        "mediumId": "freestyle",
+        "chancePerTick": 0.12,
+        "strength": 40,
+        "ticksTotal": 8
+      }
+    ]
   },
   "decayPerTick": 2,
   "habituationRate": 0.1,
@@ -19,28 +27,61 @@
       "compulsion": "Get to a bar. Any bar."
     },
     "modifiers": [
-      { "stat": "toughness", "value": -3 },
-      { "stat": "charm", "value": -2 },
-      { "stat": "creativity", "value": 3 }
+      {
+        "stat": "toughness",
+        "value": -3
+      },
+      {
+        "stat": "charm",
+        "value": -2
+      },
+      {
+        "stat": "creativity",
+        "value": 3
+      }
     ]
   },
   "bands": [
     {
       "atLeast": 15,
       "modifiers": [
-        { "stat": "toughness", "value": 3 },
-        { "stat": "reputation", "value": -2 },
-        { "stat": "wits", "value": -2 }
+        {
+          "stat": "toughness",
+          "value": 3
+        },
+        {
+          "stat": "reputation",
+          "value": -2
+        },
+        {
+          "stat": "wits",
+          "value": -2
+        }
       ]
     },
     {
       "atLeast": 50,
       "modifiers": [
-        { "stat": "toughness", "value": 5 },
-        { "stat": "luck", "value": 1 },
-        { "stat": "charm", "value": -3 },
-        { "stat": "reputation", "value": -4 },
-        { "stat": "wits", "value": -6 }
+        {
+          "stat": "toughness",
+          "value": 5
+        },
+        {
+          "stat": "luck",
+          "value": 1
+        },
+        {
+          "stat": "charm",
+          "value": -3
+        },
+        {
+          "stat": "reputation",
+          "value": -4
+        },
+        {
+          "stat": "wits",
+          "value": -6
+        }
       ]
     }
   ]

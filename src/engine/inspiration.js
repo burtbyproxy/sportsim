@@ -207,6 +207,38 @@ export function inspirationTick({ player, ticksElapsed, gameTime }) {
 }
 
 /**
+ * Some of the people you turn into want to DO something about it. While a
+ * persona with urges is in charge and nothing is already moving the player,
+ * each tick is a chance one of its urges lands. The urge is returned, not
+ * struck: striking is the caller's business, like any other inspiration.
+ *
+ * @param {{
+ *   player: Object,
+ *   personas: Object<string, { urges?: { mediumId: string, chancePerTick: number, strength: number, ticksTotal: number }[] }>,
+ *   ticksElapsed: number,
+ *   rng?: () => number,
+ * }} input
+ * @returns {{ ok: boolean, data: { urge: Object|null, personaId: string }|null, error: Object|null }}
+ */
+export function inspirationUrge({ player, personas = {}, ticksElapsed, rng = Math.random }) {
+  const bad = _playerCheck(player, 'inspirationUrge')
+  if (bad) return bad
+  if (!Number.isFinite(ticksElapsed) || ticksElapsed < 0) {
+    return _fail(
+      INSPIRATION_ERROR_CODES.TICKS_INVALID,
+      `ticksElapsed must be >= 0, got ${ticksElapsed}`
+    )
+  }
+  const personaId = (player.blend ?? blendSober()).dominantPersonaId
+  if (inspirationActive({ player }) || ticksElapsed === 0) return _ok({ urge: null, personaId })
+  for (const urge of personas[personaId]?.urges ?? []) {
+    const chanceOverall = 1 - Math.pow(1 - urge.chancePerTick, ticksElapsed)
+    if (rng() < chanceOverall) return _ok({ urge: { ...urge }, personaId })
+  }
+  return _ok({ urge: null, personaId })
+}
+
+/**
  * Something got in the way. The active inspiration, if any, is marked
  * interrupted by it. Interrupting nothing is not an error; the world barges
  * in constantly.

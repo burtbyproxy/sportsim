@@ -3,6 +3,7 @@
   "type": "market",
   "variant": "pawn",
   "display": "All That Glitters",
+  "pieceAs": "outside Glitters, under the Grate Deals sign",
   "descriptions": {
     "default": "A pawn shop run by two Egyptian brothers who wear rayon shirts and will buy almost anything without asking about its origins. Outside, a blonde mannequin holds a spinning sign that reads 'Grate Deals.' The sign has been there for years. The misspelling has also been there for years. Nobody has mentioned it. Nobody will. The display window features a saxophone, a power drill, and a wedding ring. Together they tell a story nobody wants to hear.",
     "night": "Closed. The mannequin stays outside regardless. She is always on duty. The display window light stays on. The saxophone catches it. The wedding ring doesn't.",

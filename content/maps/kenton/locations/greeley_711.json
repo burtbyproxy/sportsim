@@ -3,6 +3,7 @@
   "type": "market",
   "variant": "convenience",
   "display": "7-11",
+  "pieceAs": "outside the Greeley 7-11",
   "descriptions": {
     "default": "This 7-11 is cleaner than it has any right to be. The shelves are fully stocked. Two guys work every shift and they are both genuinely friendly, which is disorienting in a convenience store context. There are always more cars in the lot than there are people inside. You have wondered about this and then stopped wondering because some things don't require an answer.",
     "night": "The night shift guys keep the coffee fresh. They nod at you. You nod back. This is a relationship. The parking lot is quieter than Denver's. The cars are still there. The people who drove them are not.",

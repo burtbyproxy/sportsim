@@ -52,6 +52,15 @@
     "game.karaoke.held": "In your head you're riding the chorus. In the room you're a verse behind, reading the screen out loud like it's a menu.",
     "game.karaoke.bowed": "You hand back the mic. The machine clunks. Somewhere above it, a tape stops turning.",
     "piece.words": "It says: {words}.",
-    "game.rhymes.picked": "{word}. It's a word. You said it out loud, to a beat only you can hear."
+    "game.rhymes.picked": "{word}. It's a word. You said it out loud, to a beat only you can hear.",
+    "inspiration.urge": "You feel like doing something about it. Right now. Right here.",
+    "making.encore": "And you're not done. There's more where that came from. There is always, regrettably, more.",
+    "game.singing.crowd.cold": "Nobody's listening. That's the good part and the bad part.",
+    "game.singing.crowd.warm": "Somebody nearby has gone quiet in the way people do when they're listening and pretending not to.",
+    "game.singing.crowd.hot": "You have an audience. You didn't ask for one. It's going well anyway, which is the strangest part.",
+    "game.singing.crowd.turning": "Somebody looks over the way you look at a car alarm.",
+    "game.singing.pushed": "You let it out. It's louder than you expected. It's yours, though.",
+    "game.singing.held": "You keep it under your breath, where it's safe and where it's still a song.",
+    "game.singing.bowed": "You trail off, and the quiet comes back like it was only waiting its turn."
   }
 }

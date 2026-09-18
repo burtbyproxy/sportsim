@@ -1,0 +1,20 @@
+{
+  "id": "singing",
+  "display": "Singing",
+  "stat": "charm",
+  "description": "Your own voice, no machine, no screen, no five bucks. You don't need anything. You can do it anywhere, which is the trouble.",
+  "pieceAs": "a song",
+  "making": {
+    "gameId": "singing",
+    "anywhere": true,
+    "ticksTotal": 3,
+    "dc": 12,
+    "xp": 8,
+    "toolRequired": false,
+    "takesIngredient": false,
+    "leavesArtifact": false,
+    "statusChanges": {
+      "energy": -1
+    }
+  }
+}
