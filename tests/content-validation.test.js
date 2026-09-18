@@ -88,13 +88,17 @@ const CHARACTER_REQUIRED_FIELDS = [
   'schedule',
   'want',
   'fear',
-  'level',
 ]
 
 function validateCharacter(data, file) {
   // Required fields
   for (const field of CHARACTER_REQUIRED_FIELDS) {
     expect(data, `${file}: missing required field '${field}'`).toHaveProperty(field)
+  }
+
+  // Fields nothing reads do not come back
+  for (const dead of ['level', 'dialogueTreeIds', 'descriptionVariants']) {
+    expect(data, `${file}: '${dead}' is not part of a character`).not.toHaveProperty(dead)
   }
 
   // simulation tier
@@ -136,10 +140,6 @@ function validateCharacter(data, file) {
       100
     )
   }
-
-  // level: positive integer
-  expect(typeof data.level, `${file}: level must be number`).toBe('number')
-  expect(data.level, `${file}: level must be >= 1`).toBeGreaterThanOrEqual(1)
 
   // Stats: if present, validate structure
   if (data.stats) {
@@ -216,6 +216,11 @@ const LOCATION_REQUIRED_FIELDS = [
 function validateLocation(data, file) {
   for (const field of LOCATION_REQUIRED_FIELDS) {
     expect(data, `${file}: missing field '${field}'`).toHaveProperty(field)
+  }
+
+  // Fields nothing reads do not come back: who is here comes from schedules.
+  for (const dead of ['npcSlots', 'variant']) {
+    expect(data, `${file}: '${dead}' is not part of a location`).not.toHaveProperty(dead)
   }
 
   // An action says where it lives. A second list here is how actions got lost.
@@ -1543,19 +1548,6 @@ describe('cross-reference validation', () => {
         expect(
           knownLocationIds.has(entry.locationId),
           `Character '${character.id}' schedule references unknown location '${entry.locationId}'`
-        ).toBe(true)
-      })
-    }
-  }
-
-  // Location npcSlots reference real characters
-  for (const { file, data: location } of locationFiles) {
-    const slots = location.npcSlots ?? []
-    for (const charId of slots) {
-      it(`${file}: npcSlot '${charId}' exists in character data`, () => {
-        expect(
-          knownCharacterIds.has(charId),
-          `Location '${location.id}' npcSlots references unknown character '${charId}'`
         ).toBe(true)
       })
     }

@@ -35,9 +35,7 @@
   },
   "relationshipScore": 0,
   "currentLocationId": "blue_parrot",
-  "dialogueTreeIds": [],
   "want": "Order. Greg wants the Parrot to function like a real bar. He will never get this. The Parrot is not a real bar. It is a building where beer is sold and chaos is tolerated. Greg's entire life is the space between what he wants and what he has.",
   "fear": "Something happening on his watch that he can't handle. Not a fight — he can handle fights. Something worse. Something the cameras catch that he has to explain to someone.",
-  "level": 1,
   "decisionWeights": null
 }

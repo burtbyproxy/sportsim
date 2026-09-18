@@ -5,7 +5,6 @@ import {
   addModifier,
   addItem,
   removeItem,
-  hasItem,
   adjustMoney,
   feedObsession,
   updateArchetypeScore,
@@ -76,12 +75,6 @@ describe('createPlayer', () => {
     expect(p.psyche.obsessions).toEqual([])
     expect(p.psyche.insanities).toEqual([])
     expect(p.psyche.abilities).toEqual([])
-  })
-
-  it('starts at level 1 with 0 xp', () => {
-    const p = createPlayer('X')
-    expect(p.level).toBe(1)
-    expect(p.xp).toBe(0)
   })
 
   it('serializes cleanly to JSON', () => {
@@ -173,7 +166,7 @@ describe('addModifier', () => {
 })
 
 // ---------------------------------------------------------------------------
-// addItem / removeItem / hasItem
+// addItem / removeItem
 // ---------------------------------------------------------------------------
 
 describe('addItem', () => {
@@ -238,29 +231,6 @@ describe('removeItem', () => {
   it('is a no-op when item not in inventory', () => {
     expect(() => removeItem(player, 'ghost_item')).not.toThrow()
     expect(player.inventory).toHaveLength(0)
-  })
-})
-
-describe('hasItem', () => {
-  let player
-
-  beforeEach(() => {
-    player = createPlayer('Test')
-  })
-
-  it('returns true when item is in inventory', () => {
-    addItem(player, { id: 'knife', name: 'Knife', stackable: false, quantity: 1 })
-    expect(hasItem(player, 'knife')).toBe(true)
-  })
-
-  it('returns false when item is not in inventory', () => {
-    expect(hasItem(player, 'knife')).toBe(false)
-  })
-
-  it('returns false after item removed', () => {
-    addItem(player, { id: 'knife', name: 'Knife', stackable: false, quantity: 1 })
-    removeItem(player, 'knife')
-    expect(hasItem(player, 'knife')).toBe(false)
   })
 })
 

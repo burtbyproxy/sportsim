@@ -7,7 +7,7 @@
  * Tier routing is handled inside simulateTick() — this worker just calls it.
  *
  * Message in:  tick(gameTime, characters)
- * Message out: { characters: CharacterUpdate[], events: [] }
+ * Message out: { characters: CharacterUpdate[] }
  *
  * CharacterUpdate: { id: string, locationId: string|null, statusChanges?: Object }
  */
@@ -21,15 +21,12 @@ const simulation = {
    *
    * @param {import('../engine/clock.js').GameTime} gameTime
    * @param {Object[]} characters - Character objects from game state
-   * @returns {{ characters: Array<{id: string, locationId: string|null, statusChanges?: Object}>, events: Array }}
+   * @returns {{ characters: Array<{id: string, locationId: string|null, statusChanges?: Object}> }}
    */
   tick(gameTime, characters = []) {
     const updates = simulateTick(characters, gameTime)
 
-    return {
-      characters: updates,
-      events: [], // Phase 4: event generation moves here
-    }
+    return { characters: updates }
   },
 }
 

@@ -63,7 +63,6 @@ describe('kentonLocations data integrity', () => {
       expect(loc.descriptions, `${id}: missing descriptions`).toBeDefined()
       expect(loc.descriptions.default, `${id}: missing default description`).toBeTruthy()
       expect(Array.isArray(loc.exits), `${id}: exits must be array`).toBe(true)
-      expect(Array.isArray(loc.npcSlots), `${id}: npcSlots must be array`).toBe(true)
       expect(loc.availability, `${id}: missing availability`).toBeDefined()
       expect(typeof loc.availability.openHour, `${id}: openHour must be number`).toBe('number')
       expect(typeof loc.availability.closeHour, `${id}: closeHour must be number`).toBe('number')

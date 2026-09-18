@@ -1,7 +1,6 @@
 {
   "id": "liquor",
   "type": "market",
-  "variant": "liquor",
   "display": "Kenton Liquor Store",
   "pieceAs": "in the parking lot of the state liquor store",
   "outdoors": true,
@@ -39,7 +38,6 @@
       "requirements": null
     }
   ],
-  "npcSlots": [],
   "scavengeTableId": "lot",
   "surfaces": [
     {

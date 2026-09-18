@@ -1,7 +1,6 @@
 {
   "id": "glitters",
   "type": "market",
-  "variant": "pawn",
   "display": "All That Glitters",
   "pieceAs": "outside Glitters, under the Grate Deals sign",
   "outdoors": true,
@@ -39,7 +38,6 @@
       "requirements": null
     }
   ],
-  "npcSlots": [],
   "scavengeTableId": "lot",
   "surfaces": [
     {

@@ -111,8 +111,6 @@ export function createPlayer(name, start = PLAYER_START_DEFAULTS) {
     currentLocationId: begin.locationId,
     archetypeScores: {},
     counters: {},
-    level: 1,
-    xp: 0,
   }
 }
 
@@ -187,18 +185,6 @@ export function removeItem(player, itemId) {
   } else {
     player.inventory.splice(idx, 1)
   }
-}
-
-/**
- * Check whether the player has an item in inventory.
- * Pure — does not mutate player.
- *
- * @param {import('./types').Player} player
- * @param {string} itemId
- * @returns {boolean}
- */
-export function hasItem(player, itemId) {
-  return player.inventory.some((i) => i.id === itemId)
 }
 
 /**

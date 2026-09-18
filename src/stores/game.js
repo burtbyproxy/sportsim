@@ -58,7 +58,7 @@ function _levelsApply({ levels, changes }) {
 
 /**
  * Primary game state store.
- * Holds player, game time, location, NPC states, fired events, and counters.
+ * Holds player, game time, location, NPC states, and fired events.
  */
 export const useGameStore = defineStore('game', {
   state: () => ({
@@ -82,9 +82,6 @@ export const useGameStore = defineStore('game', {
 
     /** An event waiting on the player's choice, or null. One at a time. */
     activeEvent: null,
-
-    /** General-purpose counters */
-    counters: {},
 
     /** @type {Object<string, Object>} */
     items: {},
@@ -134,14 +131,6 @@ export const useGameStore = defineStore('game', {
     },
 
     charactersAtCurrentLocation: (state) => {
-      if (!state.currentLocationId) return []
-      return Object.values(state.characters).filter(
-        (c) => c.currentLocationId === state.currentLocationId
-      )
-    },
-
-    /** @deprecated use charactersAtCurrentLocation */
-    npcsAtCurrentLocation: (state) => {
       if (!state.currentLocationId) return []
       return Object.values(state.characters).filter(
         (c) => c.currentLocationId === state.currentLocationId
@@ -277,7 +266,6 @@ export const useGameStore = defineStore('game', {
       this.time = createClock()
       this.firedEventIds = []
       this.activeEvent = null
-      this.counters = {}
       this.characters = {}
       this.availableActions = []
       this.makingPicker = null
@@ -499,15 +487,6 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
-     * Increment a counter by delta (default 1).
-     * @param {string} key
-     * @param {number} delta
-     */
-    incrementCounter(key, delta = 1) {
-      this.counters[key] = (this.counters[key] ?? 0) + delta
-    },
-
-    /**
      * Set available actions for the current location.
      * @param {Array} actions
      */
@@ -529,11 +508,6 @@ export const useGameStore = defineStore('game', {
      */
     registerCharacter(character) {
       this.characters[character.id] = character
-    },
-
-    /** @deprecated use registerCharacter */
-    registerNpc(npc) {
-      this.characters[npc.id] = npc
     },
 
     /**
@@ -1037,11 +1011,6 @@ export const useGameStore = defineStore('game', {
       }
     },
 
-    /** @deprecated use setCharacterLocation */
-    setNpcLocation(characterId, locationId) {
-      this.setCharacterLocation(characterId, locationId)
-    },
-
     /**
      * Load a full save game into state.
      * @param {Object} save
@@ -1054,7 +1023,6 @@ export const useGameStore = defineStore('game', {
       this.characters = save.characters
       this.firedEventIds = save.firedEventIds
       this.activeEvent = save.activeEvent ?? null
-      this.counters = save.counters
       this.makingPicker = null
       this.isRunning = true
       this.blendRefresh()
@@ -1070,7 +1038,6 @@ export const useGameStore = defineStore('game', {
       this.characters = {}
       this.firedEventIds = []
       this.activeEvent = null
-      this.counters = {}
       this.availableActions = []
       this.makingPicker = null
       this.isRunning = false

@@ -21,7 +21,6 @@ function makeFixedCharacter(overrides = {}) {
     relationshipScore: 0,
     want: 'To close on time.',
     fear: 'The 2am crowd.',
-    level: 2,
     ...overrides,
   })
 }
@@ -81,7 +80,6 @@ describe('createCharacter', () => {
     expect(c.id).toBe('bartender_parrot')
     expect(c.name).toBe('The Bartender')
     expect(c.simulation).toBe('fixed')
-    expect(c.level).toBe(2)
     expect(c.want).toBe('To close on time.')
     expect(c.fear).toBe('The 2am crowd.')
   })
@@ -153,13 +151,6 @@ describe('createCharacter', () => {
     const c = createCharacter(raw)
     c.schedule.entries[0].locationId = 'CHANGED'
     expect(raw.schedule.entries[0].locationId).toBe('y')
-  })
-
-  it('does not share dialogueTreeIds array reference', () => {
-    const raw = { name: 'X', dialogueTreeIds: ['intro'] }
-    const c = createCharacter(raw)
-    c.dialogueTreeIds.push('extra')
-    expect(raw.dialogueTreeIds).toHaveLength(1)
   })
 
   it('serializes cleanly to JSON', () => {

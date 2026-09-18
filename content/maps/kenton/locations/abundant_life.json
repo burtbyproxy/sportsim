@@ -1,7 +1,6 @@
 {
   "id": "abundant_life",
   "type": "church",
-  "variant": "christian",
   "display": "Abundant Life Church",
   "pieceAs": "on the sidewalk outside Abundant Life",
   "outdoors": true,
@@ -33,7 +32,6 @@
       "requirements": null
     }
   ],
-  "npcSlots": [],
   "scavengeTableId": "lot",
   "surfaces": [
     {

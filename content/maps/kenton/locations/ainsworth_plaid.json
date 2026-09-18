@@ -1,7 +1,6 @@
 {
   "id": "ainsworth_plaid",
   "type": "market",
-  "variant": "convenience",
   "display": "Plaid Pantry",
   "pieceAs": "outside the Ainsworth Plaid",
   "outdoors": true,
@@ -33,7 +32,6 @@
       "requirements": null
     }
   ],
-  "npcSlots": ["ray", "dale"],
   "scavengeTableId": "lot",
   "surfaces": [
     {

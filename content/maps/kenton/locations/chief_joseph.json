@@ -1,7 +1,6 @@
 {
   "id": "chief_joseph",
   "type": "school",
-  "variant": "elementary",
   "display": "Chief Joseph Elementary",
   "pieceAs": "outside Chief Joseph Elementary",
   "outdoors": true,
@@ -33,7 +32,6 @@
       "requirements": null
     }
   ],
-  "npcSlots": [],
   "scavengeTableId": "schoolyard",
   "surfaces": [
     {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { itemUseResolve, ITEM_ERROR_CODES, ITEM_EFFECT_STATUSES } from './items.js'
+import { itemUseResolve, ITEM_ERROR_CODES, ITEM_EFFECT_STATUSES, inventoryHas } from './items.js'
 
 const tallboy = {
   id: 'tallboy_oly',
@@ -108,5 +108,23 @@ describe('itemUseResolve', () => {
     data.doses[0].value = 999
     data.item.quantity = 0
     expect(JSON.stringify(player)).toBe(before)
+  })
+})
+
+describe('inventoryHas', () => {
+  it('holds an item it carries', () => {
+    expect(inventoryHas({ inventory: [{ id: 'knife', quantity: 1 }], itemId: 'knife' })).toBe(true)
+  })
+
+  it('does not hold an item it lacks', () => {
+    expect(inventoryHas({ inventory: [{ id: 'fork', quantity: 1 }], itemId: 'knife' })).toBe(false)
+  })
+
+  it('an emptied stack is not holding anything', () => {
+    expect(inventoryHas({ inventory: [{ id: 'pabst', quantity: 0 }], itemId: 'pabst' })).toBe(false)
+  })
+
+  it('no inventory holds nothing', () => {
+    expect(inventoryHas({ inventory: undefined, itemId: 'knife' })).toBe(false)
   })
 })

@@ -1,7 +1,6 @@
 {
   "id": "dancin_bare",
   "type": "bar",
-  "variant": "exotic",
   "display": "The Dancin' Bare",
   "pieceAs": "at the Dancin' Bare",
   "outdoors": false,
@@ -33,7 +32,6 @@
       "requirements": null
     }
   ],
-  "npcSlots": [],
   "scavengeTableId": "bar_back",
   "surfaces": [
     {

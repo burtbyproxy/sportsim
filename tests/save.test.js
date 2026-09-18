@@ -65,7 +65,6 @@ function makeValidSave(overrides = {}) {
     locations: { moms_house: { id: 'moms_house', name: "Mom's House" } },
     characters: {},
     firedEventIds: [],
-    counters: {},
     ...overrides,
   }
 }
@@ -105,7 +104,6 @@ describe('validateSave', () => {
     'locations',
     'characters',
     'firedEventIds',
-    'counters',
   ]
   for (const field of requiredFields) {
     it(`rejects a save missing "${field}"`, () => {
@@ -210,7 +208,6 @@ describe('save() and load() — round trip', () => {
       locations: { moms_house: { id: 'moms_house' } },
       characters: { npc1: { id: 'npc1', name: 'Stranger' } },
       firedEventIds: ['event_intro'],
-      counters: { drinks: 2 },
     })
   })
 
@@ -241,7 +238,12 @@ describe('save() and load() — round trip', () => {
     expect(data.locations).toBeDefined()
     expect(data.characters).toBeDefined()
     expect(data.firedEventIds).toBeDefined()
-    expect(data.counters).toBeDefined()
+  })
+
+  it("saves only what the game reads: no counters beside the player's own", () => {
+    const data = sys.load(sys.save())
+    expect(data).not.toHaveProperty('counters')
+    expect(data.player.counters).toBeDefined()
   })
 
   it('load() returns null for an unknown ID', () => {
@@ -442,7 +444,6 @@ describe('exportSave()', () => {
       locations: {},
       characters: {},
       firedEventIds: [],
-      counters: {},
     })
   })
 
@@ -501,7 +502,6 @@ describe('importSave()', () => {
       locations: {},
       characters: {},
       firedEventIds: [],
-      counters: {},
     })
   })
 
@@ -664,6 +664,38 @@ describe('saveMigrate', () => {
     expect(migrated.version).toBe(SAVE_VERSION)
     expect(migrated.player.skills.painting.sober.base).toBe(4)
     expect(migrated.player.inspirations).toEqual([])
+  })
+
+  it('a v6 save loses the fields nothing read, and keeps what was lived', () => {
+    const v6 = makeValidSave({ version: 6 })
+    v6.counters = { drinks: 2 }
+    v6.player = { ...v6.player, level: 1, xp: 0, counters: { hoops_sessions: 3 } }
+    v6.characters = {
+      tina: {
+        id: 'tina',
+        level: 1,
+        dialogueTreeIds: [],
+        descriptionVariants: {},
+        want: 'To be liked.',
+      },
+    }
+    v6.locations = {
+      blue_parrot: {
+        id: 'blue_parrot',
+        variant: 'tavern',
+        npcSlots: ['tina'],
+        actionIds: [],
+        visitCount: 4,
+      },
+    }
+    const migrated = saveMigrate({ save: v6 })
+    expect(migrated.version).toBe(7)
+    expect(migrated).not.toHaveProperty('counters')
+    expect(migrated.player).not.toHaveProperty('level')
+    expect(migrated.player).not.toHaveProperty('xp')
+    expect(migrated.player.counters).toEqual({ hoops_sessions: 3 })
+    expect(migrated.characters.tina).toEqual({ id: 'tina', want: 'To be liked.' })
+    expect(migrated.locations.blue_parrot).toEqual({ id: 'blue_parrot', visitCount: 4 })
   })
 
   it('does not mutate the input', () => {

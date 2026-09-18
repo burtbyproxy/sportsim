@@ -35,9 +35,7 @@
   },
   "relationshipScore": 0,
   "currentLocationId": "mouse_trap",
-  "dialogueTreeIds": [],
   "want": "To be somewhere else. Tyler is bartending at the Mouse Trap because nowhere else hired him. This is temporary. Everything in Tyler's life is temporary. He just hasn't figured out what the permanent thing is yet.",
   "fear": "Getting caught. Not at anything specific — just the general ambient fear of a person who is probably not old enough to be doing what he's doing and knows it.",
-  "level": 1,
   "decisionWeights": null
 }

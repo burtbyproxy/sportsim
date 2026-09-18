@@ -43,9 +43,7 @@
   },
   "relationshipScore": 0,
   "currentLocationId": "ainsworth_plaid",
-  "dialogueTreeIds": [],
   "want": "To be left alone with his book. That's it. Ray has found the perfect job for a man who wants to read science fiction and be paid for it. The fact that a convenience store happens around him is incidental.",
   "fear": "Being put on day shift. Days have customers. Customers talk. Ray's entire system depends on the night shift being empty enough to read.",
-  "level": 1,
   "decisionWeights": null
 }

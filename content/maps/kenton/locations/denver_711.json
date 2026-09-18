@@ -1,7 +1,6 @@
 {
   "id": "denver_711",
   "type": "market",
-  "variant": "convenience",
   "display": "7-11",
   "pieceAs": "outside the Denver Ave 7-11",
   "outdoors": true,
@@ -33,7 +32,6 @@
       "requirements": null
     }
   ],
-  "npcSlots": [],
   "scavengeTableId": "lot",
   "surfaces": [
     {

@@ -1,7 +1,6 @@
 {
   "id": "arbys",
   "type": "restaurant",
-  "variant": "fast",
   "display": "Arby's",
   "pieceAs": "in the Arby's on Lombard",
   "outdoors": false,
@@ -39,7 +38,6 @@
       "requirements": null
     }
   ],
-  "npcSlots": ["dennis"],
   "scavengeTableId": "lot",
   "surfaces": [
     {

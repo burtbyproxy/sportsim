@@ -19,7 +19,6 @@ export function createLocation(data) {
   return {
     id: data.id,
     type: data.type,
-    variant: data.variant ?? null,
     display: data.display,
     // How the place reads inside a piece made on nothing but the spot: "outside the Denver Ave 7-11".
     pieceAs: data.pieceAs ?? null,
@@ -27,7 +26,6 @@ export function createLocation(data) {
     outdoors: data.outdoors ?? false,
     descriptions: data.descriptions ?? { default: '' },
     exits: Array.isArray(data.exits) ? data.exits.map((e) => ({ ...e })) : [],
-    npcSlots: Array.isArray(data.npcSlots) ? [...data.npcSlots] : [],
     discovered: data.discovered ?? false,
     availability: data.availability
       ? { ...data.availability }

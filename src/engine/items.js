@@ -14,6 +14,16 @@ import { STATUS_IDS_WRITABLE_DEFAULT } from '../models/defaults.js'
 import { resultOk, resultFail } from './result.js'
 
 /** Enumerated error codes for every items result. The code is the contract. */
+/**
+ * Whether an inventory holds at least one of an item.
+ *
+ * @param {{ inventory: Object[], itemId: string }} input
+ * @returns {boolean}
+ */
+export function inventoryHas({ inventory, itemId }) {
+  return (inventory ?? []).some((i) => i.id === itemId && i.quantity > 0)
+}
+
 export const ITEM_ERROR_CODES = Object.freeze({
   PLAYER_MISSING: 'PLAYER_MISSING',
   ITEM_MISSING: 'ITEM_MISSING',

@@ -195,6 +195,15 @@ describe('checkTriggeredEvents', () => {
     )
     expect(result).toHaveLength(0)
   })
+
+  it('an event that needs an item waits until the player is holding one', () => {
+    const event = makeEvent({ type: 'triggered', conditions: { requiredItems: ['karaoke_tape'] } })
+    const holding = (inventory) =>
+      checkTriggeredEvents({ ...makePlayer(), inventory }, makeLocation(), makeGameTime(), [event])
+    expect(holding([])).toHaveLength(0)
+    expect(holding([{ id: 'karaoke_tape', quantity: 0 }])).toHaveLength(0)
+    expect(holding([{ id: 'karaoke_tape', quantity: 1 }])).toHaveLength(1)
+  })
 })
 
 // --- resolveEvent ---

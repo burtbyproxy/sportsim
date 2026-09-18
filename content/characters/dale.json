@@ -42,9 +42,7 @@
   },
   "relationshipScore": 0,
   "currentLocationId": "mocks_crest",
-  "dialogueTreeIds": [],
   "want": "To run a clean bar. That's it. Dale's ambitions are exactly the size of Mock's Crest and not one square foot larger. He wants every pour right, every tab closed, every regular comfortable. He is very good at wanting exactly what he has.",
   "fear": "The bar changing. New owners. New crowd. New rules. Dale has built a world behind that bar and he knows it's fragile even if it doesn't look it.",
-  "level": 1,
   "decisionWeights": null
 }

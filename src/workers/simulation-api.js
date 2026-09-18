@@ -4,7 +4,7 @@
  * Usage:
  *   import { sim } from './workers/simulation-api.js'
  *   const result = await sim.tick(gameTime, characters)
- *   // result: { characters: [{id, locationId, statusChanges?}], events: [] }
+ *   // result: { characters: [{id, locationId, statusChanges?}] }
  */
 import { wrap } from 'comlink'
 

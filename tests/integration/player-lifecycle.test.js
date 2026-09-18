@@ -16,13 +16,13 @@ import {
   tickModifiers,
   addItem,
   removeItem,
-  hasItem,
   adjustMoney,
   feedObsession,
   updateArchetypeScore,
   incrementCounter,
 } from '../../src/models/player.js'
 import { statEffective } from '../../src/engine/dice.js'
+import { inventoryHas } from '../../src/engine/items.js'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -48,7 +48,6 @@ describe('player lifecycle — create, mutate, serialize, restore', () => {
     expect(loaded.id).toBe(player.id)
     expect(loaded.name).toBe('Portland')
     expect(loaded.currentLocationId).toBe('moms_house')
-    expect(loaded.level).toBe(1)
   })
 
   it('stats survive round-trip with modifiers intact', () => {
@@ -97,12 +96,12 @@ describe('player lifecycle — create, mutate, serialize, restore', () => {
     expect(loaded.stats.karma.modifiers[0].duration).toBe(null)
   })
 
-  it('inventory survives round-trip — hasItem and removeItem work', () => {
+  it('inventory survives round-trip — inventoryHas and removeItem work', () => {
     const player = createPlayer('Test')
     addItem(player, { id: 'pabst', name: 'Pabst', stackable: true, quantity: 3 })
 
     const loaded = saveAndLoad(player)
-    expect(hasItem(loaded, 'pabst')).toBe(true)
+    expect(inventoryHas({ inventory: loaded.inventory, itemId: 'pabst' })).toBe(true)
 
     removeItem(loaded, 'pabst')
     expect(loaded.inventory[0].quantity).toBe(2)

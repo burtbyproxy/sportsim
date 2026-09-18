@@ -44,9 +44,7 @@
   },
   "relationshipScore": 0,
   "currentLocationId": "columbia_park",
-  "dialogueTreeIds": [],
   "want": "To be left alone and to not be alone. Both at the same time. Vernon wants the park full of life around him. He does not want any of that life to require anything from him. The bench is the perfect distance from everything.",
   "fear": "The bench being gone. Not death, not illness, not violence — just showing up one morning and the bench isn't there. The city moved it. Construction. Whatever. The place he sits is the only fixed point in his life and he knows it.",
-  "level": 1,
   "decisionWeights": null
 }

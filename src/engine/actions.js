@@ -5,6 +5,7 @@
 
 import { rollCheck, rollContested } from './dice.js'
 import { inspirationActive } from './inspiration.js'
+import { inventoryHas } from './items.js'
 
 /**
  * Why an action cannot be taken. Each is a voice code: the sentence the
@@ -57,8 +58,7 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
   // Item requirements
   if (req.requiredItems) {
     for (const itemId of req.requiredItems) {
-      const hasItem = player.inventory?.some((i) => i.id === itemId && i.quantity > 0)
-      if (!hasItem) {
+      if (!inventoryHas({ inventory: player.inventory, itemId })) {
         return _refuse(REQUIREMENT_CODES.ITEM, { itemId })
       }
     }

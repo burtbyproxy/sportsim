@@ -14,11 +14,9 @@ describe('createLocation', () => {
   const raw = {
     id: 'blue_parrot',
     type: 'bar',
-    variant: 'tavern',
     display: 'The Blue Parrot',
     descriptions: { default: 'A dive bar.' },
     exits: [{ locationId: 'moms_house', label: 'Home', travelTime: 1, requirements: null }],
-    npcSlots: ['carl'],
     discovered: true,
     availability: { openHour: 11, closeHour: 2, closedMessage: 'Closed.' },
     visitCount: 3,
@@ -28,22 +26,18 @@ describe('createLocation', () => {
     const loc = createLocation(raw)
     expect(loc.id).toBe('blue_parrot')
     expect(loc.type).toBe('bar')
-    expect(loc.variant).toBe('tavern')
     expect(loc.display).toBe('The Blue Parrot')
     expect(loc.descriptions.default).toBe('A dive bar.')
     expect(loc.exits).toHaveLength(1)
-    expect(loc.npcSlots).toContain('carl')
     expect(loc.discovered).toBe(true)
     expect(loc.availability.openHour).toBe(11)
     expect(loc.visitCount).toBe(3)
   })
 
   it('applies defaults for missing optional fields', () => {
-    const loc = createLocation({ id: 'x', type: 'park', variant: null, display: 'X' })
-    expect(loc.variant).toBe(null)
+    const loc = createLocation({ id: 'x', type: 'park', display: 'X' })
     expect(loc.descriptions).toEqual({ default: '' })
     expect(loc.exits).toEqual([])
-    expect(loc.npcSlots).toEqual([])
     expect(loc.discovered).toBe(false)
     expect(loc.availability.openHour).toBe(0)
     expect(loc.availability.closeHour).toBe(23)
@@ -72,7 +66,6 @@ describe('isOpen', () => {
     const loc = createLocation({
       id: 'x',
       type: 'park',
-      variant: null,
       display: 'X',
       availability: { openHour: 0, closeHour: 23, closedMessage: null },
     })
@@ -85,7 +78,6 @@ describe('isOpen', () => {
     const loc = createLocation({
       id: 'x',
       type: 'bar',
-      variant: null,
       display: 'X',
       availability: { openHour: 11, closeHour: 22, closedMessage: null },
     })
@@ -100,7 +92,6 @@ describe('isOpen', () => {
     const loc = createLocation({
       id: 'x',
       type: 'bar',
-      variant: null,
       display: 'X',
       availability: { openHour: 23, closeHour: 2, closedMessage: null },
     })
@@ -119,13 +110,13 @@ describe('isOpen', () => {
 
 describe('incrementVisitCount', () => {
   it('increments from 0 to 1', () => {
-    const loc = createLocation({ id: 'x', type: 'park', variant: null, display: 'X' })
+    const loc = createLocation({ id: 'x', type: 'park', display: 'X' })
     incrementVisitCount(loc)
     expect(loc.visitCount).toBe(1)
   })
 
   it('increments repeatedly', () => {
-    const loc = createLocation({ id: 'x', type: 'park', variant: null, display: 'X' })
+    const loc = createLocation({ id: 'x', type: 'park', display: 'X' })
     incrementVisitCount(loc)
     incrementVisitCount(loc)
     incrementVisitCount(loc)

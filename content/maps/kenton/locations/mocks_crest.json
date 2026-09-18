@@ -1,7 +1,6 @@
 {
   "id": "mocks_crest",
   "type": "bar",
-  "variant": "tavern",
   "display": "Mock's Crest Tavern",
   "pieceAs": "at Mock's Crest",
   "outdoors": false,
@@ -39,7 +38,6 @@
       "requirements": null
     }
   ],
-  "npcSlots": ["dale", "sheila", "dennis", "maurice"],
   "scavengeTableId": "bar_back",
   "surfaces": [
     {

@@ -85,7 +85,6 @@ export function createCharacter(data) {
     id: data.id ?? uuidv4(),
     name: data.name,
     description: data.description ?? '',
-    descriptionVariants: data.descriptionVariants ? { ...data.descriptionVariants } : {},
     habit: data.habit ?? '',
     voice: data.voice ?? '',
     simulation,
@@ -109,10 +108,8 @@ export function createCharacter(data) {
     },
     relationshipScore: data.relationshipScore ?? 0,
     currentLocationId: data.currentLocationId ?? null,
-    dialogueTreeIds: Array.isArray(data.dialogueTreeIds) ? [...data.dialogueTreeIds] : [],
     want: data.want ?? '',
     fear: data.fear ?? '',
-    level: data.level ?? 1,
     decisionWeights,
   }
 }

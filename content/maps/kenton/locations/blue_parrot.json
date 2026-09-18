@@ -1,7 +1,6 @@
 {
   "id": "blue_parrot",
   "type": "bar",
-  "variant": "tavern",
   "display": "The Blue Parrot",
   "pieceAs": "at the Blue Parrot",
   "outdoors": false,
@@ -33,7 +32,6 @@
       "requirements": null
     }
   ],
-  "npcSlots": ["tina", "greg"],
   "scavengeTableId": "bar_back",
   "surfaces": [
     {

@@ -5,6 +5,7 @@
 
 import { chance } from '../utils/random.js'
 import { rollCheck } from './dice.js'
+import { inventoryHas } from './items.js'
 
 /** Enumerated error codes for event resolution. The code is the contract. */
 export const EVENT_ERROR_CODES = Object.freeze({
@@ -72,8 +73,7 @@ function _meetsEventConditions(event, player, location, gameTime, firedEventIds)
   // Item requirements
   if (cond.requiredItems) {
     for (const itemId of cond.requiredItems) {
-      const hasItem = player.inventory?.some((i) => i.id === itemId && i.quantity > 0)
-      if (!hasItem) return false
+      if (!inventoryHas({ inventory: player.inventory, itemId })) return false
     }
   }
 

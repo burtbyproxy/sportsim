@@ -9,7 +9,7 @@ const SAVE_INDEX_KEY = 'sportsim_saves'
  * Current save format version.
  * Bump this whenever the save shape changes in a breaking way.
  */
-export const SAVE_VERSION = 6
+export const SAVE_VERSION = 7
 
 /**
  * Maximum number of save slots.
@@ -34,7 +34,6 @@ const REQUIRED_SAVE_FIELDS = [
   'locations',
   'characters',
   'firedEventIds',
-  'counters',
 ]
 
 /**
@@ -73,6 +72,11 @@ export function validateSave(data) {
  * v5 → v6: the work is played. A making from before has no game on it, so
  * work caught in progress cannot be picked back up: it is abandoned, which
  * is what would have happened to it anyway.
+ * v6 → v7: fields nothing ever read are gone: the save's own counters (the
+ * player's counters are the live ones), the player's level and xp, a
+ * character's level, dialogue trees and description variants, and a
+ * location's variant, npc slots and action list. Nothing is lost that
+ * anything used.
  *
  * @param {{ save: Object }} input
  * @returns {Object}
@@ -125,6 +129,26 @@ export function saveMigrate({ save }) {
     }
     migrated.version = 6
   }
+  if (migrated.version < 7) {
+    delete migrated.counters
+    if (migrated.player) {
+      delete migrated.player.level
+      delete migrated.player.xp
+    }
+    for (const character of Object.values(migrated.characters ?? {})) {
+      if (!character) continue
+      delete character.level
+      delete character.dialogueTreeIds
+      delete character.descriptionVariants
+    }
+    for (const location of Object.values(migrated.locations ?? {})) {
+      if (!location) continue
+      delete location.variant
+      delete location.npcSlots
+      delete location.actionIds
+    }
+    migrated.version = 7
+  }
   return migrated
 }
 
@@ -166,7 +190,6 @@ export function useSave() {
       characters: game.characters,
       firedEventIds: game.firedEventIds,
       activeEvent: game.activeEvent,
-      counters: game.counters,
     }
 
     try {
