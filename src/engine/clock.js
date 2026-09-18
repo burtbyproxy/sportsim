@@ -5,17 +5,8 @@
  */
 
 const TICKS_PER_HOUR = 4
-const TICKS_PER_DAY = TICKS_PER_HOUR * 24 // 96
 
-const DAYS_OF_WEEK = [
-  'monday',
-  'tuesday',
-  'wednesday',
-  'thursday',
-  'friday',
-  'saturday',
-  'sunday',
-]
+const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 
 const MINUTES = [0, 15, 30, 45]
 

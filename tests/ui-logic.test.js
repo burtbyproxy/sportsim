@@ -2,15 +2,15 @@
  * UI logic tests — Portland 2001 overhaul
  *
  * Tests the pure logic that lives inside GameScreen, ActionMenu, and friends.
- * No Vue mounting. No DOM. Just logic. Bollo likes clean separation.
+ * No Vue mounting. No DOM. Just logic.
  *
  * @vitest-environment node
  */
 import { describe, it, expect } from 'vitest'
 
 // ─── Status bar label correctness ────────────────────────────────────────────
-// These are the full-word labels Vince introduced in the Portland 2001 commit.
-// They must be full words — not abbreviations. Howard said so. Bollo enforces it.
+// These are the full-word labels from the Portland 2001 overhaul.
+// They must be full words, not abbreviations.
 
 describe('status bar stat labels', () => {
   // Mirrors the statusStats computed in GameScreen.vue
@@ -158,7 +158,7 @@ describe('barFillClass — sobriety (wider warning band)', () => {
 
 // ─── Exit key mapping ─────────────────────────────────────────────────────────
 // ActionMenu.vue maps exits to letter keys a–z.
-// Bollo makes sure the mapping is correct and doesn't fall off a cliff.
+// The mapping must be correct and must not run past z.
 
 const EXIT_KEYS = 'abcdefghijklmnopqrstuvwxyz'
 
@@ -278,7 +278,7 @@ describe('action number shortcut display', () => {
 
 // ─── NarrativeLog accessibility contract ─────────────────────────────────────
 // The NarrativeLog must keep its accessibility attributes.
-// Bollo can't mount the component in node env, but Bollo can test the contract
+// The component cannot be mounted in the node env, so the contract is tested
 // as a specification — what values the props/aria config must have.
 
 describe('NarrativeLog accessibility specification', () => {

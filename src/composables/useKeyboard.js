@@ -1,7 +1,7 @@
 import { onMounted, onUnmounted } from 'vue'
 
 /**
- * useKeyboard — Old Gregg's keyboard composable.
+ * useKeyboard — document-level key bindings scoped to a component's lifetime.
  *
  * Takes a bindings object mapping key names (KeyboardEvent.key) to handler functions.
  * Handlers receive the raw KeyboardEvent so they can call preventDefault if they want.

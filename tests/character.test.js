@@ -4,7 +4,6 @@ import {
   getScheduledLocation,
   getCharacterDescription,
   adjustRelationship,
-  createNPC,
 } from '../src/models/character.js';
 
 // ---------------------------------------------------------------------------
@@ -314,23 +313,5 @@ describe('adjustRelationship', () => {
     const c = createCharacter({ name: 'X' });
     adjustRelationship(c, 5);
     expect(c.relationshipScore).toBe(5);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Backward compatibility — createNPC alias
-// ---------------------------------------------------------------------------
-
-describe('createNPC (deprecated alias)', () => {
-  it('still works and produces a character with simulation: fixed', () => {
-    const npc = createNPC({ id: 'old_npc', name: 'Old NPC' });
-    expect(npc.id).toBe('old_npc');
-    expect(npc.simulation).toBe('fixed');
-    expect(npc.name).toBe('Old NPC');
-  });
-
-  it('respects simulation field if provided', () => {
-    const npc = createNPC({ name: 'X', simulation: 'routine' });
-    expect(npc.simulation).toBe('routine');
   });
 });

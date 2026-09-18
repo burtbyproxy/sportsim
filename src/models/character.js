@@ -11,7 +11,7 @@
  * Pure JS. No Vue dependencies. Serializable to JSON.
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid'
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -25,7 +25,7 @@ import { v4 as uuidv4 } from 'uuid';
  * @returns {number}
  */
 function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
+  return Math.max(min, Math.min(max, value))
 }
 
 /**
@@ -34,7 +34,7 @@ function clamp(value, min, max) {
  * @returns {Object}
  */
 function createStat(base) {
-  return { base, modifiers: [], xp: 0 };
+  return { base, modifiers: [], xp: 0 }
 }
 
 /**
@@ -43,15 +43,15 @@ function createStat(base) {
  */
 function defaultStats() {
   return {
-    stamina:    createStat(10),
-    toughness:  createStat(10),
-    wits:       createStat(10),
+    stamina: createStat(10),
+    toughness: createStat(10),
+    wits: createStat(10),
     creativity: createStat(10),
-    charm:      createStat(10),
+    charm: createStat(10),
     reputation: createStat(10),
-    luck:       createStat(10),
-    karma:      createStat(10),
-  };
+    luck: createStat(10),
+    karma: createStat(10),
+  }
 }
 
 /**
@@ -61,19 +61,19 @@ function defaultStats() {
  */
 function defaultStatus() {
   return {
-    hunger:   50,
+    hunger: 50,
     sobriety: 80,
-    energy:   70,
-    mood:     50,
-    health:   100,
-  };
+    energy: 70,
+    mood: 50,
+    health: 100,
+  }
 }
 
 // ---------------------------------------------------------------------------
 // Valid simulation tiers
 // ---------------------------------------------------------------------------
 
-const VALID_SIMULATION_TIERS = ['fixed', 'routine', 'full'];
+const VALID_SIMULATION_TIERS = ['fixed', 'routine', 'full']
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -86,19 +86,13 @@ const VALID_SIMULATION_TIERS = ['fixed', 'routine', 'full'];
  * @returns {Object} Character per data contract
  */
 export function createCharacter(data) {
-  const simulation = VALID_SIMULATION_TIERS.includes(data.simulation)
-    ? data.simulation
-    : 'fixed';
+  const simulation = VALID_SIMULATION_TIERS.includes(data.simulation) ? data.simulation : 'fixed'
 
   // Status: null for fixed-tier characters unless explicitly provided
-  const status = simulation === 'fixed'
-    ? (data.status ?? null)
-    : (data.status ?? defaultStatus());
+  const status = simulation === 'fixed' ? (data.status ?? null) : (data.status ?? defaultStatus())
 
   // decisionWeights: only meaningful for full-tier characters
-  const decisionWeights = simulation === 'full'
-    ? (data.decisionWeights ?? null)
-    : null;
+  const decisionWeights = simulation === 'full' ? (data.decisionWeights ?? null) : null
 
   return {
     id: data.id ?? uuidv4(),
@@ -111,26 +105,24 @@ export function createCharacter(data) {
     stats: data.stats ?? defaultStats(),
     status,
     psyche: data.psyche ?? {
-      traumas:    [],
+      traumas: [],
       obsessions: [],
       insanities: [],
-      abilities:  [],
+      abilities: [],
     },
     schedule: {
       entries: Array.isArray(data.schedule?.entries)
-        ? data.schedule.entries.map(e => ({ ...e }))
+        ? data.schedule.entries.map((e) => ({ ...e }))
         : [],
     },
     relationshipScore: data.relationshipScore ?? 0,
     currentLocationId: data.currentLocationId ?? null,
-    dialogueTreeIds: Array.isArray(data.dialogueTreeIds)
-      ? [...data.dialogueTreeIds]
-      : [],
+    dialogueTreeIds: Array.isArray(data.dialogueTreeIds) ? [...data.dialogueTreeIds] : [],
     want: data.want ?? '',
     fear: data.fear ?? '',
     level: data.level ?? 1,
     decisionWeights,
-  };
+  }
 }
 
 /**
@@ -145,15 +137,15 @@ export function createCharacter(data) {
  * @returns {{ locationId: string, probability: number } | null}
  */
 export function getScheduledLocation(character, hour, dayOfWeek) {
-  const entries = character.schedule?.entries ?? [];
+  const entries = character.schedule?.entries ?? []
   for (const entry of entries) {
-    const daysMatch = entry.days.includes('all') || entry.days.includes(dayOfWeek);
-    const hourInRange = _hourInScheduleRange(hour, entry.startHour, entry.endHour);
+    const daysMatch = entry.days.includes('all') || entry.days.includes(dayOfWeek)
+    const hourInRange = _hourInScheduleRange(hour, entry.startHour, entry.endHour)
     if (daysMatch && hourInRange) {
-      return { locationId: entry.locationId, probability: entry.probability };
+      return { locationId: entry.locationId, probability: entry.probability }
     }
   }
-  return null;
+  return null
 }
 
 /**
@@ -169,10 +161,10 @@ export function getScheduledLocation(character, hour, dayOfWeek) {
 function _hourInScheduleRange(hour, startHour, endHour) {
   if (startHour <= endHour) {
     // Normal range: e.g. 11–23
-    return hour >= startHour && hour < endHour;
+    return hour >= startHour && hour < endHour
   }
   // Overnight range: e.g. 16–2 (crosses midnight)
-  return hour >= startHour || hour < endHour;
+  return hour >= startHour || hour < endHour
 }
 
 /**
@@ -194,34 +186,34 @@ function _hourInScheduleRange(hour, startHour, endHour) {
  * @returns {string}
  */
 export function getCharacterDescription(character, context = {}) {
-  const variants = character.descriptionVariants ?? {};
-  const { timeOfDay, playerStatus, visitCount } = context;
+  const variants = character.descriptionVariants ?? {}
+  const { timeOfDay, playerStatus, visitCount } = context
 
   // Status-based variants — highest priority
   if (playerStatus) {
     if (playerStatus.sobriety !== undefined && playerStatus.sobriety < 30) {
-      if (variants.drunk) return variants.drunk;
+      if (variants.drunk) return variants.drunk
     }
     if (playerStatus.energy !== undefined && playerStatus.energy < 20) {
-      if (variants.exhausted) return variants.exhausted;
+      if (variants.exhausted) return variants.exhausted
     }
     if (playerStatus.hunger !== undefined && playerStatus.hunger < 20) {
-      if (variants.starving) return variants.starving;
+      if (variants.starving) return variants.starving
     }
   }
 
   // Time-based variants
   if (timeOfDay && variants[timeOfDay]) {
-    return variants[timeOfDay];
+    return variants[timeOfDay]
   }
 
   // Repeat visit
   if (visitCount !== undefined && visitCount > 1 && variants.repeat) {
-    return variants.repeat;
+    return variants.repeat
   }
 
   // Fallback to plain description
-  return character.description ?? '';
+  return character.description ?? ''
 }
 
 /**
@@ -234,23 +226,5 @@ export function getCharacterDescription(character, context = {}) {
  * @returns {void}
  */
 export function adjustRelationship(character, delta) {
-  character.relationshipScore = clamp(
-    (character.relationshipScore ?? 0) + delta,
-    -100,
-    100
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Backward compatibility alias
-// createNPC is deprecated — use createCharacter.
-// Retained so any existing code calling createNPC doesn't break immediately.
-// Coordinate with Scotty before removing.
-// ---------------------------------------------------------------------------
-
-/**
- * @deprecated Use createCharacter instead.
- */
-export function createNPC(data) {
-  return createCharacter({ ...data, simulation: data.simulation ?? 'fixed' });
+  character.relationshipScore = clamp((character.relationshipScore ?? 0) + delta, -100, 100)
 }

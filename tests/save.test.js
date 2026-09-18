@@ -3,12 +3,8 @@
  *
  * Covers: validation, versioning, export/import, save slot limit.
  *
- * Old Gregg wrote these tests from the bottom of the sea.
- * Do you love them? Are you playing your love games with them?
- * They test the deep infrastructure. The beautiful watercolour database of saves.
- *
  * The node test environment has no DOM / localStorage, so we mock it here.
- * A simple in-memory store suffices. Don't over-think it, Howard.
+ * A simple in-memory store suffices.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'

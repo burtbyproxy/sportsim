@@ -118,14 +118,14 @@ export const DECAY_CONFIG = {
     max: 100,
   },
   sobriety: {
-    ratePerTick: 1,       // recovery rate toward baseline
-    baseline: 80,         // natural ceiling when not drinking
+    ratePerTick: 1, // recovery rate toward baseline
+    baseline: 80, // natural ceiling when not drinking
     min: 0,
     max: 100,
   },
   mood: {
-    ratePerTick: -0.25,   // drift per tick toward baseline
-    baseline: 40,         // baseline melancholy — Portland 2001
+    ratePerTick: -0.25, // drift per tick toward baseline
+    baseline: 40, // baseline melancholy — Portland 2001
     min: 0,
     max: 100,
   },
@@ -149,14 +149,20 @@ export function getStatDecayEffects(player, ticksElapsed, config = DECAY_CONFIG)
   // Hunger — simple linear decay
   const hungerCfg = config.hunger
   const currentHunger = status.hunger ?? 50
-  const newHunger = Math.min(hungerCfg.max, Math.max(hungerCfg.min, currentHunger + hungerCfg.ratePerTick * ticksElapsed))
+  const newHunger = Math.min(
+    hungerCfg.max,
+    Math.max(hungerCfg.min, currentHunger + hungerCfg.ratePerTick * ticksElapsed)
+  )
   const hungerDelta = parseFloat((newHunger - currentHunger).toFixed(2))
   if (hungerDelta !== 0) changes.hunger = hungerDelta
 
   // Energy — simple linear decay
   const energyCfg = config.energy
   const currentEnergy = status.energy ?? 80
-  const newEnergy = Math.min(energyCfg.max, Math.max(energyCfg.min, currentEnergy + energyCfg.ratePerTick * ticksElapsed))
+  const newEnergy = Math.min(
+    energyCfg.max,
+    Math.max(energyCfg.min, currentEnergy + energyCfg.ratePerTick * ticksElapsed)
+  )
   const energyDelta = parseFloat((newEnergy - currentEnergy).toFixed(2))
   if (energyDelta !== 0) changes.energy = energyDelta
 
@@ -164,7 +170,10 @@ export function getStatDecayEffects(player, ticksElapsed, config = DECAY_CONFIG)
   const sobrietyCfg = config.sobriety
   const currentSobriety = status.sobriety ?? sobrietyCfg.baseline
   if (currentSobriety < sobrietyCfg.baseline) {
-    const newSobriety = Math.min(sobrietyCfg.baseline, currentSobriety + sobrietyCfg.ratePerTick * ticksElapsed)
+    const newSobriety = Math.min(
+      sobrietyCfg.baseline,
+      currentSobriety + sobrietyCfg.ratePerTick * ticksElapsed
+    )
     const sobrietyDelta = parseFloat((newSobriety - currentSobriety).toFixed(2))
     if (sobrietyDelta !== 0) changes.sobriety = sobrietyDelta
   }
@@ -174,11 +183,11 @@ export function getStatDecayEffects(player, ticksElapsed, config = DECAY_CONFIG)
   const currentMood = status.mood ?? moodCfg.baseline
   if (currentMood !== moodCfg.baseline) {
     // Drift toward baseline regardless of direction
-    const direction = currentMood > moodCfg.baseline ? -1 : 1
     const driftAmount = Math.abs(moodCfg.ratePerTick) * ticksElapsed
-    const newMood = currentMood > moodCfg.baseline
-      ? Math.max(moodCfg.baseline, currentMood - driftAmount)
-      : Math.min(moodCfg.baseline, currentMood + driftAmount)
+    const newMood =
+      currentMood > moodCfg.baseline
+        ? Math.max(moodCfg.baseline, currentMood - driftAmount)
+        : Math.min(moodCfg.baseline, currentMood + driftAmount)
     const moodDelta = parseFloat((newMood - currentMood).toFixed(2))
     if (moodDelta !== 0) changes.mood = moodDelta
   }

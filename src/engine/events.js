@@ -3,7 +3,7 @@
  * Pure functions. No side effects. No Vue. No DOM.
  */
 
-import { chance, roll } from '../utils/random.js'
+import { chance } from '../utils/random.js'
 import { rollCheck } from './dice.js'
 
 /**
@@ -26,8 +26,10 @@ function _meetsEventConditions(event, player, location, gameTime, firedEventIds)
   if (cond.locationId && cond.locationId !== location.id) return false
 
   // Time checks
-  if (cond.minHour !== null && cond.minHour !== undefined && gameTime.hour < cond.minHour) return false
-  if (cond.maxHour !== null && cond.maxHour !== undefined && gameTime.hour >= cond.maxHour) return false
+  if (cond.minHour !== null && cond.minHour !== undefined && gameTime.hour < cond.minHour)
+    return false
+  if (cond.maxHour !== null && cond.maxHour !== undefined && gameTime.hour >= cond.maxHour)
+    return false
 
   // Stat checks
   if (cond.minStats) {
@@ -60,9 +62,7 @@ function _meetsEventConditions(event, player, location, gameTime, firedEventIds)
   // Item requirements
   if (cond.requiredItems) {
     for (const itemId of cond.requiredItems) {
-      const hasItem = player.inventory?.some(
-        (i) => i.id === itemId && i.quantity > 0
-      )
+      const hasItem = player.inventory?.some((i) => i.id === itemId && i.quantity > 0)
       if (!hasItem) return false
     }
   }
@@ -96,7 +96,14 @@ function _meetsEventConditions(event, player, location, gameTime, firedEventIds)
  * @param {(() => number)} [rng=Math.random]
  * @returns {Object[]} - events that fire this tick
  */
-export function checkRandomEvents(player, location, gameTime, eventRegistry, firedEventIds = [], rng = Math.random) {
+export function checkRandomEvents(
+  player,
+  location,
+  gameTime,
+  eventRegistry,
+  firedEventIds = [],
+  rng = Math.random
+) {
   return eventRegistry.filter((event) => {
     if (event.type !== 'random') return false
     if (!_meetsEventConditions(event, player, location, gameTime, firedEventIds)) return false
@@ -115,7 +122,13 @@ export function checkRandomEvents(player, location, gameTime, eventRegistry, fir
  * @param {string[]} firedEventIds
  * @returns {Object[]} - events that should trigger
  */
-export function checkTriggeredEvents(player, location, gameTime, eventRegistry, firedEventIds = []) {
+export function checkTriggeredEvents(
+  player,
+  location,
+  gameTime,
+  eventRegistry,
+  firedEventIds = []
+) {
   return eventRegistry.filter((event) => {
     if (event.type !== 'triggered') return false
     return _meetsEventConditions(event, player, location, gameTime, firedEventIds)

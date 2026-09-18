@@ -22,8 +22,8 @@ export function createItem(data) {
     value: data.value ?? 0,
     stackable: data.stackable ?? false,
     quantity: data.quantity ?? 1,
-    effects: Array.isArray(data.effects) ? data.effects.map(e => ({ ...e })) : [],
-  };
+    effects: Array.isArray(data.effects) ? data.effects.map((e) => ({ ...e })) : [],
+  }
 }
 
 /**
@@ -32,9 +32,8 @@ export function createItem(data) {
  * Pure.
  *
  * @param {import('./types').Item} item
- * @param {import('./types').Player} _player - reserved for future conditional effects
  * @returns {import('./types').ItemEffect[]}
  */
-export function applyEffects(item, _player) {
-  return item.effects.map(e => ({ ...e }));
+export function applyEffects(item) {
+  return item.effects.map((e) => ({ ...e }))
 }
