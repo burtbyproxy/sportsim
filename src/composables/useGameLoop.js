@@ -14,7 +14,6 @@
  * Everything that involves resolving player actions flows through resolveAction().
  */
 
-import { inject } from 'vue'
 import { useGameStore } from '../stores/game.js'
 import { resolveAction, getAvailableActions } from '../engine/actions.js'
 import { getStatDecayEffects } from '../engine/stats.js'
@@ -30,11 +29,14 @@ import { generateActionNarrative } from './useNarrative.js'
 import { sim } from '../workers/simulation-api.js'
 
 /**
- * @param {Object} actionRegistry - array of Action objects to evaluate against
+ * @param {{ actionRegistry?: Object[], narrative?: ReturnType<import('./useNarrative.js').useNarrative>|null }} input
+ *   actionRegistry — array of Action objects to evaluate against
+ *   narrative — the renderer that receives action and event prose. Passed in
+ *   explicitly: the screen that owns the loop also owns the renderer, and a
+ *   component cannot inject what it provided itself.
  */
-export function useGameLoop(actionRegistry = []) {
+export function useGameLoop({ actionRegistry = [], narrative = null } = {}) {
   const game = useGameStore()
-  const narrative = inject('narrative', null)
 
   /**
    * Advance game time by N ticks, applying decay and expiring modifiers.
