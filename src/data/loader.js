@@ -24,6 +24,7 @@ const _voiceFiles = import.meta.glob('/content/voices/*.json', { eager: true })
 const _scavengeFiles = import.meta.glob('/content/scavenge/*.json', { eager: true })
 const _gameFiles = import.meta.glob('/content/games/*.json', { eager: true })
 const _configFiles = import.meta.glob('/content/game.json', { eager: true })
+const _vocabularyFiles = import.meta.glob('/content/vocabulary.json', { eager: true })
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -190,6 +191,16 @@ export function loadScavengeTables() {
 export function loadGameConfig() {
   const [config] = _extractModules(_configFiles)
   return config
+}
+
+/**
+ * Load the game's vocabulary (content/vocabulary.json): which stats and
+ * vitals exist and how they read, item types, action kinds, and the rest.
+ * @returns {Object}
+ */
+export function loadVocabulary() {
+  const [vocabulary] = _extractModules(_vocabularyFiles)
+  return vocabulary
 }
 
 /**

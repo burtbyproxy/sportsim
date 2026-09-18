@@ -13,6 +13,7 @@
 
 import { v4 as uuidv4 } from 'uuid'
 import { blendSober, sobrietyDerive } from '../engine/blend.js'
+import { STAT_IDS_DEFAULT, SIMULATION_TIERS_DEFAULT } from './defaults.js'
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -28,20 +29,11 @@ function createStat(base) {
 }
 
 /**
- * Default stats for a character — all 8 stats at base 10.
+ * Default stats for a character — every stat at base 10.
  * @returns {Object}
  */
 function defaultStats() {
-  return {
-    stamina: createStat(10),
-    toughness: createStat(10),
-    wits: createStat(10),
-    creativity: createStat(10),
-    charm: createStat(10),
-    reputation: createStat(10),
-    luck: createStat(10),
-    karma: createStat(10),
-  }
+  return Object.fromEntries(STAT_IDS_DEFAULT.map((statId) => [statId, createStat(10)]))
 }
 
 /**
@@ -63,7 +55,7 @@ function defaultStatus() {
 // Valid simulation tiers
 // ---------------------------------------------------------------------------
 
-const VALID_SIMULATION_TIERS = ['fixed', 'routine', 'full']
+const VALID_SIMULATION_TIERS = SIMULATION_TIERS_DEFAULT
 
 // ---------------------------------------------------------------------------
 // Public API

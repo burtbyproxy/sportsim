@@ -1,0 +1,83 @@
+{
+  "id": "vocabulary",
+  "stats": [
+    {
+      "id": "stamina",
+      "display": "Stamina"
+    },
+    {
+      "id": "toughness",
+      "display": "Toughness"
+    },
+    {
+      "id": "wits",
+      "display": "Wits"
+    },
+    {
+      "id": "creativity",
+      "display": "Creativity"
+    },
+    {
+      "id": "charm",
+      "display": "Charm"
+    },
+    {
+      "id": "reputation",
+      "display": "Reputation"
+    },
+    {
+      "id": "luck",
+      "display": "Luck"
+    },
+    {
+      "id": "karma",
+      "display": "Karma"
+    }
+  ],
+  "statuses": [
+    {
+      "id": "health",
+      "display": "Health",
+      "icon": "♥",
+      "danger": 20,
+      "warning": 40,
+      "writable": true
+    },
+    {
+      "id": "energy",
+      "display": "Energy",
+      "icon": "⚡",
+      "danger": 20,
+      "warning": 40,
+      "writable": true
+    },
+    {
+      "id": "mood",
+      "display": "Mood",
+      "icon": "◈",
+      "danger": 20,
+      "warning": 40,
+      "writable": true
+    },
+    {
+      "id": "sobriety",
+      "display": "Sobriety",
+      "icon": "◎",
+      "danger": 25,
+      "warning": 50,
+      "writable": false
+    },
+    {
+      "id": "hunger",
+      "display": "Hunger",
+      "icon": "◆",
+      "danger": 20,
+      "warning": 40,
+      "writable": true
+    }
+  ],
+  "itemTypes": ["consumable", "tool", "surface", "ingredient", "junk", "key", "weapon"],
+  "actionKinds": ["scavenge", "make"],
+  "simulationTiers": ["fixed", "routine", "full"],
+  "substanceFamilies": ["alcohol", "cannabis", "stimulant", "nicotine"]
+}
