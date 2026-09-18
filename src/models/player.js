@@ -85,6 +85,8 @@ export function createPlayer(name) {
     blend: blendSober(),
     /** The skill grid: skills[mediumId][personaId] = { base, modifiers, xp }. See engine/skills.js. */
     skills: {},
+    /** Every inspiration that ever struck, at most one active. See engine/inspiration.js. */
+    inspirations: [],
     psyche: {
       traumas: [],
       obsessions: [],

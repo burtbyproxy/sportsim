@@ -1,0 +1,9 @@
+{
+  "id": "telepath",
+  "lines": {
+    "inspiration.struck": "Oh. Oh, this is the best idea anyone has ever had. Everyone nearby can tell. You can hear them thinking it.",
+    "inspiration.interrupted": "Too loud. Too many of them, all thinking at once, and the idea went under and didn't come back up.",
+    "inspiration.status.fresh": "genius, incoming",
+    "inspiration.status.fading": "genius, still incoming"
+  }
+}

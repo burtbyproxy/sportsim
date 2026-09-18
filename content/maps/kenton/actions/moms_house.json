@@ -141,6 +141,7 @@
     "label": "Sleep",
     "locationId": "moms_house",
     "timeCost": 8,
+    "interruptsInspiration": true,
     "requirements": {
       "minStats": null,
       "requiredItems": null,

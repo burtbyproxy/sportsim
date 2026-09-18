@@ -114,6 +114,12 @@ export function useGameLoop({
     // snapshot every roll reads is recomputed.
     game.applyBlendDecay({ ticksElapsed: ticks })
 
+    // 4c. The inspiration clock runs down. An idea that ran out says so.
+    const clock = game.applyInspirationTick({ ticksElapsed: ticks })
+    if (clock.ok && clock.data.expired) {
+      _voiceEnqueue({ code: 'inspiration.expired' })
+    }
+
     // 5. Move if requested — the new scene's prose goes into a fresh log
     if (toLocationId) {
       game.moveTo(toLocationId)
@@ -159,12 +165,18 @@ export function useGameLoop({
   function _eventStart(event) {
     if (event.oneTime) game.markEventFired(event.id)
     _narrativeEnqueue(generateEventNarrative(event, game.player))
+    // The world barging in kills whatever was moving the player — unless
+    // the world is what's moving them, in which case the strike replaces it.
+    if (!event.outcome?.inspiration) {
+      const cut = game.applyInspirationInterrupt({ reason: { kind: 'event', id: event.id } })
+      if (cut.ok && cut.data.interrupted) _voiceEnqueue({ code: 'inspiration.interrupted' })
+    }
     if (event.choices?.length > 0) {
       game.setActiveEvent(event)
       return
     }
     const { outcome } = resolveEvent(event, game.player, null, rng)
-    _eventOutcomeApply(outcome)
+    _eventOutcomeApply(outcome, { kind: 'event', id: event.id })
   }
 
   /**
@@ -176,11 +188,11 @@ export function useGameLoop({
     if (!event || !game.player) return
     const { outcome } = resolveEvent(event, game.player, choiceIndex, rng)
     game.clearActiveEvent()
-    _eventOutcomeApply(outcome)
+    _eventOutcomeApply(outcome, { kind: 'event', id: event.id })
     _refreshActions()
   }
 
-  function _eventOutcomeApply(outcome) {
+  function _eventOutcomeApply(outcome, source) {
     if (!outcome) return
     if (outcome.narrative) {
       const text =
@@ -189,13 +201,20 @@ export function useGameLoop({
           : outcome.narrative
       _narrativeEnqueue(text)
     }
-    _outcomeApply(outcome)
+    _outcomeApply(outcome, source)
   }
 
   function _narrativeEnqueue(narrativeText) {
     if (narrative && narrativeText?.tokens?.length > 0) {
       narrative.enqueue(narrativeText)
     }
+  }
+
+  /** A line in the voice of whoever is in charge, if the renderer is listening. */
+  function _voiceEnqueue({ code }) {
+    if (!narrative) return
+    const text = game.voiceLine({ code })
+    if (text) _narrativeEnqueue(toNarrativeText(text))
   }
 
   /**
@@ -231,7 +250,13 @@ export function useGameLoop({
     const outcome = result.outcome
     if (!outcome) return
 
-    _outcomeApply(outcome)
+    _outcomeApply(outcome, { kind: 'action', id: action.id })
+
+    // Some actions are the interruption: sleep, mostly.
+    if (action.interruptsInspiration) {
+      const cut = game.applyInspirationInterrupt({ reason: { kind: 'action', id: action.id } })
+      if (cut.ok && cut.data.interrupted) _voiceEnqueue({ code: 'inspiration.interrupted' })
+    }
 
     // Advance time by action cost
     await tick(action.timeCost ?? 1)
@@ -239,10 +264,11 @@ export function useGameLoop({
 
   /**
    * Apply an outcome's state effects to the store. Shared by actions and events.
-   * Narrative is the caller's business.
+   * Narrative is the caller's business, except the muse's own lines.
    * @param {Object} outcome
+   * @param {{ kind: string, id: string }} source - what produced the outcome
    */
-  function _outcomeApply(outcome) {
+  function _outcomeApply(outcome, source) {
     // Apply status changes
     if (outcome.statusChanges) {
       game.applyStatusChanges(outcome.statusChanges)
@@ -261,6 +287,16 @@ export function useGameLoop({
     // Doses — what went into the player. Hidden doses roll here.
     if (outcome.doses?.length > 0) {
       game.applyDoses({ doses: outcome.doses, rng })
+    }
+
+    // Inspiration — the world strikes. Snapshots the blend as it is now,
+    // after the doses, because whoever you are right now owns the idea.
+    if (outcome.inspiration) {
+      const struck = game.applyInspirationStrike({ ...outcome.inspiration, source })
+      if (struck.ok) {
+        if (struck.data.replaced) _voiceEnqueue({ code: 'inspiration.replaced' })
+        _voiceEnqueue({ code: 'inspiration.struck' })
+      }
     }
 
     // Grant items — itemsGained is string[] (item IDs per contract)

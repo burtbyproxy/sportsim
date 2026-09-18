@@ -2,6 +2,14 @@ import { defineStore } from 'pinia'
 import { createClock, advanceClock } from '../engine/clock.js'
 import { blendCompute, blendDecay, dosesApply, sobrietyDerive } from '../engine/blend.js'
 import { skillGain } from '../engine/skills.js'
+import {
+  inspirationActive,
+  inspirationStrike,
+  inspirationTick,
+  inspirationInterrupt,
+  inspirationSpend,
+} from '../engine/inspiration.js'
+import { voiceLine } from '../engine/voice.js'
 
 /**
  * Add a map of deltas onto a map of levels, dropping any key that reaches zero.
@@ -61,6 +69,9 @@ export const useGameStore = defineStore('game', {
     /** Medium definitions, keyed by id. Loaded once at init from content/mediums. */
     mediums: {},
 
+    /** Voice catalogs, keyed by persona id. Loaded once at init from content/voices. */
+    voices: {},
+
     /** Actions currently available at this location */
     availableActions: [],
 
@@ -95,6 +106,30 @@ export const useGameStore = defineStore('game', {
     playerMood: (state) => state.player?.status?.mood ?? 50,
     playerSobriety: (state) => state.player?.status?.sobriety ?? 100,
     playerHunger: (state) => state.player?.status?.hunger ?? 100,
+
+    /** The inspiration moving the player right now, or null. */
+    inspirationActive: (state) =>
+      state.player ? inspirationActive({ player: state.player }) : null,
+
+    /** The persona in charge of the prose right now. */
+    personaInCharge: (state) => state.player?.blend?.dominantPersonaId ?? 'sober',
+
+    /**
+     * What the sidebar says about the muse, in the voice of whoever is in
+     * charge. Words, never a number.
+     */
+    inspirationLabel(state) {
+      const active = this.inspirationActive
+      let code = 'inspiration.status.none'
+      if (active) {
+        code =
+          active.ticksRemaining * 2 > active.ticksTotal
+            ? 'inspiration.status.fresh'
+            : 'inspiration.status.fading'
+      }
+      const line = voiceLine({ code, personaId: this.personaInCharge, voices: state.voices })
+      return line.ok ? line.data.text : ''
+    },
   },
 
   actions: {
@@ -361,6 +396,109 @@ export const useGameStore = defineStore('game', {
      */
     registerMedium({ medium }) {
       this.mediums[medium.id] = medium
+    },
+
+    /**
+     * Register a voice catalog. Called at init from loadVoices().
+     * @param {{ voice: Object }} input
+     */
+    registerVoice({ voice }) {
+      this.voices[voice.id] = voice
+    },
+
+    /**
+     * A line of prose for a message code, in the voice of the persona in
+     * charge. Empty when nobody has a line, which content validation forbids.
+     * @param {{ code: string }} input
+     * @returns {string}
+     */
+    voiceLine({ code }) {
+      const line = voiceLine({ code, personaId: this.personaInCharge, voices: this.voices })
+      if (!line.ok) {
+        console.warn(`[game] voiceLine: ${line.error.code}`, line.error.message)
+        return ''
+      }
+      return line.data.text
+    },
+
+    /**
+     * The world strikes. Snapshots the blend as it is right now.
+     * @param {{ source: { kind: string, id: string }, mediumId?: string|null, strength: number, ticksTotal: number }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the inspiration engine's result
+     */
+    applyInspirationStrike({ source, mediumId = null, strength, ticksTotal }) {
+      if (!this.player) {
+        return { ok: false, data: null, error: { code: 'PLAYER_MISSING', message: 'No player' } }
+      }
+      const result = inspirationStrike({
+        player: this.player,
+        source,
+        mediumId,
+        strength,
+        ticksTotal,
+        gameTime: this.time,
+        locationId: this.currentLocationId,
+      })
+      if (!result.ok) {
+        console.warn(`[game] applyInspirationStrike: ${result.error.code}`, result.error.message)
+        return result
+      }
+      this.player.inspirations = result.data.inspirations
+      return result
+    },
+
+    /**
+     * The clock runs down.
+     * @param {{ ticksElapsed: number }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }}
+     */
+    applyInspirationTick({ ticksElapsed }) {
+      if (!this.player) {
+        return { ok: false, data: null, error: { code: 'PLAYER_MISSING', message: 'No player' } }
+      }
+      const result = inspirationTick({ player: this.player, ticksElapsed, gameTime: this.time })
+      if (!result.ok) {
+        console.warn(`[game] applyInspirationTick: ${result.error.code}`, result.error.message)
+        return result
+      }
+      this.player.inspirations = result.data.inspirations
+      return result
+    },
+
+    /**
+     * Something got in the way.
+     * @param {{ reason: { kind: string, id: string } }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }}
+     */
+    applyInspirationInterrupt({ reason }) {
+      if (!this.player) {
+        return { ok: false, data: null, error: { code: 'PLAYER_MISSING', message: 'No player' } }
+      }
+      const result = inspirationInterrupt({ player: this.player, reason, gameTime: this.time })
+      if (!result.ok) {
+        console.warn(`[game] applyInspirationInterrupt: ${result.error.code}`, result.error.message)
+        return result
+      }
+      this.player.inspirations = result.data.inspirations
+      return result
+    },
+
+    /**
+     * The inspiration went into a piece.
+     * @param {{ spentOn: { kind: string, id: string } }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }}
+     */
+    applyInspirationSpend({ spentOn }) {
+      if (!this.player) {
+        return { ok: false, data: null, error: { code: 'PLAYER_MISSING', message: 'No player' } }
+      }
+      const result = inspirationSpend({ player: this.player, spentOn, gameTime: this.time })
+      if (!result.ok) {
+        console.warn(`[game] applyInspirationSpend: ${result.error.code}`, result.error.message)
+        return result
+      }
+      this.player.inspirations = result.data.inspirations
+      return result
     },
 
     /**

@@ -19,6 +19,7 @@
  *   content/substances/{id}.json               — Substance contract
  *   content/conditions/{id}.json               — Condition contract
  *   content/mediums/{id}.json                  — Medium contract
+ *   content/voices/{personaId}.json            — Voice catalog contract
  */
 
 import { describe, it, expect } from 'vitest';
@@ -259,6 +260,16 @@ function validateOutcome(outcome, label) {
     ).toBeUndefined();
   }
   validateDoses(outcome.doses, label);
+  if (outcome.inspiration !== undefined && outcome.inspiration !== null) {
+    const ins = outcome.inspiration;
+    expect(ins.strength, `${label}: inspiration.strength must be 1-100`).toBeGreaterThanOrEqual(1);
+    expect(ins.strength, `${label}: inspiration.strength must be 1-100`).toBeLessThanOrEqual(100);
+    expect(Number.isInteger(ins.ticksTotal), `${label}: inspiration.ticksTotal must be a whole number`).toBe(true);
+    expect(ins.ticksTotal, `${label}: inspiration.ticksTotal must be >= 1`).toBeGreaterThanOrEqual(1);
+    if (ins.mediumId !== null && ins.mediumId !== undefined) {
+      expect(typeof ins.mediumId, `${label}: inspiration.mediumId must be string or null`).toBe('string');
+    }
+  }
 }
 
 /** Every outcome an action or event can produce, flattened. */
@@ -310,6 +321,14 @@ function validateAction(data, file) {
 
   for (const outcome of outcomesOf(data)) {
     validateOutcome(outcome, `${file} '${data.id}'`);
+  }
+
+  if (data.interruptsInspiration !== undefined) {
+    expect(typeof data.interruptsInspiration, `${file} '${data.id}': interruptsInspiration must be boolean`).toBe('boolean');
+  }
+  const requiresInspiration = data.requirements?.requiresInspiration;
+  if (requiresInspiration !== undefined && requiresInspiration !== null) {
+    expect(typeof requiresInspiration, `${file} '${data.id}': requiresInspiration must be boolean`).toBe('boolean');
   }
 }
 
@@ -648,6 +667,42 @@ describe('content/conditions/*.json — Condition contract', () => {
   }
 });
 
+describe('content/voices/*.json — Voice catalog contract', () => {
+  const dir = join(CONTENT_ROOT, 'voices');
+  const files = loadJsonFiles(dir);
+  const sober = files.find(({ data }) => data.id === 'sober');
+
+  it('content/voices/ directory exists and has a sober catalog', () => {
+    expect(existsSync(dir)).toBe(true);
+    expect(sober, 'content/voices/sober.json is the fallback for every line').toBeTruthy();
+  });
+
+  // Every persona any substance, withdrawal, or condition can put in charge
+  const personaIds = new Set(['sober']);
+  for (const { data } of loadJsonFiles(join(CONTENT_ROOT, 'substances'))) {
+    personaIds.add(data.persona?.id);
+    if (data.withdrawal) personaIds.add(data.withdrawal.persona?.id);
+  }
+  for (const { data } of loadJsonFiles(join(CONTENT_ROOT, 'conditions'))) {
+    personaIds.add(data.persona?.id);
+  }
+
+  for (const { file, data } of files) {
+    it(`${file} — valid voice catalog`, () => {
+      expect(typeof data.id, `${file}: id must be string`).toBe('string');
+      expect(file.endsWith(`${data.id}.json`), `${file}: file name must match id '${data.id}'`).toBe(true);
+      expect(personaIds.has(data.id), `${file}: '${data.id}' is not a persona anything can put in charge`).toBe(true);
+      expect(data.lines && typeof data.lines === 'object', `${file}: lines must be an object`).toBe(true);
+      for (const [code, text] of Object.entries(data.lines)) {
+        expect(typeof text, `${file}: line '${code}' must be a string`).toBe('string');
+        expect(text.length, `${file}: line '${code}' must not be empty`).toBeGreaterThan(0);
+        // A persona can only re-voice a line sober already has, so the fallback always exists.
+        expect(sober.data.lines, `${file}: code '${code}' has no sober fallback`).toHaveProperty([code]);
+      }
+    });
+  }
+});
+
 describe('content/mediums/*.json — Medium contract', () => {
   const dir = join(CONTENT_ROOT, 'mediums');
   const files = loadJsonFiles(dir);
@@ -723,6 +778,26 @@ describe('cross-reference validation', () => {
       for (const dose of item.doses ?? []) {
         it(`${file} item '${item.id}': dose '${dose.substanceId}' exists in substance data`, () => {
           expect(knownSubstanceIds.has(dose.substanceId), `Item '${item.id}' doses unknown substance '${dose.substanceId}'`).toBe(true);
+        });
+      }
+    }
+  }
+
+  // Inspirations name real mediums
+  const knownMediumIds = new Set(
+    loadJsonFiles(join(CONTENT_ROOT, 'mediums')).map(({ data }) => data.id).filter(Boolean)
+  );
+  for (const { file, data } of [
+    ...mapDirs.flatMap(mapDir => loadJsonFiles(join(mapDir, 'actions'))),
+    ...mapDirs.flatMap(mapDir => loadJsonFiles(join(mapDir, 'events'))),
+  ]) {
+    const entries = Array.isArray(data) ? data : Object.values(data);
+    for (const entry of entries) {
+      for (const outcome of outcomesOf(entry)) {
+        const mediumId = outcome.inspiration?.mediumId;
+        if (mediumId === undefined || mediumId === null) continue;
+        it(`${file} '${entry.id}': inspiration medium '${mediumId}' exists in medium data`, () => {
+          expect(knownMediumIds.has(mediumId), `'${entry.id}' inspires unknown medium '${mediumId}'`).toBe(true);
         });
       }
     }
