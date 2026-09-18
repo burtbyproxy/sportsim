@@ -1,0 +1,68 @@
+{
+  "id": "rhymes",
+  "shape": "word_pick",
+  "description": "A freestyle is the next word, right now, and it had better rhyme with the last one. Each register is a rhyme family.",
+  "sittingTicks": 1,
+  "params": {
+    "picksPerRound": 3,
+    "voiceCap": 3,
+    "mushModifier": -2,
+    "registers": {
+      "ight": [
+        "night",
+        "fight",
+        "tight",
+        "light",
+        "right",
+        "sight",
+        "dynamite",
+        "Bud Light",
+        "outta sight",
+        "alright"
+      ],
+      "ack": [
+        "back",
+        "stack",
+        "crack",
+        "Cadillac",
+        "snack",
+        "payback",
+        "six-pack",
+        "heart attack",
+        "cul-de-sac",
+        "Kenton track"
+      ],
+      "ay": [
+        "day",
+        "pay",
+        "okay",
+        "Denver Ave",
+        "no way",
+        "payday",
+        "hooray",
+        "parlay",
+        "allegedly, eh",
+        "St. Johns way"
+      ],
+      "oney": [
+        "money",
+        "honey",
+        "funny",
+        "sunny",
+        "bunny",
+        "runny",
+        "acrimony",
+        "baloney",
+        "my mom's Sony",
+        "testimony"
+      ]
+    },
+    "personaLean": {
+      "suburban_gangster": "ack"
+    }
+  },
+  "lines": {
+    "picked": "game.rhymes.picked"
+  },
+  "compulsions": []
+}

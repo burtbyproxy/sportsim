@@ -51,6 +51,7 @@
     "game.karaoke.pushed": "In your head it's the big note. In the room it's a noise. Somebody at the bar puts a hand over their drink.",
     "game.karaoke.held": "In your head you're riding the chorus. In the room you're a verse behind, reading the screen out loud like it's a menu.",
     "game.karaoke.bowed": "You hand back the mic. The machine clunks. Somewhere above it, a tape stops turning.",
-    "piece.words": "It says: {words}."
+    "piece.words": "It says: {words}.",
+    "game.rhymes.picked": "{word}. It's a word. You said it out loud, to a beat only you can hear."
   }
 }

@@ -711,10 +711,53 @@ describe('making pipeline', () => {
     const beer = await heard('beer')
     expect(beer.persona).toBe('one_of_the_guys')
     expect(beer.log).toContain(voice('one_of_the_guys', 'game.karaoke.pushed'))
-    const malt = await heard('malt_liquor')
-    expect(malt.persona).toBe('suburban_gangster')
-    expect(malt.log).toContain(voice('suburban_gangster', 'game.karaoke.pushed'))
-    expect(new Set([vodka.log, beer.log, malt.log]).size).toBe(3)
+    const coffee = await heard('caffeine')
+    expect(coffee.persona).toBe('yeller')
+    expect(coffee.log).toContain(voice('yeller', 'game.karaoke.pushed'))
+    expect(new Set([vodka.log, beer.log, coffee.log]).size).toBe(3)
+  })
+
+  it('on malt liquor you would not be caught dead karaoking; you spit rhymes in a parking lot instead', async () => {
+    const malt = [{ substanceId: 'malt_liquor', value: 80 }]
+    const bar = karaokeNight({ doses: malt, money: 20 })
+    expect(bar.game.personaInCharge).toBe('suburban_gangster')
+    await pick(bar, 'Make something')
+    const refusal = medium('karaoke').making.refusals.find(
+      (r) => r.personaId === 'suburban_gangster'
+    ).reason
+    expect(entry(bar.game, 'Karaoke: the karaoke machine').available).toBe(false)
+    expect(entry(bar.game, 'Karaoke: the karaoke machine').unavailableReason).toBe(refusal)
+
+    const ctx = startGame({ at: 'denver_711' })
+    const { game } = ctx
+    game.applyDoses({ doses: malt })
+    strike(game, { mediumId: 'freestyle' })
+    ctx.loop.onLocationEntered()
+    await pick(ctx, 'Make something')
+    await pick(ctx, 'Freestyle: the good light in the parking lot')
+
+    const rhymes = games.find((g) => g.id === 'rhymes')
+    const familyOf = (word) =>
+      Object.entries(rhymes.params.registers).find(([, words]) => words.includes(word))[0]
+    const lean = rhymes.params.personaLean.suburban_gangster
+    const picked = []
+    for (let bar = 0; bar < 4; bar++) {
+      const offered = game.availableActions.filter((a) => a.kind === 'making_choice')
+      // The gangster has a flow: two of the three words on offer are always in his family.
+      expect(offered.filter((a) => familyOf(a.label) === lean)).toHaveLength(2)
+      const word = offered.find((a) => familyOf(a.label) === lean)
+      picked.push(word.label)
+      await ctx.loop.resolvePlayerAction(word)
+    }
+    const experience = game.player.experiences[0]
+    expect(experience).toMatchObject({ mediumId: 'freestyle', artifactId: null, words: picked })
+    // Four words that rhyme are a flow, and the check hears it.
+    const played = experience.check.modifierItems.find((m) => m.sourceId === 'game')
+    expect(played.value).toBe(rhymes.params.voiceCap)
+    expect(await logOf(ctx.narrative)).toContain(
+      voice('suburban_gangster', 'game.rhymes.picked').replace('{word}', picked[0])
+    )
+    expect(game.player.skills.freestyle.suburban_gangster.xp).toBeGreaterThan(0)
   })
 
   it('DLC: mime arrives as content alone — a medium, a game, a place to do it, and nothing else', async () => {

@@ -1,7 +1,7 @@
 {
   "id": "suburban_gangster",
   "lines": {
-    "game.karaoke.pushed": "You're screaming. Not the words. The words left a while ago. Just screaming, on the beat, more or less, at a bar in Kenton.",
-    "game.karaoke.held": "You scream the quiet part too."
+    "game.rhymes.picked": "{word}! You point at the ground when you say it. Twice. A sprinkler comes on somewhere in the cul-de-sac of your heart.",
+    "piece.artist.rough": "Done: {work}. That was hard. That was street. Nobody was here to see it, which is how you know it was real."
   }
 }
