@@ -103,7 +103,8 @@ export function checkArchetypeThresholds(player, archetypeDefinitions, previousl
  * Targets:
  *   hunger:   -1/tick    → noticeably hungry after 2-3h (~8-12 ticks), starving after 6h (~24 ticks)
  *   energy:   -0.5/tick  → exhausted after a full active day (~96 ticks of activity)
- *   sobriety: +1/tick toward baseline 80 (drunk wears off in ~2-3h / 8-12 ticks)
+ *   sobriety: derived from intoxications; each substance wears off on its own
+ *             clock in the blend engine (engine/blend.js), not here
  *   mood:     -0.25/tick toward baseline 40 (slow drift; events/actions are main mood drivers)
  */
 export const DECAY_CONFIG = {
@@ -114,12 +115,6 @@ export const DECAY_CONFIG = {
   },
   energy: {
     ratePerTick: -0.5,
-    min: 0,
-    max: 100,
-  },
-  sobriety: {
-    ratePerTick: 1, // recovery rate toward baseline
-    baseline: 80, // natural ceiling when not drinking
     min: 0,
     max: 100,
   },
@@ -165,18 +160,6 @@ export function getStatDecayEffects(player, ticksElapsed, config = DECAY_CONFIG)
   )
   const energyDelta = parseFloat((newEnergy - currentEnergy).toFixed(2))
   if (energyDelta !== 0) changes.energy = energyDelta
-
-  // Sobriety — recovers toward baseline (80), not 100
-  const sobrietyCfg = config.sobriety
-  const currentSobriety = status.sobriety ?? sobrietyCfg.baseline
-  if (currentSobriety < sobrietyCfg.baseline) {
-    const newSobriety = Math.min(
-      sobrietyCfg.baseline,
-      currentSobriety + sobrietyCfg.ratePerTick * ticksElapsed
-    )
-    const sobrietyDelta = parseFloat((newSobriety - currentSobriety).toFixed(2))
-    if (sobrietyDelta !== 0) changes.sobriety = sobrietyDelta
-  }
 
   // Mood — drifts toward baseline (40)
   const moodCfg = config.mood

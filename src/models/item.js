@@ -23,6 +23,7 @@ export function createItem(data) {
     stackable: data.stackable ?? false,
     quantity: data.quantity ?? 1,
     effects: Array.isArray(data.effects) ? data.effects.map((e) => ({ ...e })) : [],
+    doses: Array.isArray(data.doses) ? data.doses.map((d) => ({ ...d })) : [],
   }
 }
 

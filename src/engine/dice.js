@@ -7,66 +7,10 @@
 import { roll } from '../utils/random.js'
 
 /**
- * Altered state modifier thresholds.
- * Data-driven so they can be tuned without touching engine logic.
- * Each entry: { stat, value } applied when condition is true.
+ * Everything acting on a player — every substance, every condition — reaches
+ * the dice through the blend snapshot the engine writes to `player.blend`
+ * (see engine/blend.js). The dice never learn what whiskey is.
  */
-export const ALTERED_STATE_CONFIG = {
-  sobriety: [
-    {
-      below: 30,
-      modifiers: [
-        { stat: 'wits', value: -5 },
-        { stat: 'charm', value: 3 },
-      ],
-    },
-    {
-      below: 15,
-      modifiers: [
-        { stat: 'wits', value: -10 },
-        { stat: 'charm', value: 0 },
-        { stat: 'toughness', value: 5 },
-      ],
-      // This threshold supersedes the above — use overrides: true
-      overrides: true,
-    },
-  ],
-  energy: [
-    {
-      below: 20,
-      modifiers: [
-        { stat: 'stamina', value: -3 },
-        { stat: 'toughness', value: -3 },
-        { stat: 'wits', value: -3 },
-      ],
-    },
-  ],
-  hunger: [
-    {
-      below: 15,
-      modifiers: [
-        { stat: 'wits', value: -3 },
-        { stat: 'mood', value: -5 },
-      ],
-    },
-  ],
-  mood: [
-    {
-      above: 80,
-      modifiers: [
-        { stat: 'charm', value: 3 },
-        { stat: 'luck', value: 2 },
-      ],
-    },
-    {
-      below: 20,
-      modifiers: [
-        { stat: 'charm', value: -5 },
-        { stat: 'creativity', value: 3 },
-      ],
-    },
-  ],
-}
 
 /**
  * Rolls a d20. Returns a value from 1 to 20.
@@ -97,7 +41,7 @@ export const STAT_POINTS_PER_MODIFIER = 10
  * The effective value of a stat on the 1–100 scale, taking into account:
  * - Base stat value
  * - Active modifiers on the stat
- * - Altered state effects (drunk, exhausted, starving, etc.)
+ * - The blend's modifiers (substances, withdrawals, conditions)
  * - Active abilities' dice modifiers
  * - Trauma effects
  *
@@ -120,8 +64,8 @@ export function statEffective({ player, statName }) {
     }
   }
 
-  // Altered state modifiers
-  total += _calculateAlteredStateModifier(player, statName)
+  // Blend modifiers
+  total += _blendModifier({ player, statName })
 
   // Ability effects
   if (player.psyche?.abilities) {
@@ -155,49 +99,12 @@ export function checkModifier({ player, statName }) {
 }
 
 /**
- * Calculates altered state modifier contribution for a given stat.
- * Internal helper.
- *
- * For each status key (sobriety, energy, etc.), iterates thresholds once.
- * If any override threshold matches, it wins outright and replaces all non-override matches.
- * Otherwise, the last matching non-override threshold applies.
- *
- * @param {Object} player
- * @param {string} statName
+ * The blend's modifier for a stat. A player with no snapshot is sober.
+ * @param {{ player: Object, statName: string }} input
  * @returns {number}
  */
-function _calculateAlteredStateModifier(player, statName) {
-  const status = player.status || {}
-  let total = 0
-
-  for (const [statusKey, thresholds] of Object.entries(ALTERED_STATE_CONFIG)) {
-    const statusValue = status[statusKey]
-    if (statusValue === undefined) continue
-
-    let overrideValue = null // set if an override threshold matches
-    let lastNonOverride = 0 // last matching non-override value
-
-    for (const threshold of thresholds) {
-      const matches =
-        (threshold.below !== undefined && statusValue < threshold.below) ||
-        (threshold.above !== undefined && statusValue > threshold.above)
-
-      if (!matches) continue
-
-      const mod = threshold.modifiers.find((m) => m.stat === statName)
-      if (mod === undefined) continue
-
-      if (threshold.overrides) {
-        overrideValue = mod.value
-      } else {
-        lastNonOverride = mod.value
-      }
-    }
-
-    total += overrideValue !== null ? overrideValue : lastNonOverride
-  }
-
-  return total
+function _blendModifier({ player, statName }) {
+  return player.blend?.modifiers?.[statName] ?? 0
 }
 
 /**

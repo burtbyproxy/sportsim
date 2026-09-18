@@ -16,6 +16,8 @@
  *   content/maps/{map}/locations/{id}.json     — Location contract
  *   content/maps/{map}/actions/{id}.json       — Action contract (array of actions)
  *   content/items/{id}.json                    — Item contract (array of items)
+ *   content/substances/{id}.json               — Substance contract
+ *   content/conditions/{id}.json               — Condition contract
  */
 
 import { describe, it, expect } from 'vitest';
@@ -28,7 +30,9 @@ import { join, resolve } from 'path';
 
 const CONTENT_ROOT = resolve('content');
 const VALID_STATS = ['stamina', 'toughness', 'wits', 'creativity', 'charm', 'reputation', 'luck', 'karma'];
-const VALID_STATUS_KEYS = ['hunger', 'sobriety', 'energy', 'mood', 'health'];
+// sobriety is derived from intoxications — it is read, never written, by content.
+const VALID_STATUS_KEYS = ['hunger', 'energy', 'mood', 'health'];
+const VALID_SUBSTANCE_FAMILIES = ['alcohol', 'cannabis', 'stimulant', 'nicotine'];
 const VALID_SIMULATION_TIERS = ['fixed', 'routine', 'full'];
 const VALID_ITEM_TYPES = ['consumable', 'tool', 'junk', 'key', 'weapon'];
 
@@ -150,6 +154,20 @@ function validateCharacter(data, file) {
         expect(data.status[key], `${file}: status.${key} must be 0-100`).toBeLessThanOrEqual(100);
       }
     }
+    expect(
+      data.status.sobriety,
+      `${file}: status.sobriety is derived from intoxications — declare intoxications instead`
+    ).toBeUndefined();
+  }
+
+  // Intoxications / habituations: per-substance levels 0-100 (ids cross-checked below)
+  for (const field of ['intoxications', 'habituations']) {
+    if (data[field] === undefined) continue;
+    for (const [substanceId, level] of Object.entries(data[field])) {
+      expect(typeof level, `${file}: ${field}.${substanceId} must be number`).toBe('number');
+      expect(level, `${file}: ${field}.${substanceId} must be 0-100`).toBeGreaterThanOrEqual(0);
+      expect(level, `${file}: ${field}.${substanceId} must be 0-100`).toBeLessThanOrEqual(100);
+    }
   }
 
   // full-tier: decisionWeights recommended (not required — warn via test name)
@@ -207,6 +225,49 @@ function validateLocation(data, file) {
 }
 
 // ---------------------------------------------------------------------------
+// Outcome validation (shared by actions and events)
+// ---------------------------------------------------------------------------
+
+/**
+ * A dose is { substanceId, value > 0, chance? in (0, 1] }. Substance ids are
+ * cross-checked against content/substances below.
+ */
+function validateDoses(doses, label) {
+  if (doses === null || doses === undefined) return;
+  expect(Array.isArray(doses), `${label}: doses must be an array`).toBe(true);
+  for (const dose of doses) {
+    expect(typeof dose.substanceId, `${label}: dose.substanceId must be string`).toBe('string');
+    expect(typeof dose.value, `${label}: dose.value must be number`).toBe('number');
+    expect(dose.value, `${label}: dose.value must be > 0`).toBeGreaterThan(0);
+    if (dose.chance !== undefined) {
+      expect(dose.chance, `${label}: dose.chance must be in (0, 1]`).toBeGreaterThan(0);
+      expect(dose.chance, `${label}: dose.chance must be in (0, 1]`).toBeLessThanOrEqual(1);
+    }
+  }
+}
+
+/**
+ * Outcomes write status, never sobriety — what went into the player is a dose.
+ */
+function validateOutcome(outcome, label) {
+  if (!outcome) return;
+  if (outcome.statusChanges) {
+    expect(
+      outcome.statusChanges.sobriety,
+      `${label}: statusChanges.sobriety is not writable — use doses: [{ substanceId, value }]`
+    ).toBeUndefined();
+  }
+  validateDoses(outcome.doses, label);
+}
+
+/** Every outcome an action or event can produce, flattened. */
+function outcomesOf(entry) {
+  const direct = [entry.success, entry.failure, entry.criticalSuccess, entry.criticalFailure, entry.outcome];
+  const fromChoices = (entry.choices ?? []).flatMap(c => [c.outcome, c.failureOutcome]);
+  return [...direct, ...fromChoices].filter(Boolean);
+}
+
+// ---------------------------------------------------------------------------
 // Action validation
 // ---------------------------------------------------------------------------
 
@@ -245,6 +306,10 @@ function validateAction(data, file) {
     // If check has a stat, failure outcome is required
     expect(data.failure, `${file} '${data.id}': actions with dice checks must have a failure outcome`).toBeTruthy();
   }
+
+  for (const outcome of outcomesOf(data)) {
+    validateOutcome(outcome, `${file} '${data.id}'`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -265,8 +330,94 @@ function validateItem(data, file) {
       expect(effect, `${file} '${data.id}': effect missing target`).toHaveProperty('target');
       expect(effect, `${file} '${data.id}': effect missing value`).toHaveProperty('value');
       expect(typeof effect.value, `${file} '${data.id}': effect.value must be number`).toBe('number');
+      expect(
+        effect.target,
+        `${file} '${data.id}': effects cannot target sobriety — declare doses instead`
+      ).not.toBe('sobriety');
     }
   }
+  validateDoses(data.doses, `${file} '${data.id}'`);
+}
+
+// ---------------------------------------------------------------------------
+// Substance / Condition validation
+// ---------------------------------------------------------------------------
+
+function validatePersona(persona, label) {
+  expect(persona, `${label}: persona required`).toBeTruthy();
+  expect(typeof persona.id, `${label}: persona.id must be string`).toBe('string');
+  expect(typeof persona.display, `${label}: persona.display must be string`).toBe('string');
+  expect(typeof persona.compulsion, `${label}: persona.compulsion must be string`).toBe('string');
+}
+
+/**
+ * Everything has a cost and everything has a use. A modifier set with only
+ * pluses or only minuses fails the build.
+ */
+function validateModifiers(modifiers, label) {
+  expect(Array.isArray(modifiers), `${label}: modifiers must be an array`).toBe(true);
+  expect(modifiers.length, `${label}: modifiers must not be empty`).toBeGreaterThan(0);
+  for (const mod of modifiers) {
+    expect(VALID_STATS, `${label}: modifier stat '${mod.stat}' is not a stat`).toContain(mod.stat);
+    expect(typeof mod.value, `${label}: modifier value must be number`).toBe('number');
+    expect(mod.value, `${label}: modifier value must not be 0`).not.toBe(0);
+  }
+  expect(modifiers.some(m => m.value > 0), `${label}: needs at least one pro (positive modifier)`).toBe(true);
+  expect(modifiers.some(m => m.value < 0), `${label}: needs at least one con (negative modifier)`).toBe(true);
+}
+
+const SUBSTANCE_REQUIRED_FIELDS = [
+  'id', 'display', 'family', 'persona', 'decayPerTick', 'habituationRate',
+  'habituationDecayPerTick', 'withdrawal', 'bands',
+];
+
+function validateSubstance(data, file) {
+  for (const field of SUBSTANCE_REQUIRED_FIELDS) {
+    expect(data, `${file}: missing field '${field}'`).toHaveProperty(field);
+  }
+  expect(VALID_SUBSTANCE_FAMILIES, `${file}: invalid family '${data.family}'`).toContain(data.family);
+  validatePersona(data.persona, file);
+  expect(data.decayPerTick, `${file}: decayPerTick must be > 0`).toBeGreaterThan(0);
+  expect(data.habituationRate, `${file}: habituationRate must be 0-1`).toBeGreaterThanOrEqual(0);
+  expect(data.habituationRate, `${file}: habituationRate must be 0-1`).toBeLessThanOrEqual(1);
+  expect(data.habituationDecayPerTick, `${file}: habituationDecayPerTick must be >= 0`).toBeGreaterThanOrEqual(0);
+
+  if (data.withdrawal !== null) {
+    const w = data.withdrawal;
+    expect(w.habituationAtLeast, `${file}: withdrawal.habituationAtLeast must be 1-100`).toBeGreaterThan(0);
+    expect(w.habituationAtLeast, `${file}: withdrawal.habituationAtLeast must be 1-100`).toBeLessThanOrEqual(100);
+    expect(w.intoxicationBelow, `${file}: withdrawal.intoxicationBelow must be > 0`).toBeGreaterThan(0);
+    expect(data.habituationRate, `${file}: a substance with withdrawal must habituate`).toBeGreaterThan(0);
+    validatePersona(w.persona, `${file} withdrawal`);
+    validateModifiers(w.modifiers, `${file} withdrawal`);
+  }
+
+  expect(Array.isArray(data.bands), `${file}: bands must be an array`).toBe(true);
+  expect(data.bands.length, `${file}: needs at least one band`).toBeGreaterThan(0);
+  const thresholds = new Set();
+  for (const band of data.bands) {
+    expect(band.atLeast, `${file}: band.atLeast must be 1-100`).toBeGreaterThan(0);
+    expect(band.atLeast, `${file}: band.atLeast must be 1-100`).toBeLessThanOrEqual(100);
+    expect(thresholds.has(band.atLeast), `${file}: duplicate band threshold ${band.atLeast}`).toBe(false);
+    thresholds.add(band.atLeast);
+    validateModifiers(band.modifiers, `${file} band ${band.atLeast}`);
+  }
+}
+
+const CONDITION_REQUIRED_FIELDS = ['id', 'display', 'source', 'weight', 'persona', 'modifiers'];
+
+function validateCondition(data, file) {
+  for (const field of CONDITION_REQUIRED_FIELDS) {
+    expect(data, `${file}: missing field '${field}'`).toHaveProperty(field);
+  }
+  expect(VALID_STATUS_KEYS, `${file}: source.status '${data.source.status}' is not a status`).toContain(data.source.status);
+  const hasBelow = typeof data.source.below === 'number';
+  const hasAbove = typeof data.source.above === 'number';
+  expect(hasBelow !== hasAbove, `${file}: source needs exactly one of below / above`).toBe(true);
+  expect(data.weight, `${file}: weight must be in (0, 1]`).toBeGreaterThan(0);
+  expect(data.weight, `${file}: weight must be in (0, 1]`).toBeLessThanOrEqual(1);
+  validatePersona(data.persona, file);
+  validateModifiers(data.modifiers, file);
 }
 
 // ---------------------------------------------------------------------------
@@ -378,6 +529,9 @@ function validateEvent(data, file) {
     hasChoices || Boolean(data.outcome),
     `${file} '${data.id}': an event needs choices or an outcome`
   ).toBe(true);
+  for (const outcome of outcomesOf(data)) {
+    validateOutcome(outcome, `${file} '${data.id}'`);
+  }
   if (hasChoices) {
     for (const choice of data.choices) {
       expect(typeof choice.label, `${file} '${data.id}': every choice needs a label`).toBe('string');
@@ -439,6 +593,50 @@ describe('content/items/*.json — Item contract', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Tests — Substances and Conditions
+// ---------------------------------------------------------------------------
+
+describe('content/substances/*.json — Substance contract', () => {
+  const dir = join(CONTENT_ROOT, 'substances');
+  const files = loadJsonFiles(dir);
+
+  it('content/substances/ directory exists', () => {
+    expect(existsSync(dir)).toBe(true);
+  });
+
+  it('has at least one substance', () => {
+    expect(files.length).toBeGreaterThan(0);
+  });
+
+  const ids = new Set();
+  for (const { file, data } of files) {
+    it(`${file} — valid Substance`, () => {
+      validateSubstance(data, file);
+      expect(ids.has(data.id), `${file}: duplicate substance id '${data.id}'`).toBe(false);
+      ids.add(data.id);
+    });
+  }
+});
+
+describe('content/conditions/*.json — Condition contract', () => {
+  const dir = join(CONTENT_ROOT, 'conditions');
+  const files = loadJsonFiles(dir);
+
+  it('content/conditions/ directory exists', () => {
+    expect(existsSync(dir)).toBe(true);
+  });
+
+  const ids = new Set();
+  for (const { file, data } of files) {
+    it(`${file} — valid Condition`, () => {
+      validateCondition(data, file);
+      expect(ids.has(data.id), `${file}: duplicate condition id '${data.id}'`).toBe(false);
+      ids.add(data.id);
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Tests — Cross-reference validation
 // ---------------------------------------------------------------------------
 
@@ -463,10 +661,53 @@ describe('cross-reference validation', () => {
     })
   );
 
+  // Collect all known substance IDs from content/substances/
+  const substanceFiles = loadJsonFiles(join(CONTENT_ROOT, 'substances'));
+  const knownSubstanceIds = new Set(substanceFiles.map(({ data }) => data.id).filter(Boolean));
+
   if (characterFiles.length === 0 && locationFiles.length === 0) {
     it('(no content files yet — cross-reference validation will run when files are added)', () => {
       expect(true).toBe(true);
     });
+  }
+
+  // Character intoxications / habituations name real substances
+  for (const { file, data: character } of characterFiles) {
+    for (const field of ['intoxications', 'habituations']) {
+      for (const substanceId of Object.keys(character[field] ?? {})) {
+        it(`${file}: ${field} '${substanceId}' exists in substance data`, () => {
+          expect(knownSubstanceIds.has(substanceId), `Character '${character.id}' ${field} references unknown substance '${substanceId}'`).toBe(true);
+        });
+      }
+    }
+  }
+
+  // Item doses name real substances
+  for (const { file, data } of itemFiles) {
+    const items = Array.isArray(data) ? data : Object.values(data);
+    for (const item of items) {
+      for (const dose of item.doses ?? []) {
+        it(`${file} item '${item.id}': dose '${dose.substanceId}' exists in substance data`, () => {
+          expect(knownSubstanceIds.has(dose.substanceId), `Item '${item.id}' doses unknown substance '${dose.substanceId}'`).toBe(true);
+        });
+      }
+    }
+  }
+
+  // Action and event doses name real substances
+  const eventFilesAll = mapDirs.flatMap(mapDir => loadJsonFiles(join(mapDir, 'events')));
+  const actionFilesAll = mapDirs.flatMap(mapDir => loadJsonFiles(join(mapDir, 'actions')));
+  for (const { file, data } of [...actionFilesAll, ...eventFilesAll]) {
+    const entries = Array.isArray(data) ? data : Object.values(data);
+    for (const entry of entries) {
+      for (const outcome of outcomesOf(entry)) {
+        for (const dose of outcome.doses ?? []) {
+          it(`${file} '${entry.id}': dose '${dose.substanceId}' exists in substance data`, () => {
+            expect(knownSubstanceIds.has(dose.substanceId), `'${entry.id}' doses unknown substance '${dose.substanceId}'`).toBe(true);
+          });
+        }
+      }
+    }
   }
 
   // Character schedule locationIds must exist in location data

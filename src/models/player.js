@@ -5,6 +5,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid'
+import { blendSober, sobrietyDerive } from '../engine/blend.js'
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -70,12 +71,18 @@ export function createPlayer(name) {
     },
     status: {
       hunger: 50,
-      sobriety: 80,
+      sobriety: sobrietyDerive({ intoxications: {} }),
       energy: 70,
       mood: 40,
       health: 100,
       money: START_MONEY,
     },
+    /** Per-substance levels, 0–100, keyed by substance id. The source of truth for sobriety. */
+    intoxications: {},
+    /** Per-substance habituation, 0–100. Past a substance's threshold, its absence is a condition. */
+    habituations: {},
+    /** Engine-written snapshot of every persona acting on the player. See engine/blend.js. */
+    blend: blendSober(),
     psyche: {
       traumas: [],
       obsessions: [],
@@ -194,9 +201,10 @@ export function hasItem(player, itemId) {
 /**
  * Adjust a status value by delta, clamping to valid range.
  * money is NOT clamped — use adjustMoney for that.
- * Mutates player in place.
+ * sobriety is derived from intoxications and cannot be adjusted here — dose
+ * the player through the blend engine instead. Mutates player in place.
  *
- * Status ranges: hunger/sobriety/energy/mood/health all 0-100.
+ * Status ranges: hunger/energy/mood/health all 0-100.
  *
  * @param {import('./types').Player} player
  * @param {string} statusName
@@ -208,6 +216,7 @@ export function adjustStatus(player, statusName, delta) {
     adjustMoney(player, delta)
     return
   }
+  if (statusName === 'sobriety') return
   if (!(statusName in player.status)) return
   player.status[statusName] = clamp(player.status[statusName] + delta, 0, 100)
 }

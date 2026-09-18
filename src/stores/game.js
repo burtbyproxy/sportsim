@@ -1,5 +1,22 @@
 import { defineStore } from 'pinia'
 import { createClock, advanceClock } from '../engine/clock.js'
+import { blendCompute, blendDecay, dosesApply, sobrietyDerive } from '../engine/blend.js'
+
+/**
+ * Add a map of deltas onto a map of levels, dropping any key that reaches zero.
+ * @param {{ levels: Object<string, number>, changes: Object<string, number> }} input
+ * @returns {void}
+ */
+function _levelsApply({ levels, changes }) {
+  for (const [id, delta] of Object.entries(changes)) {
+    const next = parseFloat(((levels[id] ?? 0) + delta).toFixed(2))
+    if (next <= 0) {
+      delete levels[id]
+    } else {
+      levels[id] = next
+    }
+  }
+}
 
 /**
  * Primary game state store.
@@ -33,6 +50,12 @@ export const useGameStore = defineStore('game', {
 
     /** @type {Object<string, import('../../comms/docs/data-contracts.js').Item>} */
     items: {},
+
+    /** Substance definitions, keyed by id. Loaded once at init from content/substances. */
+    substances: {},
+
+    /** Condition definitions, keyed by id. Loaded once at init from content/conditions. */
+    conditions: {},
 
     /** Actions currently available at this location */
     availableActions: [],
@@ -86,6 +109,7 @@ export const useGameStore = defineStore('game', {
       this.characters = {}
       this.availableActions = []
       this.isRunning = true
+      this.blendRefresh()
       // Note: items registry persists across game reset — item definitions don't change per-run
     },
 
@@ -117,18 +141,95 @@ export const useGameStore = defineStore('game', {
 
     /**
      * Apply status changes to the player.
-     * Money is excluded — use adjustMoney for that.
-     * All other status values clamp 0-100.
+     * Money is excluded — use adjustMoney for that. Sobriety is excluded — it
+     * is derived from intoxications; use applyDoses. All other status values
+     * clamp 0-100. Conditions depend on status, so the blend is refreshed.
      * @param {Object<string, number>} changes
      */
     applyStatusChanges(changes) {
       if (!this.player) return
       for (const [key, delta] of Object.entries(changes)) {
-        if (key === 'money') continue // use adjustMoney
+        if (key === 'money' || key === 'sobriety') continue
         if (key in this.player.status) {
           this.player.status[key] = Math.max(0, Math.min(100, this.player.status[key] + delta))
         }
       }
+      this.blendRefresh()
+    },
+
+    /**
+     * Recompute the blend snapshot and derived sobriety for the player and
+     * for every character that carries a status. The blend engine is the
+     * only reader of substance and condition definitions.
+     */
+    blendRefresh() {
+      const subjects = [this.player, ...Object.values(this.characters)].filter(
+        (subject) => subject && subject.status
+      )
+      for (const subject of subjects) {
+        const result = blendCompute({
+          player: subject,
+          substances: this.substances,
+          conditions: this.conditions,
+        })
+        if (!result.ok) {
+          console.warn(
+            `[game] blendRefresh (${subject.id}): ${result.error.code}`,
+            result.error.message
+          )
+          continue
+        }
+        subject.blend = result.data
+        subject.status.sobriety = sobrietyDerive({ intoxications: subject.intoxications ?? {} })
+      }
+    },
+
+    /**
+     * Put substances into the player. Each dose names a substance, a value,
+     * and optionally a chance that it is really in there.
+     * @param {{ doses: { substanceId: string, value: number, chance?: number }[], rng?: () => number }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the blend engine's result
+     */
+    applyDoses({ doses, rng = Math.random }) {
+      if (!this.player)
+        return { ok: false, data: null, error: { code: 'PLAYER_MISSING', message: 'No player' } }
+      this.player.intoxications ??= {}
+      this.player.habituations ??= {}
+      const result = dosesApply({ player: this.player, substances: this.substances, doses, rng })
+      if (!result.ok) {
+        console.warn(`[game] applyDoses: ${result.error.code}`, result.error.message)
+        return result
+      }
+      _levelsApply({ levels: this.player.intoxications, changes: result.data.intoxicationChanges })
+      _levelsApply({ levels: this.player.habituations, changes: result.data.habituationChanges })
+      this.blendRefresh()
+      return result
+    },
+
+    /**
+     * Let every substance wear off, and every habituation fade, for the
+     * player and every character with a status, over elapsed ticks.
+     * @param {{ ticksElapsed: number }} input
+     */
+    applyBlendDecay({ ticksElapsed }) {
+      const subjects = [this.player, ...Object.values(this.characters)].filter(
+        (subject) => subject && subject.status
+      )
+      for (const subject of subjects) {
+        subject.intoxications ??= {}
+        subject.habituations ??= {}
+        const result = blendDecay({ player: subject, substances: this.substances, ticksElapsed })
+        if (!result.ok) {
+          console.warn(
+            `[game] applyBlendDecay (${subject.id}): ${result.error.code}`,
+            result.error.message
+          )
+          continue
+        }
+        _levelsApply({ levels: subject.intoxications, changes: result.data.intoxicationChanges })
+        _levelsApply({ levels: subject.habituations, changes: result.data.habituationChanges })
+      }
+      this.blendRefresh()
     },
 
     /**
@@ -235,6 +336,22 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
+     * Register a substance definition. Called at init from loadSubstances().
+     * @param {{ substance: Object }} input
+     */
+    registerSubstance({ substance }) {
+      this.substances[substance.id] = substance
+    },
+
+    /**
+     * Register a condition definition. Called at init from loadConditions().
+     * @param {{ condition: Object }} input
+     */
+    registerCondition({ condition }) {
+      this.conditions[condition.id] = condition
+    },
+
+    /**
      * Update character location (from simulation worker output).
      * @param {string} characterId
      * @param {string} locationId
@@ -265,6 +382,7 @@ export const useGameStore = defineStore('game', {
       this.activeEvent = save.activeEvent ?? null
       this.counters = save.counters
       this.isRunning = true
+      this.blendRefresh()
       // Note: items registry (this.items) is NOT restored from save —
       // it is populated at init via loadItems() and persists across resets.
       // The init flow (TitleScreen.vue) must call loadItems() before or after loadSave().

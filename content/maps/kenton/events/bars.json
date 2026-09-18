@@ -42,9 +42,9 @@
     "outcome": {
       "narrative": null,
       "statusChanges": {
-        "sobriety": -12,
         "mood": 8
       },
+      "doses": [{ "substanceId": "beer", "value": 12 }],
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,

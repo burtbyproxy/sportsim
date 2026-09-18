@@ -39,10 +39,10 @@
         ]
       },
       "statusChanges": {
-        "sobriety": -35,
         "mood": 12,
         "health": -3
       },
+      "doses": [{ "substanceId": "vodka", "value": 35 }],
       "statChanges": null,
       "moneyChange": -7.95,
       "itemsGained": null,

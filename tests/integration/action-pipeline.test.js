@@ -70,7 +70,8 @@ const DRINK_ACTION = {
   success: {
     narrative: { tokens: [{ text: 'You drink the beer.', style: 'normal', speed: 'normal', pauseAfter: 0, effect: 'none', color: null }] },
     statChanges: null,
-    statusChanges: { sobriety: -10, mood: 5 },
+    statusChanges: { mood: 5 },
+    doses: [{ substanceId: 'beer', value: 10 }],
     moneyChange: -1,
     itemsGained: null,
     itemsLost: null,
@@ -271,13 +272,14 @@ describe('resolveAction — real Kenton action data', () => {
     expect(result.outcome.counterChanges.times_raided_fridge).toBe(1);
   });
 
-  it('order_beer_parrot auto-succeeds and costs money, reduces sobriety', () => {
+  it('order_beer_parrot auto-succeeds, costs money, and doses beer', () => {
     const player = createPlayer('Test');
     player.status.money = 10;
     const result = resolveAction(player, kentonActions.order_beer_parrot, makeGameTime(14), [], seededRandom(1));
     expect(result.success).toBe(true);
     expect(result.outcome.moneyChange).toBe(-3);
-    expect(result.outcome.statusChanges.sobriety).toBe(-15);
+    expect(result.outcome.statusChanges.sobriety).toBeUndefined();
+    expect(result.outcome.doses).toEqual([{ substanceId: 'beer', value: 15 }]);
     expect(result.outcome.statusChanges.mood).toBe(10);
   });
 
@@ -319,7 +321,7 @@ describe('resolveAction — full pipeline', () => {
     expect(result.success).toBe(true);
     expect(result.diceResult).toBeNull();
     expect(result.requirementFailure).toBeNull();
-    expect(result.outcome.statusChanges.sobriety).toBe(-10);
+    expect(result.outcome.doses).toEqual([{ substanceId: 'beer', value: 10 }]);
     expect(result.outcome.statusChanges.mood).toBe(5);
     expect(result.outcome.moneyChange).toBe(-1);
     expect(result.outcome.counterChanges.drinks_consumed).toBe(1);
@@ -395,30 +397,24 @@ describe('getStatDecayEffects — realistic tick counts', () => {
     const player = createPlayer('Test');
     player.status.hunger = 60;
     player.status.energy = 80;
-    player.status.sobriety = 70;
 
     const changes = getStatDecayEffects(player, 4);
 
     // 4 ticks = 1 hour
     expect(changes.hunger).toBe(-4);  // -1 per tick
     expect(changes.energy).toBe(-2);  // -0.5 per tick
-    // sobriety: +1/tick toward baseline 80. 70 + 4 = 74. change = +4
-    expect(changes.sobriety).toBe(4);
+    expect(changes.sobriety).toBeUndefined(); // derived from the blend, never decayed here
   });
 
   it('8 hours (32 ticks) — a whole night — produces correct values', () => {
     const player = createPlayer('Test');
     player.status.hunger = 80;
     player.status.energy = 100;
-    player.status.sobriety = 40;
 
     const changes = getStatDecayEffects(player, 32);
 
     expect(changes.hunger).toBe(-32);
     expect(changes.energy).toBe(-16);
-    // sobriety: +1/tick toward baseline 80. 40 + 32 = 72 < 80, not capped. change = +32
-    expect(changes.sobriety).toBe(32);
-    expect(player.status.sobriety + changes.sobriety).toBe(72);
   });
 
   it('hunger cannot go below 0 regardless of ticks', () => {
@@ -435,14 +431,6 @@ describe('getStatDecayEffects — realistic tick counts', () => {
 
     const changes = getStatDecayEffects(player, 100);
     expect(player.status.energy + changes.energy).toBeGreaterThanOrEqual(0);
-  });
-
-  it('sobriety does not change when already at 100', () => {
-    const player = createPlayer('Test');
-    player.status.sobriety = 100;
-
-    const changes = getStatDecayEffects(player, 10);
-    expect(changes.sobriety).toBeUndefined();
   });
 
   it('0 ticks returns empty object', () => {

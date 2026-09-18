@@ -1,4 +1,5 @@
 import { ref, readonly } from 'vue'
+import { blendSober } from '../engine/blend.js'
 import { template, pickVariant, toNarrativeText } from '../utils/text.js'
 
 /**
@@ -399,12 +400,18 @@ function _buildNarrativeContext(player, gameTime, location) {
   const sobriety = player.status?.sobriety ?? 100
   const energy = player.status?.energy ?? 80
   const hunger = player.status?.hunger ?? 50
+  const blend = player.blend ?? blendSober()
+  // Every persona acting on the player is a flag, so content can key a
+  // variant on "telepath" or "priest" the way it keys one on "drunk".
+  const personaFlags = Object.fromEntries(blend.weights.map((w) => [w.personaId, true]))
   return {
     period: gameTime?.period ?? 'morning',
     visitCount: location?.visitCount ?? 0,
     drunk: sobriety < 30,
     exhausted: energy < 20,
     starving: hunger < 15,
+    ...personaFlags,
+    personaId: blend.dominantPersonaId,
   }
 }
 

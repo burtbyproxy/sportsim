@@ -52,7 +52,7 @@ describe('createPlayer', () => {
   it('starts with default status values', () => {
     const p = createPlayer('X');
     expect(p.status.hunger).toBe(50);
-    expect(p.status.sobriety).toBe(80);
+    expect(p.status.sobriety).toBe(100); // derived: nothing in the bloodstream yet
     expect(p.status.energy).toBe(70);
     expect(p.status.mood).toBe(40);
     expect(p.status.health).toBe(100);

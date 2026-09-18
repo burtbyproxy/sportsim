@@ -1,0 +1,47 @@
+{
+  "id": "beer",
+  "display": "Beer",
+  "family": "alcohol",
+  "persona": {
+    "id": "one_of_the_guys",
+    "display": "One of the guys",
+    "compulsion": "Lift things, hike, drive, pull pranks, wander. Be worse at every one of them."
+  },
+  "decayPerTick": 2,
+  "habituationRate": 0.1,
+  "habituationDecayPerTick": 0.1,
+  "withdrawal": {
+    "habituationAtLeast": 60,
+    "intoxicationBelow": 5,
+    "persona": {
+      "id": "shakes",
+      "display": "The shakes",
+      "compulsion": "Get to a bar. Any bar."
+    },
+    "modifiers": [
+      { "stat": "toughness", "value": -3 },
+      { "stat": "charm", "value": -2 },
+      { "stat": "creativity", "value": 3 }
+    ]
+  },
+  "bands": [
+    {
+      "atLeast": 15,
+      "modifiers": [
+        { "stat": "charm", "value": 3 },
+        { "stat": "luck", "value": 1 },
+        { "stat": "stamina", "value": -2 },
+        { "stat": "wits", "value": -2 }
+      ]
+    },
+    {
+      "atLeast": 50,
+      "modifiers": [
+        { "stat": "charm", "value": 4 },
+        { "stat": "toughness", "value": 2 },
+        { "stat": "stamina", "value": -5 },
+        { "stat": "wits", "value": -6 }
+      ]
+    }
+  ]
+}

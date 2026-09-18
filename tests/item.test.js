@@ -14,10 +14,8 @@ describe('createItem', () => {
     value: 1,
     stackable: true,
     quantity: 6,
-    effects: [
-      { target: 'sobriety', value: -10, duration: null },
-      { target: 'mood', value: 5, duration: null },
-    ],
+    effects: [{ target: 'mood', value: 5, duration: null }],
+    doses: [{ substanceId: 'beer', value: 10 }],
   };
 
   it('maps all fields correctly', () => {
@@ -29,7 +27,19 @@ describe('createItem', () => {
     expect(item.value).toBe(1);
     expect(item.stackable).toBe(true);
     expect(item.quantity).toBe(6);
-    expect(item.effects).toHaveLength(2);
+    expect(item.effects).toHaveLength(1);
+    expect(item.doses).toEqual([{ substanceId: 'beer', value: 10 }]);
+  });
+
+  it('defaults doses to an empty array', () => {
+    const item = createItem({ id: 'rock', name: 'Rock' });
+    expect(item.doses).toEqual([]);
+  });
+
+  it('does not share the doses array reference with source', () => {
+    const item = createItem(raw);
+    item.doses[0].value = 99;
+    expect(raw.doses[0].value).toBe(10);
   });
 
   it('applies defaults for missing optional fields', () => {
@@ -45,14 +55,15 @@ describe('createItem', () => {
   it('does not share effects array reference with source', () => {
     const item = createItem(raw);
     item.effects[0].value = 99;
-    expect(raw.effects[0].value).toBe(-10);
+    expect(raw.effects[0].value).toBe(5);
   });
 
   it('serializes cleanly to JSON', () => {
     const item = createItem(raw);
     const serialized = JSON.parse(JSON.stringify(item));
     expect(serialized.name).toBe('Pabst Blue Ribbon');
-    expect(serialized.effects).toHaveLength(2);
+    expect(serialized.effects).toHaveLength(1);
+    expect(serialized.doses).toHaveLength(1);
   });
 });
 
@@ -67,25 +78,21 @@ describe('applyEffects', () => {
     type: 'consumable',
     stackable: true,
     quantity: 1,
-    effects: [
-      { target: 'sobriety', value: -10, duration: null },
-      { target: 'mood', value: 5, duration: null },
-    ],
+    effects: [{ target: 'mood', value: 5, duration: null }],
+    doses: [{ substanceId: 'beer', value: 10 }],
   });
 
   it('returns a copy of all effects', () => {
     const effects = applyEffects(item);
-    expect(effects).toHaveLength(2);
-    expect(effects[0].target).toBe('sobriety');
-    expect(effects[0].value).toBe(-10);
-    expect(effects[1].target).toBe('mood');
-    expect(effects[1].value).toBe(5);
+    expect(effects).toHaveLength(1);
+    expect(effects[0].target).toBe('mood');
+    expect(effects[0].value).toBe(5);
   });
 
   it('does not mutate the item', () => {
     const effects = applyEffects(item);
     effects[0].value = 999;
-    expect(item.effects[0].value).toBe(-10);
+    expect(item.effects[0].value).toBe(5);
   });
 
   it('returns empty array for item with no effects', () => {

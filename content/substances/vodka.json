@@ -1,0 +1,46 @@
+{
+  "id": "vodka",
+  "display": "Vodka",
+  "family": "alcohol",
+  "persona": {
+    "id": "host",
+    "display": "The host",
+    "compulsion": "Pour for the room. Pour for yourself. Keep everyone drinking vodka. Slur into soup."
+  },
+  "decayPerTick": 1.5,
+  "habituationRate": 0.1,
+  "habituationDecayPerTick": 0.1,
+  "withdrawal": {
+    "habituationAtLeast": 60,
+    "intoxicationBelow": 5,
+    "persona": {
+      "id": "shakes",
+      "display": "The shakes",
+      "compulsion": "Get to a bar. Any bar."
+    },
+    "modifiers": [
+      { "stat": "toughness", "value": -3 },
+      { "stat": "charm", "value": -2 },
+      { "stat": "creativity", "value": 3 }
+    ]
+  },
+  "bands": [
+    {
+      "atLeast": 15,
+      "modifiers": [
+        { "stat": "charm", "value": 4 },
+        { "stat": "wits", "value": -3 },
+        { "stat": "stamina", "value": -1 }
+      ]
+    },
+    {
+      "atLeast": 50,
+      "modifiers": [
+        { "stat": "charm", "value": 2 },
+        { "stat": "reputation", "value": 2 },
+        { "stat": "wits", "value": -9 },
+        { "stat": "creativity", "value": -2 }
+      ]
+    }
+  ]
+}
