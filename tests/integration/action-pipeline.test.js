@@ -134,20 +134,22 @@ const CHARM_CHECK_ACTION = {
 // ---------------------------------------------------------------------------
 
 describe('getAvailableActions — real Kenton location data', () => {
-  it('mouse_trap with no wired location actions only returns "any" actions', () => {
-    // mouse_trap.actionIds is empty — only "any" locationId actions appear (e.g. talk_to_maurice)
+  it('mouse_trap returns its own wired actions alongside "any" actions', () => {
     const location = createLocation(kentonLocations.mouse_trap);
     const player = createPlayer('Test');
     const result = getAvailableActions(player, location, makeGameTime(), kentonActionRegistry);
-    // All returned actions must have locationId === 'any' (not wired to mouse_trap specifically)
+    const ids = result.map((a) => a.id);
+    expect(ids).toContain('play_pool_mouse_trap');
+    expect(ids).toContain('smoke_out_front_mouse_trap');
     for (const action of result) {
-      expect(action.locationId).toBe('any');
+      expect(['any', 'mouse_trap']).toContain(action.locationId);
     }
   });
 
   it('returns real actions at blue_parrot with real action registry', () => {
     const location = createLocation(kentonLocations.blue_parrot);
     const player = createPlayer('Test');
+    player.status.money = 10;
     // Blue Parrot is open at 14:00 (minHour: 11)
     const result = getAvailableActions(player, location, makeGameTime(14), kentonActionRegistry);
     expect(result.map(a => a.id)).toContain('order_beer_parrot');
@@ -186,6 +188,7 @@ describe('getAvailableActions — real Kenton location data', () => {
   it('shoplift_plaid is filtered when player is too drunk (sobriety < 50)', () => {
     const location = createLocation(kentonLocations.ainsworth_plaid);
     const player = createPlayer('Test');
+    player.status.money = 10;
     player.status.sobriety = 30; // below minSobriety: 50
     const result = getAvailableActions(player, location, makeGameTime(14), kentonActionRegistry);
     const ids = result.map(a => a.id);
@@ -270,6 +273,7 @@ describe('resolveAction — real Kenton action data', () => {
 
   it('order_beer_parrot auto-succeeds and costs money, reduces sobriety', () => {
     const player = createPlayer('Test');
+    player.status.money = 10;
     const result = resolveAction(player, kentonActions.order_beer_parrot, makeGameTime(14), [], seededRandom(1));
     expect(result.success).toBe(true);
     expect(result.outcome.moneyChange).toBe(-3);

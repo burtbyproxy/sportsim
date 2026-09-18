@@ -56,7 +56,7 @@ describe('createPlayer', () => {
     expect(p.status.energy).toBe(70);
     expect(p.status.mood).toBe(40);
     expect(p.status.health).toBe(100);
-    expect(p.status.money).toBe(0);
+    expect(p.status.money).toBe(2);
   });
 
   it('starts with empty inventory', () => {

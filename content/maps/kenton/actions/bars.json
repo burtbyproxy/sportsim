@@ -12,6 +12,7 @@
       "minHour": 11,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": 3,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -37,15 +38,22 @@
           }
         ]
       },
-      "statusChanges": { "sobriety": -15, "mood": 10 },
+      "statusChanges": {
+        "sobriety": -15,
+        "mood": 10
+      },
       "statChanges": null,
       "moneyChange": -3,
       "itemsGained": null,
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,
-      "archetypeChanges": { "barfly": 2 },
-      "counterChanges": { "beers_consumed": 1 },
+      "archetypeChanges": {
+        "barfly": 2
+      },
+      "counterChanges": {
+        "beers_consumed": 1
+      },
       "traumaGained": null,
       "obsessionFed": null
     },
@@ -68,6 +76,7 @@
       "minHour": 11,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": 4,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -101,15 +110,22 @@
           }
         ]
       },
-      "statusChanges": { "sobriety": -20, "mood": 12 },
+      "statusChanges": {
+        "sobriety": -20,
+        "mood": 12
+      },
       "statChanges": null,
       "moneyChange": -4,
       "itemsGained": null,
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,
-      "archetypeChanges": { "barfly": 2 },
-      "counterChanges": { "beers_consumed": 1 },
+      "archetypeChanges": {
+        "barfly": 2
+      },
+      "counterChanges": {
+        "beers_consumed": 1
+      },
       "traumaGained": null,
       "obsessionFed": null
     },
@@ -132,6 +148,7 @@
       "minHour": 11,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -162,7 +179,10 @@
           }
         ]
       },
-      "statusChanges": { "mood": 10, "energy": -5 },
+      "statusChanges": {
+        "mood": 10,
+        "energy": -5
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
@@ -195,7 +215,10 @@
           }
         ]
       },
-      "statusChanges": { "mood": -8, "energy": -5 },
+      "statusChanges": {
+        "mood": -8,
+        "energy": -5
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,

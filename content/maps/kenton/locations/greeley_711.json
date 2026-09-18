@@ -38,8 +38,15 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": [],
+  "actionIds": [
+    "buy_corn_dog_greeley",
+    "chat_clerks_greeley"
+  ],
   "discovered": false,
-  "availability": { "openHour": 0, "closeHour": 23, "closedMessage": null },
+  "availability": {
+    "openHour": 0,
+    "closeHour": 23,
+    "closedMessage": null
+  },
   "visitCount": 0
 }

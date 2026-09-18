@@ -1,0 +1,503 @@
+[
+  {
+    "id": "free_toothbrush_dental",
+    "label": "Ask about the free toothbrush",
+    "locationId": "lombard_dental",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 8,
+      "maxHour": 17,
+      "minVisits": null,
+      "minMoney": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "charm",
+      "dc": 8,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "The receptionist has transcended dentist jokes and she has also, it turns out, transcended asking questions. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "She hands you a toothbrush and a travel-size tube of paste from a drawer full of them. 'Floss,' she says. You will not floss. You feel cared for anyway.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "health": 4,
+        "mood": 5
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "toothbrushes_acquired": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "'Are you a patient?' ",
+            "style": "italic",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "You are not a patient. You have no plan for what to say next and it shows. The fish that circles keeps circling. You leave with your own teeth and nothing for them.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": -5
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 40,
+    "obsessionIds": []
+  },
+  {
+    "id": "read_magazines_dental",
+    "label": "Read the magazines",
+    "locationId": "lombard_dental",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 8,
+      "maxHour": 17,
+      "minVisits": null,
+      "minMoney": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "1997. A Newsweek about the internet. A People about a wedding that has since ended. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "You sit in the warm room and read about a world that didn't know what was coming. The receptionist lets you. The fish circles. Nobody calls your name because you don't have an appointment and you never will.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "energy": 6,
+        "mood": 4
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "waiting_room_hours": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 45,
+    "obsessionIds": []
+  },
+  {
+    "id": "shoot_hoops_chief_joseph",
+    "label": "Shoot hoops after hours",
+    "locationId": "chief_joseph",
+    "timeCost": 2,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 15,
+      "maxHour": null,
+      "minVisits": null,
+      "minMoney": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "stamina",
+      "dc": 10,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "The rim is eight feet and bent. You hit six in a row from where the free throw line would be if there were one. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "A kid on a bike stops to watch. You miss the seventh on purpose so he doesn't get the wrong idea about adults.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": 9,
+        "energy": -8,
+        "health": 2
+      },
+      "statChanges": {
+        "stamina": 1
+      },
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "hoops_sessions": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You airball twice and then the ball gets away from you and rolls under the fence into the street. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "A car stops for it. The driver hands it back over the chain-link without a word. You are a grown adult on a playground and everybody now knows.",
+            "style": "normal",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": -7,
+        "energy": -8
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "hoops_sessions": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 40,
+    "obsessionIds": []
+  },
+  {
+    "id": "swings_chief_joseph",
+    "label": "Sit on the swings",
+    "locationId": "chief_joseph",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 15,
+      "maxHour": null,
+      "minVisits": null,
+      "minMoney": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "The swings are the seventies kind, chain and rubber, built to survive a decade of children and one adult trying not to look suspicious. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "You swing a little. Not much. The chains complain. For a minute you are eleven and nothing has happened yet.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": 8,
+        "energy": 2
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "swing_sits": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 45,
+    "obsessionIds": []
+  },
+  {
+    "id": "food_pantry_abundant_life",
+    "label": "Ask about the food pantry",
+    "locationId": "abundant_life",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": 40,
+      "maxSobriety": null,
+      "minHour": 8,
+      "maxHour": 17,
+      "minVisits": null,
+      "minMoney": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "They don't make you sit through anything. A woman in a cardigan hands you a paper bag and says God bless like she's handing you your change. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "Beans, corn, a box of mac and cheese, a granola bar. You carry it out in front of you like it might spill. It won't. You're just not used to carrying something you were given.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": 5
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": [
+        "church_pantry_bag"
+      ],
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "pantry_visits": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 65,
+    "obsessionIds": []
+  },
+  {
+    "id": "sit_in_back_abundant_life",
+    "label": "Sit in the back row",
+    "locationId": "abundant_life",
+    "timeCost": 2,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 8,
+      "maxHour": 20,
+      "minVisits": null,
+      "minMoney": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "karma",
+      "dc": 10,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You sit in the back. The singing starts and it is loud and it is not for you, exactly, but it goes through you anyway. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 400,
+            "effect": "none"
+          },
+          {
+            "text": "The pastor shakes your hand on the way out with a grip like a vise and says your name. He has never met you. You don't ask.",
+            "style": "normal",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": 12,
+        "energy": 4
+      },
+      "statChanges": {
+        "karma": 1
+      },
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "services_attended": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You fall asleep during the second song. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "You wake up because the singing has stopped and everyone is looking at the back row. The pastor says 'welcome, brother' in a way that means he saw. You are welcomed. You are also seen. Both are a lot.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": -6,
+        "energy": 8
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "services_attended": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 40,
+    "obsessionIds": []
+  }
+]

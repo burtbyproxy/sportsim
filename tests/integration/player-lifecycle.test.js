@@ -11,6 +11,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   createPlayer,
+  START_MONEY,
   getEffectiveStat,
   addModifier,
   tickModifiers,
@@ -116,7 +117,7 @@ describe('player lifecycle — create, mutate, serialize, restore', () => {
 
     const loaded = saveAndLoad(player);
     expect(loaded.status.hunger).toBe(30);
-    expect(loaded.status.money).toBe(-50);
+    expect(loaded.status.money).toBe(START_MONEY - 50);
   });
 
   it('psyche state survives round-trip', () => {
@@ -164,8 +165,8 @@ describe('player lifecycle — create, mutate, serialize, restore', () => {
     adjustMoney(player, -1000);
     const loaded = saveAndLoad(player);
 
-    expect(loaded.status.money).toBe(-1000);
+    expect(loaded.status.money).toBe(START_MONEY - 1000);
     adjustMoney(loaded, -500);
-    expect(loaded.status.money).toBe(-1500);
+    expect(loaded.status.money).toBe(START_MONEY - 1500);
   });
 });

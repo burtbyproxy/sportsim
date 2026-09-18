@@ -1,18 +1,18 @@
 [
   {
-    "id": "raid_fridge",
-    "label": "Raid the fridge",
-    "locationId": "moms_house",
+    "id": "buy_fifth_liquor",
+    "label": "Buy a fifth of the cheap stuff",
+    "locationId": "liquor",
     "timeCost": 1,
     "requirements": {
       "minStats": null,
       "requiredItems": null,
       "minSobriety": null,
       "maxSobriety": null,
-      "minHour": null,
+      "minHour": 9,
       "maxHour": null,
       "minVisits": null,
-      "minMoney": null,
+      "minMoney": 7.95,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -21,33 +21,134 @@
       "narrative": {
         "tokens": [
           {
-            "text": "You stand in front of the open fridge for a long time. There is a block of cheese, something in foil, and a bottle of Worcestershire sauce that has been there since before you were born. ",
+            "text": "Seven ninety-five for a plastic bottle with a label that's mostly a color. The clerk bags it without being asked, which is the only courtesy the state provides. ",
             "style": "normal",
             "color": null,
             "speed": "normal",
-            "pauseAfter": 0,
+            "pauseAfter": 300,
             "effect": "none"
           },
           {
-            "text": "You eat the cheese. ",
+            "text": "You take the first pull in the alley. It tastes like a decision. You've made it.",
             "style": "normal",
             "color": null,
             "speed": "normal",
-            "pauseAfter": 400,
-            "effect": "none"
-          },
-          {
-            "text": "It's fine.",
-            "style": "normal",
-            "color": null,
-            "speed": "slow",
             "pauseAfter": 0,
             "effect": "none"
           }
         ]
       },
       "statusChanges": {
-        "hunger": 25
+        "sobriety": -35,
+        "mood": 12,
+        "health": -3
+      },
+      "statChanges": null,
+      "moneyChange": -7.95,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": {
+        "barfly": 3
+      },
+      "counterChanges": {
+        "fifths_bought": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 60,
+    "obsessionIds": []
+  },
+  {
+    "id": "ask_clerk_liquor",
+    "label": "Ask the clerk what's good",
+    "locationId": "liquor",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 9,
+      "maxHour": null,
+      "minVisits": null,
+      "minMoney": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "charm",
+      "dc": 10,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "He's been here since the state acquired it. He looks at you, then at the shelf, then back at you, and points at a bottle of Canadian whiskey nobody has heard of. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "'That one doesn't hurt,' he says. It's the most useful sentence anyone has said to you this week.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": 6
+      },
+      "statChanges": {
+        "wits": 1
+      },
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "clerk_conversations": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "He looks at the sign by the door. ",
+            "style": "normal",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 400,
+            "effect": "none"
+          },
+          {
+            "text": "'We reserve the right,' he says, not finishing it, not needing to. You buy nothing. You were going to buy nothing anyway. That's not the point.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": -8
       },
       "statChanges": null,
       "moneyChange": null,
@@ -57,143 +158,14 @@
       "locationDiscovered": null,
       "archetypeChanges": null,
       "counterChanges": {
-        "times_raided_fridge": 1
+        "refused_service": 1
       },
       "traumaGained": null,
       "obsessionFed": null
     },
-    "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 80,
-    "obsessionIds": []
-  },
-  {
-    "id": "stare_at_ceiling",
-    "label": "Stare at the ceiling",
-    "locationId": "moms_house",
-    "timeCost": 2,
-    "requirements": {
-      "minStats": null,
-      "requiredItems": null,
-      "minSobriety": null,
-      "maxSobriety": null,
-      "minHour": null,
-      "maxHour": null,
-      "minVisits": null,
-      "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
-    },
-    "check": null,
-    "success": {
-      "narrative": {
-        "tokens": [
-          {
-            "text": "You lie on the cot and stare at the water stain on the ceiling. It looks like something but you can't decide what. Dave sits on the space heater and watches you. ",
-            "style": "normal",
-            "color": null,
-            "speed": "normal",
-            "pauseAfter": 300,
-            "effect": "none"
-          },
-          {
-            "text": "Eventually you feel slightly better. ",
-            "style": "normal",
-            "color": null,
-            "speed": "normal",
-            "pauseAfter": 0,
-            "effect": "none"
-          },
-          {
-            "text": "This is as good as it gets right now.",
-            "style": "normal",
-            "color": null,
-            "speed": "slow",
-            "pauseAfter": 0,
-            "effect": "none"
-          }
-        ]
-      },
-      "statusChanges": {
-        "energy": 10,
-        "mood": -5
-      },
-      "statChanges": null,
-      "moneyChange": null,
-      "itemsGained": null,
-      "itemsLost": null,
-      "eventTriggered": null,
-      "locationDiscovered": null,
-      "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
-    },
-    "failure": null,
-    "criticalSuccess": null,
-    "criticalFailure": null,
-    "weight": 40,
-    "obsessionIds": []
-  },
-  {
-    "id": "sleep",
-    "label": "Sleep",
-    "locationId": "moms_house",
-    "timeCost": 8,
-    "requirements": {
-      "minStats": null,
-      "requiredItems": null,
-      "minSobriety": null,
-      "maxSobriety": null,
-      "minHour": 21,
-      "maxHour": null,
-      "minVisits": null,
-      "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
-    },
-    "check": null,
-    "success": {
-      "narrative": {
-        "tokens": [
-          {
-            "text": "You sleep. Dave wakes you up at some point by sitting on your face. You go back to sleep. ",
-            "style": "normal",
-            "color": null,
-            "speed": "normal",
-            "pauseAfter": 300,
-            "effect": "none"
-          },
-          {
-            "text": "It's fine.",
-            "style": "normal",
-            "color": null,
-            "speed": "slow",
-            "pauseAfter": 0,
-            "effect": "none"
-          }
-        ]
-      },
-      "statusChanges": {
-        "energy": 60,
-        "mood": 10
-      },
-      "statChanges": null,
-      "moneyChange": null,
-      "itemsGained": null,
-      "itemsLost": null,
-      "eventTriggered": null,
-      "locationDiscovered": null,
-      "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
-    },
-    "failure": null,
-    "criticalSuccess": null,
-    "criticalFailure": null,
-    "weight": 60,
+    "weight": 35,
     "obsessionIds": []
   }
 ]

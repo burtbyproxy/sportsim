@@ -44,6 +44,9 @@ function createStat(base) {
 // Public API
 // ---------------------------------------------------------------------------
 
+/** A couple of bucks — what you have when you wake up in the basement. */
+export const START_MONEY = 2
+
 /**
  * Create a new Player with default starting values.
  * Stats are randomized slightly around starting ranges.
@@ -71,7 +74,7 @@ export function createPlayer(name) {
       energy: 70,
       mood: 40,
       health: 100,
-      money: 0,
+      money: START_MONEY,
     },
     psyche: {
       traumas: [],

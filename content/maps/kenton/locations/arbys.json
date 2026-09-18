@@ -37,8 +37,13 @@
       "requirements": null
     }
   ],
-  "npcSlots": ["dennis"],
-  "actionIds": [],
+  "npcSlots": [
+    "dennis"
+  ],
+  "actionIds": [
+    "curly_fries_arbys",
+    "bathroom_arbys"
+  ],
   "discovered": false,
   "availability": {
     "openHour": 9,

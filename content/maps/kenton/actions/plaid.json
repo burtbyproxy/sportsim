@@ -12,6 +12,7 @@
       "minHour": null,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": 2,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -40,12 +41,18 @@
       "statusChanges": null,
       "statChanges": null,
       "moneyChange": -2,
-      "itemsGained": ["tallboy_oly"],
+      "itemsGained": [
+        "tallboy_oly"
+      ],
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,
-      "archetypeChanges": { "barfly": 1 },
-      "counterChanges": { "tallboys_purchased": 1 },
+      "archetypeChanges": {
+        "barfly": 1
+      },
+      "counterChanges": {
+        "tallboys_purchased": 1
+      },
       "traumaGained": null,
       "obsessionFed": null
     },
@@ -68,6 +75,7 @@
       "minHour": null,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -98,15 +106,21 @@
           }
         ]
       },
-      "statusChanges": { "hunger": 10 },
+      "statusChanges": {
+        "hunger": 10
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,
-      "archetypeChanges": { "drifter": 2 },
-      "counterChanges": { "successful_shoplifts": 1 },
+      "archetypeChanges": {
+        "drifter": 2
+      },
+      "counterChanges": {
+        "successful_shoplifts": 1
+      },
       "traumaGained": null,
       "obsessionFed": null
     },
@@ -139,7 +153,9 @@
           }
         ]
       },
-      "statusChanges": { "mood": -20 },
+      "statusChanges": {
+        "mood": -20
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
@@ -147,7 +163,9 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": { "failed_shoplifts": 1 },
+      "counterChanges": {
+        "failed_shoplifts": 1
+      },
       "traumaGained": null,
       "obsessionFed": null
     },
@@ -181,7 +199,9 @@
           }
         ]
       },
-      "statusChanges": { "mood": -30 },
+      "statusChanges": {
+        "mood": -30
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
@@ -189,7 +209,10 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": { "police_encounters": 1, "failed_shoplifts": 1 },
+      "counterChanges": {
+        "police_encounters": 1,
+        "failed_shoplifts": 1
+      },
       "traumaGained": null,
       "obsessionFed": null
     },

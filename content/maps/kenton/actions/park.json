@@ -12,6 +12,7 @@
       "minHour": null,
       "maxHour": null,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -37,7 +38,10 @@
           }
         ]
       },
-      "statusChanges": { "energy": 5, "mood": 5 },
+      "statusChanges": {
+        "energy": 5,
+        "mood": 5
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
@@ -68,6 +72,7 @@
       "minHour": 6,
       "maxHour": 22,
       "minVisits": null,
+      "minMoney": null,
       "requiredTraumas": null,
       "requiredAbilities": null
     },
@@ -98,15 +103,21 @@
           }
         ]
       },
-      "statusChanges": { "mood": -5 },
+      "statusChanges": {
+        "mood": -5
+      },
       "statChanges": null,
       "moneyChange": 1.5,
       "itemsGained": null,
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,
-      "archetypeChanges": { "drifter": 1 },
-      "counterChanges": { "times_fished_fountain": 1 },
+      "archetypeChanges": {
+        "drifter": 1
+      },
+      "counterChanges": {
+        "times_fished_fountain": 1
+      },
       "traumaGained": null,
       "obsessionFed": null
     },
@@ -123,7 +134,9 @@
           }
         ]
       },
-      "statusChanges": { "mood": -3 },
+      "statusChanges": {
+        "mood": -3
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
@@ -131,7 +144,9 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": { "times_fished_fountain": 1 },
+      "counterChanges": {
+        "times_fished_fountain": 1
+      },
       "traumaGained": null,
       "obsessionFed": null
     },
@@ -163,8 +178,12 @@
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,
-      "archetypeChanges": { "lucky_bastard": 5 },
-      "counterChanges": { "times_fished_fountain": 1 },
+      "archetypeChanges": {
+        "lucky_bastard": 5
+      },
+      "counterChanges": {
+        "times_fished_fountain": 1
+      },
       "traumaGained": null,
       "obsessionFed": null
     },
@@ -189,7 +208,9 @@
           }
         ]
       },
-      "statusChanges": { "mood": -15 },
+      "statusChanges": {
+        "mood": -15
+      },
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
@@ -197,7 +218,9 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": { "times_fished_fountain": 1 },
+      "counterChanges": {
+        "times_fished_fountain": 1
+      },
       "traumaGained": null,
       "obsessionFed": null
     },

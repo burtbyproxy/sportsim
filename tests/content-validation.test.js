@@ -225,6 +225,16 @@ function validateAction(data, file) {
   expect(data.success, `${file} '${data.id}': success outcome required`).toBeTruthy();
   expect(data.success.narrative, `${file} '${data.id}': success.narrative required`).toBeTruthy();
 
+  // Anything that costs money must declare the price as a money floor,
+  // so a broke player is told the price instead of going negative.
+  const cost = data.success.moneyChange;
+  if (typeof cost === 'number' && cost < 0) {
+    expect(
+      data.requirements?.minMoney,
+      `${file} '${data.id}': costs ${cost} but requirements.minMoney is not set to at least ${-cost}`
+    ).toBeGreaterThanOrEqual(-cost);
+  }
+
   // If there's a check, validate it
   if (data.check) {
     expect(typeof data.check.stat, `${file} '${data.id}': check.stat must be string`).toBe('string');

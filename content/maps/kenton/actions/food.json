@@ -1,0 +1,330 @@
+[
+  {
+    "id": "curly_fries_arbys",
+    "label": "Cheesy curly fries",
+    "locationId": "arbys",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 9,
+      "maxHour": null,
+      "minVisits": null,
+      "minMoney": 2.99,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Two ninety-nine for the medium, which is the correct size. The cheese is a liquid that is not legally cheese and you would defend it in court. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "You eat at the table with the least film on it. This is a low bar and you are under it.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "hunger": 30,
+        "mood": 6,
+        "health": -2
+      },
+      "statChanges": null,
+      "moneyChange": -2.99,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "curly_fries_eaten": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 80,
+    "obsessionIds": []
+  },
+  {
+    "id": "bathroom_arbys",
+    "label": "Use the bathroom",
+    "locationId": "arbys",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 9,
+      "maxHour": null,
+      "minVisits": null,
+      "minMoney": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "toughness",
+      "dc": 10,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "The bathroom situation, it turns out, is fine. Somebody has cleaned it recently and left the paper towels stocked. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 200,
+            "effect": "none"
+          },
+          {
+            "text": "You wash your face. You look at yourself. You look like a person who is handling it. You leave before the mirror changes its mind.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": 5,
+        "health": 2
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "The bathroom situation is not fine. ",
+            "style": "normal",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 400,
+            "effect": "none"
+          },
+          {
+            "text": "You will not describe it. You come out a different person, slightly, and a manager looks at you like you did it.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": -10,
+        "health": -1
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 30,
+    "obsessionIds": []
+  },
+  {
+    "id": "buy_cigarettes_toads",
+    "label": "Buy a pack of Reds",
+    "locationId": "toads_express",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": null,
+      "maxHour": null,
+      "minVisits": null,
+      "minMoney": 3.75,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Three seventy-five through the slot in the bulletproof glass. The clerk pushes the pack back through without looking up. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 200,
+            "effect": "none"
+          },
+          {
+            "text": "The armed guard by the door nods at you. You nod back. You are both being very careful about a pack of Marlboros.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": null,
+      "statChanges": null,
+      "moneyChange": -3.75,
+      "itemsGained": [
+        "pack_cigarettes"
+      ],
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "cigarettes_bought": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 75,
+    "obsessionIds": []
+  },
+  {
+    "id": "bum_smoke_toads",
+    "label": "Bum a cigarette off somebody",
+    "locationId": "toads_express",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": null,
+      "maxHour": null,
+      "minVisits": null,
+      "minMoney": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "charm",
+      "dc": 10,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "A guy filling up a Tercel gives you one without a word and lights it for you. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "You smoke it leaning on the ice machine. For six minutes nobody wants anything from you.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": 8,
+        "energy": -2,
+        "health": -1
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "cigarettes_bummed": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "'I don't smoke,' says the man holding a cigarette. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "He gets in his car. The guard watches the whole thing and does not intervene because there is nothing to intervene in. Just you.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": -6
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "cigarettes_denied": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 40,
+    "obsessionIds": []
+  }
+]
