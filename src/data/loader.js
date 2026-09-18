@@ -81,7 +81,7 @@ function _extractModules(globResult) {
 /**
  * Load all locations for a given map.
  * @param {string} mapId - e.g. "kenton"
- * @returns {Object<string, import('../../comms/docs/data-contracts.js').Location>}
+ * @returns {Object<string, Object>}
  */
 export function loadLocations(mapId) {
   const relevant = Object.entries(_locationFiles)
@@ -95,7 +95,7 @@ export function loadLocations(mapId) {
  * Load all actions for a given map.
  * Action files can contain arrays or single objects.
  * @param {string} mapId - e.g. "kenton"
- * @returns {Object<string, import('../../comms/docs/data-contracts.js').Action>}
+ * @returns {Object<string, Object>}
  */
 export function loadActions(mapId) {
   const relevant = Object.entries(_actionFiles)
@@ -108,7 +108,7 @@ export function loadActions(mapId) {
 /**
  * Load all events for a given map.
  * @param {string} mapId - e.g. "kenton"
- * @returns {Object<string, import('../../comms/docs/data-contracts.js').GameEvent>}
+ * @returns {Object<string, Object>}
  */
 export function loadEvents(mapId) {
   const relevant = Object.entries(_eventFiles)
@@ -120,7 +120,7 @@ export function loadEvents(mapId) {
 
 /**
  * Load all characters (global — not map-scoped).
- * @returns {Object<string, import('../../comms/docs/data-contracts.js').Character>}
+ * @returns {Object<string, Object>}
  */
 export function loadCharacters() {
   const modules = _extractModules(_characterFiles)
@@ -129,7 +129,7 @@ export function loadCharacters() {
 
 /**
  * Load all items (global).
- * @returns {Object<string, import('../../comms/docs/data-contracts.js').Item>}
+ * @returns {Object<string, Object>}
  */
 export function loadItems() {
   const modules = _extractModules(_itemFiles)

@@ -4,6 +4,7 @@
   "variant": "christian",
   "display": "Abundant Life Church",
   "pieceAs": "on the sidewalk outside Abundant Life",
+  "outdoors": true,
   "descriptions": {
     "default": "A Pentecostal church in a converted storefront. The sign out front changes weekly with a new message — not scripture, exactly, more like scripture adjacent. Something that sounds like it should be a verse but isn't. Inside, on Sundays, there is singing that you can hear from half a block away. The pastor has a handshake like a vice and remembers every name. Every one.",
     "night": "Dark except for a light in the pastor's office, which is always on. The sign out front is lit by a single bulb. This week it says 'God Already Knows What You Did Last Night.' You're not sure if this is a comfort or a threat.",

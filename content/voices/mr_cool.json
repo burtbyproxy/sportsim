@@ -1,0 +1,13 @@
+{
+  "id": "mr_cool",
+  "lines": {
+    "inspiration.struck": "An idea arrives. You let it wait a second. You don't chase ideas. They come to you, and this one did, and you exhale.",
+    "inspiration.expired": "It left. You let it. You lean on something and watch it go like it was your call.",
+    "scavenge.found": "You pick up {item} without looking at it, like you'd left it there on purpose.",
+    "scavenge.nothing": "Nothing. You weren't really looking. You make sure your posture says so.",
+    "item.used": "You finish the {item} and flick what's left of it somewhere without checking where. It lands in a puddle. Perfect. Nobody saw.",
+    "making.started": "You start like it's no big deal. It's a very big deal. Your hands know; your face doesn't.",
+    "piece.artist.solid": "Done: {work}. You glance at it once, the way you'd glance at a car you own.",
+    "piece.artist.rough": "Done: {work}. It's off. You decide it's off on purpose, and stand next to it like that's true."
+  }
+}

@@ -25,6 +25,10 @@ function _meetsEventConditions(event, player, location, gameTime, firedEventIds)
   // Location checks — a specific place, or any place of a type (bar, park, market...)
   if (cond.locationId && cond.locationId !== location.id) return false
   if (cond.locationType && cond.locationType !== location.type) return false
+  // The street happens on the street: a cruiser does not ease up to the curb in a basement.
+  if (cond.outdoors !== null && cond.outdoors !== undefined) {
+    if (Boolean(location.outdoors) !== cond.outdoors) return false
+  }
 
   // Time checks
   if (cond.minHour !== null && cond.minHour !== undefined && gameTime.hour < cond.minHour)

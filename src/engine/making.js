@@ -290,8 +290,8 @@ export function makingOptions({ player, location, items = {}, mediums = {}, game
 /**
  * Begin. The plan is checked against what the player carries and where they
  * stand, a record is opened bound to the active inspiration, and the things
- * the work uses up — a carried surface, an ingredient — are named for the
- * caller to take away. Tools survive.
+ * the work uses up — a carried surface, an ingredient, a tool with one job
+ * left in it — are named for the caller to take away. Other tools survive.
  *
  * @param {{
  *   player: Object,
@@ -412,6 +412,7 @@ export function makingStart({
     updatedAtTick: tick,
   }
   const itemIdsConsumed = []
+  if (toolItemId !== null && items[toolItemId].spentOnUse) itemIdsConsumed.push(toolItemId)
   if (surfaceKind === MAKING_SURFACE_KINDS.ITEM) itemIdsConsumed.push(surfaceId)
   if (ingredientItemId !== null) itemIdsConsumed.push(ingredientItemId)
 

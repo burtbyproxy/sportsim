@@ -4,6 +4,7 @@
   "variant": "community",
   "display": "Columbia Park",
   "pieceAs": "in Columbia Park",
+  "outdoors": true,
   "descriptions": {
     "default": "Columbia Park is huge. Old-growth firs so tall they make the sky small. During the day the place is alive — kids on the playground, dogs off-leash, people on blankets, a guy throwing a frisbee badly, someone's portable radio playing something you almost recognize. The paths branch and loop and if you're not paying attention you end up somewhere you didn't mean to be. There's a broken swing that spins when there's no wind. There's a bench where the same man sits every single day.",
     "night": "You're not supposed to be here. The park after dark is a different country with different rules and nobody wrote them down. The old-growth firs are just shapes now. The paths that made sense in daylight go somewhere else at night. Things move between the trees. If you look like you know where you're going, nobody bothers you. Look lost and someone will find you. You do not want to be found.",

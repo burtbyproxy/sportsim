@@ -16,7 +16,8 @@
       "maxStatus": null,
       "requiredItems": null,
       "requiredTraumas": null,
-      "minVisits": null
+      "minVisits": null,
+      "outdoors": true
     },
     "narrative": {
       "tokens": [
@@ -55,9 +56,7 @@
       },
       "statChanges": null,
       "moneyChange": null,
-      "itemsGained": [
-        "bus_token"
-      ],
+      "itemsGained": ["bus_token"],
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,
@@ -67,7 +66,11 @@
       },
       "traumaGained": null,
       "obsessionFed": null,
-        "inspiration": { "mediumId": "drawing", "strength": 40, "ticksTotal": 8 }
+      "inspiration": {
+        "mediumId": "drawing",
+        "strength": 40,
+        "ticksTotal": 8
+      }
     },
     "nextEventId": null
   },
@@ -171,7 +174,11 @@
       "counterChanges": null,
       "traumaGained": null,
       "obsessionFed": null,
-        "inspiration": { "mediumId": "writing", "strength": 30, "ticksTotal": 6 }
+      "inspiration": {
+        "mediumId": "writing",
+        "strength": 30,
+        "ticksTotal": 6
+      }
     },
     "nextEventId": null
   },
@@ -194,7 +201,8 @@
       },
       "requiredItems": null,
       "requiredTraumas": null,
-      "minVisits": null
+      "minVisits": null,
+      "outdoors": true
     },
     "narrative": {
       "tokens": [
@@ -542,7 +550,11 @@
       },
       "traumaGained": null,
       "obsessionFed": null,
-        "inspiration": { "mediumId": "painting", "strength": 60, "ticksTotal": 12 }
+      "inspiration": {
+        "mediumId": "painting",
+        "strength": 60,
+        "ticksTotal": 12
+      }
     },
     "nextEventId": null
   }

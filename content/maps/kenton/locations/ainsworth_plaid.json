@@ -4,6 +4,7 @@
   "variant": "convenience",
   "display": "Plaid Pantry",
   "pieceAs": "outside the Ainsworth Plaid",
+  "outdoors": true,
   "descriptions": {
     "default": "This Plaid Pantry is indistinguishable from every other Plaid Pantry. That is not an accident. The design is intentional, a franchise commitment to radical sameness. The hot dog rollers turn with a devotion that borders on spiritual. The staff pays you minimal attention. The night clerk reads a paperback behind the counter and does not look up when you come in. He does not look up when you leave. He has noticed everything in between.",
     "night": "The night shift belongs to Ray and his book and the hum of the refrigeration units. The hot dogs have been rotating since morning. They have achieved a texture. One fluorescent tube flickers in the back aisle. It has been flickering for months. Nobody has reported it. Nobody will.",

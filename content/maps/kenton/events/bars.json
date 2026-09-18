@@ -44,7 +44,12 @@
       "statusChanges": {
         "mood": 8
       },
-      "doses": [{ "substanceId": "beer", "value": 12 }],
+      "doses": [
+        {
+          "substanceId": "beer",
+          "value": 12
+        }
+      ],
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
@@ -108,6 +113,60 @@
       "counterChanges": null,
       "traumaGained": null,
       "obsessionFed": null
+    },
+    "nextEventId": null
+  },
+  {
+    "id": "karaoke_night_pull",
+    "title": "Karaoke night",
+    "type": "random",
+    "oneTime": false,
+    "probability": 0.15,
+    "conditions": {
+      "locationId": "blue_parrot",
+      "locationType": null,
+      "minHour": 21,
+      "maxHour": null,
+      "minStats": null,
+      "maxStats": null,
+      "minStatus": null,
+      "maxStatus": null,
+      "requiredItems": null,
+      "requiredTraumas": null,
+      "minVisits": null
+    },
+    "narrative": {
+      "tokens": [
+        {
+          "text": "The man in the Blazers jersey finishes murdering his song and the room applauds the fact that it's over. The mic goes back in the stand. It's just standing there. The book of songs is open on the bar, and you catch yourself reading it. ",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 0,
+          "effect": "none"
+        }
+      ]
+    },
+    "choices": [],
+    "outcome": {
+      "narrative": null,
+      "statusChanges": null,
+      "doses": null,
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null,
+      "inspiration": {
+        "mediumId": "karaoke",
+        "strength": 45,
+        "ticksTotal": 10
+      }
     },
     "nextEventId": null
   }

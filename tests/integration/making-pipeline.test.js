@@ -20,6 +20,7 @@ import { createItem } from '../../src/models/item.js'
 import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
 import { useSave, saveMigrate, SAVE_VERSION } from '../../src/composables/useSave.js'
+import { checkRandomEvents } from '../../src/engine/events.js'
 
 const loadDir = (dir) =>
   readdirSync(resolve(dir))
@@ -34,6 +35,7 @@ const conditions = loadDir('content/conditions')
 const locations = loadDir('content/maps/kenton/locations')
 const actions = loadDir('content/maps/kenton/actions').flat()
 const games = loadDir('content/games')
+const events = loadDir('content/maps/kenton/events').flat()
 
 const voice = (personaId, code) => voices.find((v) => v.id === personaId).lines[code]
 const medium = (id) => mediums.find((m) => m.id === id)
@@ -915,6 +917,57 @@ describe('making pipeline', () => {
     const done = await run(encore.chance + 0.01)
     expect(done.game.player.experiences).toHaveLength(1)
     expect(done.game.inspirationActive).toBeNull()
+  })
+
+  // ── Refinements ───────────────────────────────────────────────────────────
+
+  it('the street stays on the street: no cruiser and no Civic in the basement, the bar, or the dentist', () => {
+    const everythingFires = () => 0
+    // Drunk, after dark: exactly who the cruiser is looking for.
+    const canFire = (locationId) => {
+      const ctx = startGame({ at: locationId })
+      ctx.game.applyDoses({ doses: [{ substanceId: 'beer', value: 80 }] })
+      return checkRandomEvents(
+        ctx.game.player,
+        ctx.game.currentLocation,
+        { ...ctx.game.time, hour: 22 },
+        events,
+        [],
+        everythingFires
+      ).map((e) => e.id)
+    }
+    for (const indoors of ['moms_house', 'blue_parrot', 'lombard_dental']) {
+      expect(canFire(indoors), indoors).not.toContain('cop_hassle')
+      expect(canFire(indoors), indoors).not.toContain('car_treasure')
+    }
+    expect(canFire('denver_711')).toContain('car_treasure')
+    expect(canFire('columbia_park')).toContain('cop_hassle')
+    // Rain is still everybody's.
+    expect(canFire('moms_house')).toContain('rain')
+  })
+
+  it('a spray can with one bad decision left in it has none left after the tag', async () => {
+    const ctx = startGame({ at: 'lombard_dental', carrying: ['spray_can_dregs', 'sharpie'] })
+    strike(ctx.game, { mediumId: 'tagging' })
+    ctx.loop.onLocationEntered()
+    await pick(ctx, 'Make something')
+    await pick(ctx, 'Tagging: Nearly Empty Spray Can')
+    // Spent the moment it is committed, like the door. The Sharpie would not have been.
+    expect(ctx.game.playerInventory.map((i) => i.id)).toEqual(['sharpie'])
+    await pick(ctx, "That's enough")
+    expect(ctx.game.locations.lombard_dental.marks).toHaveLength(1)
+  })
+
+  it('karaoke night pulls at you: at the Parrot after nine the open songbook is an idea, and at noon it is a book', async () => {
+    const pull = events.find((e) => e.id === 'karaoke_night_pull')
+    const at = async (ticksIn) => {
+      const ctx = startGame({ at: 'blue_parrot', events: [pull], rng: () => 0 })
+      ctx.game.advanceTime(ticksIn)
+      await ctx.loop.tick(1)
+      return ctx.game.inspirationActive
+    }
+    expect(await at(4 * 4)).toBeNull()
+    expect(await at(13 * 4)).toMatchObject({ mediumId: 'karaoke', sourceKind: 'event' })
   })
 
   it('work caught mid-stroke by an older save is abandoned on load, not left unplayable', () => {

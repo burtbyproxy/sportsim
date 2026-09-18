@@ -30,6 +30,8 @@ export function createItem(data) {
     foundAs: data.foundAs ?? null,
     // How the item reads inside a piece: "Sharpie", "on a cabinet door", "Brut".
     pieceAs: data.pieceAs ?? null,
+    // A tool with one job left in it: the work uses it up.
+    spentOnUse: data.spentOnUse ?? false,
   }
 }
 

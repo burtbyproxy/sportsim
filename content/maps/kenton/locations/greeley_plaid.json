@@ -4,6 +4,7 @@
   "variant": "convenience",
   "display": "Plaid Pantry",
   "pieceAs": "outside the Greeley Plaid",
+  "outdoors": true,
   "descriptions": {
     "default": "The Greeley Plaid is not the same as the Ainsworth Plaid despite being the same chain selling the same products under the same lighting. The difference is difficult to articulate and probably not real. The clerk here seems to recognize you even if you've never been in before. Maybe you just have one of those faces. The hot dog rollers turn. The fluorescents hum. The sameness is the point.",
     "night": "Quieter than the other Plaid. The kind of quiet that's just the refrigeration units humming. A moth circles the parking lot light. You are the only customer. The clerk watches the moth. You watch the clerk. Nobody is watching you.",

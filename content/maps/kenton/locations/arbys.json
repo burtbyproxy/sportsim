@@ -4,6 +4,7 @@
   "variant": "fast",
   "display": "Arby's",
   "pieceAs": "in the Arby's on Lombard",
+  "outdoors": false,
   "descriptions": {
     "default": "What can you say about Arby's. The cheesy curly fries are a genuine achievement of American food science. This particular Arby's has tables with a slimy film that no amount of wiping fully removes. The bathroom situation is unclear. The clientele at this location tends toward the weathered.",
     "night": "The late-night Arby's crowd is a specific demographic. You are part of it now. The overhead lights are very bright. Everyone looks worse than they did an hour ago. A man is asleep in a booth. Nobody wakes him. This is policy or pity or both.",

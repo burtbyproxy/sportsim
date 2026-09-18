@@ -306,6 +306,9 @@ describe('useGameLoop → events', () => {
 
   it('a checked choice that fails applies the failure outcome', async () => {
     const game = startGame()
+    // The cruiser works the street, so be on it.
+    game.registerLocation(createLocation(columbiaPark))
+    game.moveTo('columbia_park')
     const narrative = useNarrative()
     // A low roll botches every check. Force the event by type so the roll only governs the check.
     const botch = () => 0.001

@@ -4,6 +4,7 @@
   "variant": "house",
   "display": "Mom's House",
   "pieceAs": "in your mother's basement",
+  "outdoors": false,
   "descriptions": {
     "default": "The basement has a cot, a space heater that smells like burning dust, and a litter box in the corner that Dave — the cat — uses as a territorial statement. Your mom is upstairs. She is kind. She does not ask questions. Dave is not kind. Dave has irritable bowel syndrome and strong opinions about squatters.",
     "night": "After midnight the furnace kicks on and shudders like it's thinking about giving up. Dave prowls the perimeter in the dark. You can hear him but you cannot see him. This is how Dave prefers it.",
