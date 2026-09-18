@@ -75,7 +75,7 @@
                 <div class="status-stat__track">
                   <div
                     class="status-stat__fill"
-                    :class="[`status-stat__fill--${stat.key}`, barFillClass(stat.key, stat.value)]"
+                    :class="[`status-stat__fill--${stat.key}`, stat.fillClass]"
                     :style="{ width: `${stat.value}%` }"
                   />
                 </div>
@@ -161,7 +161,6 @@ import { useSave } from '../../composables/useSave.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
 import { loadActions, loadEvents } from '../../data/loader.js'
 import { formatTime } from '../../engine/clock.js'
-import { STATUS_BAR_STATS, statusBarFillClass } from '../../utils/statusBar.js'
 import GameHeader from './GameHeader.vue'
 import GameFooter from './GameFooter.vue'
 import LocationView from '../game/LocationView.vue'
@@ -213,13 +212,7 @@ const formattedMoney = computed(() => {
   return m.toFixed(2)
 })
 
-const statusStats = computed(() =>
-  STATUS_BAR_STATS.map((stat) => ({ ...stat, value: game.player?.status?.[stat.key] ?? 0 }))
-)
-
-function barFillClass(key, value) {
-  return statusBarFillClass({ key, value })
-}
+const statusStats = computed(() => game.statusBars)
 
 // === Inventory ===
 

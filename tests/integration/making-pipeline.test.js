@@ -21,6 +21,7 @@ import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
 import { useSave, saveMigrate, SAVE_VERSION } from '../../src/composables/useSave.js'
 import { checkRandomEvents } from '../../src/engine/events.js'
+import { itemUseResolve } from '../../src/engine/items.js'
 
 const loadDir = (dir) =>
   readdirSync(resolve(dir))
@@ -35,6 +36,7 @@ const conditions = loadDir('content/conditions')
 const locations = loadDir('content/maps/kenton/locations')
 const actions = loadDir('content/maps/kenton/actions').flat()
 const games = loadDir('content/games')
+const vocabulary = JSON.parse(readFileSync(resolve('content/vocabulary.json'), 'utf-8'))
 const events = loadDir('content/maps/kenton/events').flat()
 
 const voice = (personaId, code) => voices.find((v) => v.id === personaId).lines[code]
@@ -60,6 +62,7 @@ function startGame({
   for (const v of voices) game.registerVoice({ voice: v })
   for (const m of mediumsUsed) game.registerMedium({ medium: m })
   for (const g of games) game.registerGame({ game: g })
+  game.registerVocabulary({ vocabulary })
   for (const substance of substances) game.registerSubstance({ substance })
   for (const condition of conditions) game.registerCondition({ condition })
   for (const location of locations) game.registerLocation(createLocation(location))
@@ -1030,6 +1033,46 @@ describe('making pipeline', () => {
     const shipped = createPlayer(config.start.playerName, config.start)
     expect(shipped.status.money).toBe(config.start.money)
     expect(shipped.currentLocationId).toBe(config.start.locationId)
+  })
+
+  // ── The game's words are content ──────────────────────────────────────────
+
+  it('the vitals panel is the vocabulary: its order, its names, and where each bar turns', () => {
+    const { game } = startGame()
+    expect(game.statusBars.map((bar) => bar.label)).toEqual(
+      vocabulary.statuses.map((status) => status.display)
+    )
+    const bar = (id) => game.statusBars.find((b) => b.key === id)
+    // Half drunk is already news; half tired is not.
+    game.applyDoses({ doses: [{ substanceId: 'beer', value: 55 }] })
+    game.player.status.energy = 45
+    expect(bar('sobriety').value).toBe(45)
+    expect(bar('sobriety').fillClass).toBe('status-stat__fill--warning')
+    expect(bar('energy').fillClass).toBe('')
+    game.player.status.energy = 20
+    expect(bar('energy').fillClass).toBe('status-stat__fill--danger')
+  })
+
+  it('a stat the vocabulary adds is a stat the player has; a vital it marks writable is one an item can move', () => {
+    const player = createPlayer('Wider', {
+      statIds: [...vocabulary.stats.map((stat) => stat.id), 'legend'],
+    })
+    expect(Object.keys(player.stats)).toHaveLength(vocabulary.stats.length + 1)
+    expect(player.stats.legend.base).toBeGreaterThanOrEqual(10)
+
+    player.status.nerve = 50
+    player.inventory.push({
+      id: 'pep_talk',
+      name: 'Pep Talk',
+      type: 'consumable',
+      quantity: 1,
+      effects: [{ target: 'nerve', value: 10 }],
+    })
+    // A vital the vocabulary does not know is not quietly ignored: the engine refuses it.
+    const closed = itemUseResolve({ player, itemId: 'pep_talk' })
+    expect(closed.error.code).toBe('EFFECT_TARGET_UNKNOWN')
+    const open = itemUseResolve({ player, itemId: 'pep_talk', statusIds: ['hunger', 'nerve'] })
+    expect(open.data.statusChanges).toEqual({ nerve: 10 })
   })
 
   it('work caught mid-stroke by an older save is abandoned on load, not left unplayable', () => {

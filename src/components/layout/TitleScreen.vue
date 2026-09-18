@@ -54,6 +54,7 @@ import {
   loadScavengeTables,
   loadGames,
   loadGameConfig,
+  loadVocabulary,
 } from '../../data/loader.js'
 import { createPlayer } from '../../models/player.js'
 import { createCharacter } from '../../models/character.js'
@@ -72,6 +73,8 @@ const hasSave = ref(false)
 // What a new game is — its words, its map, where and as whom you start — is content.
 const config = loadGameConfig()
 game.registerConfig({ config })
+const vocabulary = loadVocabulary()
+game.registerVocabulary({ vocabulary })
 
 // Load item, substance, and condition registries once at startup — they
 // are definitions, not run state, and persist across game resets.
@@ -107,7 +110,10 @@ onMounted(() => {
 const bootLines = config.bootLines.map((line) => line.replace('{version}', version))
 
 function startNewGame() {
-  const player = createPlayer(config.start.playerName, config.start)
+  const player = createPlayer(config.start.playerName, {
+    ...config.start,
+    statIds: vocabulary.stats.map((stat) => stat.id),
+  })
   game.startNewGame(player, config.start.locationId)
 
   // Register the map's locations from content/

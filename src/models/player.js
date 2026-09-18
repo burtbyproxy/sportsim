@@ -6,6 +6,7 @@
 
 import { v4 as uuidv4 } from 'uuid'
 import { blendSober, sobrietyDerive } from '../engine/blend.js'
+import { STAT_IDS_DEFAULT } from './defaults.js'
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -50,6 +51,7 @@ function createStat(base) {
  * says otherwise: content/game.json `start` is what a real new game uses.
  */
 export const PLAYER_START_DEFAULTS = Object.freeze({
+  statIds: STAT_IDS_DEFAULT,
   locationId: 'moms_house',
   money: 2,
   statRoll: Object.freeze({ min: 10, max: 20 }),
@@ -64,7 +66,7 @@ export const START_MONEY = PLAYER_START_DEFAULTS.money
  * Stats are randomized slightly around starting ranges.
  *
  * @param {string} name
- * @param {{ locationId?: string, money?: number, statRoll?: { min: number, max: number }, status?: Object<string, number> }} [start]
+ * @param {{ statIds?: string[], locationId?: string, money?: number, statRoll?: { min: number, max: number }, status?: Object<string, number> }} [start]
  *   where, and with what, the player begins (content/game.json `start`)
  * @returns {import('./types').Player}
  */
@@ -74,16 +76,7 @@ export function createPlayer(name, start = PLAYER_START_DEFAULTS) {
   return {
     id: uuidv4(),
     name,
-    stats: {
-      stamina: roll(),
-      toughness: roll(),
-      wits: roll(),
-      creativity: roll(),
-      charm: roll(),
-      reputation: roll(),
-      luck: roll(),
-      karma: roll(),
-    },
+    stats: Object.fromEntries(begin.statIds.map((statId) => [statId, roll()])),
     status: {
       hunger: begin.status.hunger,
       sobriety: sobrietyDerive({ intoxications: {} }),

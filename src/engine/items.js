@@ -10,6 +10,7 @@
  */
 
 import { applyEffects } from '../models/item.js'
+import { STATUS_IDS_WRITABLE_DEFAULT } from '../models/defaults.js'
 
 /** Enumerated error codes for every items result. The code is the contract. */
 export const ITEM_ERROR_CODES = Object.freeze({
@@ -20,7 +21,7 @@ export const ITEM_ERROR_CODES = Object.freeze({
 })
 
 /** Statuses an effect may change directly. Sobriety is derived; money has its own door. */
-export const ITEM_EFFECT_STATUSES = Object.freeze(['hunger', 'energy', 'mood', 'health'])
+export const ITEM_EFFECT_STATUSES = STATUS_IDS_WRITABLE_DEFAULT
 
 function _fail(code, message) {
   return { ok: false, data: null, error: { code, message } }
@@ -29,7 +30,8 @@ function _fail(code, message) {
 /**
  * Work out what using one of an item does.
  *
- * @param {{ player: Object, itemId: string }} input
+ * @param {{ player: Object, itemId: string, statusIds?: string[] }} input
+ *   statusIds — the vitals an effect may change directly (content/vocabulary.json, writable ones)
  * @returns {{ ok: boolean, data: {
  *   item: Object,
  *   statusChanges: Object<string, number>,
@@ -37,7 +39,7 @@ function _fail(code, message) {
  *   doses: Object[],
  * }|null, error: Object|null }}
  */
-export function itemUseResolve({ player, itemId }) {
+export function itemUseResolve({ player, itemId, statusIds = ITEM_EFFECT_STATUSES }) {
   if (!player || typeof player !== 'object') {
     return _fail(ITEM_ERROR_CODES.PLAYER_MISSING, 'itemUseResolve needs a player')
   }
@@ -52,7 +54,7 @@ export function itemUseResolve({ player, itemId }) {
   const statusChanges = {}
   const statModifiers = []
   for (const effect of applyEffects(item)) {
-    if (ITEM_EFFECT_STATUSES.includes(effect.target)) {
+    if (statusIds.includes(effect.target)) {
       statusChanges[effect.target] = (statusChanges[effect.target] ?? 0) + effect.value
     } else if (player.stats?.[effect.target]) {
       statModifiers.push({

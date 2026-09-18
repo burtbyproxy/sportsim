@@ -33,13 +33,15 @@ import { join, resolve } from 'path';
 // ---------------------------------------------------------------------------
 
 const CONTENT_ROOT = resolve('content');
-const VALID_STATS = ['stamina', 'toughness', 'wits', 'creativity', 'charm', 'reputation', 'luck', 'karma'];
+// The game's words are content. This file reads them; it does not keep its own copy.
+const VOCABULARY = JSON.parse(readFileSync(join(CONTENT_ROOT, 'vocabulary.json'), 'utf-8'));
+const VALID_STATS = VOCABULARY.stats.map(s => s.id);
 // sobriety is derived from intoxications — it is read, never written, by content.
-const VALID_STATUS_KEYS = ['hunger', 'energy', 'mood', 'health'];
-const VALID_SUBSTANCE_FAMILIES = ['alcohol', 'cannabis', 'stimulant', 'nicotine'];
-const VALID_SIMULATION_TIERS = ['fixed', 'routine', 'full'];
-const VALID_ITEM_TYPES = ['consumable', 'tool', 'surface', 'ingredient', 'junk', 'key', 'weapon'];
-const VALID_ACTION_KINDS = ['scavenge', 'make'];
+const VALID_STATUS_KEYS = VOCABULARY.statuses.filter(s => s.writable).map(s => s.id);
+const VALID_SUBSTANCE_FAMILIES = VOCABULARY.substanceFamilies;
+const VALID_SIMULATION_TIERS = VOCABULARY.simulationTiers;
+const VALID_ITEM_TYPES = VOCABULARY.itemTypes;
+const VALID_ACTION_KINDS = VOCABULARY.actionKinds;
 
 /**
  * Load all JSON files from a directory path (non-recursive).
@@ -904,6 +906,34 @@ describe('content/mediums/*.json — Medium contract', () => {
       ids.add(data.id);
     });
   }
+});
+
+describe('content/vocabulary.json — the game\'s words', () => {
+  it('every stat and vital has an id and reads as something', () => {
+    for (const entry of [...VOCABULARY.stats, ...VOCABULARY.statuses]) {
+      expect(typeof entry.id).toBe('string');
+      expect(typeof entry.display).toBe('string');
+      expect(entry.display.length).toBeGreaterThan(0);
+    }
+    const ids = [...VOCABULARY.stats, ...VOCABULARY.statuses].map(e => e.id);
+    expect(new Set(ids).size, 'ids are unique across stats and vitals').toBe(ids.length);
+  });
+
+  it('every vital says how it looks and where its bar turns', () => {
+    for (const status of VOCABULARY.statuses) {
+      expect(typeof status.icon, `${status.id}: icon`).toBe('string');
+      expect(typeof status.writable, `${status.id}: writable`).toBe('boolean');
+      expect(status.danger, `${status.id}: danger below warning`).toBeLessThan(status.warning);
+      expect(status.warning).toBeLessThanOrEqual(100);
+    }
+  });
+
+  it('the code fallbacks have not drifted from it', async () => {
+    const defaults = await import('../src/models/defaults.js');
+    expect([...defaults.STAT_IDS_DEFAULT]).toEqual(VALID_STATS);
+    expect([...defaults.STATUS_IDS_WRITABLE_DEFAULT].sort()).toEqual([...VALID_STATUS_KEYS].sort());
+    expect([...defaults.SIMULATION_TIERS_DEFAULT]).toEqual(VALID_SIMULATION_TIERS);
+  });
 });
 
 describe('content/game.json — what a new game is', () => {

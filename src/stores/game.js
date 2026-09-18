@@ -30,6 +30,7 @@ import { addItem, removeItem, addModifier, incrementCounter } from '../models/pl
 import { incrementVisitCount, locationRestore } from '../models/location.js'
 import { itemUseResolve } from '../engine/items.js'
 import { statXpApply } from '../engine/stats.js'
+import { statusBarFillClass } from '../utils/statusBar.js'
 
 /**
  * Add a map of deltas onto a map of levels, dropping any key that reaches zero.
@@ -100,6 +101,9 @@ export const useGameStore = defineStore('game', {
 
     /** What a new game is: title words, map, starting point. Loaded once from content/game.json. */
     config: null,
+
+    /** The game's words: stats, vitals, types. Loaded once from content/vocabulary.json. */
+    vocabulary: null,
 
     /**
      * The making menu while the player is choosing what to make, or null.
@@ -174,6 +178,26 @@ export const useGameStore = defineStore('game', {
       }
       return personas
     },
+
+    /**
+     * The vitals panel, in content's order: what each bar is called, where
+     * it stands, and whether it has turned colour. The panel only renders.
+     */
+    statusBars: (state) =>
+      (state.vocabulary?.statuses ?? []).map((status) => {
+        const value = state.player?.status?.[status.id] ?? 0
+        return {
+          key: status.id,
+          label: status.display,
+          icon: status.icon,
+          value,
+          fillClass: statusBarFillClass({ value, danger: status.danger, warning: status.warning }),
+        }
+      }),
+
+    /** The vitals content may change directly (not the derived ones). */
+    statusIdsWritable: (state) =>
+      (state.vocabulary?.statuses ?? []).filter((s) => s.writable).map((s) => s.id),
 
     /** The making under way, or null. */
     makingActive: (state) => (state.player ? makingActive({ player: state.player }) : null),
@@ -425,7 +449,12 @@ export const useGameStore = defineStore('game', {
      * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the items engine's result
      */
     applyItemUse({ itemId, rng = Math.random }) {
-      const result = itemUseResolve({ player: this.player, itemId })
+      const statusIds = this.statusIdsWritable
+      const result = itemUseResolve({
+        player: this.player,
+        itemId,
+        ...(statusIds.length > 0 ? { statusIds } : {}),
+      })
       if (!result.ok) {
         console.warn(`[game] applyItemUse: ${result.error.code}`, result.error.message)
         return result
@@ -556,6 +585,14 @@ export const useGameStore = defineStore('game', {
      */
     registerScavengeTable({ table }) {
       this.scavengeTables[table.id] = table
+    },
+
+    /**
+     * Register the game's vocabulary. Called at init from loadVocabulary().
+     * @param {{ vocabulary: Object }} input
+     */
+    registerVocabulary({ vocabulary }) {
+      this.vocabulary = vocabulary
     },
 
     /**
