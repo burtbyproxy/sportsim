@@ -37,14 +37,23 @@
       "requirements": null
     }
   ],
-  "npcSlots": [
-    "dennis"
-  ],
-  "actionIds": [
-    "curly_fries_arbys",
-    "bathroom_arbys"
-  ],
+  "npcSlots": ["dennis"],
+  "actionIds": ["curly_fries_arbys", "bathroom_arbys"],
   "scavengeTableId": "lot",
+  "surfaces": [
+    {
+      "id": "table_film",
+      "name": "a table, through the film",
+      "pieceAs": "in the film on an Arby's table",
+      "mediumIds": ["drawing", "writing"]
+    },
+    {
+      "id": "bathroom_stall",
+      "name": "the bathroom stall",
+      "pieceAs": "on the inside of an Arby's bathroom stall",
+      "mediumIds": ["tagging", "writing", "drawing"]
+    }
+  ],
   "discovered": false,
   "availability": {
     "openHour": 9,

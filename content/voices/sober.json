@@ -11,6 +11,24 @@
     "scavenge.found": "You come up with {item}.",
     "scavenge.nothing": "Nothing. Or nothing you'd pick up, which today is a distinction you still make.",
     "scavenge.picked_clean": "You've been through this already. It's picked clean, and you're the one who picked it.",
-    "item.used": "You finish the {item}. It does what it does."
+    "item.used": "You finish the {item}. It does what it does.",
+    "making.nothing_to_work_with": "You've got the idea and nothing to put it on, or nothing to put it on with. The idea doesn't care. The clock's running.",
+    "making.started": "You start. For once the hands know where they're going.",
+    "making.working": "You keep at it. It's still there, the idea, just ahead of your hands.",
+    "making.abandoned.walked_away": "You walk away from it. Half a thing is worse than nothing. Nothing at least doesn't look at you.",
+    "making.abandoned.lost": "The idea went, and the work went with it. What's left is just damage you did to something.",
+    "making.covered": "You went over the one that was already there. It was yours to go over.",
+    "mark.still_here": "Yours is still here: {work}.",
+    "piece.work": "{medium}, {tool} {surface}",
+    "piece.work.ingredient": "{medium}, {tool} and {ingredient} {surface}",
+    "piece.work.bare": "{medium} {surface}",
+    "piece.artist.inspired": "Done: {work}. It is exactly the thing you saw. That never happens. It happened.",
+    "piece.artist.solid": "Done: {work}. It's close. It's closer than you usually get.",
+    "piece.artist.rough": "Done: {work}. It isn't what you saw. It's what your hands did while you were busy seeing it.",
+    "piece.artist.botched": "It was going to be {work}. It isn't anything now. You know the exact moment it stopped being something, and you kept going anyway.",
+    "work.whereabouts.carried": "with you",
+    "work.whereabouts.fresh": "still up, {place}",
+    "work.whereabouts.covered": "gone over, {place}",
+    "work.whereabouts.none": "nothing left of it but the doing"
   }
 }

@@ -2,5 +2,17 @@
   "id": "carving",
   "display": "Carving",
   "stat": "toughness",
-  "description": "Wood, mostly. Swords, mostly. It takes hands more than ideas."
+  "description": "Wood, mostly. Swords, mostly. It takes hands more than ideas.",
+  "pieceAs": "a carving",
+  "making": {
+    "ticksTotal": 8,
+    "dc": 13,
+    "xp": 14,
+    "toolRequired": true,
+    "takesIngredient": true,
+    "leavesArtifact": true,
+    "statusChanges": {
+      "energy": -4
+    }
+  }
 }

@@ -32,11 +32,16 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": [
-    "buy_hot_dog_greeley_plaid",
-    "shoplift_greeley_plaid"
-  ],
+  "actionIds": ["buy_hot_dog_greeley_plaid", "shoplift_greeley_plaid"],
   "scavengeTableId": "lot",
+  "surfaces": [
+    {
+      "id": "ice_machine",
+      "name": "the side of the ice machine",
+      "pieceAs": "on the ice machine outside the Greeley Plaid",
+      "mediumIds": ["tagging", "drawing"]
+    }
+  ],
   "discovered": false,
   "availability": {
     "openHour": 0,

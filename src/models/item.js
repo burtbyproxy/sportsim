@@ -28,6 +28,8 @@ export function createItem(data) {
     mediumIds: Array.isArray(data.mediumIds) ? [...data.mediumIds] : [],
     // How the item reads in a sentence when it turns up: "a shoe. Left. Men's. Wet".
     foundAs: data.foundAs ?? null,
+    // How the item reads inside a piece: "Sharpie", "on a cabinet door", "Brut".
+    pieceAs: data.pieceAs ?? null,
   }
 }
 

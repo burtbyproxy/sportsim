@@ -32,11 +32,22 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": [
-    "free_toothbrush_dental",
-    "read_magazines_dental"
-  ],
+  "actionIds": ["free_toothbrush_dental", "read_magazines_dental"],
   "scavengeTableId": "lot",
+  "surfaces": [
+    {
+      "id": "back_wall",
+      "name": "the back wall",
+      "pieceAs": "on the back wall of Lombard Dental",
+      "mediumIds": ["tagging", "painting"]
+    },
+    {
+      "id": "waiting_room_magazine",
+      "name": "a magazine from 1997",
+      "pieceAs": "in the margins of a waiting room magazine from 1997",
+      "mediumIds": ["drawing", "writing"]
+    }
+  ],
   "discovered": false,
   "availability": {
     "openHour": 8,

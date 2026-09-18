@@ -87,6 +87,12 @@ export function createPlayer(name) {
     skills: {},
     /** Every inspiration that ever struck, at most one active. See engine/inspiration.js. */
     inspirations: [],
+    /** Every piece of work ever started, at most one in progress. See engine/making.js. */
+    makings: [],
+    /** What came of the work: one experience per finished making. */
+    experiences: [],
+    /** The pieces the player can carry. Pieces left on walls live on the location. */
+    portfolio: [],
     psyche: {
       traumas: [],
       obsessions: [],

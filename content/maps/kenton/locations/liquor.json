@@ -38,11 +38,16 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": [
-    "buy_fifth_liquor",
-    "ask_clerk_liquor"
-  ],
+  "actionIds": ["buy_fifth_liquor", "ask_clerk_liquor"],
   "scavengeTableId": "lot",
+  "surfaces": [
+    {
+      "id": "side_wall",
+      "name": "the side wall",
+      "pieceAs": "on the side wall of a state liquor store",
+      "mediumIds": ["tagging", "painting"]
+    }
+  ],
   "discovered": false,
   "availability": {
     "openHour": 9,

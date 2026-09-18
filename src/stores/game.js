@@ -11,8 +11,20 @@ import {
 } from '../engine/inspiration.js'
 import { voiceLine } from '../engine/voice.js'
 import { scavengeSearch, scavengedCounterName } from '../engine/scavenge.js'
+import {
+  MAKING_SURFACE_KINDS,
+  ARTIFACT_KINDS,
+  ARTIFACT_STATUSES,
+  makingActive,
+  makingStart,
+  makingWork,
+  makingFinish,
+  makingAbandon,
+  marksCover,
+} from '../engine/making.js'
+import { pieceDescribe } from '../engine/describer.js'
 import { addItem, removeItem, addModifier, incrementCounter } from '../models/player.js'
-import { incrementVisitCount } from '../models/location.js'
+import { incrementVisitCount, locationRestore } from '../models/location.js'
 import { itemUseResolve } from '../engine/items.js'
 import { statXpApply } from '../engine/stats.js'
 
@@ -80,6 +92,13 @@ export const useGameStore = defineStore('game', {
     /** Scavenge loot tables, keyed by id. Loaded once at init from content/scavenge. */
     scavengeTables: {},
 
+    /**
+     * The making menu while the player is choosing what to make, or null.
+     * { step: 'plan' } or { step: 'ingredient', plan }. Not saved: a load
+     * lands on the ordinary menu.
+     */
+    makingPicker: null,
+
     /** Actions currently available at this location */
     availableActions: [],
 
@@ -129,6 +148,43 @@ export const useGameStore = defineStore('game', {
     inspirationActive: (state) =>
       state.player ? inspirationActive({ player: state.player }) : null,
 
+    /** The making under way, or null. */
+    makingActive: (state) => (state.player ? makingActive({ player: state.player }) : null),
+
+    /**
+     * Everything the player has made, newest first, as the work panel lists
+     * it: what it is, and what became of it, in the voice of whoever is in
+     * charge.
+     */
+    playerWorks(state) {
+      const portfolio = state.player?.portfolio ?? []
+      return [...(state.player?.experiences ?? [])].reverse().map((experience) => {
+        const place = state.locations[experience.locationId]
+        const mark = (place?.marks ?? []).find((m) => m.id === experience.artifactId)
+        let code = 'work.whereabouts.none'
+        if (portfolio.some((a) => a.id === experience.artifactId)) {
+          code = 'work.whereabouts.carried'
+        } else if (mark) {
+          code =
+            mark.status === ARTIFACT_STATUSES.FRESH
+              ? 'work.whereabouts.fresh'
+              : 'work.whereabouts.covered'
+        }
+        const line = voiceLine({
+          code,
+          personaId: this.personaInCharge,
+          voices: state.voices,
+          params: { place: place?.display ?? '' },
+        })
+        return {
+          id: experience.id,
+          workText: experience.workText,
+          artistText: experience.artistText,
+          whereabouts: line.ok ? line.data.text : '',
+        }
+      })
+    },
+
     /** The persona in charge of the prose right now. */
     personaInCharge: (state) => state.player?.blend?.dominantPersonaId ?? 'sober',
 
@@ -165,6 +221,7 @@ export const useGameStore = defineStore('game', {
       this.counters = {}
       this.characters = {}
       this.availableActions = []
+      this.makingPicker = null
       this.isRunning = true
       this.blendRefresh()
       // Note: items registry persists across game reset — item definitions don't change per-run
@@ -625,6 +682,154 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
+     * Open, move, or close the making menu.
+     * @param {{ picker: { step: string, plan?: Object }|null }} input
+     */
+    makingPickerSet({ picker }) {
+      this.makingPicker = picker
+    },
+
+    /**
+     * Begin a piece of work here. What the work uses up leaves the inventory.
+     * @param {{ plan: Object }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the making engine's result
+     */
+    applyMakingStart({ plan }) {
+      const result = makingStart({
+        player: this.player,
+        location: this.currentLocation,
+        items: this.items,
+        mediums: this.mediums,
+        plan,
+        gameTime: this.time,
+      })
+      if (!result.ok) {
+        console.warn(`[game] applyMakingStart: ${result.error.code}`, result.error.message)
+        return result
+      }
+      this.player.makings = result.data.makings
+      for (const itemId of result.data.itemIdsConsumed) removeItem(this.player, itemId)
+      return result
+    },
+
+    /**
+     * A sitting's worth of work goes into the piece.
+     * @param {{ ticksWorked: number }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the making engine's result
+     */
+    applyMakingWork({ ticksWorked }) {
+      const result = makingWork({ player: this.player, ticksWorked, gameTime: this.time })
+      if (!result.ok) {
+        console.warn(`[game] applyMakingWork: ${result.error.code}`, result.error.message)
+        return result
+      }
+      this.player.makings = result.data.makings
+      return result
+    },
+
+    /**
+     * The work is done. The check decides what it is, the describer gives it
+     * the artist's words, the experience is remembered, the artifact goes in
+     * the portfolio or onto the wall, the idea is spent, and the practice
+     * lands on the skill grid. Nothing is written unless all of it can be.
+     *
+     * @param {{ rng?: () => number }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the making engine's result, with the words filled in
+     */
+    applyMakingFinish({ rng = Math.random } = {}) {
+      const location = this.currentLocation
+      const result = makingFinish({
+        player: this.player,
+        location,
+        mediums: this.mediums,
+        gameTime: this.time,
+        rng,
+      })
+      if (!result.ok) {
+        console.warn(`[game] applyMakingFinish: ${result.error.code}`, result.error.message)
+        return result
+      }
+      const { making, tier, experience, artifact, markIdsCovered } = result.data
+      const words = pieceDescribe({
+        tier,
+        medium: this.mediums[making.mediumId],
+        tool: making.toolItemId ? this.items[making.toolItemId] : null,
+        surface:
+          making.surfaceKind === MAKING_SURFACE_KINDS.ITEM
+            ? this.items[making.surfaceId]
+            : (location.surfaces ?? []).find((s) => s.id === making.surfaceId),
+        ingredient: making.ingredientItemId ? this.items[making.ingredientItemId] : null,
+        personaId: this.personaInCharge,
+        voices: this.voices,
+      })
+      if (!words.ok) {
+        console.warn(`[game] applyMakingFinish: ${words.error.code}`, words.error.message)
+        return words
+      }
+      for (const record of [experience, artifact]) {
+        if (!record) continue
+        record.workText = words.data.workText
+        record.artistText = words.data.artistText
+      }
+
+      this.player.makings = result.data.makings
+      this.player.experiences ??= []
+      this.player.experiences.push(experience)
+      if (artifact?.kind === ARTIFACT_KINDS.PORTABLE) {
+        this.player.portfolio ??= []
+        this.player.portfolio.push(artifact)
+      }
+      if (artifact?.kind === ARTIFACT_KINDS.FIXED) {
+        location.marks = [
+          ...marksCover({
+            location,
+            markIdsCovered,
+            coveredBy: { kind: 'mark', id: artifact.id },
+            gameTime: this.time,
+          }),
+          artifact,
+        ]
+      }
+      this.applyInspirationSpend({ spentOn: { kind: 'experience', id: experience.id } })
+      this.applySkillGain({
+        mediumId: making.mediumId,
+        amount: this.mediums[making.mediumId].making.xp,
+      })
+      return result
+    },
+
+    /**
+     * The work stops short.
+     * @param {{ reason: { kind: string, id: string } }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the making engine's result
+     */
+    applyMakingAbandon({ reason }) {
+      const result = makingAbandon({ player: this.player, reason, gameTime: this.time })
+      if (!result.ok) {
+        console.warn(`[game] applyMakingAbandon: ${result.error.code}`, result.error.message)
+        return result
+      }
+      this.player.makings = result.data.makings
+      return result
+    },
+
+    /**
+     * After a load: rebuild every location on today's content definition,
+     * keeping what the save remembers happening there.
+     * @param {{ definitions: Object<string, Object> }} input
+     */
+    locationsRestore({ definitions }) {
+      const restored = {}
+      for (const definition of Object.values(definitions)) {
+        restored[definition.id] = locationRestore({
+          definition,
+          saved: this.locations[definition.id] ?? null,
+        })
+      }
+      this.locations = restored
+    },
+
+    /**
      * Update character location (from simulation worker output).
      * @param {string} characterId
      * @param {string} locationId
@@ -654,6 +859,7 @@ export const useGameStore = defineStore('game', {
       this.firedEventIds = save.firedEventIds
       this.activeEvent = save.activeEvent ?? null
       this.counters = save.counters
+      this.makingPicker = null
       this.isRunning = true
       this.blendRefresh()
       // Note: items registry (this.items) is NOT restored from save —
@@ -670,6 +876,7 @@ export const useGameStore = defineStore('game', {
       this.activeEvent = null
       this.counters = {}
       this.availableActions = []
+      this.makingPicker = null
       this.isRunning = false
       this.time = createClock()
     },

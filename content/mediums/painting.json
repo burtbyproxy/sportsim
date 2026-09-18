@@ -2,5 +2,17 @@
   "id": "painting",
   "display": "Painting",
   "stat": "creativity",
-  "description": "Paint on something. Grandma's set, a found board, whatever holds still."
+  "description": "Paint on something. Grandma's set, a found board, whatever holds still.",
+  "pieceAs": "a painting",
+  "making": {
+    "ticksTotal": 6,
+    "dc": 12,
+    "xp": 12,
+    "toolRequired": true,
+    "takesIngredient": true,
+    "leavesArtifact": true,
+    "statusChanges": {
+      "energy": -3
+    }
+  }
 }

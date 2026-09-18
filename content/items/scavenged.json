@@ -9,7 +9,8 @@
     "quantity": 1,
     "effects": [],
     "foundAs": "a Sharpie with some life left in it",
-    "mediumIds": ["tagging", "drawing", "writing"]
+    "mediumIds": ["tagging", "drawing", "writing"],
+    "pieceAs": "Sharpie"
   },
   {
     "id": "dried_brush",
@@ -21,7 +22,8 @@
     "quantity": 1,
     "effects": [],
     "foundAs": "a paintbrush gone stiff as a twig",
-    "mediumIds": ["painting"]
+    "mediumIds": ["painting"],
+    "pieceAs": "a brush gone stiff"
   },
   {
     "id": "golf_pencil",
@@ -33,7 +35,8 @@
     "quantity": 1,
     "effects": [],
     "foundAs": "a golf pencil, the kind nobody ever buys",
-    "mediumIds": ["drawing", "writing"]
+    "mediumIds": ["drawing", "writing"],
+    "pieceAs": "golf pencil"
   },
   {
     "id": "pool_chalk",
@@ -45,7 +48,8 @@
     "quantity": 1,
     "effects": [],
     "foundAs": "a cube of blue pool chalk",
-    "mediumIds": ["drawing"]
+    "mediumIds": ["drawing"],
+    "pieceAs": "pool chalk"
   },
   {
     "id": "sidewalk_chalk",
@@ -57,7 +61,8 @@
     "quantity": 1,
     "effects": [],
     "foundAs": "a nub of sidewalk chalk, pink",
-    "mediumIds": ["drawing", "tagging"]
+    "mediumIds": ["drawing", "tagging"],
+    "pieceAs": "pink sidewalk chalk"
   },
   {
     "id": "spray_can_dregs",
@@ -69,7 +74,8 @@
     "quantity": 1,
     "effects": [],
     "foundAs": "a spray can with about one bad decision left in it",
-    "mediumIds": ["tagging", "painting"]
+    "mediumIds": ["tagging", "painting"],
+    "pieceAs": "the last of a spray can"
   },
   {
     "id": "pocket_knife",
@@ -81,7 +87,8 @@
     "quantity": 1,
     "effects": [],
     "foundAs": "a pocket knife with a loose blade",
-    "mediumIds": ["carving"]
+    "mediumIds": ["carving"],
+    "pieceAs": "pocket knife"
   },
   {
     "id": "matchbook",
@@ -93,7 +100,8 @@
     "quantity": 1,
     "effects": [],
     "foundAs": "a matchbook from a bar that closed",
-    "mediumIds": ["drawing"]
+    "mediumIds": ["drawing"],
+    "pieceAs": "burnt match"
   },
   {
     "id": "grandmas_paints",
@@ -105,7 +113,8 @@
     "quantity": 1,
     "effects": [],
     "foundAs": "the watercolours your grandmother wanted you to have",
-    "mediumIds": ["painting"]
+    "mediumIds": ["painting"],
+    "pieceAs": "your grandmother's watercolours"
   },
   {
     "id": "cardboard",
@@ -117,7 +126,8 @@
     "quantity": 1,
     "effects": [],
     "foundAs": "a flattened piece of cardboard, mostly dry",
-    "mediumIds": ["painting", "drawing", "tagging"]
+    "mediumIds": ["painting", "drawing", "tagging"],
+    "pieceAs": "on cardboard"
   },
   {
     "id": "pizza_box",
@@ -129,7 +139,8 @@
     "quantity": 1,
     "effects": [],
     "foundAs": "a pizza box with a clean lid",
-    "mediumIds": ["painting", "drawing"]
+    "mediumIds": ["painting", "drawing"],
+    "pieceAs": "on the lid of a pizza box"
   },
   {
     "id": "cabinet_door",
@@ -141,7 +152,8 @@
     "quantity": 1,
     "effects": [],
     "foundAs": "a cabinet door somebody put out with the trash",
-    "mediumIds": ["painting", "carving"]
+    "mediumIds": ["painting", "carving"],
+    "pieceAs": "on a cabinet door"
   },
   {
     "id": "hubcap",
@@ -153,7 +165,8 @@
     "quantity": 1,
     "effects": [],
     "foundAs": "a hubcap",
-    "mediumIds": ["painting"]
+    "mediumIds": ["painting"],
+    "pieceAs": "on a hubcap"
   },
   {
     "id": "bar_napkin",
@@ -165,7 +178,8 @@
     "quantity": 1,
     "effects": [],
     "foundAs": "a stack of bar napkins",
-    "mediumIds": ["drawing", "writing"]
+    "mediumIds": ["drawing", "writing"],
+    "pieceAs": "on a bar napkin"
   },
   {
     "id": "coaster",
@@ -177,7 +191,8 @@
     "quantity": 1,
     "effects": [],
     "foundAs": "a beer coaster, one side unspoiled",
-    "mediumIds": ["drawing", "writing"]
+    "mediumIds": ["drawing", "writing"],
+    "pieceAs": "on the back of a beer coaster"
   },
   {
     "id": "nice_piece_of_wood",
@@ -189,7 +204,8 @@
     "quantity": 1,
     "effects": [],
     "foundAs": "a nice heavy piece of wood. You remember it. It seems to remember you",
-    "mediumIds": ["painting", "carving"]
+    "mediumIds": ["painting", "carving"],
+    "pieceAs": "on the nice piece of wood"
   },
   {
     "id": "paperback",
@@ -200,7 +216,8 @@
     "stackable": false,
     "quantity": 1,
     "effects": [],
-    "foundAs": "a swollen paperback with the cover torn off"
+    "foundAs": "a swollen paperback with the cover torn off",
+    "pieceAs": "pages out of a paperback"
   },
   {
     "id": "magazine",
@@ -211,7 +228,8 @@
     "stackable": false,
     "quantity": 1,
     "effects": [],
-    "foundAs": "a magazine, last year's, water-damaged into a single object"
+    "foundAs": "a magazine, last year's, water-damaged into a single object",
+    "pieceAs": "last year's magazine"
   },
   {
     "id": "brut_aftershave",
@@ -222,7 +240,8 @@
     "stackable": false,
     "quantity": 1,
     "effects": [],
-    "foundAs": "a bottle of Brut, a third full"
+    "foundAs": "a bottle of Brut, a third full",
+    "pieceAs": "Brut"
   },
   {
     "id": "ketchup_packets",
@@ -233,7 +252,8 @@
     "stackable": true,
     "quantity": 1,
     "effects": [],
-    "foundAs": "a fistful of ketchup packets"
+    "foundAs": "a fistful of ketchup packets",
+    "pieceAs": "ketchup"
   },
   {
     "id": "motor_oil",
@@ -244,7 +264,8 @@
     "stackable": false,
     "quantity": 1,
     "effects": [],
-    "foundAs": "a quart of motor oil with the cap missing"
+    "foundAs": "a quart of motor oil with the cap missing",
+    "pieceAs": "motor oil"
   },
   {
     "id": "house_paint",
@@ -255,7 +276,8 @@
     "stackable": false,
     "quantity": 1,
     "effects": [],
-    "foundAs": "half a can of house paint, the colour of a dentist's office"
+    "foundAs": "half a can of house paint, the colour of a dentist's office",
+    "pieceAs": "house paint the colour of a dentist's office"
   },
   {
     "id": "single_sock",

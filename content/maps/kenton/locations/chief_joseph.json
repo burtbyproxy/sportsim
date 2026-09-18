@@ -32,11 +32,22 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": [
-    "shoot_hoops_chief_joseph",
-    "swings_chief_joseph"
-  ],
+  "actionIds": ["shoot_hoops_chief_joseph", "swings_chief_joseph"],
   "scavengeTableId": "schoolyard",
+  "surfaces": [
+    {
+      "id": "blacktop",
+      "name": "the blacktop",
+      "pieceAs": "on the blacktop at Chief Joseph",
+      "mediumIds": ["drawing", "tagging"]
+    },
+    {
+      "id": "gym_wall",
+      "name": "the back wall of the gym",
+      "pieceAs": "on the back wall of an elementary school gym",
+      "mediumIds": ["tagging", "painting"]
+    }
+  ],
   "discovered": false,
   "availability": {
     "openHour": 0,

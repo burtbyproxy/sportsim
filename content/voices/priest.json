@@ -7,6 +7,9 @@
     "inspiration.status.fading": "called, and stalling",
     "scavenge.found": "Somebody left behind {item}. You take it into your care. Somebody has to.",
     "scavenge.nothing": "Nothing. The Lord provides, but not on a schedule.",
-    "item.used": "You finish the {item} and look around for someone to share the next one with. Or to forgive."
+    "item.used": "You finish the {item} and look around for someone to share the next one with. Or to forgive.",
+    "making.abandoned.lost": "You let it go unfinished. Some things the Lord takes back early. You pat it, like a shoulder.",
+    "piece.artist.inspired": "Done: {work}. You'd like everyone here to come and look at it, and then you'd like to buy every one of them a drink.",
+    "piece.artist.rough": "Done: {work}. It's not perfect. Nothing is, son. You forgive it, and you mean it."
   }
 }

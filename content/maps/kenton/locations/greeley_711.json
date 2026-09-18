@@ -38,11 +38,16 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": [
-    "buy_corn_dog_greeley",
-    "chat_clerks_greeley"
-  ],
+  "actionIds": ["buy_corn_dog_greeley", "chat_clerks_greeley"],
   "scavengeTableId": "lot",
+  "surfaces": [
+    {
+      "id": "payphone",
+      "name": "the payphone out front",
+      "pieceAs": "on the payphone outside the Greeley 7-11",
+      "mediumIds": ["tagging", "writing"]
+    }
+  ],
   "discovered": false,
   "availability": {
     "openHour": 0,

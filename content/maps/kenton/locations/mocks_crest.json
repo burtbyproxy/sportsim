@@ -40,6 +40,26 @@
   "npcSlots": ["dale", "sheila", "dennis", "maurice"],
   "actionIds": ["order_beer_mocks", "play_pool_mocks"],
   "scavengeTableId": "bar_back",
+  "surfaces": [
+    {
+      "id": "bar_top",
+      "name": "the end of the bar",
+      "pieceAs": "into the end of the bar at Mock's Crest",
+      "mediumIds": ["carving"]
+    },
+    {
+      "id": "bathroom_wall",
+      "name": "the bathroom wall",
+      "pieceAs": "on the bathroom wall at Mock's Crest",
+      "mediumIds": ["tagging", "writing", "drawing"]
+    },
+    {
+      "id": "under_the_elk",
+      "name": "the floor under the elk",
+      "pieceAs": "under the elk at Mock's Crest",
+      "mediumIds": ["performance"]
+    }
+  ],
   "discovered": false,
   "availability": {
     "openHour": 11,

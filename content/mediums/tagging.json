@@ -2,5 +2,17 @@
   "id": "tagging",
   "display": "Tagging",
   "stat": "luck",
-  "description": "Writing on things that are not yours. The nerve is the medium."
+  "description": "Writing on things that are not yours. The nerve is the medium.",
+  "pieceAs": "a tag",
+  "making": {
+    "ticksTotal": 1,
+    "dc": 12,
+    "xp": 5,
+    "toolRequired": true,
+    "takesIngredient": false,
+    "leavesArtifact": true,
+    "statusChanges": {
+      "energy": -1
+    }
+  }
 }

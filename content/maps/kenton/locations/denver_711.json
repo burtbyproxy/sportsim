@@ -32,11 +32,22 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": [
-    "buy_coffee_denver",
-    "dumpster_dive_denver"
-  ],
+  "actionIds": ["buy_coffee_denver", "dumpster_dive_denver"],
   "scavengeTableId": "lot",
+  "surfaces": [
+    {
+      "id": "dumpster_side",
+      "name": "the side of the dumpster",
+      "pieceAs": "on the dumpster behind the Denver Ave 7-11",
+      "mediumIds": ["tagging", "painting"]
+    },
+    {
+      "id": "lot_light",
+      "name": "the good light in the parking lot",
+      "pieceAs": "under the good light in a 7-11 parking lot",
+      "mediumIds": ["performance"]
+    }
+  ],
   "discovered": false,
   "availability": {
     "openHour": 0,

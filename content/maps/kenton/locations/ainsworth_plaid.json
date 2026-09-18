@@ -18,7 +18,12 @@
       "travelTime": 2,
       "requirements": null
     },
-    { "locationId": "arbys", "label": "Head to Arby's", "travelTime": 2, "requirements": null },
+    {
+      "locationId": "arbys",
+      "label": "Head to Arby's",
+      "travelTime": 2,
+      "requirements": null
+    },
     {
       "locationId": "denver_711",
       "label": "Walk to Denver 7-11",
@@ -29,7 +34,19 @@
   "npcSlots": ["ray", "dale"],
   "actionIds": ["buy_tallboy", "shoplift_plaid"],
   "scavengeTableId": "lot",
+  "surfaces": [
+    {
+      "id": "dumpster_side",
+      "name": "the side of the dumpster",
+      "pieceAs": "on the Ainsworth Plaid dumpster",
+      "mediumIds": ["tagging", "painting"]
+    }
+  ],
   "discovered": false,
-  "availability": { "openHour": 0, "closeHour": 23, "closedMessage": null },
+  "availability": {
+    "openHour": 0,
+    "closeHour": 23,
+    "closedMessage": null
+  },
   "visitCount": 0
 }

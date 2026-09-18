@@ -2,5 +2,17 @@
   "id": "drawing",
   "display": "Drawing",
   "stat": "creativity",
-  "description": "A line on a surface. Napkins, tables, the backs of receipts."
+  "description": "A line on a surface. Napkins, tables, the backs of receipts.",
+  "pieceAs": "a drawing",
+  "making": {
+    "ticksTotal": 2,
+    "dc": 11,
+    "xp": 6,
+    "toolRequired": true,
+    "takesIngredient": true,
+    "leavesArtifact": true,
+    "statusChanges": {
+      "energy": -1
+    }
+  }
 }

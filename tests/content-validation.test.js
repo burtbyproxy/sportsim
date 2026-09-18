@@ -38,7 +38,7 @@ const VALID_STATUS_KEYS = ['hunger', 'energy', 'mood', 'health'];
 const VALID_SUBSTANCE_FAMILIES = ['alcohol', 'cannabis', 'stimulant', 'nicotine'];
 const VALID_SIMULATION_TIERS = ['fixed', 'routine', 'full'];
 const VALID_ITEM_TYPES = ['consumable', 'tool', 'surface', 'ingredient', 'junk', 'key', 'weapon'];
-const VALID_ACTION_KINDS = ['scavenge'];
+const VALID_ACTION_KINDS = ['scavenge', 'make'];
 
 /**
  * Load all JSON files from a directory path (non-recursive).
@@ -194,7 +194,7 @@ function validateCharacter(data, file) {
 // Location validation
 // ---------------------------------------------------------------------------
 
-const LOCATION_REQUIRED_FIELDS = ['id', 'type', 'display', 'descriptions', 'exits', 'availability'];
+const LOCATION_REQUIRED_FIELDS = ['id', 'type', 'display', 'descriptions', 'exits', 'availability', 'surfaces'];
 
 function validateLocation(data, file) {
   for (const field of LOCATION_REQUIRED_FIELDS) {
@@ -215,6 +215,20 @@ function validateLocation(data, file) {
     expect(exit, `${file}: exit missing label`).toHaveProperty('label');
     expect(exit, `${file}: exit missing travelTime`).toHaveProperty('travelTime');
     expect(exit.travelTime, `${file}: travelTime must be >= 1`).toBeGreaterThanOrEqual(1);
+  }
+
+  // surfaces — what the place itself offers to work on ([] for nothing)
+  expect(Array.isArray(data.surfaces), `${file}: surfaces must be an array`).toBe(true);
+  const surfaceIds = new Set();
+  for (const surface of data.surfaces) {
+    for (const field of ['id', 'name', 'pieceAs']) {
+      expect(typeof surface[field], `${file}: surface.${field} must be string`).toBe('string');
+      expect(surface[field].length, `${file}: surface.${field} must not be empty`).toBeGreaterThan(0);
+    }
+    expect(surfaceIds.has(surface.id), `${file}: duplicate surface id '${surface.id}'`).toBe(false);
+    surfaceIds.add(surface.id);
+    expect(Array.isArray(surface.mediumIds), `${file} '${surface.id}': mediumIds must be array`).toBe(true);
+    expect(surface.mediumIds.length, `${file} '${surface.id}': a surface must take at least one medium`).toBeGreaterThan(0);
   }
 
   // availability
@@ -298,6 +312,12 @@ function validateAction(data, file) {
     expect(data, `${file} action '${data.id ?? '?'}': missing field '${field}'`).toHaveProperty(field);
   }
 
+  if (data.kind === 'make') {
+    // Taking stock is free; the work is what costs, and the medium says how much.
+    expect(data.timeCost, `${file} '${data.id}': a 'make' action costs no time itself`).toBe(0);
+    expect(data.requirements?.requiresInspiration, `${file} '${data.id}': making requires inspiration`).toBe(true);
+    return;
+  }
   expect(data.timeCost, `${file} '${data.id}': timeCost must be >= 1`).toBeGreaterThanOrEqual(1);
   expect(data.weight, `${file} '${data.id}': weight must be >= 0`).toBeGreaterThanOrEqual(0);
 
@@ -382,6 +402,11 @@ function validateItem(data, file) {
   }
   if (data.type === 'surface') {
     expect(data.mediumIds?.length, `${file} '${data.id}': a surface must take at least one medium`).toBeGreaterThan(0);
+  }
+  if (['tool', 'surface', 'ingredient'].includes(data.type)) {
+    // Anything that can end up in a piece has to read inside the piece's sentence.
+    expect(typeof data.pieceAs, `${file} '${data.id}': a ${data.type} needs a pieceAs phrase`).toBe('string');
+    expect(data.pieceAs.length, `${file} '${data.id}': pieceAs must not be empty`).toBeGreaterThan(0);
   }
   if (data.foundAs !== undefined && data.foundAs !== null) {
     expect(typeof data.foundAs, `${file} '${data.id}': foundAs must be string`).toBe('string');
@@ -485,7 +510,7 @@ function validateSubstance(data, file) {
   }
 }
 
-const MEDIUM_REQUIRED_FIELDS = ['id', 'display', 'stat', 'description'];
+const MEDIUM_REQUIRED_FIELDS = ['id', 'display', 'stat', 'description', 'pieceAs', 'making'];
 
 function validateMedium(data, file) {
   for (const field of MEDIUM_REQUIRED_FIELDS) {
@@ -494,6 +519,24 @@ function validateMedium(data, file) {
   expect(VALID_STATS, `${file}: stat '${data.stat}' is not a stat`).toContain(data.stat);
   expect(typeof data.description, `${file}: description must be string`).toBe('string');
   expect(data.description.length, `${file}: description must not be empty`).toBeGreaterThan(0);
+  expect(typeof data.pieceAs, `${file}: pieceAs must be string`).toBe('string');
+  expect(data.pieceAs.length, `${file}: pieceAs must not be empty`).toBeGreaterThan(0);
+
+  const making = data.making;
+  expect(Number.isInteger(making.ticksTotal), `${file}: making.ticksTotal must be a whole number`).toBe(true);
+  expect(making.ticksTotal, `${file}: making.ticksTotal must be >= 1`).toBeGreaterThanOrEqual(1);
+  expect(typeof making.dc, `${file}: making.dc must be number`).toBe('number');
+  expect(making.xp, `${file}: making.xp must be > 0`).toBeGreaterThan(0);
+  for (const flag of ['toolRequired', 'takesIngredient', 'leavesArtifact']) {
+    expect(typeof making[flag], `${file}: making.${flag} must be boolean`).toBe('boolean');
+  }
+  if (making.takesIngredient) {
+    expect(making.toolRequired, `${file}: an ingredient needs a tool to work it in`).toBe(true);
+  }
+  for (const [key, delta] of Object.entries(making.statusChanges ?? {})) {
+    expect(VALID_STATUS_KEYS, `${file}: making.statusChanges '${key}' is not a status`).toContain(key);
+    expect(typeof delta, `${file}: making.statusChanges.${key} must be number`).toBe('number');
+  }
 }
 
 const CONDITION_REQUIRED_FIELDS = ['id', 'display', 'source', 'weight', 'persona', 'modifiers'];
@@ -819,6 +862,62 @@ describe('content/mediums/*.json — Medium contract', () => {
       validateMedium(data, file);
       expect(ids.has(data.id), `${file}: duplicate medium id '${data.id}'`).toBe(false);
       ids.add(data.id);
+    });
+  }
+});
+
+describe('making — every medium can actually be made in', () => {
+  const mediums = loadJsonFiles(join(CONTENT_ROOT, 'mediums')).map(({ data }) => data);
+  const mediumIds = new Set(mediums.map(m => m.id));
+  const items = loadJsonFiles(join(CONTENT_ROOT, 'items')).flatMap(({ data }) =>
+    Array.isArray(data) ? data : Object.values(data)
+  );
+  const locationFiles = getMapDirs().flatMap(mapDir => loadJsonFiles(join(mapDir, 'locations')));
+  const locationSurfaces = locationFiles.flatMap(({ data }) => data.surfaces ?? []);
+
+  for (const { file, data: location } of locationFiles) {
+    for (const surface of location.surfaces ?? []) {
+      for (const mediumId of surface.mediumIds ?? []) {
+        it(`${file} surface '${surface.id}': medium '${mediumId}' exists in medium data`, () => {
+          expect(mediumIds.has(mediumId), `Surface '${surface.id}' names unknown medium '${mediumId}'`).toBe(true);
+        });
+      }
+    }
+  }
+
+  for (const medium of mediums) {
+    it(`medium '${medium.id}': the world holds what it takes to make one`, () => {
+      const takes = thing => (thing.mediumIds ?? []).includes(medium.id);
+      if (medium.making.toolRequired) {
+        expect(items.some(i => i.type === 'tool' && takes(i)), `nothing in content/items is a tool for ${medium.id}`).toBe(true);
+      }
+      const surfaces = [...items.filter(i => i.type === 'surface'), ...locationSurfaces].filter(takes);
+      expect(surfaces.length, `nothing anywhere is a surface for ${medium.id}`).toBeGreaterThan(0);
+      if (!medium.making.leavesArtifact) {
+        // Nothing to carry away, so there is nothing to carry in: it happens at a place.
+        expect(locationSurfaces.some(takes), `no location offers a place for ${medium.id}`).toBe(true);
+      }
+    });
+  }
+
+  // Every line the code asks the voices for is a line sober can say.
+  const sober = JSON.parse(readFileSync(join(CONTENT_ROOT, 'voices', 'sober.json'), 'utf-8'));
+  const sources = ['src/composables/useGameLoop.js', 'src/stores/game.js', 'src/engine/describer.js'];
+  const codes = new Set();
+  for (const source of sources) {
+    const text = readFileSync(resolve(source), 'utf-8');
+    for (const match of text.matchAll(/'((?:inspiration|scavenge|item|making|mark|piece|work)\.[a-z_.]+)'/g)) {
+      codes.add(match[1]);
+    }
+  }
+  for (const tier of ['botched', 'rough', 'solid', 'inspired']) codes.add(`piece.artist.${tier}`);
+
+  it('finds the voice codes the code uses', () => {
+    expect(codes.size).toBeGreaterThan(20);
+  });
+  for (const code of codes) {
+    it(`voice code '${code}' has a sober line`, () => {
+      expect(sober.lines, `sober.json has no line for '${code}'`).toHaveProperty([code]);
     });
   }
 });

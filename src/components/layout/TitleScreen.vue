@@ -97,7 +97,7 @@ onMounted(() => {
 })
 
 const bootLines = [
-  'SPORTSIM v0.8.0',
+  'SPORTSIM v0.9.0',
   'Portland Art Scene Simulation Engine',
   'Loading city data...',
   'Generating despair...',
@@ -133,6 +133,8 @@ function loadGame() {
   const saveData = save.load(latest.id)
   if (saveData) {
     game.loadSave(saveData)
+    // What a place is comes from content; the save only knows what happened there.
+    game.locationsRestore({ definitions: loadLocations('kenton') })
     router.push('/game')
   }
 }

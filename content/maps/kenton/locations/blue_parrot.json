@@ -34,6 +34,26 @@
   "npcSlots": ["tina", "greg"],
   "actionIds": ["order_beer_parrot", "talk_to_bartender_parrot"],
   "scavengeTableId": "bar_back",
+  "surfaces": [
+    {
+      "id": "bar_table",
+      "name": "the table in the corner",
+      "pieceAs": "into a table at the Blue Parrot",
+      "mediumIds": ["carving"]
+    },
+    {
+      "id": "bathroom_wall",
+      "name": "the bathroom wall",
+      "pieceAs": "on the bathroom wall at the Blue Parrot",
+      "mediumIds": ["tagging", "writing", "drawing"]
+    },
+    {
+      "id": "jukebox_corner",
+      "name": "the corner by the jukebox",
+      "pieceAs": "in the corner by the jukebox at the Blue Parrot",
+      "mediumIds": ["performance"]
+    }
+  ],
   "discovered": false,
   "availability": {
     "openHour": 11,

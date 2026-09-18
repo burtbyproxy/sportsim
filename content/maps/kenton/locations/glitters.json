@@ -38,11 +38,16 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": [
-    "pawn_karaoke_tape_glitters",
-    "browse_glitters"
-  ],
+  "actionIds": ["pawn_karaoke_tape_glitters", "browse_glitters"],
   "scavengeTableId": "lot",
+  "surfaces": [
+    {
+      "id": "mannequin_sign",
+      "name": "the back of the mannequin's sign",
+      "pieceAs": "on the back of the Grate Deals sign",
+      "mediumIds": ["tagging", "writing"]
+    }
+  ],
   "discovered": false,
   "availability": {
     "openHour": 9,
