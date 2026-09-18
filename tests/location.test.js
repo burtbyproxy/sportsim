@@ -263,3 +263,27 @@ describe('exitMeetsRequirements', () => {
     expect(exitMeetsRequirements({ exit: nightOnly, player, gameTime: { hour: 22 } }).meets).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// scavenge fields
+// ---------------------------------------------------------------------------
+
+describe('createLocation — scavenge', () => {
+  const base = { id: 'lot', type: 'fuel', display: 'The Lot' };
+
+  it('carries the table the place draws from', () => {
+    expect(createLocation({ ...base, scavengeTableId: 'lot' }).scavengeTableId).toBe('lot');
+  });
+
+  it('a place with no table has nothing to find', () => {
+    expect(createLocation(base).scavengeTableId).toBeNull();
+  });
+
+  it('starts unworked, and copies saved wear', () => {
+    expect(createLocation(base).scavenge).toEqual({ depletion: 0, updatedAtTick: 0 });
+    const saved = { depletion: 3, updatedAtTick: 40 };
+    const location = createLocation({ ...base, scavenge: saved });
+    expect(location.scavenge).toEqual(saved);
+    expect(location.scavenge).not.toBe(saved);
+  });
+});

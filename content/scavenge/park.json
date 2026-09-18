@@ -1,0 +1,74 @@
+{
+  "id": "park",
+  "display": "The park",
+  "stat": "luck",
+  "dc": 9,
+  "entries": [
+    {
+      "itemId": "lone_shoe",
+      "weight": 15,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "single_sock",
+      "weight": 15,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "broken_umbrella",
+      "weight": 12,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "cardboard",
+      "weight": 12,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "church_flyer",
+      "weight": 12,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "paperback",
+      "weight": 10,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "golf_pencil",
+      "weight": 10,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "magazine",
+      "weight": 10,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "cat_toy",
+      "weight": 8,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "lawn_flamingo",
+      "weight": 6,
+      "rare": true,
+      "unique": false
+    },
+    {
+      "itemId": "pocket_knife",
+      "weight": 4,
+      "rare": true,
+      "unique": false
+    }
+  ]
+}

@@ -36,6 +36,7 @@
     "steak_bites_bare",
     "amateur_night_bare"
   ],
+  "scavengeTableId": "bar_back",
   "discovered": false,
   "availability": {
     "openHour": 11,

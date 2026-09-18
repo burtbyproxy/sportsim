@@ -44,6 +44,7 @@
     "curly_fries_arbys",
     "bathroom_arbys"
   ],
+  "scavengeTableId": "lot",
   "discovered": false,
   "availability": {
     "openHour": 9,

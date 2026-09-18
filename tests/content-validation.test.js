@@ -20,6 +20,7 @@
  *   content/conditions/{id}.json               — Condition contract
  *   content/mediums/{id}.json                  — Medium contract
  *   content/voices/{personaId}.json            — Voice catalog contract
+ *   content/scavenge/{id}.json                 — Scavenge loot table contract
  */
 
 import { describe, it, expect } from 'vitest';
@@ -36,7 +37,8 @@ const VALID_STATS = ['stamina', 'toughness', 'wits', 'creativity', 'charm', 'rep
 const VALID_STATUS_KEYS = ['hunger', 'energy', 'mood', 'health'];
 const VALID_SUBSTANCE_FAMILIES = ['alcohol', 'cannabis', 'stimulant', 'nicotine'];
 const VALID_SIMULATION_TIERS = ['fixed', 'routine', 'full'];
-const VALID_ITEM_TYPES = ['consumable', 'tool', 'junk', 'key', 'weapon'];
+const VALID_ITEM_TYPES = ['consumable', 'tool', 'surface', 'ingredient', 'junk', 'key', 'weapon'];
+const VALID_ACTION_KINDS = ['scavenge'];
 
 /**
  * Load all JSON files from a directory path (non-recursive).
@@ -323,6 +325,9 @@ function validateAction(data, file) {
     validateOutcome(outcome, `${file} '${data.id}'`);
   }
 
+  if (data.kind !== undefined) {
+    expect(VALID_ACTION_KINDS, `${file} '${data.id}': unknown action kind '${data.kind}'`).toContain(data.kind);
+  }
   if (data.interruptsInspiration !== undefined) {
     expect(typeof data.interruptsInspiration, `${file} '${data.id}': interruptsInspiration must be boolean`).toBe('boolean');
   }
@@ -357,6 +362,52 @@ function validateItem(data, file) {
     }
   }
   validateDoses(data.doses, `${file} '${data.id}'`);
+
+  if (data.mediumIds !== undefined) {
+    expect(Array.isArray(data.mediumIds), `${file} '${data.id}': mediumIds must be array`).toBe(true);
+    expect(
+      ['tool', 'surface'],
+      `${file} '${data.id}': only tools and surfaces name mediums`
+    ).toContain(data.type);
+  }
+  if (data.type === 'surface') {
+    expect(data.mediumIds?.length, `${file} '${data.id}': a surface must take at least one medium`).toBeGreaterThan(0);
+  }
+  if (data.foundAs !== undefined && data.foundAs !== null) {
+    expect(typeof data.foundAs, `${file} '${data.id}': foundAs must be string`).toBe('string');
+    expect(data.foundAs.length, `${file} '${data.id}': foundAs must not be empty`).toBeGreaterThan(0);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Scavenge table validation
+// ---------------------------------------------------------------------------
+
+const SCAVENGE_TABLE_REQUIRED_FIELDS = ['id', 'display', 'stat', 'dc', 'entries'];
+
+function validateScavengeTable(data, file) {
+  for (const field of SCAVENGE_TABLE_REQUIRED_FIELDS) {
+    expect(data, `${file}: missing field '${field}'`).toHaveProperty(field);
+  }
+  expect(VALID_STATS, `${file}: stat '${data.stat}' is not a stat`).toContain(data.stat);
+  expect(data.dc, `${file}: dc must be > 0`).toBeGreaterThan(0);
+  expect(Array.isArray(data.entries), `${file}: entries must be an array`).toBe(true);
+  expect(data.entries.length, `${file}: a table needs entries`).toBeGreaterThan(0);
+  const seen = new Set();
+  for (const entry of data.entries) {
+    expect(typeof entry.itemId, `${file}: entry.itemId must be string`).toBe('string');
+    expect(seen.has(entry.itemId), `${file}: duplicate entry '${entry.itemId}'`).toBe(false);
+    seen.add(entry.itemId);
+    expect(entry.weight, `${file} '${entry.itemId}': weight must be > 0`).toBeGreaterThan(0);
+    expect(typeof entry.rare, `${file} '${entry.itemId}': rare must be boolean`).toBe('boolean');
+    expect(typeof entry.unique, `${file} '${entry.itemId}': unique must be boolean`).toBe('boolean');
+    validateOutcome({ inspiration: entry.inspiration }, `${file} '${entry.itemId}'`);
+  }
+  // A table that is nothing but uniques would run dry and leave the action lying.
+  expect(
+    data.entries.some(e => !e.unique),
+    `${file}: a table needs at least one entry that can be found again`
+  ).toBe(true);
 }
 
 // ---------------------------------------------------------------------------
@@ -664,6 +715,63 @@ describe('content/conditions/*.json — Condition contract', () => {
       expect(ids.has(data.id), `${file}: duplicate condition id '${data.id}'`).toBe(false);
       ids.add(data.id);
     });
+  }
+});
+
+describe('content/scavenge/*.json — Scavenge table contract', () => {
+  const dir = join(CONTENT_ROOT, 'scavenge');
+  const files = loadJsonFiles(dir);
+  const itemsById = new Map(
+    loadJsonFiles(join(CONTENT_ROOT, 'items')).flatMap(({ data }) =>
+      (Array.isArray(data) ? data : Object.values(data)).map(i => [i.id, i])
+    )
+  );
+  const mediumIds = new Set(loadJsonFiles(join(CONTENT_ROOT, 'mediums')).map(({ data }) => data.id));
+
+  it('content/scavenge/ directory exists', () => {
+    expect(existsSync(dir)).toBe(true);
+  });
+
+  const ids = new Set();
+  for (const { file, data } of files) {
+    it(`${file} — valid scavenge table`, () => {
+      validateScavengeTable(data, file);
+      expect(ids.has(data.id), `${file}: duplicate table id '${data.id}'`).toBe(false);
+      ids.add(data.id);
+      for (const entry of data.entries) {
+        const item = itemsById.get(entry.itemId);
+        expect(item, `${file}: entry '${entry.itemId}' is not an item`).toBeTruthy();
+        expect(
+          typeof item.foundAs,
+          `${file}: '${entry.itemId}' can be found, so it needs a foundAs phrase for the prose`
+        ).toBe('string');
+        if (entry.inspiration?.mediumId) {
+          expect(mediumIds.has(entry.inspiration.mediumId), `${file} '${entry.itemId}': unknown medium`).toBe(true);
+        }
+      }
+    });
+  }
+
+  // Every location names a table that exists (or null, for nothing to find)
+  const tableIds = new Set(files.map(({ data }) => data.id));
+  for (const mapDir of getMapDirs()) {
+    for (const { file, data: location } of loadJsonFiles(join(mapDir, 'locations'))) {
+      it(`${file}: scavengeTableId is declared and real`, () => {
+        expect(location, `${file}: every location declares scavengeTableId (null for nothing)`).toHaveProperty('scavengeTableId');
+        if (location.scavengeTableId !== null) {
+          expect(tableIds.has(location.scavengeTableId), `${file}: unknown scavenge table '${location.scavengeTableId}'`).toBe(true);
+        }
+      });
+    }
+  }
+
+  // Tools and surfaces name real mediums
+  for (const [itemId, item] of itemsById) {
+    for (const mediumId of item.mediumIds ?? []) {
+      it(`item '${itemId}': medium '${mediumId}' exists in medium data`, () => {
+        expect(mediumIds.has(mediumId), `Item '${itemId}' names unknown medium '${mediumId}'`).toBe(true);
+      });
+    }
   }
 });
 

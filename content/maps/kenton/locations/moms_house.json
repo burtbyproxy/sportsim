@@ -39,6 +39,7 @@
   ],
   "npcSlots": [],
   "actionIds": ["raid_fridge", "stare_at_ceiling", "sleep"],
+  "scavengeTableId": "basement",
   "discovered": true,
   "availability": { "openHour": 0, "closeHour": 23, "closedMessage": null },
   "visitCount": 0

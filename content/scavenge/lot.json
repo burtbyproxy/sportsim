@@ -1,0 +1,97 @@
+{
+  "id": "lot",
+  "display": "The lot and the dumpster out back",
+  "stat": "luck",
+  "dc": 10,
+  "entries": [
+    {
+      "itemId": "cardboard",
+      "weight": 30,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "pizza_box",
+      "weight": 15,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "lone_shoe",
+      "weight": 15,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "lottery_scratcher",
+      "weight": 15,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "shopping_cart_wheel",
+      "weight": 12,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "magazine",
+      "weight": 12,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "ketchup_packets",
+      "weight": 12,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "church_flyer",
+      "weight": 10,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "broken_umbrella",
+      "weight": 10,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "motor_oil",
+      "weight": 8,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "hubcap",
+      "weight": 8,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "sharpie",
+      "weight": 6,
+      "rare": true,
+      "unique": false
+    },
+    {
+      "itemId": "spray_can_dregs",
+      "weight": 4,
+      "rare": true,
+      "unique": false,
+      "inspiration": {
+        "mediumId": "tagging",
+        "strength": 40,
+        "ticksTotal": 8
+      }
+    },
+    {
+      "itemId": "cabinet_door",
+      "weight": 4,
+      "rare": true,
+      "unique": false
+    }
+  ]
+}

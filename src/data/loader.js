@@ -21,6 +21,7 @@ const _substanceFiles = import.meta.glob('/content/substances/*.json', { eager: 
 const _conditionFiles = import.meta.glob('/content/conditions/*.json', { eager: true })
 const _mediumFiles = import.meta.glob('/content/mediums/*.json', { eager: true })
 const _voiceFiles = import.meta.glob('/content/voices/*.json', { eager: true })
+const _scavengeFiles = import.meta.glob('/content/scavenge/*.json', { eager: true })
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -168,4 +169,13 @@ export function loadMediums() {
 export function loadVoices() {
   const modules = _extractModules(_voiceFiles)
   return _mergeById(modules, 'loadVoices()')
+}
+
+/**
+ * Load all scavenge loot tables (global). One file per table.
+ * @returns {Object<string, Object>}
+ */
+export function loadScavengeTables() {
+  const modules = _extractModules(_scavengeFiles)
+  return _mergeById(modules, 'loadScavengeTables()')
 }

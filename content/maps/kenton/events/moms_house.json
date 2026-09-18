@@ -56,7 +56,7 @@
         "creativity": 2
       },
       "moneyChange": null,
-      "itemsGained": null,
+      "itemsGained": ["grandmas_paints"],
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,

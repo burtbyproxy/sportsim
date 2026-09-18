@@ -1,0 +1,58 @@
+[
+  {
+    "id": "scavenge",
+    "label": "Look around for anything useful",
+    "locationId": "any",
+    "kind": "scavenge",
+    "timeCost": 2,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": null,
+      "maxHour": null,
+      "minVisits": null,
+      "minMoney": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You look at the ground the way other people look at shop windows. Everything here belonged to somebody once, and none of them are coming back for it. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "energy": -2
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": {
+        "scavenger": 1
+      },
+      "counterChanges": {
+        "times_scavenged": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 30,
+    "obsessionIds": []
+  }
+]

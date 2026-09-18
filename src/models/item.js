@@ -24,6 +24,10 @@ export function createItem(data) {
     quantity: data.quantity ?? 1,
     effects: Array.isArray(data.effects) ? data.effects.map((e) => ({ ...e })) : [],
     doses: Array.isArray(data.doses) ? data.doses.map((d) => ({ ...d })) : [],
+    // Mediums a tool can work in, or a surface can take. Empty for everything else.
+    mediumIds: Array.isArray(data.mediumIds) ? [...data.mediumIds] : [],
+    // How the item reads in a sentence when it turns up: "a shoe. Left. Men's. Wet".
+    foundAs: data.foundAs ?? null,
   }
 }
 

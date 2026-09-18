@@ -41,6 +41,7 @@
     "play_pool_mouse_trap",
     "smoke_out_front_mouse_trap"
   ],
+  "scavengeTableId": "bar_back",
   "discovered": false,
   "availability": {
     "openHour": 11,

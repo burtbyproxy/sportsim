@@ -51,4 +51,26 @@ describe('voiceLine', () => {
     })
     expect(result.error.code).toBe(VOICE_ERROR_CODES.SOBER_MISSING)
   })
+
+  it('fills {tokens} from params, in whichever voice speaks', () => {
+    const catalog = {
+      sober: { id: 'sober', lines: { 'scavenge.found': 'You come up with {item}.' } },
+      telepath: { id: 'telepath', lines: { 'scavenge.found': '{item}. It was calling you.' } },
+    }
+    const params = { item: 'a shoe' }
+    expect(voiceLine({ code: 'scavenge.found', voices: catalog, params }).data.text).toBe(
+      'You come up with a shoe.'
+    )
+    expect(
+      voiceLine({ code: 'scavenge.found', personaId: 'telepath', voices: catalog, params }).data
+        .text
+    ).toBe('a shoe. It was calling you.')
+  })
+
+  it('leaves a token with no param as written, so the gap shows up in play', () => {
+    const catalog = { sober: { id: 'sober', lines: { x: 'You find {item} near {place}.' } } }
+    expect(voiceLine({ code: 'x', voices: catalog, params: { item: 'a sock' } }).data.text).toBe(
+      'You find a sock near {place}.'
+    )
+  })
 })

@@ -36,6 +36,7 @@
     "free_toothbrush_dental",
     "read_magazines_dental"
   ],
+  "scavengeTableId": "lot",
   "discovered": false,
   "availability": {
     "openHour": 8,

@@ -20,12 +20,30 @@ export const VOICE_ERROR_CODES = Object.freeze({
 })
 
 /**
- * The line for a message code in the voice of the persona in charge.
+ * Fill a line's {tokens} from params. A token with no param is left as
+ * written, so a missing value shows up in play instead of vanishing.
+ * @param {{ text: string, params: Object<string, string> }} input
+ * @returns {string}
+ */
+function _interpolate({ text, params }) {
+  return text.replace(/\{(\w+)\}/g, (token, name) =>
+    params[name] === undefined || params[name] === null ? token : String(params[name])
+  )
+}
+
+/**
+ * The line for a message code in the voice of the persona in charge, with
+ * any {tokens} in it filled from params.
  *
- * @param {{ code: string, personaId: string, voices: Object<string, { id: string, lines: Object<string, string> }> }} input
+ * @param {{
+ *   code: string,
+ *   personaId: string,
+ *   voices: Object<string, { id: string, lines: Object<string, string> }>,
+ *   params?: Object<string, string>,
+ * }} input
  * @returns {{ ok: boolean, data: { text: string, personaId: string }|null, error: Object|null }}
  */
-export function voiceLine({ code, personaId = SOBER_PERSONA_ID, voices = {} }) {
+export function voiceLine({ code, personaId = SOBER_PERSONA_ID, voices = {}, params = {} }) {
   const sober = voices[SOBER_PERSONA_ID]
   if (!sober) {
     return {
@@ -35,10 +53,16 @@ export function voiceLine({ code, personaId = SOBER_PERSONA_ID, voices = {} }) {
     }
   }
   const own = voices[personaId]?.lines?.[code]
-  if (typeof own === 'string') return { ok: true, data: { text: own, personaId }, error: null }
+  if (typeof own === 'string') {
+    return { ok: true, data: { text: _interpolate({ text: own, params }), personaId }, error: null }
+  }
   const fallback = sober.lines?.[code]
   if (typeof fallback === 'string') {
-    return { ok: true, data: { text: fallback, personaId: SOBER_PERSONA_ID }, error: null }
+    return {
+      ok: true,
+      data: { text: _interpolate({ text: fallback, params }), personaId: SOBER_PERSONA_ID },
+      error: null,
+    }
   }
   return {
     ok: false,

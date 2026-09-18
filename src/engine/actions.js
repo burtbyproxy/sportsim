@@ -103,6 +103,21 @@ export function meetsRequirements(player, action, gameTime) {
 }
 
 /**
+ * Whether an action belongs on a location's menu at all, before any
+ * requirement is checked: it is listed there or it goes anywhere, and an
+ * action of a kind the place cannot support is left off.
+ *
+ * @param {{ action: Object, location: Object }} input
+ * @returns {boolean}
+ */
+export function actionApplies({ action, location }) {
+  const listed = (location.actionIds || []).includes(action.id) || action.locationId === 'any'
+  if (!listed) return false
+  if (action.kind === 'scavenge' && !location.scavengeTableId) return false
+  return true
+}
+
+/**
  * Returns the list of available actions at the current location,
  * filtered by requirements and sorted by effective weight.
  * Obsessions boost weight of related actions.
@@ -114,13 +129,8 @@ export function meetsRequirements(player, action, gameTime) {
  * @returns {Object[]} - sorted array of available actions
  */
 export function getAvailableActions(player, location, gameTime, actionRegistry) {
-  // Collect action IDs available at this location
-  const locationActionIds = new Set(location.actionIds || [])
-
-  // Also include "any" location actions
-  const eligible = actionRegistry.filter(
-    (a) => locationActionIds.has(a.id) || a.locationId === 'any'
-  )
+  // Actions listed here, plus "any" location actions the place can support
+  const eligible = actionRegistry.filter((action) => actionApplies({ action, location }))
 
   // Filter by requirements
   const available = eligible.filter((action) => {

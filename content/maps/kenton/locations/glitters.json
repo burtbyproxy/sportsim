@@ -42,6 +42,7 @@
     "pawn_karaoke_tape_glitters",
     "browse_glitters"
   ],
+  "scavengeTableId": "lot",
   "discovered": false,
   "availability": {
     "openHour": 9,

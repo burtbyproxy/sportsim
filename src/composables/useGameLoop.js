@@ -15,7 +15,7 @@
  */
 
 import { useGameStore } from '../stores/game.js'
-import { resolveAction, getAvailableActions } from '../engine/actions.js'
+import { resolveAction, getAvailableActions, actionApplies } from '../engine/actions.js'
 import { getStatDecayEffects } from '../engine/stats.js'
 import {
   tickModifiers,
@@ -211,10 +211,36 @@ export function useGameLoop({
   }
 
   /** A line in the voice of whoever is in charge, if the renderer is listening. */
-  function _voiceEnqueue({ code }) {
+  function _voiceEnqueue({ code, params = {} }) {
     if (!narrative) return
-    const text = game.voiceLine({ code })
+    const text = game.voiceLine({ code, params })
     if (text) _narrativeEnqueue(toNarrativeText(text))
+  }
+
+  /**
+   * Look around the current location and say what turned up. The right
+   * object can be the inspiration.
+   */
+  function _scavenge() {
+    const result = game.applyScavenge({ rng })
+    if (!result.ok) return
+    const { itemId, entry, pickedClean } = result.data
+    if (!itemId) {
+      _voiceEnqueue({ code: pickedClean ? 'scavenge.picked_clean' : 'scavenge.nothing' })
+      return
+    }
+    const found = game.getItem(itemId)
+    _voiceEnqueue({ code: 'scavenge.found', params: { item: found.foundAs ?? found.name } })
+    if (entry.inspiration) {
+      const struck = game.applyInspirationStrike({
+        ...entry.inspiration,
+        source: { kind: 'item', id: itemId },
+      })
+      if (struck.ok) {
+        if (struck.data.replaced) _voiceEnqueue({ code: 'inspiration.replaced' })
+        _voiceEnqueue({ code: 'inspiration.struck' })
+      }
+    }
   }
 
   /**
@@ -251,6 +277,9 @@ export function useGameLoop({
     if (!outcome) return
 
     _outcomeApply(outcome, { kind: 'action', id: action.id })
+
+    // Looking around: what turns up is the engine's call, not the content's.
+    if (action.kind === 'scavenge') _scavenge()
 
     // Some actions are the interruption: sleep, mostly.
     if (action.interruptsInspiration) {
@@ -377,11 +406,10 @@ export function useGameLoop({
 
     // Also add disabled actions so they show as greyed-out
     // (actions at this location that fail requirements)
-    const locationActionIds = new Set(game.currentLocation.actionIds || [])
     const disabledActions = actionRegistry
       .filter(
         (a) =>
-          (locationActionIds.has(a.id) || a.locationId === 'any') &&
+          actionApplies({ action: a, location: game.currentLocation }) &&
           !annotated.find((x) => x.id === a.id)
       )
       .map((a) => ({ ...a, available: false }))
