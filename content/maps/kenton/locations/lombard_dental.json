@@ -34,7 +34,6 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": ["free_toothbrush_dental", "read_magazines_dental"],
   "scavengeTableId": "lot",
   "surfaces": [
     {

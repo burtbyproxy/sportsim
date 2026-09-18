@@ -218,6 +218,12 @@ function validateLocation(data, file) {
     expect(data, `${file}: missing field '${field}'`).toHaveProperty(field)
   }
 
+  // An action says where it lives. A second list here is how actions got lost.
+  expect(
+    data,
+    `${file}: actions are placed by their own locationId, not listed here`
+  ).not.toHaveProperty('actionIds')
+
   // descriptions must have a 'default' key
   expect(data.descriptions, `${file}: descriptions must be an object`).toBeTruthy()
   expect(
@@ -1557,6 +1563,26 @@ describe('cross-reference validation', () => {
 
   // Action itemsGained references real item IDs (string[] per contract)
   const actionFiles = mapDirs.flatMap((mapDir) => loadJsonFiles(join(mapDir, 'actions')))
+
+  // Every action lives somewhere real, and anyone it involves exists
+  for (const { file, data } of actionFiles) {
+    const actions = Array.isArray(data) ? data : Object.values(data)
+    for (const action of actions) {
+      it(`${file} action '${action.id}': locationId '${action.locationId}' is 'any' or a real location`, () => {
+        expect(
+          action.locationId === 'any' || knownLocationIds.has(action.locationId),
+          `Action '${action.id}' lives at unknown location '${action.locationId}'`
+        ).toBe(true)
+      })
+      if (action.characterId === undefined || action.characterId === null) continue
+      it(`${file} action '${action.id}': characterId '${action.characterId}' exists in character data`, () => {
+        expect(
+          knownCharacterIds.has(action.characterId),
+          `Action '${action.id}' involves unknown character '${action.characterId}'`
+        ).toBe(true)
+      })
+    }
+  }
   for (const { file, data } of actionFiles) {
     const actions = Array.isArray(data) ? data : Object.values(data)
     for (const action of actions) {

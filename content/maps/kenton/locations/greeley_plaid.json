@@ -34,7 +34,6 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": ["buy_hot_dog_greeley_plaid", "shoplift_greeley_plaid"],
   "scavengeTableId": "lot",
   "surfaces": [
     {

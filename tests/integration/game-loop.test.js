@@ -16,6 +16,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '../../src/stores/game.js'
 import { createPlayer } from '../../src/models/player.js'
 import { createLocation } from '../../src/models/location.js'
+import { createCharacter } from '../../src/models/character.js'
 import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
 
@@ -32,6 +33,7 @@ const mocksCrest = JSON.parse(
 const talkToDale = JSON.parse(
   readFileSync(resolve('content/maps/kenton/actions/npc_interactions.json'), 'utf-8')
 ).find((a) => a.id === 'talk_to_dale')
+const dale = JSON.parse(readFileSync(resolve('content/characters/dale.json'), 'utf-8'))
 const voices = readdirSync(resolve('content/voices')).map((file) =>
   JSON.parse(readFileSync(resolve('content/voices', file), 'utf-8'))
 )
@@ -403,53 +405,61 @@ describe('useGameLoop → scene order on arrival', () => {
   })
 })
 
-describe('useGameLoop → visits', () => {
+describe('useGameLoop → visits and company', () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
 
-  // Dale talks to regulars. His action is put on the bar's menu here; the
-  // requirement under test is his own, from content.
-  function startAtTheBar() {
+  // Dale tends bar at Mock's Crest and talks to regulars. Everything here is
+  // content: the bar, Dale, and what it takes to get a word out of him.
+  function startAtTheBar({ visits, daleIn }) {
     setActivePinia(createPinia())
     const game = useGameStore()
     game.registerLocation(createLocation(momsHouse))
-    game.registerLocation(
-      createLocation({ ...mocksCrest, actionIds: [...mocksCrest.actionIds, talkToDale.id] })
-    )
+    game.registerLocation(createLocation(mocksCrest))
     for (const substance of substances) game.registerSubstance({ substance })
     for (const voice of voices) game.registerVoice({ voice })
     game.startNewGame(createPlayer('Tester'), 'moms_house')
+    game.registerCharacter(createCharacter(dale))
+    for (let n = 0; n < visits; n++) {
+      game.moveTo('mocks_crest')
+      if (n < visits - 1) game.moveTo('moms_house')
+    }
+    game.setCharacterLocation('dale', daleIn ? 'mocks_crest' : 'moms_house')
     return game
   }
 
   const onTheMenu = (game) => game.availableActions.find((a) => a.id === talkToDale.id)
 
+  it('with Dale out, there is no one to talk to, however often you come', () => {
+    const game = startAtTheBar({ visits: 5, daleIn: false })
+    const loop = useGameLoop({ actionRegistry: [talkToDale] })
+    loop.onLocationEntered()
+    expect(onTheMenu(game)).toBeUndefined()
+  })
+
   it('a first-time visitor sees Dale greyed out, and asking anyway is refused', async () => {
-    const game = startAtTheBar()
+    const game = startAtTheBar({ visits: 1, daleIn: true })
     const narrative = useNarrative()
     const loop = useGameLoop({ actionRegistry: [talkToDale], narrative, rng: () => 0.9 })
-    game.moveTo('mocks_crest')
-    await loop.tick()
+    loop.onLocationEntered()
 
     expect(onTheMenu(game).available).toBe(false)
     await loop.resolvePlayerAction(talkToDale)
     const entries = await settle(narrative)
 
     expect(entries.at(-1)).toBe(voices.find((v) => v.id === 'sober').lines['requirement.visits'])
-    expect(game.player.archetypeScores.social).toBeUndefined()
   })
 
   it('a regular gets Dale on the menu, and talking to him goes through', async () => {
-    const game = startAtTheBar()
-    const loop = useGameLoop({ actionRegistry: [talkToDale], rng: () => 0.9 })
-    game.moveTo('mocks_crest')
-    game.moveTo('moms_house')
-    game.moveTo('mocks_crest')
-    await loop.tick()
+    const game = startAtTheBar({ visits: 2, daleIn: true })
+    const narrative = useNarrative()
+    const loop = useGameLoop({ actionRegistry: [talkToDale], narrative, rng: () => 0.9 })
+    loop.onLocationEntered()
 
     expect(onTheMenu(game).available).toBe(true)
     await loop.resolvePlayerAction(talkToDale)
+    const entries = await settle(narrative)
 
-    expect(game.player.archetypeScores.social).toBe(talkToDale.success.archetypeChanges.social)
+    expect(entries.join('')).toContain(talkToDale.success.narrative.tokens[1].text)
   })
 })

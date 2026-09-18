@@ -28,7 +28,6 @@ export function createLocation(data) {
     descriptions: data.descriptions ?? { default: '' },
     exits: Array.isArray(data.exits) ? data.exits.map((e) => ({ ...e })) : [],
     npcSlots: Array.isArray(data.npcSlots) ? [...data.npcSlots] : [],
-    actionIds: Array.isArray(data.actionIds) ? [...data.actionIds] : [],
     discovered: data.discovered ?? false,
     availability: data.availability
       ? { ...data.availability }
@@ -68,13 +67,20 @@ export function locationRestore({ definition, saved }) {
 
 /**
  * Check whether the player meets an exit's requirements.
- * Exits share the requirement vocabulary of actions, so the same rules apply.
- * @param {{ exit: Object, player: Object, gameTime: Object }} input
+ * Exits share the requirement vocabulary of actions, so the same rules apply:
+ * minVisits counts visits to the place the exit leads out of.
+ * @param {{ exit: Object, player: Object, gameTime: Object, location: Object }} input
+ *   location — where the player is standing.
  * @returns {{ meets: boolean, reasonCode: string|null, reasonParams: Object<string, string> }}
  */
-export function exitMeetsRequirements({ exit, player, gameTime }) {
+export function exitMeetsRequirements({ exit, player, gameTime, location }) {
   if (!exit.requirements) return { meets: true, reasonCode: null, reasonParams: {} }
-  return requirementsMeet({ player, action: { requirements: exit.requirements }, gameTime })
+  return requirementsMeet({
+    player,
+    action: { requirements: exit.requirements },
+    gameTime,
+    location,
+  })
 }
 
 /**

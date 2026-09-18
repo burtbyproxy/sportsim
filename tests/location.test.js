@@ -19,7 +19,6 @@ describe('createLocation', () => {
     descriptions: { default: 'A dive bar.' },
     exits: [{ locationId: 'moms_house', label: 'Home', travelTime: 1, requirements: null }],
     npcSlots: ['carl'],
-    actionIds: ['drink'],
     discovered: true,
     availability: { openHour: 11, closeHour: 2, closedMessage: 'Closed.' },
     visitCount: 3,
@@ -34,7 +33,6 @@ describe('createLocation', () => {
     expect(loc.descriptions.default).toBe('A dive bar.')
     expect(loc.exits).toHaveLength(1)
     expect(loc.npcSlots).toContain('carl')
-    expect(loc.actionIds).toContain('drink')
     expect(loc.discovered).toBe(true)
     expect(loc.availability.openHour).toBe(11)
     expect(loc.visitCount).toBe(3)
@@ -46,7 +44,6 @@ describe('createLocation', () => {
     expect(loc.descriptions).toEqual({ default: '' })
     expect(loc.exits).toEqual([])
     expect(loc.npcSlots).toEqual([])
-    expect(loc.actionIds).toEqual([])
     expect(loc.discovered).toBe(false)
     expect(loc.availability.openHour).toBe(0)
     expect(loc.availability.closeHour).toBe(23)
@@ -184,6 +181,17 @@ describe('exitMeetsRequirements', () => {
     expect(exitMeetsRequirements({ exit: nightOnly, player, gameTime: { hour: 22 } }).meets).toBe(
       true
     )
+  })
+
+  it('a visits requirement counts visits to the place the exit leads out of', () => {
+    const exit = { locationId: 'back_room', requirements: { minVisits: 3 } }
+    const here = (visitCount) => ({ id: 'bar', visitCount })
+    expect(exitMeetsRequirements({ exit, player, gameTime, location: here(2) })).toEqual({
+      meets: false,
+      reasonCode: 'requirement.visits',
+      reasonParams: {},
+    })
+    expect(exitMeetsRequirements({ exit, player, gameTime, location: here(3) }).meets).toBe(true)
   })
 })
 

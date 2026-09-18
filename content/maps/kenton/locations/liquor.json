@@ -40,7 +40,6 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": ["buy_fifth_liquor", "ask_clerk_liquor"],
   "scavengeTableId": "lot",
   "surfaces": [
     {

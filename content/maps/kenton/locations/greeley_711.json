@@ -40,7 +40,6 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": ["buy_corn_dog_greeley", "chat_clerks_greeley"],
   "scavengeTableId": "lot",
   "surfaces": [
     {

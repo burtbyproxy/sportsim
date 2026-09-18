@@ -131,16 +131,18 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
 
 /**
  * Whether an action belongs on a location's menu at all, before any
- * requirement is checked: it is listed there or it goes anywhere, and an
- * action of a kind the place cannot support is left off.
+ * requirement is checked. The action says where it lives: one place, or
+ * anywhere. An action of a kind the place cannot support is left off, and
+ * an action with someone is left off when they are not here.
  *
- * @param {{ action: Object, location: Object }} input
+ * @param {{ action: Object, location: Object, characters: Object[] }} input
+ *   characters — those present at the location.
  * @returns {boolean}
  */
-export function actionApplies({ action, location }) {
-  const listed = (location.actionIds || []).includes(action.id) || action.locationId === 'any'
-  if (!listed) return false
+export function actionApplies({ action, location, characters }) {
+  if (action.locationId !== 'any' && action.locationId !== location.id) return false
   if (action.kind === 'scavenge' && !location.scavengeTableId) return false
+  if (action.characterId && !characters.some((c) => c.id === action.characterId)) return false
   return true
 }
 
@@ -149,13 +151,15 @@ export function actionApplies({ action, location }) {
  * filtered by requirements and sorted by effective weight.
  * Obsessions boost weight of related actions.
  *
- * @param {{ player: Object, location: Object, gameTime: Object, actionRegistry: Object[] }} input
- *   actionRegistry — all action definitions
+ * @param {{ player: Object, location: Object, characters: Object[], gameTime: Object, actionRegistry: Object[] }} input
+ *   characters — those present at the location; actionRegistry — all action definitions
  * @returns {Object[]} - sorted array of available actions
  */
-export function actionsAvailable({ player, location, gameTime, actionRegistry }) {
-  // Actions listed here, plus "any" location actions the place can support
-  const eligible = actionRegistry.filter((action) => actionApplies({ action, location }))
+export function actionsAvailable({ player, location, characters, gameTime, actionRegistry }) {
+  // Actions that live here or anywhere, that the place and the company support
+  const eligible = actionRegistry.filter((action) =>
+    actionApplies({ action, location, characters })
+  )
 
   // Filter by requirements
   const available = eligible.filter((action) => {

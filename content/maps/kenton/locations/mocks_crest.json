@@ -40,7 +40,6 @@
     }
   ],
   "npcSlots": ["dale", "sheila", "dennis", "maurice"],
-  "actionIds": ["order_beer_mocks", "play_pool_mocks"],
   "scavengeTableId": "bar_back",
   "surfaces": [
     {

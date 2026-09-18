@@ -34,7 +34,6 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": ["buy_coffee_denver", "dumpster_dive_denver"],
   "scavengeTableId": "lot",
   "surfaces": [
     {

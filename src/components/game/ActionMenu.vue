@@ -141,7 +141,12 @@ function canTravel(exit) {
   const dest = game.locations[exit.locationId]
   if (!dest) return false
   if (!isOpen(dest, game.time.hour)) return false
-  return exitMeetsRequirements({ exit, player: game.player, gameTime: game.time }).meets
+  return exitMeetsRequirements({
+    exit,
+    player: game.player,
+    gameTime: game.time,
+    location: game.currentLocation,
+  }).meets
 }
 
 function travelBlockReason(exit) {
@@ -157,6 +162,7 @@ function travelBlockReason(exit) {
     exit,
     player: game.player,
     gameTime: game.time,
+    location: game.currentLocation,
   })
   return meets ? '' : game.requirementReason({ code: reasonCode, params: reasonParams })
 }

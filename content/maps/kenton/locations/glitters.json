@@ -40,7 +40,6 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": ["pawn_karaoke_tape_glitters", "browse_glitters"],
   "scavengeTableId": "lot",
   "surfaces": [
     {

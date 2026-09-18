@@ -40,7 +40,6 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": ["buy_cigarettes_toads", "bum_smoke_toads"],
   "scavengeTableId": "lot",
   "surfaces": [
     {

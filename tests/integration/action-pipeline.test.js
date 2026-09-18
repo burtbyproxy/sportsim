@@ -177,6 +177,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const result = actionsAvailable({
       player,
       location,
+      characters: [],
       gameTime: makeGameTime(),
       actionRegistry: kentonActionRegistry,
     })
@@ -196,13 +197,29 @@ describe('actionsAvailable — real Kenton location data', () => {
     const result = actionsAvailable({
       player,
       location,
+      characters: [],
       gameTime: makeGameTime(14),
       actionRegistry: kentonActionRegistry,
     })
     expect(result.map((a) => a.id)).toContain('order_beer_parrot')
-    // NPC interactions at blue_parrot use character names (talk_to_tina, talk_to_greg)
-    const ids = result.map((a) => a.id)
-    expect(ids.some((id) => id.startsWith('talk_to_'))).toBe(true)
+  })
+
+  it('the regulars can be talked to at blue_parrot when they are in, and not when they are out', () => {
+    const location = createLocation(kentonLocations.blue_parrot)
+    const available = (characters) =>
+      actionsAvailable({
+        player: createPlayer('Test'),
+        location,
+        characters,
+        gameTime: makeGameTime(14),
+        actionRegistry: kentonActionRegistry,
+      }).map((a) => a.id)
+
+    expect(available([{ id: 'tina' }, { id: 'greg' }])).toEqual(
+      expect.arrayContaining(['talk_to_tina', 'talk_to_greg'])
+    )
+    expect(available([{ id: 'tina' }])).not.toContain('talk_to_greg')
+    expect(available([])).not.toContain('talk_to_tina')
   })
 
   it('blue_parrot location actions are filtered before 11am (time-restricted)', () => {
@@ -212,6 +229,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const result = actionsAvailable({
       player,
       location,
+      characters: [],
       gameTime: makeGameTime(9),
       actionRegistry: kentonActionRegistry,
     })
@@ -226,6 +244,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const result = actionsAvailable({
       player,
       location,
+      characters: [],
       gameTime: makeGameTime(14),
       actionRegistry: kentonActionRegistry,
     })
@@ -241,6 +260,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const result = actionsAvailable({
       player,
       location,
+      characters: [],
       gameTime: makeGameTime(21),
       actionRegistry: kentonActionRegistry,
     })
@@ -255,6 +275,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const result = actionsAvailable({
       player,
       location,
+      characters: [],
       gameTime: makeGameTime(14),
       actionRegistry: kentonActionRegistry,
     })
@@ -269,6 +290,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const result = actionsAvailable({
       player,
       location,
+      characters: [],
       gameTime: makeGameTime(23),
       actionRegistry: kentonActionRegistry,
     })
@@ -281,6 +303,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const result = actionsAvailable({
       player,
       location,
+      characters: [],
       gameTime: makeGameTime(14),
       actionRegistry: kentonActionRegistry,
     })
@@ -291,7 +314,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     expect(raidIdx).toBeLessThan(stareIdx)
   })
 
-  it('always returns "any" location actions regardless of actionIds', () => {
+  it('always returns "any" location actions', () => {
     const location = createLocation(kentonLocations.columbia_park)
     const player = createPlayer('Test')
     const anyAction = { ...DRINK_ACTION, id: 'look_around', locationId: 'any', weight: 1 }
@@ -299,6 +322,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const result = actionsAvailable({
       player,
       location,
+      characters: [],
       gameTime: makeGameTime(),
       actionRegistry: [anyAction],
     })
@@ -306,8 +330,7 @@ describe('actionsAvailable — real Kenton location data', () => {
   })
 
   it('filters actions by time-of-day requirements', () => {
-    const locationData = { ...kentonLocations.blue_parrot, actionIds: ['drink_pbr'] }
-    const location = createLocation(locationData)
+    const location = createLocation(kentonLocations.blue_parrot)
     const player = createPlayer('Test')
     const earlyAction = { ...DRINK_ACTION, requirements: { minHour: 20 } }
 
@@ -315,6 +338,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const result = actionsAvailable({
       player,
       location,
+      characters: [],
       gameTime: makeGameTime(14),
       actionRegistry: [earlyAction],
     })
@@ -322,8 +346,7 @@ describe('actionsAvailable — real Kenton location data', () => {
   })
 
   it('filters actions by stat requirements', () => {
-    const locationData = { ...kentonLocations.blue_parrot, actionIds: ['charm_action'] }
-    const location = createLocation(locationData)
+    const location = createLocation(kentonLocations.blue_parrot)
     const player = createPlayer('Test')
     player.stats.charm.base = 5
 
@@ -335,6 +358,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const result = actionsAvailable({
       player,
       location,
+      characters: [],
       gameTime: makeGameTime(),
       actionRegistry: [eliteAction],
     })
@@ -342,16 +366,13 @@ describe('actionsAvailable — real Kenton location data', () => {
   })
 
   it('sorts available actions by descending weight', () => {
-    const locationData = {
-      ...kentonLocations.blue_parrot,
-      actionIds: ['drink_pbr', 'chat_up_bartender'],
-    }
-    const location = createLocation(locationData)
+    const location = createLocation(kentonLocations.blue_parrot)
     const player = createPlayer('Test')
 
     const result = actionsAvailable({
       player,
       location,
+      characters: [],
       gameTime: makeGameTime(),
       actionRegistry: [DRINK_ACTION, CHARM_CHECK_ACTION],
     })

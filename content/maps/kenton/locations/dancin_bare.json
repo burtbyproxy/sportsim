@@ -34,7 +34,6 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": ["steak_bites_bare", "amateur_night_bare"],
   "scavengeTableId": "bar_back",
   "surfaces": [
     {

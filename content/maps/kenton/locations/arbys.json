@@ -40,7 +40,6 @@
     }
   ],
   "npcSlots": ["dennis"],
-  "actionIds": ["curly_fries_arbys", "bathroom_arbys"],
   "scavengeTableId": "lot",
   "surfaces": [
     {

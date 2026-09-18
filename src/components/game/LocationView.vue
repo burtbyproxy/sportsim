@@ -52,7 +52,12 @@ function canTravel(exit) {
   // Delegate availability check to the model — single source of truth
   if (!isOpen(dest, game.time.hour)) return false
   // Honor exit requirements — same vocabulary as action requirements
-  return exitMeetsRequirements({ exit, player: game.player, gameTime: game.time }).meets
+  return exitMeetsRequirements({
+    exit,
+    player: game.player,
+    gameTime: game.time,
+    location: game.currentLocation,
+  }).meets
 }
 
 // The scene itself (log, description, events, actions) is the game loop's.

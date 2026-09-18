@@ -34,7 +34,6 @@
     }
   ],
   "npcSlots": ["ray", "dale"],
-  "actionIds": ["buy_tallboy", "shoplift_plaid"],
   "scavengeTableId": "lot",
   "surfaces": [
     {

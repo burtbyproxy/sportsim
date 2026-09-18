@@ -40,7 +40,6 @@
     }
   ],
   "npcSlots": ["vernon", "maurice"],
-  "actionIds": ["sit_on_bench", "look_for_change"],
   "scavengeTableId": "park",
   "surfaces": [
     {

@@ -725,9 +725,12 @@ export function useGameLoop({
       return
     }
 
+    const location = game.currentLocation
+    const characters = game.charactersAtCurrentLocation
     const actions = actionsAvailable({
       player: game.player,
-      location: game.currentLocation,
+      location,
+      characters,
       gameTime: game.time,
       actionRegistry,
     })
@@ -740,7 +743,7 @@ export function useGameLoop({
     const disabledActions = actionRegistry
       .filter(
         (a) =>
-          actionApplies({ action: a, location: game.currentLocation }) &&
+          actionApplies({ action: a, location, characters }) &&
           !annotated.find((x) => x.id === a.id)
       )
       .map((a) => ({ ...a, available: false }))

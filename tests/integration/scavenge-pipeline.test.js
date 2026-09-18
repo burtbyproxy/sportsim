@@ -82,6 +82,7 @@ describe('scavenge pipeline', () => {
       const menu = actionsAvailable({
         player: game.player,
         location,
+        characters: [],
         gameTime: game.time,
         actionRegistry: [scavengeAction],
       })
@@ -99,6 +100,7 @@ describe('scavenge pipeline', () => {
       actionsAvailable({
         player: game.player,
         location: sealed,
+        characters: [],
         gameTime: game.time,
         actionRegistry: [scavengeAction],
       })

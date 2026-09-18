@@ -34,7 +34,6 @@
     }
   ],
   "npcSlots": ["larry", "tyler", "dennis", "maurice"],
-  "actionIds": ["play_pool_mouse_trap", "smoke_out_front_mouse_trap"],
   "scavengeTableId": "bar_back",
   "surfaces": [
     {

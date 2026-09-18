@@ -34,7 +34,6 @@
     }
   ],
   "npcSlots": ["tina", "greg"],
-  "actionIds": ["order_beer_parrot", "talk_to_bartender_parrot"],
   "scavengeTableId": "bar_back",
   "surfaces": [
     {

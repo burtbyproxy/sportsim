@@ -34,7 +34,6 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": ["shoot_hoops_chief_joseph", "swings_chief_joseph"],
   "scavengeTableId": "schoolyard",
   "surfaces": [
     {

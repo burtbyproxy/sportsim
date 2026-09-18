@@ -40,7 +40,6 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": ["raid_fridge", "stare_at_ceiling", "sleep"],
   "scavengeTableId": "basement",
   "surfaces": [
     {
