@@ -45,7 +45,7 @@
       "id": "lot_light",
       "name": "the good light in the parking lot",
       "pieceAs": "under the good light in a 7-11 parking lot",
-      "mediumIds": ["performance"]
+      "mediumIds": ["performance", "freestyle"]
     }
   ],
   "discovered": false,

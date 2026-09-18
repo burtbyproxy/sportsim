@@ -19,6 +19,10 @@
       {
         "personaId": "sober",
         "reason": "Sober? No. Not for money, not on a dare, not if the whole bar chants your name"
+      },
+      {
+        "personaId": "suburban_gangster",
+        "reason": "Karaoke? You? You'd rather be seen getting out of your mom's Corolla"
       }
     ]
   }

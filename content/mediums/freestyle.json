@@ -1,0 +1,19 @@
+{
+  "id": "freestyle",
+  "display": "Freestyle",
+  "stat": "wits",
+  "description": "Spitting rhymes off the top of your head, to a beat only you can hear. Words that rhyme are a flow. Words that don't are a man listing things in a parking lot.",
+  "pieceAs": "a freestyle",
+  "making": {
+    "gameId": "rhymes",
+    "ticksTotal": 4,
+    "dc": 12,
+    "xp": 8,
+    "toolRequired": false,
+    "takesIngredient": false,
+    "leavesArtifact": false,
+    "statusChanges": {
+      "energy": -2
+    }
+  }
+}
