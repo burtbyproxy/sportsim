@@ -1,0 +1,114 @@
+[
+  {
+    "id": "stranger_buys_beer",
+    "title": "a stranger",
+    "type": "random",
+    "oneTime": false,
+    "probability": 0.1,
+    "conditions": {
+      "locationId": null,
+      "locationType": "bar",
+      "minHour": 15,
+      "maxHour": null,
+      "minStats": null,
+      "maxStats": null,
+      "minStatus": null,
+      "maxStatus": null,
+      "requiredItems": null,
+      "requiredTraumas": null,
+      "minVisits": null
+    },
+    "narrative": {
+      "tokens": [
+        {
+          "text": "A man at the end of the bar with a mustache like a closed argument sends a beer down to you. He nods. That is all. You will never learn why. ",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 0,
+          "effect": "none"
+        },
+        {
+          "text": "This is Portland in 2001. Things like this still happen.",
+          "style": "normal",
+          "color": null,
+          "speed": "slow",
+          "pauseAfter": 0,
+          "effect": "none"
+        }
+      ]
+    },
+    "choices": null,
+    "outcome": {
+      "narrative": null,
+      "statusChanges": {
+        "sobriety": -12,
+        "mood": 8
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "beers_consumed": 1,
+        "free_beers": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "nextEventId": null
+  },
+  {
+    "id": "bar_last_call",
+    "title": "last call",
+    "type": "random",
+    "oneTime": false,
+    "probability": 0.5,
+    "conditions": {
+      "locationId": null,
+      "locationType": "bar",
+      "minHour": 1,
+      "maxHour": 2,
+      "minStats": null,
+      "maxStats": null,
+      "minStatus": null,
+      "maxStatus": null,
+      "requiredItems": null,
+      "requiredTraumas": null,
+      "minVisits": null
+    },
+    "narrative": {
+      "tokens": [
+        {
+          "text": "The lights come up. Nobody is ready for the lights. Under fluorescent honesty the whole room looks like a police lineup for a crime none of you can remember committing.",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 0,
+          "effect": "none"
+        }
+      ]
+    },
+    "choices": null,
+    "outcome": {
+      "narrative": null,
+      "statusChanges": {
+        "mood": -4
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "nextEventId": null
+  }
+]

@@ -361,6 +361,57 @@ describe('content/maps/*/actions/*.json — Action contract', () => {
 // Tests — Items
 // ---------------------------------------------------------------------------
 
+function validateEvent(data, file) {
+  const required = ['id', 'title', 'type', 'oneTime', 'conditions', 'narrative'];
+  for (const field of required) {
+    expect(data, `${file} event '${data.id ?? '?'}': missing field '${field}'`).toHaveProperty(field);
+  }
+  expect(['random', 'triggered'], `${file} '${data.id}': type must be random or triggered`).toContain(data.type);
+  if (data.type === 'random') {
+    expect(typeof data.probability, `${file} '${data.id}': random events need a probability`).toBe('number');
+    expect(data.probability, `${file} '${data.id}': probability must be in (0, 1]`).toBeGreaterThan(0);
+    expect(data.probability, `${file} '${data.id}': probability must be in (0, 1]`).toBeLessThanOrEqual(1);
+  }
+  expect(data.narrative?.tokens?.length, `${file} '${data.id}': narrative needs tokens`).toBeGreaterThan(0);
+  const hasChoices = Array.isArray(data.choices) && data.choices.length > 0;
+  expect(
+    hasChoices || Boolean(data.outcome),
+    `${file} '${data.id}': an event needs choices or an outcome`
+  ).toBe(true);
+  if (hasChoices) {
+    for (const choice of data.choices) {
+      expect(typeof choice.label, `${file} '${data.id}': every choice needs a label`).toBe('string');
+      expect(choice.outcome, `${file} '${data.id}': choice '${choice.label}' needs an outcome`).toBeTruthy();
+      if (choice.check) {
+        expect(VALID_CHECK_STATS, `${file} '${data.id}': check.stat '${choice.check.stat}' is not a valid stat`)
+          .toContain(choice.check.stat);
+        expect(choice.check.dc, `${file} '${data.id}': check.dc must be > 0`).toBeGreaterThan(0);
+        expect(
+          choice.failureOutcome,
+          `${file} '${data.id}': a checked choice '${choice.label}' needs a failureOutcome`
+        ).toBeTruthy();
+      }
+    }
+  }
+}
+
+describe('content/maps/*/events/*.json — Event contract', () => {
+  const ids = new Set();
+  for (const mapDir of getMapDirs()) {
+    const dir = join(mapDir, 'events');
+    for (const { file, data } of loadJsonFiles(dir)) {
+      const events = Array.isArray(data) ? data : Object.values(data);
+      for (const event of events) {
+        it(`${file}: event '${event.id}' honours the contract`, () => {
+          validateEvent(event, file);
+          expect(ids.has(event.id), `${file}: duplicate event id '${event.id}'`).toBe(false);
+          ids.add(event.id);
+        });
+      }
+    }
+  }
+});
+
 describe('content/items/*.json — Item contract', () => {
   const itemsDir = join(CONTENT_ROOT, 'items');
   const files = loadJsonFiles(itemsDir);

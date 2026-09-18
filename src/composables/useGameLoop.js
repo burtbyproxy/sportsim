@@ -25,23 +25,39 @@ import {
   updateArchetypeScore,
   incrementCounter,
 } from '../models/player.js'
-import { generateActionNarrative } from './useNarrative.js'
+import { checkRandomEvents, checkTriggeredEvents, resolveEvent } from '../engine/events.js'
+import {
+  generateActionNarrative,
+  generateEventNarrative,
+  generateLocationNarrative,
+} from './useNarrative.js'
+import { toNarrativeText } from '../utils/text.js'
 import { sim } from '../workers/simulation-api.js'
 
 /**
  * @param {{
  *   actionRegistry?: Object[],
+ *   eventRegistry?: Object[],
  *   narrative?: ReturnType<import('./useNarrative.js').useNarrative>|null,
  *   save?: ReturnType<import('./useSave.js').useSave>|null,
+ *   rng?: () => number,
  * }} input
  *   actionRegistry — array of Action objects to evaluate against
+ *   eventRegistry — array of GameEvent objects; checked after every tick
+ *   rng — random source for event rolls; injectable so tests are deterministic
  *   narrative — the renderer that receives action and event prose. Passed in
  *   explicitly: the screen that owns the loop also owns the renderer, and a
  *   component cannot inject what it provided itself.
  *   save — the save module; when present, arriving somewhere writes the
  *   auto-save slot so a closed tab costs at most the current scene.
  */
-export function useGameLoop({ actionRegistry = [], narrative = null, save = null } = {}) {
+export function useGameLoop({
+  actionRegistry = [],
+  eventRegistry = [],
+  narrative = null,
+  save = null,
+  rng = Math.random,
+} = {}) {
   const game = useGameStore()
 
   /**
@@ -94,17 +110,88 @@ export function useGameLoop({ actionRegistry = [], narrative = null, save = null
       console.warn('[useGameLoop] simulation worker tick failed:', err)
     }
 
-    // 5. Check random/triggered events (stub — full implementation Phase 4)
-    // Events must fire AFTER decay so altered-state thresholds from decay are visible
-    // _checkEvents()
-
-    // 6. Move if requested
+    // 5. Move if requested — the new scene's prose goes into a fresh log
     if (toLocationId) {
       game.moveTo(toLocationId)
+      _locationEnter()
     }
+
+    // 6. The world happens to the player: at most one event per tick.
+    // After decay and after the move, so thresholds and the new place are
+    // visible, and after the scene text so the event lands beneath it.
+    _eventsCheck()
 
     // 7. Re-evaluate available actions
     _refreshActions()
+  }
+
+  /**
+   * Start a scene: clear the log, describe where the player is, and if an
+   * event is still waiting on them (say, after a load), put it back in front.
+   */
+  function _locationEnter() {
+    if (narrative && game.currentLocation && game.player) {
+      narrative.clearLog()
+      narrative.enqueue(generateLocationNarrative(game.currentLocation, game.player, game.time))
+      if (game.activeEvent) {
+        _narrativeEnqueue(generateEventNarrative(game.activeEvent, game.player))
+      }
+    }
+    _refreshActions()
+  }
+
+  /**
+   * Fire the first event whose conditions hold. Triggered events take
+   * precedence over random ones. Nothing fires while a choice is pending.
+   */
+  function _eventsCheck() {
+    if (game.activeEvent || !game.player || !game.currentLocation) return
+    const args = [game.player, game.currentLocation, game.time, eventRegistry, game.firedEventIds]
+    const [event] = [...checkTriggeredEvents(...args), ...checkRandomEvents(...args, rng)]
+    if (!event) return
+    _eventStart(event)
+  }
+
+  function _eventStart(event) {
+    if (event.oneTime) game.markEventFired(event.id)
+    _narrativeEnqueue(generateEventNarrative(event, game.player))
+    if (event.choices?.length > 0) {
+      game.setActiveEvent(event)
+      return
+    }
+    const { outcome } = resolveEvent(event, game.player, null, rng)
+    _eventOutcomeApply(outcome)
+  }
+
+  /**
+   * Resolve the pending event with the player's choice.
+   * @param {{ choiceIndex: number }} input
+   */
+  function resolveEventChoice({ choiceIndex }) {
+    const event = game.activeEvent
+    if (!event || !game.player) return
+    const { outcome } = resolveEvent(event, game.player, choiceIndex, rng)
+    game.clearActiveEvent()
+    _eventOutcomeApply(outcome)
+    _refreshActions()
+  }
+
+  function _eventOutcomeApply(outcome) {
+    if (!outcome) return
+    if (outcome.narrative) {
+      const text =
+        typeof outcome.narrative === 'string'
+          ? toNarrativeText(outcome.narrative)
+          : outcome.narrative
+      _narrativeEnqueue(text)
+    }
+    _outcomeApply(outcome)
+  }
+
+  function _narrativeEnqueue(narrativeText) {
+    if (narrative && narrativeText?.tokens?.length > 0) {
+      narrative.enqueue(narrativeText)
+    }
   }
 
   /**
@@ -130,13 +217,7 @@ export function useGameLoop({ actionRegistry = [], narrative = null, save = null
     const characters = game.charactersAtCurrentLocation
     const result = resolveAction(game.player, action, game.time, characters)
 
-    // Feed outcome narrative to renderer
-    if (narrative) {
-      const narrativeText = generateActionNarrative(result)
-      if (narrativeText?.tokens?.length > 0) {
-        narrative.enqueue(narrativeText)
-      }
-    }
+    _narrativeEnqueue(generateActionNarrative(result))
 
     if (!result.success && result.requirementFailure) {
       // Requirements not met — shouldn't happen if menu is correct, but handle gracefully
@@ -146,6 +227,18 @@ export function useGameLoop({ actionRegistry = [], narrative = null, save = null
     const outcome = result.outcome
     if (!outcome) return
 
+    _outcomeApply(outcome)
+
+    // Advance time by action cost
+    await tick(action.timeCost ?? 1)
+  }
+
+  /**
+   * Apply an outcome's state effects to the store. Shared by actions and events.
+   * Narrative is the caller's business.
+   * @param {Object} outcome
+   */
+  function _outcomeApply(outcome) {
     // Apply status changes
     if (outcome.statusChanges) {
       game.applyStatusChanges(outcome.statusChanges)
@@ -215,9 +308,6 @@ export function useGameLoop({ actionRegistry = [], narrative = null, save = null
       const loc = game.locations[outcome.locationDiscovered]
       if (loc) loc.discovered = true
     }
-
-    // Advance time by action cost
-    await tick(action.timeCost ?? 1)
   }
 
   /**
@@ -255,17 +345,18 @@ export function useGameLoop({ actionRegistry = [], narrative = null, save = null
   }
 
   /**
-   * Call this when entering a new location (from LocationView).
-   * Refreshes the action list for the new context.
+   * Call this when the game screen mounts (new game, or a loaded save).
+   * Moves made through travel() start their scene themselves.
    */
   function onLocationEntered() {
-    _refreshActions()
+    _locationEnter()
   }
 
   return {
     tick,
     travel,
     resolvePlayerAction,
+    resolveEventChoice,
     onLocationEntered,
   }
 }

@@ -1,0 +1,546 @@
+[
+  {
+    "id": "car_treasure",
+    "title": "something from a passing car",
+    "type": "random",
+    "oneTime": false,
+    "probability": 0.04,
+    "conditions": {
+      "locationId": null,
+      "locationType": null,
+      "minHour": null,
+      "maxHour": null,
+      "minStats": null,
+      "maxStats": null,
+      "minStatus": null,
+      "maxStatus": null,
+      "requiredItems": null,
+      "requiredTraumas": null,
+      "minVisits": null
+    },
+    "narrative": {
+      "tokens": [
+        {
+          "text": "A Civic with one working headlight slows down beside you. The passenger window comes down. ",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 0,
+          "effect": "none"
+        },
+        {
+          "text": "Something hits you in the shoulder and lands on the sidewalk.",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 300,
+          "effect": "none"
+        },
+        {
+          "text": " The Civic is gone. It's a bus token. It's a treasure. Your shoulder disagrees.",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 0,
+          "effect": "none"
+        }
+      ]
+    },
+    "choices": null,
+    "outcome": {
+      "narrative": null,
+      "statusChanges": {
+        "health": -4,
+        "mood": 3
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": [
+        "bus_token"
+      ],
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "hit_by_car_objects": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "nextEventId": null
+  },
+  {
+    "id": "found_change",
+    "title": "found money",
+    "type": "random",
+    "oneTime": false,
+    "probability": 0.05,
+    "conditions": {
+      "locationId": null,
+      "locationType": null,
+      "minHour": null,
+      "maxHour": null,
+      "minStats": null,
+      "maxStats": null,
+      "minStatus": null,
+      "maxStatus": null,
+      "requiredItems": null,
+      "requiredTraumas": null,
+      "minVisits": null
+    },
+    "narrative": {
+      "tokens": [
+        {
+          "text": "There is money on the ground. Not a lot of money. Enough money that you bend down for it, which tells you something about where you are in life.",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 0,
+          "effect": "none"
+        }
+      ]
+    },
+    "choices": null,
+    "outcome": {
+      "narrative": null,
+      "statusChanges": {
+        "mood": 2
+      },
+      "statChanges": null,
+      "moneyChange": 0.6,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "change_found": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "nextEventId": null
+  },
+  {
+    "id": "rain",
+    "title": "rain",
+    "type": "random",
+    "oneTime": false,
+    "probability": 0.08,
+    "conditions": {
+      "locationId": null,
+      "locationType": null,
+      "minHour": 6,
+      "maxHour": 23,
+      "minStats": null,
+      "maxStats": null,
+      "minStatus": null,
+      "maxStatus": null,
+      "requiredItems": null,
+      "requiredTraumas": null,
+      "minVisits": null
+    },
+    "narrative": {
+      "tokens": [
+        {
+          "text": "It starts to rain. Not real rain. Portland rain, the kind that doesn't fall so much as hang around and make you damp on purpose. Everyone near you keeps walking without looking up. This is the correct response and you know it.",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 0,
+          "effect": "none"
+        }
+      ]
+    },
+    "choices": null,
+    "outcome": {
+      "narrative": null,
+      "statusChanges": {
+        "mood": -3,
+        "energy": -2
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "nextEventId": null
+  },
+  {
+    "id": "cop_hassle",
+    "title": "a cop",
+    "type": "random",
+    "oneTime": false,
+    "probability": 0.18,
+    "conditions": {
+      "locationId": null,
+      "locationType": null,
+      "minHour": 20,
+      "maxHour": null,
+      "minStats": null,
+      "maxStats": null,
+      "minStatus": null,
+      "maxStatus": {
+        "sobriety": 40
+      },
+      "requiredItems": null,
+      "requiredTraumas": null,
+      "minVisits": null
+    },
+    "narrative": {
+      "tokens": [
+        {
+          "text": "A Portland Police cruiser eases up to the curb and stays there. The window comes down. ",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 0,
+          "effect": "none"
+        },
+        {
+          "text": "\"You doing alright tonight?\"",
+          "style": "normal",
+          "color": null,
+          "speed": "slow",
+          "pauseAfter": 400,
+          "effect": "none"
+        },
+        {
+          "text": " It is not a question about your wellbeing.",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 0,
+          "effect": "none"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "label": "Be polite. Be boring.",
+        "check": {
+          "stat": "charm",
+          "dc": 24
+        },
+        "outcome": {
+          "narrative": {
+            "tokens": [
+              {
+                "text": "You say yes sir, just walking home. You say it like a person with a home. The cruiser idles for a long moment, then pulls away. You breathe out.",
+                "style": "normal",
+                "color": null,
+                "speed": "normal",
+                "pauseAfter": 0,
+                "effect": "none"
+              }
+            ]
+          },
+          "statusChanges": {
+            "mood": 4
+          },
+          "statChanges": null,
+          "moneyChange": null,
+          "itemsGained": null,
+          "itemsLost": null,
+          "eventTriggered": null,
+          "locationDiscovered": null,
+          "archetypeChanges": null,
+          "counterChanges": null,
+          "traumaGained": null,
+          "obsessionFed": null
+        },
+        "failureOutcome": {
+          "narrative": {
+            "tokens": [
+              {
+                "text": "You say yes sir and something else that was supposed to be a joke. It was not received as a joke. You get twenty minutes of questions on the curb and a warning you will not remember.",
+                "style": "normal",
+                "color": null,
+                "speed": "normal",
+                "pauseAfter": 0,
+                "effect": "none"
+              }
+            ]
+          },
+          "statusChanges": {
+            "mood": -8,
+            "energy": -6
+          },
+          "statChanges": null,
+          "moneyChange": null,
+          "itemsGained": null,
+          "itemsLost": null,
+          "eventTriggered": null,
+          "locationDiscovered": null,
+          "archetypeChanges": null,
+          "counterChanges": null,
+          "traumaGained": null,
+          "obsessionFed": null
+        }
+      },
+      {
+        "label": "Walk faster.",
+        "check": {
+          "stat": "stamina",
+          "dc": 24
+        },
+        "outcome": {
+          "narrative": {
+            "tokens": [
+              {
+                "text": "You walk faster. The cruiser keeps pace, then loses interest, then finds a Buick doing something more interesting two blocks up. Your heart is a drum solo.",
+                "style": "normal",
+                "color": null,
+                "speed": "normal",
+                "pauseAfter": 0,
+                "effect": "none"
+              }
+            ]
+          },
+          "statusChanges": {
+            "energy": -5,
+            "mood": -2
+          },
+          "statChanges": null,
+          "moneyChange": null,
+          "itemsGained": null,
+          "itemsLost": null,
+          "eventTriggered": null,
+          "locationDiscovered": null,
+          "archetypeChanges": null,
+          "counterChanges": null,
+          "traumaGained": null,
+          "obsessionFed": null
+        },
+        "failureOutcome": {
+          "narrative": {
+            "tokens": [
+              {
+                "text": "You walk faster. This is, in retrospect, a signal. The spotlight finds you. You spend forty minutes on the curb explaining that you live with your mother, which is true and does not help.",
+                "style": "normal",
+                "color": null,
+                "speed": "normal",
+                "pauseAfter": 0,
+                "effect": "none"
+              }
+            ]
+          },
+          "statusChanges": {
+            "mood": -12,
+            "energy": -10
+          },
+          "statChanges": null,
+          "moneyChange": null,
+          "itemsGained": null,
+          "itemsLost": null,
+          "eventTriggered": null,
+          "locationDiscovered": null,
+          "archetypeChanges": null,
+          "counterChanges": {
+            "times_detained": 1
+          },
+          "traumaGained": null,
+          "obsessionFed": null
+        }
+      },
+      {
+        "label": "Tell him about your art.",
+        "check": {
+          "stat": "creativity",
+          "dc": 25
+        },
+        "outcome": {
+          "narrative": {
+            "tokens": [
+              {
+                "text": "You tell him about your art. He listens for longer than anyone has listened all year. When you finish he says \"okay\" and drives off. You feel, briefly, like a professional.",
+                "style": "normal",
+                "color": null,
+                "speed": "normal",
+                "pauseAfter": 0,
+                "effect": "none"
+              }
+            ]
+          },
+          "statusChanges": {
+            "mood": 8
+          },
+          "statChanges": {
+            "reputation": 1
+          },
+          "moneyChange": null,
+          "itemsGained": null,
+          "itemsLost": null,
+          "eventTriggered": null,
+          "locationDiscovered": null,
+          "archetypeChanges": null,
+          "counterChanges": null,
+          "traumaGained": null,
+          "obsessionFed": null
+        },
+        "failureOutcome": {
+          "narrative": {
+            "tokens": [
+              {
+                "text": "You tell him about your art. It does not land. He writes something in a notebook. You hope it's a review.",
+                "style": "normal",
+                "color": null,
+                "speed": "normal",
+                "pauseAfter": 0,
+                "effect": "none"
+              }
+            ]
+          },
+          "statusChanges": {
+            "mood": -5
+          },
+          "statChanges": null,
+          "moneyChange": null,
+          "itemsGained": null,
+          "itemsLost": null,
+          "eventTriggered": null,
+          "locationDiscovered": null,
+          "archetypeChanges": null,
+          "counterChanges": null,
+          "traumaGained": null,
+          "obsessionFed": null
+        }
+      }
+    ],
+    "outcome": null,
+    "nextEventId": null
+  },
+  {
+    "id": "first_starving",
+    "title": "hunger",
+    "type": "triggered",
+    "oneTime": true,
+    "probability": null,
+    "conditions": {
+      "locationId": null,
+      "locationType": null,
+      "minHour": null,
+      "maxHour": null,
+      "minStats": null,
+      "maxStats": null,
+      "minStatus": null,
+      "maxStatus": {
+        "hunger": 15
+      },
+      "requiredItems": null,
+      "requiredTraumas": null,
+      "minVisits": null
+    },
+    "narrative": {
+      "tokens": [
+        {
+          "text": "Your stomach makes a sound like furniture being moved. ",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 200,
+          "effect": "none"
+        },
+        {
+          "text": "This is the point where hunger stops being a feeling and becomes a coworker. It follows you around. It has opinions. You should eat something. You know this. Knowing it is not the same as having a dollar.",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 0,
+          "effect": "none"
+        }
+      ]
+    },
+    "choices": null,
+    "outcome": {
+      "narrative": null,
+      "statusChanges": {
+        "mood": -6
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "times_starving": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "nextEventId": null
+  },
+  {
+    "id": "rock_bottom_echo",
+    "title": "an echo",
+    "type": "triggered",
+    "oneTime": true,
+    "probability": null,
+    "conditions": {
+      "locationId": null,
+      "locationType": null,
+      "minHour": null,
+      "maxHour": null,
+      "minStats": null,
+      "maxStats": null,
+      "minStatus": null,
+      "maxStatus": {
+        "sobriety": 25
+      },
+      "requiredItems": null,
+      "requiredTraumas": null,
+      "minVisits": null
+    },
+    "narrative": {
+      "tokens": [
+        {
+          "text": "The ground tilts and for a second you are back there, the night before, whatever the night before was. You remember the piece of wood. You remember deciding it was a nice piece of wood. ",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 0,
+          "effect": "none"
+        },
+        {
+          "text": "You do not remember why.",
+          "style": "normal",
+          "color": null,
+          "speed": "slow",
+          "pauseAfter": 0,
+          "effect": "none"
+        }
+      ]
+    },
+    "choices": null,
+    "outcome": {
+      "narrative": null,
+      "statusChanges": {
+        "mood": -5
+      },
+      "statChanges": {
+        "wits": 1
+      },
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "blackouts_remembered": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "nextEventId": null
+  }
+]

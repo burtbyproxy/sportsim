@@ -1,0 +1,136 @@
+[
+  {
+    "id": "park_acquaintance",
+    "title": "someone you know",
+    "type": "random",
+    "oneTime": false,
+    "probability": 0.12,
+    "conditions": {
+      "locationId": null,
+      "locationType": "park",
+      "minHour": 8,
+      "maxHour": 20,
+      "minStats": null,
+      "maxStats": null,
+      "minStatus": null,
+      "maxStatus": null,
+      "requiredItems": null,
+      "requiredTraumas": null,
+      "minVisits": null
+    },
+    "narrative": {
+      "tokens": [
+        {
+          "text": "Across the path: someone from before. Before what, you are not sure, but they knew you when you had a different haircut and better prospects. They have seen you. It is too late to not be here.",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 0,
+          "effect": "none"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "label": "Say hi. Commit to it.",
+        "check": {
+          "stat": "charm",
+          "dc": 24
+        },
+        "outcome": {
+          "narrative": {
+            "tokens": [
+              {
+                "text": "You say hi like a person who is doing well. It works. They tell you about a gallery in Old Town that's looking for people. You write it on your hand.",
+                "style": "normal",
+                "color": null,
+                "speed": "normal",
+                "pauseAfter": 0,
+                "effect": "none"
+              }
+            ]
+          },
+          "statusChanges": {
+            "mood": 10
+          },
+          "statChanges": {
+            "reputation": 1,
+            "charm": 1
+          },
+          "moneyChange": null,
+          "itemsGained": null,
+          "itemsLost": null,
+          "eventTriggered": null,
+          "locationDiscovered": null,
+          "archetypeChanges": null,
+          "counterChanges": null,
+          "traumaGained": null,
+          "obsessionFed": null
+        },
+        "failureOutcome": {
+          "narrative": {
+            "tokens": [
+              {
+                "text": "You say hi. It comes out wrong, too loud, a pitch that suggests you have been practising. They ask what you're up to and you say \"art\" and it hangs there between you like weather.",
+                "style": "normal",
+                "color": null,
+                "speed": "normal",
+                "pauseAfter": 0,
+                "effect": "none"
+              }
+            ]
+          },
+          "statusChanges": {
+            "mood": -6
+          },
+          "statChanges": null,
+          "moneyChange": null,
+          "itemsGained": null,
+          "itemsLost": null,
+          "eventTriggered": null,
+          "locationDiscovered": null,
+          "archetypeChanges": null,
+          "counterChanges": null,
+          "traumaGained": null,
+          "obsessionFed": null
+        }
+      },
+      {
+        "label": "Study a tree until they pass.",
+        "check": null,
+        "outcome": {
+          "narrative": {
+            "tokens": [
+              {
+                "text": "You study the tree. It is a fir. It is very tall. They pass. Nobody is fooled and nobody says so. The tree is genuinely impressive.",
+                "style": "normal",
+                "color": null,
+                "speed": "normal",
+                "pauseAfter": 0,
+                "effect": "none"
+              }
+            ]
+          },
+          "statusChanges": {
+            "mood": -2
+          },
+          "statChanges": {
+            "karma": -1
+          },
+          "moneyChange": null,
+          "itemsGained": null,
+          "itemsLost": null,
+          "eventTriggered": null,
+          "locationDiscovered": null,
+          "archetypeChanges": null,
+          "counterChanges": null,
+          "traumaGained": null,
+          "obsessionFed": null
+        },
+        "failureOutcome": null
+      }
+    ],
+    "outcome": null,
+    "nextEventId": null
+  }
+]

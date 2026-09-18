@@ -253,3 +253,44 @@ describe('resolveEvent', () => {
     expect(outcome).toBe(event.outcome)
   })
 })
+
+// --- location type conditions and failure outcomes on checked choices ---
+
+describe('event conditions — locationType', () => {
+  it('matches any location of the type', () => {
+    const event = makeEvent({ type: 'triggered', conditions: { locationType: 'bar' } })
+    const bar = { id: 'blue_parrot', type: 'bar', visitCount: 0 }
+    const park = { id: 'columbia_park', type: 'park', visitCount: 0 }
+    expect(checkTriggeredEvents(makePlayer(), bar, makeGameTime(), [event], [])).toHaveLength(1)
+    expect(checkTriggeredEvents(makePlayer(), park, makeGameTime(), [event], [])).toHaveLength(0)
+  })
+})
+
+describe('resolveEvent — checked choice with a failure outcome', () => {
+  const win = { narrative: 'Won.', statChanges: null }
+  const lose = { narrative: 'Lost.', statChanges: null }
+  const eventWith = (dc) =>
+    makeEvent({
+      choices: [{ label: 'Try', check: { stat: 'charm', dc }, outcome: win, failureOutcome: lose }],
+    })
+
+  it('a passed check yields the choice outcome', () => {
+    const { outcome, diceResult } = resolveEvent(eventWith(1), makePlayer(), 0, seededRandom(1))
+    expect(diceResult.success).toBe(true)
+    expect(outcome).toBe(win)
+  })
+
+  it('a failed check yields the failure outcome', () => {
+    const { outcome, diceResult } = resolveEvent(eventWith(999), makePlayer(), 0, seededRandom(1))
+    expect(diceResult.success).toBe(false)
+    expect(outcome).toBe(lose)
+  })
+
+  it('a failed check without a failure outcome falls back to the choice outcome', () => {
+    const event = makeEvent({
+      choices: [{ label: 'Try', check: { stat: 'charm', dc: 999 }, outcome: win }],
+    })
+    const { outcome } = resolveEvent(event, makePlayer(), 0, seededRandom(1))
+    expect(outcome).toBe(win)
+  })
+})

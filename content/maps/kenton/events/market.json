@@ -1,0 +1,54 @@
+[
+  {
+    "id": "market_clerk_watch",
+    "title": "the clerk",
+    "type": "random",
+    "oneTime": false,
+    "probability": 0.1,
+    "conditions": {
+      "locationId": null,
+      "locationType": "market",
+      "minHour": null,
+      "maxHour": null,
+      "minStats": null,
+      "maxStats": null,
+      "minStatus": null,
+      "maxStatus": null,
+      "requiredItems": null,
+      "requiredTraumas": null,
+      "minVisits": null
+    },
+    "narrative": {
+      "tokens": [
+        {
+          "text": "The clerk is watching you. Not in a hostile way. In the way of a person who has watched a thousand people who look like you and has developed a taxonomy. You are being classified. You straighten up, which does not help your category.",
+          "style": "normal",
+          "color": null,
+          "speed": "normal",
+          "pauseAfter": 0,
+          "effect": "none"
+        }
+      ]
+    },
+    "choices": null,
+    "outcome": {
+      "narrative": null,
+      "statusChanges": {
+        "mood": -2
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "times_profiled": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "nextEventId": null
+  }
+]
