@@ -32,11 +32,22 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": [
-    "steak_bites_bare",
-    "amateur_night_bare"
-  ],
+  "actionIds": ["steak_bites_bare", "amateur_night_bare"],
   "scavengeTableId": "bar_back",
+  "surfaces": [
+    {
+      "id": "bathroom_wall",
+      "name": "the bathroom wall",
+      "pieceAs": "on the bathroom wall at the Dancin' Bare",
+      "mediumIds": ["tagging", "writing", "drawing"]
+    },
+    {
+      "id": "pool_table_rail",
+      "name": "the rail of the zig-zag pool table",
+      "pieceAs": "into the rail of a zig-zag pool table",
+      "mediumIds": ["carving"]
+    }
+  ],
   "discovered": false,
   "availability": {
     "openHour": 11,

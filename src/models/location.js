@@ -34,7 +34,32 @@ export function createLocation(data) {
     scavengeTableId: data.scavengeTableId ?? null,
     // How picked-over the place is, and when it was last worked. See engine/scavenge.js.
     scavenge: data.scavenge ? { ...data.scavenge } : { depletion: 0, updatedAtTick: 0 },
+    // What the place itself offers to work on: a wall, a table, a corner to stand in.
+    surfaces: Array.isArray(data.surfaces)
+      ? data.surfaces.map((s) => ({ ...s, mediumIds: [...(s.mediumIds ?? [])] }))
+      : [],
+    // Everything the player ever left here, fresh or gone over. See engine/making.js.
+    marks: Array.isArray(data.marks) ? data.marks.map((m) => ({ ...m })) : [],
   }
+}
+
+/**
+ * A location as a save remembers it, rebuilt on today's definition. What a
+ * place IS comes from content; what HAPPENED there comes from the save. A
+ * save from before the place learned something new picks it up on load.
+ *
+ * @param {{ definition: Object, saved: Object|null }} input
+ * @returns {import('./types').Location}
+ */
+export function locationRestore({ definition, saved }) {
+  if (!saved) return createLocation(definition)
+  return createLocation({
+    ...definition,
+    discovered: saved.discovered ?? definition.discovered,
+    visitCount: saved.visitCount,
+    scavenge: saved.scavenge,
+    marks: saved.marks,
+  })
 }
 
 /**

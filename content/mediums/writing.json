@@ -2,5 +2,17 @@
   "id": "writing",
   "display": "Writing",
   "stat": "wits",
-  "description": "Poems, letters that should not be sent, manifestos on bar napkins."
+  "description": "Poems, letters that should not be sent, manifestos on bar napkins.",
+  "pieceAs": "a few lines",
+  "making": {
+    "ticksTotal": 2,
+    "dc": 11,
+    "xp": 6,
+    "toolRequired": true,
+    "takesIngredient": false,
+    "leavesArtifact": true,
+    "statusChanges": {
+      "energy": -1
+    }
+  }
 }

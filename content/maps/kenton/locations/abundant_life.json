@@ -32,11 +32,22 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": [
-    "food_pantry_abundant_life",
-    "sit_in_back_abundant_life"
-  ],
+  "actionIds": ["food_pantry_abundant_life", "sit_in_back_abundant_life"],
   "scavengeTableId": "lot",
+  "surfaces": [
+    {
+      "id": "sign_back",
+      "name": "the back of the weekly sign",
+      "pieceAs": "on the back of the Abundant Life sign",
+      "mediumIds": ["tagging", "writing"]
+    },
+    {
+      "id": "sidewalk_pulpit",
+      "name": "the sidewalk out front",
+      "pieceAs": "on the sidewalk outside a storefront church",
+      "mediumIds": ["performance", "drawing"]
+    }
+  ],
   "discovered": false,
   "availability": {
     "openHour": 8,

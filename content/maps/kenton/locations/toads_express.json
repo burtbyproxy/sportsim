@@ -38,11 +38,22 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": [
-    "buy_cigarettes_toads",
-    "bum_smoke_toads"
-  ],
+  "actionIds": ["buy_cigarettes_toads", "bum_smoke_toads"],
   "scavengeTableId": "lot",
+  "surfaces": [
+    {
+      "id": "bulletproof_glass",
+      "name": "the bulletproof glass",
+      "pieceAs": "on the bulletproof glass at Toad's Express",
+      "mediumIds": ["tagging", "drawing"]
+    },
+    {
+      "id": "pump_island",
+      "name": "the pump island",
+      "pieceAs": "on the pump island at Toad's Express",
+      "mediumIds": ["tagging"]
+    }
+  ],
   "discovered": false,
   "availability": {
     "openHour": 0,

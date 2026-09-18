@@ -40,7 +40,25 @@
   "npcSlots": [],
   "actionIds": ["raid_fridge", "stare_at_ceiling", "sleep"],
   "scavengeTableId": "basement",
+  "surfaces": [
+    {
+      "id": "basement_wall",
+      "name": "the basement wall",
+      "pieceAs": "on the wall of your mother's basement",
+      "mediumIds": ["painting", "drawing", "tagging", "writing"]
+    },
+    {
+      "id": "cot_side",
+      "name": "the basement, to Dave",
+      "pieceAs": "in your mother's basement, for the cat",
+      "mediumIds": ["performance"]
+    }
+  ],
   "discovered": true,
-  "availability": { "openHour": 0, "closeHour": 23, "closedMessage": null },
+  "availability": {
+    "openHour": 0,
+    "closeHour": 23,
+    "closedMessage": null
+  },
   "visitCount": 0
 }

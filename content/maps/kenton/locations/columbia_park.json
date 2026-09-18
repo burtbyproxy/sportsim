@@ -40,7 +40,31 @@
   "npcSlots": ["vernon", "maurice"],
   "actionIds": ["sit_on_bench", "look_for_change"],
   "scavengeTableId": "park",
+  "surfaces": [
+    {
+      "id": "picnic_table",
+      "name": "a picnic table",
+      "pieceAs": "into a picnic table in Columbia Park",
+      "mediumIds": ["carving", "drawing", "writing"]
+    },
+    {
+      "id": "restroom_wall",
+      "name": "the restroom building",
+      "pieceAs": "on the restroom building in Columbia Park",
+      "mediumIds": ["tagging", "painting"]
+    },
+    {
+      "id": "under_the_firs",
+      "name": "the clearing under the firs",
+      "pieceAs": "under the firs in Columbia Park",
+      "mediumIds": ["performance"]
+    }
+  ],
   "discovered": false,
-  "availability": { "openHour": 0, "closeHour": 23, "closedMessage": null },
+  "availability": {
+    "openHour": 0,
+    "closeHour": 23,
+    "closedMessage": null
+  },
   "visitCount": 0
 }

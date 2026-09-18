@@ -8,7 +8,7 @@ const SAVE_INDEX_KEY = 'sportsim_saves'
  * Current save format version.
  * Bump this whenever the save shape changes in a breaking way.
  */
-export const SAVE_VERSION = 4
+export const SAVE_VERSION = 5
 
 /**
  * Maximum number of save slots.
@@ -67,6 +67,8 @@ export function validateSave(data) {
  * everyone wakes up sober with an empty blend.
  * v2 → v3: the skill grid. Nobody had trained anything, so it is empty.
  * v3 → v4: the inspiration log. Nothing had struck yet, so it is empty.
+ * v4 → v5: making. Nobody had made anything: no makings, no experiences, an
+ * empty portfolio, and no marks on any location.
  *
  * @param {{ save: Object }} input
  * @returns {Object}
@@ -95,6 +97,17 @@ export function saveMigrate({ save }) {
       if (subject) subject.inspirations = []
     }
     migrated.version = 4
+  }
+  if (migrated.version < 5) {
+    if (migrated.player) {
+      migrated.player.makings = []
+      migrated.player.experiences = []
+      migrated.player.portfolio = []
+    }
+    for (const location of Object.values(migrated.locations ?? {})) {
+      if (location) location.marks = []
+    }
+    migrated.version = 5
   }
   return migrated
 }

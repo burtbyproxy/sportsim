@@ -137,7 +137,7 @@ const sortedActions = computed(() => {
 const exits = computed(() => game.currentLocation?.exits ?? [])
 
 function canTravel(exit) {
-  if (!exit) return false
+  if (!exit || game.makingActive) return false
   const dest = game.locations[exit.locationId]
   if (!dest) return false
   if (!isOpen(dest, game.time.hour)) return false
@@ -145,6 +145,7 @@ function canTravel(exit) {
 }
 
 function travelBlockReason(exit) {
+  if (game.makingActive) return 'you are in the middle of something'
   const dest = game.locations[exit.locationId]
   if (!dest) return 'unknown destination'
   if (!isOpen(dest, game.time.hour)) {
@@ -179,6 +180,7 @@ async function executeAction(action) {
 
 function disabledReason(action) {
   if (!game.player) return 'not available'
+  if (action.unavailableReason) return action.unavailableReason
   const { meets, reason } = meetsRequirements(game.player, action, game.time)
   if (!meets && reason) return reason
   return 'not available'
@@ -289,7 +291,8 @@ useKeyboard({
   padding: 5px 8px;
   text-align: left;
   display: flex;
-  justify-content: space-between;
+  // The time cost pushes itself right; an entry without one stays left.
+  justify-content: flex-start;
   align-items: center;
   transition:
     border-color 150ms ease,

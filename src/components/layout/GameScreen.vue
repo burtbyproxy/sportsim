@@ -38,6 +38,13 @@
           >
             inventory
           </button>
+          <button
+            class="sidebar-tab"
+            :class="{ 'sidebar-tab--active': activeTab === 'work' }"
+            @click="activeTab = 'work'"
+          >
+            work
+          </button>
         </div>
 
         <!-- Status tab -->
@@ -114,6 +121,25 @@
                 <span v-if="item.quantity > 1" class="status-inventory__quantity">
                   ×{{ item.quantity }}
                 </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Work tab — everything the player has made, as they see it -->
+        <div v-if="activeTab === 'work'" class="sidebar-panel sidebar-panel--work">
+          <div class="status-section status-section--grow">
+            <div class="status-section__label">made</div>
+            <div v-if="game.playerWorks.length === 0" class="status-inventory-empty">nothing</div>
+            <ul v-else class="status-works">
+              <li
+                v-for="work in game.playerWorks"
+                :key="work.id"
+                class="status-works__item"
+                :title="work.artistText"
+              >
+                <span class="status-works__text">{{ work.workText }}</span>
+                <span class="status-works__whereabouts">{{ work.whereabouts }}</span>
               </li>
             </ul>
           </div>
@@ -429,6 +455,31 @@ function useItem(item) {
 
 .status-inventory__quantity {
   color: $color-text-muted;
+}
+
+// Work
+
+.status-works {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: $font-mono;
+  font-size: $font-size-sm;
+}
+
+.status-works__item {
+  display: flex;
+  flex-direction: column;
+  padding: 0.3rem 0;
+}
+
+.status-works__text {
+  color: $color-text-primary;
+}
+
+.status-works__whereabouts {
+  color: $color-text-muted;
+  font-style: italic;
 }
 
 .status-inventory-empty {

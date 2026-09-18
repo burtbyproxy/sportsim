@@ -1,0 +1,53 @@
+[
+  {
+    "id": "make_something",
+    "label": "Make something",
+    "locationId": "any",
+    "kind": "make",
+    "timeCost": 0,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": null,
+      "maxHour": null,
+      "minVisits": null,
+      "minMoney": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null,
+      "requiresInspiration": true
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You take stock of what you've got and what's in reach. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": null,
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null,
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 40,
+    "obsessionIds": []
+  }
+]

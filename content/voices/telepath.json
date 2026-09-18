@@ -7,6 +7,10 @@
     "inspiration.status.fading": "genius, still incoming",
     "scavenge.found": "There: {item}. It was calling you. You heard it from across the street.",
     "scavenge.picked_clean": "Everything here already told you everything it knows.",
-    "item.used": "The {item} is gone. You are fairly sure you're the one who had it."
+    "item.used": "The {item} is gone. You are fairly sure you're the one who had it.",
+    "making.working": "You keep at it. It's telling you where it wants the next part. It has a lot of opinions.",
+    "piece.artist.solid": "Done: {work}. It knows what it is. It told you.",
+    "piece.artist.rough": "Done: {work}. Genius. The worst parts are the most genius parts. Anyone could see that. Everyone can; you can hear them.",
+    "piece.artist.botched": "It was going to be {work}, and now it's something nobody has a word for, which is how you know it's important."
   }
 }

@@ -31,17 +31,23 @@
       "requirements": null
     }
   ],
-  "npcSlots": [
-    "larry",
-    "tyler",
-    "dennis",
-    "maurice"
-  ],
-  "actionIds": [
-    "play_pool_mouse_trap",
-    "smoke_out_front_mouse_trap"
-  ],
+  "npcSlots": ["larry", "tyler", "dennis", "maurice"],
+  "actionIds": ["play_pool_mouse_trap", "smoke_out_front_mouse_trap"],
   "scavengeTableId": "bar_back",
+  "surfaces": [
+    {
+      "id": "pool_table_rail",
+      "name": "the rail of the far pool table",
+      "pieceAs": "into the rail of a pool table at the Mouse Trap",
+      "mediumIds": ["carving"]
+    },
+    {
+      "id": "bathroom_wall",
+      "name": "the bathroom wall",
+      "pieceAs": "on the bathroom wall at the Mouse Trap",
+      "mediumIds": ["tagging", "writing", "drawing"]
+    }
+  ],
   "discovered": false,
   "availability": {
     "openHour": 11,
