@@ -41,10 +41,14 @@
         v-for="(exit, i) in exits"
         :key="exit.locationId"
         class="action-item action-item--exit"
-        :class="{ 'action-item--disabled': !canTravel(exit) }"
+        :class="{
+          'action-item--disabled': !canTravel(exit),
+          'action-item--selected': navIndex === sortedActions.length + i,
+        }"
         :disabled="!canTravel(exit)"
         :title="canTravel(exit) ? formatTravelTime(exit.travelTime) : travelBlockReason(exit)"
         @click="travel(exit)"
+        @mouseenter="navIndex = sortedActions.length + i"
       >
         <span class="action-shortcut action-shortcut--exit">{{ exitKey(i) }}.</span>
         {{ exit.label }}
@@ -62,7 +66,8 @@ import { useGameStore } from '../../stores/game.js'
 import { meetsRequirements } from '../../engine/actions.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
 import { useKeyboardNav } from '../../composables/useKeyboardNav.js'
-import { isOpen } from '../../models/location.js'
+import { isOpen, exitMeetsRequirements } from '../../models/location.js'
+import { menuEntriesBuild, EXIT_KEYS } from '../../utils/menu.js'
 
 const game = useGameStore()
 const gameLoop = inject('gameLoop')
@@ -105,8 +110,6 @@ const sortedActions = computed(() => {
 
 // ── Exits (injected from GameScreen which reads from game store) ─────────────
 
-const EXIT_KEYS = 'abcdefghijklmnopqrstuvwxyz'
-
 const exits = computed(() => game.currentLocation?.exits ?? [])
 
 function exitKey(index) {
@@ -118,8 +121,7 @@ function canTravel(exit) {
   const dest = game.locations[exit.locationId]
   if (!dest) return false
   if (!isOpen(dest, game.time.hour)) return false
-  if (exit.requirements) return false
-  return true
+  return exitMeetsRequirements({ exit, player: game.player, gameTime: game.time }).meets
 }
 
 function travelBlockReason(exit) {
@@ -177,18 +179,32 @@ function formatTimeCost(ticks) {
 
 // ── Keyboard navigation ──────────────────────────────────────────────────────
 
+// Arrow keys and Enter walk one list: actions first, then exits.
+const menuEntries = computed(() =>
+  menuEntriesBuild({ actions: sortedActions.value, exits: exits.value, exitAvailable: canTravel })
+)
+
 const {
   selectedIndex: navIndex,
   onKeydown: navKeydown,
   clamp,
-} = useKeyboardNav(sortedActions, {
-  onSelect: (action) => executeAction(action),
-  skip: (action) => !action.available,
+} = useKeyboardNav(menuEntries, {
+  onSelect: (entry) => {
+    if (entry.kind === 'action') executeAction(entry.action)
+    else travel(entry.exit)
+  },
+  skip: (entry) => !entry.available,
   loop: true,
 })
 
-// Reset nav index when actions change
-watch(sortedActions, () => clamp())
+// Keep the highlight valid when the list changes, and start from the top at a new place
+watch(menuEntries, () => clamp())
+watch(
+  () => game.currentLocationId,
+  () => {
+    navIndex.value = 0
+  }
+)
 
 // Number keys 1–9 for action shortcuts, arrow keys + enter for nav.
 // useKeyboard handles input exclusion and repeat filtering automatically.

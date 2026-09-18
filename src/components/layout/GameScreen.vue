@@ -132,7 +132,7 @@ provide('narrative', narrative)
 // Space skips the running narrative from anywhere on the screen
 useKeyboard(narrativeSkipBindings({ narrative }))
 
-const gameLoop = useGameLoop(actionRegistry)
+const gameLoop = useGameLoop({ actionRegistry, narrative })
 provide('gameLoop', gameLoop)
 
 // Selected character — set by LocationView when player clicks a character,
