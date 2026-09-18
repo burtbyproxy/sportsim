@@ -112,7 +112,12 @@ describe('meetsRequirements', () => {
 
   it('passes when required trauma present', () => {
     const player = makePlayer({
-      psyche: { traumas: [{ id: 'mugged', effects: {} }], obsessions: [], insanities: [], abilities: [] },
+      psyche: {
+        traumas: [{ id: 'mugged', effects: {} }],
+        obsessions: [],
+        insanities: [],
+        abilities: [],
+      },
     })
     const action = makeAction({ requirements: { requiredTraumas: ['mugged'] } })
     const { meets } = meetsRequirements(player, action, makeGameTime())
@@ -145,9 +150,7 @@ describe('getAvailableActions', () => {
 
   it('filters out actions where requirements not met', () => {
     const location = { id: 'bar', actionIds: ['vip_entrance'] }
-    const registry = [
-      makeAction({ id: 'vip_entrance', requirements: { minStats: { charm: 50 } } }),
-    ]
+    const registry = [makeAction({ id: 'vip_entrance', requirements: { minStats: { charm: 50 } } })]
     const result = getAvailableActions(makePlayer(), location, makeGameTime(), registry)
     expect(result).toHaveLength(0)
   })
@@ -168,7 +171,9 @@ describe('getAvailableActions', () => {
   it('boosts weight for actions matching active obsessions', () => {
     const player = makePlayer({
       psyche: {
-        traumas: [], insanities: [], abilities: [],
+        traumas: [],
+        insanities: [],
+        abilities: [],
         obsessions: [{ id: 'drinking', strength: 100, relatedActions: ['drink'], effects: {} }],
       },
     })
@@ -205,7 +210,9 @@ describe('resolveAction', () => {
 
   it('returns success outcome on passing check', () => {
     // Force success: stat=charm(10), dc=1, any roll passes
-    const action = makeAction({ check: { stat: 'charm', dc: 1, opposedStat: null, opposedNpcId: null } })
+    const action = makeAction({
+      check: { stat: 'charm', dc: 1, opposedStat: null, opposedNpcId: null },
+    })
     const result = resolveAction(makePlayer(), action, makeGameTime(), [], seededRandom(1))
     expect(result.diceResult).toBeTruthy()
     // Result depends on roll but dc=1, charm=10, should almost always succeed
@@ -216,7 +223,9 @@ describe('resolveAction', () => {
 
   it('returns failure outcome on failing check', () => {
     // Force failure: stat=charm(10), dc=100, impossible to pass
-    const action = makeAction({ check: { stat: 'charm', dc: 100, opposedStat: null, opposedNpcId: null } })
+    const action = makeAction({
+      check: { stat: 'charm', dc: 100, opposedStat: null, opposedNpcId: null },
+    })
     const result = resolveAction(makePlayer(), action, makeGameTime(), [], seededRandom(1))
     // Only a natural 1 is a crit fail, otherwise just failure
     expect(result.success).toBe(false)
@@ -229,7 +238,7 @@ describe('resolveAction', () => {
       check: { stat: 'charm', dc: 1, opposedStat: null, opposedNpcId: null },
       criticalSuccess: critSuccessOutcome,
     })
-    const alwaysMax = () => 0.9999  // natural 20
+    const alwaysMax = () => 0.9999 // natural 20
     const result = resolveAction(makePlayer(), action, makeGameTime(), [], alwaysMax)
     expect(result.outcome).toBe(critSuccessOutcome)
   })
@@ -240,13 +249,18 @@ describe('resolveAction', () => {
       check: { stat: 'charm', dc: 1, opposedStat: null, opposedNpcId: null },
       criticalFailure: critFailOutcome,
     })
-    const alwaysMin = () => 0  // natural 1
+    const alwaysMin = () => 0 // natural 1
     const result = resolveAction(makePlayer(), action, makeGameTime(), [], alwaysMin)
     expect(result.outcome).toBe(critFailOutcome)
   })
 
   it('handles contested roll when NPC is present', () => {
-    const npc = { id: 'bartender', stats: { charm: { base: 8, modifiers: [], xp: 0 } }, status: { sobriety: 100, energy: 80, mood: 50 }, psyche: { traumas: [], abilities: [] } }
+    const npc = {
+      id: 'bartender',
+      stats: { charm: { base: 8, modifiers: [], xp: 0 } },
+      status: { sobriety: 100, energy: 80, mood: 50 },
+      psyche: { traumas: [], abilities: [] },
+    }
     const action = makeAction({
       check: { stat: 'charm', dc: 0, opposedStat: 'charm', opposedNpcId: 'bartender' },
     })

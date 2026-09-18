@@ -149,8 +149,8 @@ function _calculateAlteredStateModifier(player, statName) {
     const statusValue = status[statusKey]
     if (statusValue === undefined) continue
 
-    let overrideValue = null  // set if an override threshold matches
-    let lastNonOverride = 0   // last matching non-override value
+    let overrideValue = null // set if an override threshold matches
+    let lastNonOverride = 0 // last matching non-override value
 
     for (const threshold of thresholds) {
       const matches =

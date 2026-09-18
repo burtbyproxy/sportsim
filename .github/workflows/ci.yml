@@ -23,6 +23,7 @@ jobs:
           go-version: '1.25'
       - run: npm ci
       - run: npm run lint
+      - run: npm run format:check
       - run: npx vitest run
       - run: go install codeberg.org/galaxi/boundary-first-development/cmd/bfd@latest
       - run: "$(go env GOPATH)/bin/bfd conform"

@@ -33,9 +33,7 @@ export function pickVariant(variants, context = {}) {
 
   // Direct context key match — check each context key to see if it's a variant name
   // Priority: explicit boolean/truthy context flags first
-  const directKeys = Object.keys(context).filter(
-    (k) => k in variants && context[k]
-  )
+  const directKeys = Object.keys(context).filter((k) => k in variants && context[k])
   if (directKeys.length > 0) {
     return variants[directKeys[0]]
   }

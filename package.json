@@ -10,6 +10,7 @@
     "test": "vitest",
     "lint": "eslint src --ext .js,.vue",
     "format": "prettier --write \"src/**/*.{js,vue,scss}\"",
+    "format:check": "prettier --check \"src/**/*.{js,vue,scss}\"",
     "prepare": "husky"
   },
   "lint-staged": {

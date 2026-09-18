@@ -84,7 +84,13 @@ describe('resolveSchedule', () => {
   const schedule = {
     entries: [
       { locationId: 'work', startHour: 9, endHour: 17, probability: 0.95, days: ['all'] },
-      { locationId: 'bar', startHour: 17, endHour: 23, probability: 0.8, days: ['friday', 'saturday'] },
+      {
+        locationId: 'bar',
+        startHour: 17,
+        endHour: 23,
+        probability: 0.8,
+        days: ['friday', 'saturday'],
+      },
       { locationId: 'home', startHour: 23, endHour: 9, probability: 0.99, days: ['all'] },
     ],
   }
@@ -158,7 +164,9 @@ describe('isInTransit', () => {
   })
 
   it('returns false for single-entry schedule', () => {
-    const single = { entries: [{ locationId: 'home', startHour: 0, endHour: 24, probability: 1, days: ['all'] }] }
+    const single = {
+      entries: [{ locationId: 'home', startHour: 0, endHour: 24, probability: 1, days: ['all'] }],
+    }
     expect(isInTransit(single, 12, 30)).toBe(false)
   })
 })

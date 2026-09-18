@@ -63,11 +63,16 @@ export function evaluateCondition(condition, gameState, metaState = {}) {
  */
 function _compareOp(actual, op, value) {
   switch (op) {
-    case '>=': return actual >= value
-    case '<=': return actual <= value
-    case '==': return actual == value  // intentional loose equality for flexibility
-    case '!=': return actual != value
-    default: return false
+    case '>=':
+      return actual >= value
+    case '<=':
+      return actual <= value
+    case '==':
+      return actual == value // intentional loose equality for flexibility
+    case '!=':
+      return actual != value
+    default:
+      return false
   }
 }
 
@@ -85,15 +90,11 @@ export function evaluateTrigger(trigger, gameState, metaState = {}) {
   }
 
   if (trigger.type === 'all') {
-    return trigger.conditions.every((cond) =>
-      evaluateCondition(cond, gameState, metaState)
-    )
+    return trigger.conditions.every((cond) => evaluateCondition(cond, gameState, metaState))
   }
 
   if (trigger.type === 'any') {
-    return trigger.conditions.some((cond) =>
-      evaluateCondition(cond, gameState, metaState)
-    )
+    return trigger.conditions.some((cond) => evaluateCondition(cond, gameState, metaState))
   }
 
   return false

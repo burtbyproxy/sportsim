@@ -107,8 +107,7 @@ export const useGameStore = defineStore('game', {
         this.player.currentLocationId = locationId
       }
       if (this.locations[locationId]) {
-        this.locations[locationId].visitCount =
-          (this.locations[locationId].visitCount ?? 0) + 1
+        this.locations[locationId].visitCount = (this.locations[locationId].visitCount ?? 0) + 1
       }
     },
 
@@ -123,10 +122,7 @@ export const useGameStore = defineStore('game', {
       for (const [key, delta] of Object.entries(changes)) {
         if (key === 'money') continue // use adjustMoney
         if (key in this.player.status) {
-          this.player.status[key] = Math.max(
-            0,
-            Math.min(100, this.player.status[key] + delta)
-          )
+          this.player.status[key] = Math.max(0, Math.min(100, this.player.status[key] + delta))
         }
       }
     },

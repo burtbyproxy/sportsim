@@ -130,7 +130,7 @@ describe('calculateModifier', () => {
 
     it('applies mood penalties when mood < 20 (charm down, creativity up)', () => {
       const player = makePlayer({ status: { ...makePlayer().status, mood: 15 } })
-      expect(calculateModifier(player, 'charm')).toBe(5)   // 10 - 5
+      expect(calculateModifier(player, 'charm')).toBe(5) // 10 - 5
       expect(calculateModifier(player, 'creativity')).toBe(13) // 10 + 3
     })
 
@@ -217,7 +217,7 @@ describe('rollCheck', () => {
   })
 
   it('adds extra modifiers to the total', () => {
-    const alwaysMin = () => 0  // natural = 1
+    const alwaysMin = () => 0 // natural = 1
     const player = makePlayer()
     const result = rollCheck(player, 'charm', [5, 5], 1, alwaysMin)
     // natural 1 + charm 10 + extra 10 = 21
@@ -264,7 +264,7 @@ describe('rollContested', () => {
   })
 
   it('tie when totals are equal', () => {
-    const alwaysSame = () => 0.5  // same roll, same stat base
+    const alwaysSame = () => 0.5 // same roll, same stat base
     const player1 = makePlayer()
     const player2 = makePlayer()
     const result = rollContested(player1, [], 'charm', player2, [], 'charm', alwaysSame)

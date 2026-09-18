@@ -29,9 +29,7 @@ export function meetsRequirements(player, action, gameTime) {
   // Item requirements
   if (req.requiredItems) {
     for (const itemId of req.requiredItems) {
-      const hasItem = player.inventory?.some(
-        (i) => i.id === itemId && i.quantity > 0
-      )
+      const hasItem = player.inventory?.some((i) => i.id === itemId && i.quantity > 0)
       if (!hasItem) {
         return { meets: false, reason: `Requires item: ${itemId}` }
       }
@@ -212,8 +210,12 @@ export function resolveAction(player, action, gameTime, npcs = [], rng = Math.ra
     }
 
     const { winner, result1 } = rollContested(
-      player, [], check.stat,
-      npc, [], check.opposedStat,
+      player,
+      [],
+      check.stat,
+      npc,
+      [],
+      check.opposedStat,
       rng
     )
 

@@ -52,27 +52,59 @@ describe('evaluateCondition', () => {
 
   it('evaluates counter condition', () => {
     const gs = makeGameState()
-    expect(evaluateCondition({ type: 'counter', key: 'fights_won', op: '>=', value: 3 }, gs)).toBe(true)
-    expect(evaluateCondition({ type: 'counter', key: 'fights_won', op: '>=', value: 5 }, gs)).toBe(false)
+    expect(evaluateCondition({ type: 'counter', key: 'fights_won', op: '>=', value: 3 }, gs)).toBe(
+      true
+    )
+    expect(evaluateCondition({ type: 'counter', key: 'fights_won', op: '>=', value: 5 }, gs)).toBe(
+      false
+    )
   })
 
   it('evaluates event_completed condition', () => {
     const gs = makeGameState()
-    expect(evaluateCondition({ type: 'event_completed', key: 'bar_fight_event', op: '==', value: true }, gs)).toBe(true)
-    expect(evaluateCondition({ type: 'event_completed', key: 'missing_event', op: '==', value: true }, gs)).toBe(false)
+    expect(
+      evaluateCondition(
+        { type: 'event_completed', key: 'bar_fight_event', op: '==', value: true },
+        gs
+      )
+    ).toBe(true)
+    expect(
+      evaluateCondition(
+        { type: 'event_completed', key: 'missing_event', op: '==', value: true },
+        gs
+      )
+    ).toBe(false)
   })
 
   it('evaluates location_discovered condition', () => {
     const gs = makeGameState()
-    expect(evaluateCondition({ type: 'location_discovered', key: 'mock_crest', op: '==', value: true }, gs)).toBe(true)
-    expect(evaluateCondition({ type: 'location_discovered', key: 'secret_spot', op: '==', value: true }, gs)).toBe(false)
+    expect(
+      evaluateCondition(
+        { type: 'location_discovered', key: 'mock_crest', op: '==', value: true },
+        gs
+      )
+    ).toBe(true)
+    expect(
+      evaluateCondition(
+        { type: 'location_discovered', key: 'secret_spot', op: '==', value: true },
+        gs
+      )
+    ).toBe(false)
   })
 
   it('evaluates death_by condition', () => {
     const gs = makeGameState()
-    const meta = makeMetaState({ completedRuns: [{ endType: 'arrest', daysPlayed: 5, dominantArchetype: 'drunk', timestamp: 1 }] })
-    expect(evaluateCondition({ type: 'death_by', key: 'arrest', op: '==', value: true }, gs, meta)).toBe(true)
-    expect(evaluateCondition({ type: 'death_by', key: 'fame', op: '==', value: true }, gs, meta)).toBe(false)
+    const meta = makeMetaState({
+      completedRuns: [
+        { endType: 'arrest', daysPlayed: 5, dominantArchetype: 'drunk', timestamp: 1 },
+      ],
+    })
+    expect(
+      evaluateCondition({ type: 'death_by', key: 'arrest', op: '==', value: true }, gs, meta)
+    ).toBe(true)
+    expect(
+      evaluateCondition({ type: 'death_by', key: 'fame', op: '==', value: true }, gs, meta)
+    ).toBe(false)
   })
 
   it('evaluates run_completed condition', () => {
@@ -83,13 +115,19 @@ describe('evaluateCondition', () => {
         { endType: 'arrest', daysPlayed: 7 },
       ],
     })
-    expect(evaluateCondition({ type: 'run_completed', key: 'runs', op: '>=', value: 2 }, gs, meta)).toBe(true)
-    expect(evaluateCondition({ type: 'run_completed', key: 'runs', op: '>=', value: 5 }, gs, meta)).toBe(false)
+    expect(
+      evaluateCondition({ type: 'run_completed', key: 'runs', op: '>=', value: 2 }, gs, meta)
+    ).toBe(true)
+    expect(
+      evaluateCondition({ type: 'run_completed', key: 'runs', op: '>=', value: 5 }, gs, meta)
+    ).toBe(false)
   })
 
   it('returns false for unknown condition type', () => {
     const gs = makeGameState()
-    expect(evaluateCondition({ type: 'unknown_type', key: 'x', op: '>=', value: 0 }, gs)).toBe(false)
+    expect(evaluateCondition({ type: 'unknown_type', key: 'x', op: '>=', value: 0 }, gs)).toBe(
+      false
+    )
   })
 })
 

@@ -18,7 +18,14 @@ import { inject } from 'vue'
 import { useGameStore } from '../stores/game.js'
 import { resolveAction, getAvailableActions } from '../engine/actions.js'
 import { getStatDecayEffects } from '../engine/stats.js'
-import { tickModifiers, addItem, removeItem, feedObsession, updateArchetypeScore, incrementCounter } from '../models/player.js'
+import {
+  tickModifiers,
+  addItem,
+  removeItem,
+  feedObsession,
+  updateArchetypeScore,
+  incrementCounter,
+} from '../models/player.js'
 import { generateActionNarrative } from './useNarrative.js'
 import { sim } from '../workers/simulation-api.js'
 
