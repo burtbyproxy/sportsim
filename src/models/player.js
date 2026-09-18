@@ -7,31 +7,12 @@
 import { v4 as uuidv4 } from 'uuid'
 import { blendSober, sobrietyDerive } from '../engine/blend.js'
 import { STAT_IDS_DEFAULT } from './defaults.js'
+import { numberClamp } from '../utils/number.js'
+import { randomInt } from '../utils/random.js'
 
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
-
-/**
- * Clamp a number between min and max (inclusive).
- * @param {number} value
- * @param {number} min
- * @param {number} max
- * @returns {number}
- */
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value))
-}
-
-/**
- * Return a random integer between min and max (inclusive).
- * @param {number} min
- * @param {number} max
- * @returns {number}
- */
-function randInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min
-}
 
 /**
  * Create a blank Stat object.
@@ -72,7 +53,7 @@ export const START_MONEY = PLAYER_START_DEFAULTS.money
  */
 export function createPlayer(name, start = PLAYER_START_DEFAULTS) {
   const begin = { ...PLAYER_START_DEFAULTS, ...start }
-  const roll = () => createStat(randInt(begin.statRoll.min, begin.statRoll.max))
+  const roll = () => createStat(randomInt({ min: begin.statRoll.min, max: begin.statRoll.max }))
   return {
     id: uuidv4(),
     name,
@@ -213,7 +194,7 @@ export function adjustMoney(player, delta) {
 export function feedObsession(player, obsessionId, amount) {
   const obs = player.psyche.obsessions.find((o) => o.id === obsessionId)
   if (!obs) return
-  obs.strength = clamp(obs.strength + amount, 0, 100)
+  obs.strength = numberClamp({ value: obs.strength + amount, min: 0, max: 100 })
 }
 
 /**

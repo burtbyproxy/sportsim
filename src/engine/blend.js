@@ -13,8 +13,9 @@
  * takes a single input struct and returns a result struct (ok/data/error).
  */
 
-import { roll } from '../utils/random.js'
+import { randomInt } from '../utils/random.js'
 import { resultOk, resultFail } from './result.js'
+import { numberClamp, numberRound } from '../utils/number.js'
 
 /** Enumerated error codes for every blend result. The code is the contract. */
 export const BLEND_ERROR_CODES = Object.freeze({
@@ -37,14 +38,6 @@ export const PERSONA_SOURCES = Object.freeze({
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
-
-function _round(value) {
-  return parseFloat(value.toFixed(2))
-}
-
-function _clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value))
-}
 
 /**
  * The first intoxication or habituation key that names no known substance.
@@ -146,7 +139,7 @@ export function blendSober() {
  */
 export function sobrietyDerive({ intoxications }) {
   const total = Object.values(intoxications ?? {}).reduce((sum, v) => sum + v, 0)
-  return _round(_clamp(100 - total, 0, 100))
+  return numberRound({ value: numberClamp({ value: 100 - total, min: 0, max: 100 }), places: 2 })
 }
 
 /**
@@ -253,13 +246,17 @@ export function blendCompute({ player, substances = {}, conditions = {} }) {
 
   const total = raw.reduce((sum, entry) => sum + entry.weight, 0)
   const scale = total > 1 ? 1 / total : 1
-  const soberWeight = _round(Math.max(0, 1 - total))
+  const soberWeight = numberRound({ value: Math.max(0, 1 - total), places: 2 })
 
   const families = {}
   const weights = raw
     .map((entry) => {
-      const weight = _round(entry.weight * scale)
-      if (entry.family) families[entry.family] = _round((families[entry.family] ?? 0) + weight)
+      const weight = numberRound({ value: entry.weight * scale, places: 2 })
+      if (entry.family)
+        families[entry.family] = numberRound({
+          value: (families[entry.family] ?? 0) + weight,
+          places: 2,
+        })
       return {
         personaId: entry.personaId,
         weight,
@@ -309,11 +306,11 @@ export function blendDecay({ player, substances = {}, ticksElapsed }) {
 
   for (const [id, level] of Object.entries(player.intoxications ?? {})) {
     const delta = -Math.min(level, substances[id].decayPerTick * ticksElapsed)
-    if (delta !== 0) intoxicationChanges[id] = _round(delta)
+    if (delta !== 0) intoxicationChanges[id] = numberRound({ value: delta, places: 2 })
   }
   for (const [id, level] of Object.entries(player.habituations ?? {})) {
     const delta = -Math.min(level, substances[id].habituationDecayPerTick * ticksElapsed)
-    if (delta !== 0) habituationChanges[id] = _round(delta)
+    if (delta !== 0) habituationChanges[id] = numberRound({ value: delta, places: 2 })
   }
 
   return resultOk({ intoxicationChanges, habituationChanges })
@@ -367,20 +364,30 @@ export function dosesApply({ player, substances = {}, doses = [], rng = Math.ran
         message: `Dose chance of '${substance.id}' must be 0–1`,
       })
     }
-    if (chance < 1 && roll(1, 100, rng) > chance * 100) continue
+    if (chance < 1 && randomInt({ min: 1, max: 100, rng }) > chance * 100) continue
 
     const id = substance.id
-    const intoxDelta = _round(Math.min(dose.value, 100 - (intoxications[id] ?? 0)))
+    const intoxDelta = numberRound({
+      value: Math.min(dose.value, 100 - (intoxications[id] ?? 0)),
+      places: 2,
+    })
     intoxications[id] = (intoxications[id] ?? 0) + intoxDelta
     if (intoxDelta !== 0)
-      intoxicationChanges[id] = _round((intoxicationChanges[id] ?? 0) + intoxDelta)
+      intoxicationChanges[id] = numberRound({
+        value: (intoxicationChanges[id] ?? 0) + intoxDelta,
+        places: 2,
+      })
 
-    const habitDelta = _round(
-      Math.min(dose.value * substance.habituationRate, 100 - (habituations[id] ?? 0))
-    )
+    const habitDelta = numberRound({
+      value: Math.min(dose.value * substance.habituationRate, 100 - (habituations[id] ?? 0)),
+      places: 2,
+    })
     habituations[id] = (habituations[id] ?? 0) + habitDelta
     if (habitDelta !== 0)
-      habituationChanges[id] = _round((habituationChanges[id] ?? 0) + habitDelta)
+      habituationChanges[id] = numberRound({
+        value: (habituationChanges[id] ?? 0) + habitDelta,
+        places: 2,
+      })
 
     substanceIdsTaken.push(id)
   }

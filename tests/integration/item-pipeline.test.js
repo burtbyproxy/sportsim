@@ -14,8 +14,10 @@ import { useGameStore } from '../../src/stores/game.js'
 import { createPlayer } from '../../src/models/player.js'
 import { createItem } from '../../src/models/item.js'
 import { createLocation } from '../../src/models/location.js'
+import { createCharacter } from '../../src/models/character.js'
 import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
+import { simulationLocal } from '../../src/workers/simulation-local.js'
 import { statEffective } from '../../src/engine/dice.js'
 import { STAT_XP_CHECK_SUCCESS, STAT_XP_CHECK_FAILURE } from '../../src/engine/stats.js'
 
@@ -33,6 +35,10 @@ const tables = loadDir('content/scavenge')
 const locations = loadDir('content/maps/kenton/locations')
 const parkActions = loadFile('content/maps/kenton/actions/park.json')
 const scavengeAction = loadFile('content/maps/kenton/actions/scavenge.json')[0]
+
+const maurice = loadFile('content/characters/maurice.json')
+// Whoever takes over when you are starving, as content says.
+const hungerPersonaId = conditions.find((c) => c.source?.status === 'hunger').persona.id
 
 const voice = (personaId, code) => voices.find((v) => v.id === personaId).lines[code]
 
@@ -216,6 +222,36 @@ describe('the store keeps statuses in bounds', () => {
     game.applyStatusChanges({ mood: 500, hunger: -500 })
     expect(game.player.status.mood).toBe(100)
     expect(game.player.status.hunger).toBe(0)
+  })
+
+  it("a character's status follows the same rule as the player's, and their conditions follow it", () => {
+    const game = startGame()
+    game.registerCharacter(createCharacter(maurice))
+    const before = { ...game.characters.maurice.status }
+
+    game.charactersStatusApply({
+      updates: [{ id: 'maurice', statusChanges: { hunger: -500, sobriety: -50, mood: 500 } }],
+    })
+
+    const after = game.characters.maurice.status
+    expect(after.hunger).toBe(0)
+    expect(after.mood).toBe(100)
+    expect(after.sobriety).toBe(before.sobriety)
+    expect(game.characters.maurice.blend.weights.map((w) => w.personaId)).toContain(hungerPersonaId)
+  })
+
+  it('time passing wears on the characters too, by the same rule', async () => {
+    const game = startGame()
+    game.registerCharacter(createCharacter(maurice))
+    const before = { ...game.characters.maurice.status }
+    const loop = useGameLoop({ simulation: simulationLocal })
+
+    await loop.tick(8)
+
+    const after = game.characters.maurice.status
+    expect(after.hunger).toBeLessThan(before.hunger)
+    // What he drank wears off, the way it does for the player.
+    expect(after.sobriety).toBeGreaterThan(before.sobriety)
   })
 
   it('arriving somewhere counts the visit', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getStatDecayEffects, statXpApply, DECAY_CONFIG } from './stats.js'
+import { getStatDecayEffects, statXpApply, DECAY_CONFIG, statusChangesApply } from './stats.js'
 
 function makePlayer(overrides = {}) {
   return {
@@ -70,6 +70,20 @@ describe('DECAY_CONFIG', () => {
 // --- getStatDecayEffects ---
 
 describe('getStatDecayEffects', () => {
+  it('reports clean cents, not floating-point dust, whatever the rates are', () => {
+    const config = {
+      hunger: { ratePerTick: -0.1, min: 0, max: 100 },
+      energy: { ratePerTick: -0.1, min: 0, max: 100 },
+      mood: { ratePerTick: -0.1, baseline: 40, min: 0, max: 100 },
+    }
+    const player = { status: { hunger: 50.3, energy: 50.3, mood: 40.3 } }
+    expect(getStatDecayEffects(player, 1, config)).toEqual({
+      hunger: -0.1,
+      energy: -0.1,
+      mood: -0.1,
+    })
+  })
+
   it('returns empty object for 0 ticks', () => {
     expect(getStatDecayEffects(makePlayer(), 0)).toEqual({})
   })
@@ -145,5 +159,30 @@ describe('getStatDecayEffects', () => {
     const customConfig = { ...DECAY_CONFIG, hunger: { ratePerTick: -2, min: 0, max: 100 } }
     const changes = getStatDecayEffects(player, 1, customConfig)
     expect(changes.hunger).toBe(-2)
+  })
+})
+
+describe('statusChangesApply', () => {
+  const status = { hunger: 50, energy: 90, mood: 40, health: 100, sobriety: 70, money: 3 }
+
+  it('adds each change and holds the result to 0-100', () => {
+    const next = statusChangesApply({ status, changes: { hunger: -60, energy: 30, mood: 5 } })
+    expect(next).toMatchObject({ hunger: 0, energy: 100, mood: 45 })
+  })
+
+  it('never writes money or sobriety, which have their own doors', () => {
+    const next = statusChangesApply({ status, changes: { money: 50, sobriety: -40 } })
+    expect(next.money).toBe(3)
+    expect(next.sobriety).toBe(70)
+  })
+
+  it('ignores a key the status does not have', () => {
+    expect(statusChangesApply({ status, changes: { luck: 10 } })).not.toHaveProperty('luck')
+  })
+
+  it('returns a new status and leaves the old one alone', () => {
+    const next = statusChangesApply({ status, changes: { hunger: -10 } })
+    expect(next).not.toBe(status)
+    expect(status.hunger).toBe(50)
   })
 })

@@ -6,6 +6,7 @@
 import { rollCheck, rollContested } from './dice.js'
 import { inspirationActive } from './inspiration.js'
 import { inventoryHas } from './items.js'
+import { moneyFormat } from '../utils/money.js'
 
 /**
  * Why an action cannot be taken. Each is a voice code: the sentence the
@@ -69,8 +70,8 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
     const money = player.status?.money ?? 0
     if (money < req.minMoney) {
       return _refuse(REQUIREMENT_CODES.MONEY, {
-        cost: `$${req.minMoney.toFixed(2)}`,
-        money: `$${money.toFixed(2)}`,
+        cost: moneyFormat({ amount: req.minMoney }),
+        money: moneyFormat({ amount: money }),
       })
     }
   }

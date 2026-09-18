@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { seededRandom, roll, weightedPick, chance, shuffle } from './random.js'
+import { seededRandom, randomInt, weightedPick, chance, shuffle } from './random.js'
 
 describe('seededRandom', () => {
   it('produces values in [0, 1)', () => {
@@ -28,11 +28,11 @@ describe('seededRandom', () => {
   })
 })
 
-describe('roll', () => {
+describe('randomInt', () => {
   it('returns values within [min, max] inclusive', () => {
     const rng = seededRandom(99)
     for (let i = 0; i < 200; i++) {
-      const v = roll(1, 20, rng)
+      const v = randomInt({ min: 1, max: 20, rng })
       expect(v).toBeGreaterThanOrEqual(1)
       expect(v).toBeLessThanOrEqual(20)
     }
@@ -41,13 +41,13 @@ describe('roll', () => {
   it('returns integers', () => {
     const rng = seededRandom(7)
     for (let i = 0; i < 50; i++) {
-      expect(Number.isInteger(roll(1, 6, rng))).toBe(true)
+      expect(Number.isInteger(randomInt({ min: 1, max: 6, rng }))).toBe(true)
     }
   })
 
   it('works with min === max', () => {
     const rng = seededRandom(5)
-    expect(roll(7, 7, rng)).toBe(7)
+    expect(randomInt({ min: 7, max: 7, rng })).toBe(7)
   })
 })
 

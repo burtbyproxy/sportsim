@@ -4,7 +4,8 @@
  * Pure functions. No side effects. No Vue. No DOM.
  */
 
-import { roll } from '../utils/random.js'
+import { randomInt } from '../utils/random.js'
+import { numberClamp } from '../utils/number.js'
 
 /**
  * Everything acting on a player — every substance, every condition — reaches
@@ -18,7 +19,7 @@ import { roll } from '../utils/random.js'
  * @returns {number}
  */
 export function rollD20(rng = Math.random) {
-  return roll(1, 20, rng)
+  return randomInt({ min: 1, max: 20, rng })
 }
 
 /**
@@ -110,7 +111,7 @@ export function statEffective({ player, statName }) {
  * @returns {number}
  */
 export function checkModifier({ player, statName }) {
-  const effective = Math.max(0, Math.min(100, statEffective({ player, statName })))
+  const effective = numberClamp({ value: statEffective({ player, statName }), min: 0, max: 100 })
   return Math.floor(effective / STAT_POINTS_PER_MODIFIER)
 }
 

@@ -22,6 +22,7 @@ import {
 } from './dice.js'
 import { statXpApply } from './stats.js'
 import { resultOk, resultFail } from './result.js'
+import { numberClamp, numberRound } from '../utils/number.js'
 
 /** Enumerated error codes for every skills result. The code is the contract. */
 export const SKILL_ERROR_CODES = Object.freeze({
@@ -40,10 +41,6 @@ export const CHECK_ITEM_SOURCES = Object.freeze({
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
-
-function _round(value) {
-  return parseFloat(value.toFixed(2))
-}
 
 /**
  * Every persona with weight in the blend, sober included. Weights sum to one.
@@ -116,7 +113,10 @@ export function skillEffective({ player, mediumId, mediums = {} }) {
     weight,
     cellValue: _cellValue(skillCellGet({ player, mediumId, personaId })),
   }))
-  const value = _round(contributions.reduce((sum, c) => sum + c.weight * c.cellValue, 0))
+  const value = numberRound({
+    value: contributions.reduce((sum, c) => sum + c.weight * c.cellValue, 0),
+    places: 2,
+  })
   return resultOk({ value, contributions })
 }
 
@@ -156,7 +156,7 @@ export function skillGain({ player, mediumId, mediums = {}, amount }) {
   const personaIdsLeveled = []
 
   for (const { personaId, weight } of _personaWeights({ player })) {
-    const xp = _round(amount * weight)
+    const xp = numberRound({ value: amount * weight, places: 2 })
     if (xp <= 0) continue
     const before = cells[personaId] ?? skillCellGet({ player, mediumId, personaId })
     const { stat, leveledUp } = statXpApply({ stat: before, amount: xp })
@@ -212,7 +212,7 @@ export function skillCheckRoll({
   }
 
   const skill = skillEffective({ player, mediumId, mediums }).data
-  const skillModifier = Math.floor(Math.max(0, Math.min(100, skill.value)) / 10)
+  const skillModifier = Math.floor(numberClamp({ value: skill.value, min: 0, max: 100 }) / 10)
   const statModifier = checkModifier({ player, statName: medium.stat })
   const situational = modifiers.reduce((sum, m) => sum + m.value, 0)
   const natural = rollD20(rng)
@@ -223,7 +223,7 @@ export function skillCheckRoll({
     ...skill.contributions.map((c) => ({
       source: CHECK_ITEM_SOURCES.SKILL,
       sourceId: c.personaId,
-      value: _round(c.weight * c.cellValue),
+      value: numberRound({ value: c.weight * c.cellValue, places: 2 }),
     })),
     ...statModifierItems({ player, statName: medium.stat }),
     ...modifiers.map((m) => ({

@@ -16,6 +16,7 @@
 import { rollCheck } from './dice.js'
 import { weightedPick } from '../utils/random.js'
 import { resultOk, resultFail } from './result.js'
+import { numberClamp } from '../utils/number.js'
 
 /** Enumerated error codes for every scavenge result. The code is the contract. */
 export const SCAVENGE_ERROR_CODES = Object.freeze({
@@ -62,7 +63,7 @@ export function scavengeDepletion({ location, gameTime }) {
   if (!state || !state.depletion) return 0
   const elapsed = Math.max(0, (gameTime?.tick ?? 0) - (state.updatedAtTick ?? 0))
   const restocked = Math.floor(elapsed / SCAVENGE_TICKS_PER_RESTOCK)
-  return Math.max(0, Math.min(SCAVENGE_DEPLETION_MAX, state.depletion - restocked))
+  return numberClamp({ value: state.depletion - restocked, min: 0, max: SCAVENGE_DEPLETION_MAX })
 }
 
 /**

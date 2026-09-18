@@ -2,6 +2,7 @@ import { ref, readonly } from 'vue'
 import { blendSober } from '../engine/blend.js'
 import { inspirationActive } from '../engine/inspiration.js'
 import { template, pickVariant, toNarrativeText } from '../utils/text.js'
+import { randomInt } from '../utils/random.js'
 
 /**
  * Narrative Renderer composable.
@@ -68,11 +69,6 @@ export function meanCharDelayMs({ text, speed }) {
   return total / text.length
 }
 
-/** Pick a random integer in [min, max] inclusive. */
-function _randInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min
-}
-
 /**
  * Resolve a speed setting to a base character delay in ms.
  * For range-based speeds, picks a random value within the range.
@@ -82,7 +78,7 @@ function _randInt(min, max) {
 function _resolveSpeedMs(speed) {
   const setting = SPEED_MS[speed] ?? SPEED_MS.normal
   if (setting === 0) return 0
-  return _randInt(setting.min, setting.max)
+  return randomInt({ min: setting.min, max: setting.max })
 }
 
 /**
@@ -96,7 +92,7 @@ function _charDelay(char, speed) {
   const base = _resolveSpeedMs(speed)
   const extra = PUNCTUATION_PAUSE[char]
   if (!extra) return base
-  return base + _randInt(extra.min, extra.max)
+  return base + randomInt({ min: extra.min, max: extra.max })
 }
 
 export function useNarrative() {

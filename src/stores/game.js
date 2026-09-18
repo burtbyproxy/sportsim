@@ -29,9 +29,10 @@ import { skillEffective } from '../engine/skills.js'
 import { addItem, removeItem, addModifier, incrementCounter } from '../models/player.js'
 import { incrementVisitCount, locationRestore } from '../models/location.js'
 import { itemUseResolve } from '../engine/items.js'
-import { statXpApply } from '../engine/stats.js'
+import { statXpApply, statusChangesApply } from '../engine/stats.js'
 import { statusBarFillClass } from '../utils/statusBar.js'
 import { resultOk, resultFail } from '../engine/result.js'
+import { numberRound } from '../utils/number.js'
 
 /** Enumerated error codes for the store's own refusals. Engine results pass through with theirs. */
 export const GAME_ERROR_CODES = Object.freeze({
@@ -47,7 +48,7 @@ export const GAME_ERROR_CODES = Object.freeze({
  */
 function _levelsApply({ levels, changes }) {
   for (const [id, delta] of Object.entries(changes)) {
-    const next = parseFloat(((levels[id] ?? 0) + delta).toFixed(2))
+    const next = numberRound({ value: (levels[id] ?? 0) + delta, places: 2 })
     if (next <= 0) {
       delete levels[id]
     } else {
@@ -309,11 +310,21 @@ export const useGameStore = defineStore('game', {
      */
     applyStatusChanges(changes) {
       if (!this.player) return
-      for (const [key, delta] of Object.entries(changes)) {
-        if (key === 'money' || key === 'sobriety') continue
-        if (key in this.player.status) {
-          this.player.status[key] = Math.max(0, Math.min(100, this.player.status[key] + delta))
-        }
+      this.player.status = statusChangesApply({ status: this.player.status, changes })
+      this.blendRefresh()
+    },
+
+    /**
+     * Apply the simulation's status changes to characters, by the same rule
+     * as the player's. A character with no status (fixed tier) is left be.
+     * Conditions depend on status, so the blend is refreshed once.
+     * @param {{ updates: Array<{ id: string, statusChanges?: Object<string, number> }> }} input
+     */
+    charactersStatusApply({ updates }) {
+      for (const { id, statusChanges } of updates) {
+        const character = this.characters[id]
+        if (!statusChanges || !character?.status) continue
+        character.status = statusChangesApply({ status: character.status, changes: statusChanges })
       }
       this.blendRefresh()
     },

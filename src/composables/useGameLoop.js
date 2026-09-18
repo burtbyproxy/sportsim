@@ -48,6 +48,7 @@ import {
 } from './useNarrative.js'
 import { toNarrativeText } from '../utils/text.js'
 import { sim } from '../workers/simulation-api.js'
+import { moneyFormat } from '../utils/money.js'
 
 /**
  * @param {{
@@ -56,10 +57,13 @@ import { sim } from '../workers/simulation-api.js'
  *   narrative?: ReturnType<import('./useNarrative.js').useNarrative>|null,
  *   save?: ReturnType<import('./useSave.js').useSave>|null,
  *   rng?: () => number,
+ *   simulation?: { tick: (input: { gameTime: Object, characters: Object[] }) => Object },
  * }} input
  *   actionRegistry — array of Action objects to evaluate against
  *   eventRegistry — array of GameEvent objects; checked after every tick
  *   rng — random source for event rolls; injectable so tests are deterministic
+ *   simulation — moves the characters each tick: the worker by default, or
+ *   simulation-local.js in-process, which is the same code behind the same contract
  *   narrative — the renderer that receives action and event prose. Passed in
  *   explicitly: the screen that owns the loop also owns the renderer, and a
  *   component cannot inject what it provided itself.
@@ -72,6 +76,7 @@ export function useGameLoop({
   narrative = null,
   save = null,
   rng = Math.random,
+  simulation = sim,
 } = {}) {
   const game = useGameStore()
 
@@ -106,19 +111,14 @@ export function useGameLoop({
     try {
       const charactersArray = Object.values(game.characters)
       if (charactersArray.length > 0) {
-        const simResult = await sim.tick(game.time, charactersArray)
+        const simResult = await simulation.tick({
+          gameTime: game.time,
+          characters: charactersArray,
+        })
         for (const update of simResult.characters) {
           game.setCharacterLocation(update.id, update.locationId)
-          // Apply status changes for full-sim characters (stat decay, etc.)
-          if (update.statusChanges && game.characters[update.id]) {
-            const char = game.characters[update.id]
-            for (const [key, delta] of Object.entries(update.statusChanges)) {
-              if (char.status && key in char.status) {
-                char.status[key] = Math.max(0, Math.min(100, char.status[key] + delta))
-              }
-            }
-          }
         }
+        game.charactersStatusApply({ updates: simResult.characters })
       }
     } catch (err) {
       // Worker failure is non-fatal — log and continue
@@ -344,7 +344,10 @@ export function useGameLoop({
     if (!plan.affordable) {
       return game.requirementReason({
         code: REQUIREMENT_CODES.MONEY,
-        params: { cost: `$${plan.cost.toFixed(2)}`, money: `$${game.playerMoney.toFixed(2)}` },
+        params: {
+          cost: moneyFormat({ amount: plan.cost }),
+          money: moneyFormat({ amount: game.playerMoney }),
+        },
       })
     }
     return plan.enoughTime ? null : game.requirementReason({ code: REQUIREMENT_CODES.TIME })

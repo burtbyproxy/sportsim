@@ -3,7 +3,7 @@
  *
  * Usage:
  *   import { sim } from './workers/simulation-api.js'
- *   const result = await sim.tick(gameTime, characters)
+ *   const result = await sim.tick({ gameTime, characters })
  *   // result: { characters: [{id, locationId, statusChanges?}] }
  */
 import { wrap } from 'comlink'
@@ -34,16 +34,15 @@ function getWorker() {
 
 export const sim = {
   /**
-   * Run one simulation tick.
-   * @param {import('../engine/clock.js').GameTime} gameTime
-   * @param {Object[]} characters - Character objects from game store
-   * @returns {Promise<{
-   *   characters: Array<{id: string, locationId: string|null, statusChanges?: Object}>,
-   *   events: Array
-   * }>}
+   * Run one simulation tick in the worker. Same contract as simulation-local.js.
+   * @param {{ gameTime: import('../engine/clock.js').GameTime, characters: Object[] }} input
+   * @returns {Promise<{ characters: Array<{ id: string, locationId: string|null, statusChanges?: Object }> }>}
    */
-  tick(gameTime, characters = []) {
-    return getWorker().tick(toPlainSnapshot(gameTime), toPlainSnapshot(characters))
+  tick({ gameTime, characters }) {
+    return getWorker().tick({
+      gameTime: toPlainSnapshot(gameTime),
+      characters: toPlainSnapshot(characters),
+    })
   },
 
   /**

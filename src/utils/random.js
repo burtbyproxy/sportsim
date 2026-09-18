@@ -20,13 +20,11 @@ export function seededRandom(seed) {
 }
 
 /**
- * Returns a random integer in [min, max] (inclusive).
- * @param {number} min
- * @param {number} max
- * @param {(() => number)} [rng=Math.random]
+ * A random integer in [min, max], both ends included.
+ * @param {{ min: number, max: number, rng?: (() => number) }} input
  * @returns {number}
  */
-export function roll(min, max, rng = Math.random) {
+export function randomInt({ min, max, rng = Math.random }) {
   return Math.floor(rng() * (max - min + 1)) + min
 }
 
@@ -74,7 +72,7 @@ export function chance(probability, rng = Math.random) {
 export function shuffle(array, rng = Math.random) {
   const result = [...array]
   for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1))
+    const j = randomInt({ min: 0, max: i, rng })
     ;[result[i], result[j]] = [result[j], result[i]]
   }
   return result

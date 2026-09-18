@@ -3,6 +3,31 @@
  * Pure functions. No side effects. No Vue. No DOM.
  */
 
+import { numberClamp, numberRound } from '../utils/number.js'
+
+/**
+ * Status that changes only through its own door: money through adjustMoney,
+ * sobriety derived from what is in you. Everything else holds 0-100.
+ */
+const STATUS_IDS_NOT_WRITABLE = Object.freeze(['money', 'sobriety'])
+
+/**
+ * A status after changes. The same rule for the player and every character:
+ * unknown keys and keys with their own door are ignored, the rest are held
+ * to 0-100. Returns a new status; the input is not mutated.
+ *
+ * @param {{ status: Object<string, number>, changes: Object<string, number> }} input
+ * @returns {Object<string, number>}
+ */
+export function statusChangesApply({ status, changes }) {
+  const next = { ...status }
+  for (const [key, delta] of Object.entries(changes)) {
+    if (STATUS_IDS_NOT_WRITABLE.includes(key) || !(key in next)) continue
+    next[key] = numberClamp({ value: next[key] + delta, min: 0, max: 100 })
+  }
+  return next
+}
+
 /** A rolled check trains the stat it rolled on. You learn more when it works. */
 export const STAT_XP_CHECK_SUCCESS = 2
 export const STAT_XP_CHECK_FAILURE = 1
@@ -92,21 +117,23 @@ export function getStatDecayEffects(player, ticksElapsed, config = DECAY_CONFIG)
   // Hunger — simple linear decay
   const hungerCfg = config.hunger
   const currentHunger = status.hunger ?? 50
-  const newHunger = Math.min(
-    hungerCfg.max,
-    Math.max(hungerCfg.min, currentHunger + hungerCfg.ratePerTick * ticksElapsed)
-  )
-  const hungerDelta = parseFloat((newHunger - currentHunger).toFixed(2))
+  const newHunger = numberClamp({
+    value: currentHunger + hungerCfg.ratePerTick * ticksElapsed,
+    min: hungerCfg.min,
+    max: hungerCfg.max,
+  })
+  const hungerDelta = numberRound({ value: newHunger - currentHunger, places: 2 })
   if (hungerDelta !== 0) changes.hunger = hungerDelta
 
   // Energy — simple linear decay
   const energyCfg = config.energy
   const currentEnergy = status.energy ?? 80
-  const newEnergy = Math.min(
-    energyCfg.max,
-    Math.max(energyCfg.min, currentEnergy + energyCfg.ratePerTick * ticksElapsed)
-  )
-  const energyDelta = parseFloat((newEnergy - currentEnergy).toFixed(2))
+  const newEnergy = numberClamp({
+    value: currentEnergy + energyCfg.ratePerTick * ticksElapsed,
+    min: energyCfg.min,
+    max: energyCfg.max,
+  })
+  const energyDelta = numberRound({ value: newEnergy - currentEnergy, places: 2 })
   if (energyDelta !== 0) changes.energy = energyDelta
 
   // Mood — drifts toward baseline (40)
@@ -119,7 +146,7 @@ export function getStatDecayEffects(player, ticksElapsed, config = DECAY_CONFIG)
       currentMood > moodCfg.baseline
         ? Math.max(moodCfg.baseline, currentMood - driftAmount)
         : Math.min(moodCfg.baseline, currentMood + driftAmount)
-    const moodDelta = parseFloat((newMood - currentMood).toFixed(2))
+    const moodDelta = numberRound({ value: newMood - currentMood, places: 2 })
     if (moodDelta !== 0) changes.mood = moodDelta
   }
 

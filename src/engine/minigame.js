@@ -24,8 +24,9 @@
  * result struct out.
  */
 
-import { weightedPick, shuffle } from '../utils/random.js'
+import { weightedPick, shuffle, randomInt } from '../utils/random.js'
 import { resultOk, resultFail } from './result.js'
+import { numberClamp } from '../utils/number.js'
 
 /** Enumerated error codes for every minigame result. The code is the contract. */
 export const GAME_ERROR_CODES = Object.freeze({
@@ -50,10 +51,6 @@ export const GAME_MODIFIER_SOURCE_ID = 'game'
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
-
-function _clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value))
-}
 
 /**
  * The coming round's choices: the game's labels, minus what the persona in
@@ -126,7 +123,11 @@ const _pushLuck = {
         promptCode: null,
       }
     }
-    const risk = _clamp(riskBase + riskStep * state.banked - skillRelief * skillValue, 0.02, 0.95)
+    const risk = numberClamp({
+      value: riskBase + riskStep * state.banked - skillRelief * skillValue,
+      min: 0.02,
+      max: 0.95,
+    })
     if (rng() < risk) {
       return {
         state: { ...state, busted: true, offer: null },
@@ -180,7 +181,7 @@ function _wordsOffer({ game, state, round, personaId, rng }) {
       (word) => !used.has(word) && !picks.some((p) => p.word === word)
     )
     if (pool.length === 0) continue
-    picks.push({ word: pool[Math.floor(rng() * pool.length)], register })
+    picks.push({ word: pool[randomInt({ min: 0, max: pool.length - 1, rng })], register })
   }
   return {
     round,
@@ -264,7 +265,11 @@ const _readRoom = {
     }
   },
   score({ game, state }) {
-    return _clamp(state.total, -game.params.scoreCap, game.params.scoreCap)
+    return numberClamp({
+      value: state.total,
+      min: -game.params.scoreCap,
+      max: game.params.scoreCap,
+    })
   },
 }
 

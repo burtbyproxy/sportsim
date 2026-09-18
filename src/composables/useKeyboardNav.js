@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { numberClamp } from '../utils/number.js'
 
 /**
  * Reusable arrow-key list navigation.
@@ -27,7 +28,7 @@ export function useKeyboardNav(items, { onSelect, skip = null, loop = true } = {
       if (loop) {
         next = ((next % list.length) + list.length) % list.length
       } else {
-        next = Math.max(0, Math.min(list.length - 1, next))
+        next = numberClamp({ value: next, min: 0, max: list.length - 1 })
       }
       attempts++
       // Bail if we've looped all the way around (all items skipped)
