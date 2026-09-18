@@ -265,6 +265,17 @@ describe('blendCompute', () => {
     ])
   })
 
+  it('a dead heat with sober goes to sober; one point more and the persona is in charge', () => {
+    const tied = makePlayer({ intoxications: { whiskey: 50 } })
+    expect(blendCompute({ player: tied, substances, conditions }).data.dominantPersonaId).toBe(
+      SOBER_PERSONA_ID
+    )
+    const tipped = makePlayer({ intoxications: { whiskey: 51 } })
+    expect(blendCompute({ player: tipped, substances, conditions }).data.dominantPersonaId).toBe(
+      'priest'
+    )
+  })
+
   it('names the heaviest persona dominant when it outweighs sober', () => {
     const player = makePlayer({ intoxications: { whiskey: 55, weed: 30 } })
     const { data } = blendCompute({ player, substances, conditions })

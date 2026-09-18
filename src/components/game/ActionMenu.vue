@@ -38,14 +38,16 @@
           'action-item--selected': navIndex === i,
         }"
         :disabled="!action.available || isResolving"
-        :title="action.available ? formatTimeCost(action.timeCost) : disabledReason(action)"
+        :title="
+          action.available ? durationFormat({ ticks: action.timeCost }) : disabledReason(action)
+        "
         @click="executeAction(action)"
         @mouseenter="navIndex = i"
       >
         <span class="action-shortcut">{{ i < 9 ? i + 1 + '.' : '  ' }}</span>
         {{ action.label }}
         <span v-if="action.timeCost > 0" class="action-time-cost">
-          {{ formatTimeCost(action.timeCost) }}
+          {{ durationFormat({ ticks: action.timeCost }) }}
         </span>
       </button>
 
@@ -62,14 +64,16 @@
           'action-item--selected': navIndex === sortedActions.length + i,
         }"
         :disabled="!canTravel(exit)"
-        :title="canTravel(exit) ? formatTravelTime(exit.travelTime) : travelBlockReason(exit)"
+        :title="
+          canTravel(exit) ? durationFormat({ ticks: exit.travelTime }) : travelBlockReason(exit)
+        "
         @click="travel(exit)"
         @mouseenter="navIndex = sortedActions.length + i"
       >
-        <span class="action-shortcut action-shortcut--exit">{{ exitKey(i) }}.</span>
+        <span class="action-shortcut action-shortcut--exit">{{ exitKeyFor({ index: i }) }}.</span>
         {{ exit.label }}
         <span v-if="exit.travelTime > 0" class="action-time-cost">
-          {{ formatTravelTime(exit.travelTime) }}
+          {{ durationFormat({ ticks: exit.travelTime }) }}
         </span>
       </button>
     </div>
@@ -83,7 +87,8 @@ import { meetsRequirements } from '../../engine/actions.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
 import { useKeyboardNav } from '../../composables/useKeyboardNav.js'
 import { isOpen, exitMeetsRequirements } from '../../models/location.js'
-import { menuEntriesBuild, EXIT_KEYS } from '../../utils/menu.js'
+import { menuEntriesBuild, exitKeyFor } from '../../utils/menu.js'
+import { durationFormat } from '../../engine/clock.js'
 
 const game = useGameStore()
 const gameLoop = inject('gameLoop')
@@ -131,10 +136,6 @@ const sortedActions = computed(() => {
 
 const exits = computed(() => game.currentLocation?.exits ?? [])
 
-function exitKey(index) {
-  return EXIT_KEYS[index] ?? '?'
-}
-
 function canTravel(exit) {
   if (!exit) return false
   const dest = game.locations[exit.locationId]
@@ -164,15 +165,6 @@ function travel(exit) {
   }
 }
 
-function formatTravelTime(ticks) {
-  if (!ticks) return ''
-  const minutes = ticks * 15
-  if (minutes < 60) return `${minutes}m`
-  const hours = Math.floor(minutes / 60)
-  const rem = minutes % 60
-  return rem > 0 ? `${hours}h ${rem}m` : `${hours}h`
-}
-
 // ── Actions ──────────────────────────────────────────────────────────────────
 
 async function executeAction(action) {
@@ -190,15 +182,6 @@ function disabledReason(action) {
   const { meets, reason } = meetsRequirements(game.player, action, game.time)
   if (!meets && reason) return reason
   return 'not available'
-}
-
-function formatTimeCost(ticks) {
-  if (!ticks) return ''
-  const minutes = ticks * 15
-  if (minutes < 60) return `${minutes}m`
-  const hours = Math.floor(minutes / 60)
-  const rem = minutes % 60
-  return rem > 0 ? `${hours}h ${rem}m` : `${hours}h`
 }
 
 // ── Keyboard navigation ──────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { template, pickVariant, toNarrativeText, buildNarrativeText } from './text.js'
+import { template, pickVariant, toNarrativeText } from './text.js'
 
 describe('template', () => {
   it('replaces known variables', () => {
@@ -85,29 +85,5 @@ describe('toNarrativeText', () => {
     expect(token.style).toBe('bold')
     expect(token.speed).toBe('slow')
     expect(token.pauseAfter).toBe(500)
-  })
-})
-
-describe('buildNarrativeText', () => {
-  it('converts string entries to tokens', () => {
-    const result = buildNarrativeText(['hello', 'world'])
-    expect(result.tokens).toHaveLength(2)
-    expect(result.tokens[0].text).toBe('hello')
-    expect(result.tokens[1].text).toBe('world')
-  })
-
-  it('merges object entries with defaults', () => {
-    const result = buildNarrativeText([{ text: 'hi', style: 'bold', speed: 'slow' }])
-    const token = result.tokens[0]
-    expect(token.style).toBe('bold')
-    expect(token.speed).toBe('slow')
-    expect(token.color).toBeNull()
-    expect(token.effect).toBe('none')
-  })
-
-  it('handles mixed string and object entries', () => {
-    const result = buildNarrativeText(['plain', { text: 'styled', style: 'italic' }])
-    expect(result.tokens[0].style).toBe('normal')
-    expect(result.tokens[1].style).toBe('italic')
   })
 })

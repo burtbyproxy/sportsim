@@ -1,6 +1,9 @@
 import { defineConfig } from 'vitest/config'
+import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
+  // Component tests mount the real single-file components.
+  plugins: [vue()],
   test: {
     globals: true,
     environment: 'node',

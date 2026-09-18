@@ -1,15 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   createPlayer,
-  getEffectiveStat,
   tickModifiers,
   addModifier,
   addItem,
   removeItem,
   hasItem,
-  adjustStatus,
   adjustMoney,
-  addTrauma,
   feedObsession,
   updateArchetypeScore,
   incrementCounter,
@@ -83,56 +80,6 @@ describe('createPlayer', () => {
     const serialized = JSON.parse(JSON.stringify(p));
     expect(serialized.name).toBe('X');
     expect(serialized.stats.stamina.base).toBeGreaterThanOrEqual(10);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// getEffectiveStat
-// ---------------------------------------------------------------------------
-
-describe('getEffectiveStat', () => {
-  let player;
-
-  beforeEach(() => {
-    player = createPlayer('Test');
-    player.stats.stamina.base = 15;
-    player.stats.stamina.modifiers = [];
-  });
-
-  it('returns base when no modifiers', () => {
-    expect(getEffectiveStat(player, 'stamina')).toBe(15);
-  });
-
-  it('adds positive modifiers', () => {
-    player.stats.stamina.modifiers.push({ source: 'test', value: 5, duration: 3 });
-    expect(getEffectiveStat(player, 'stamina')).toBe(20);
-  });
-
-  it('subtracts negative modifiers', () => {
-    player.stats.stamina.modifiers.push({ source: 'test', value: -10, duration: 2 });
-    expect(getEffectiveStat(player, 'stamina')).toBe(5);
-  });
-
-  it('sums multiple modifiers', () => {
-    player.stats.stamina.modifiers.push({ source: 'a', value: 5, duration: 1 });
-    player.stats.stamina.modifiers.push({ source: 'b', value: -3, duration: 1 });
-    expect(getEffectiveStat(player, 'stamina')).toBe(17);
-  });
-
-  it('clamps to 0 minimum', () => {
-    player.stats.stamina.base = 5;
-    player.stats.stamina.modifiers.push({ source: 'test', value: -100, duration: 1 });
-    expect(getEffectiveStat(player, 'stamina')).toBe(0);
-  });
-
-  it('clamps to 100 maximum', () => {
-    player.stats.stamina.base = 95;
-    player.stats.stamina.modifiers.push({ source: 'test', value: 20, duration: 1 });
-    expect(getEffectiveStat(player, 'stamina')).toBe(100);
-  });
-
-  it('returns 0 for unknown stat', () => {
-    expect(getEffectiveStat(player, 'nonexistent')).toBe(0);
   });
 });
 
@@ -307,53 +254,6 @@ describe('hasItem', () => {
 });
 
 // ---------------------------------------------------------------------------
-// adjustStatus
-// ---------------------------------------------------------------------------
-
-describe('adjustStatus', () => {
-  let player;
-
-  beforeEach(() => {
-    player = createPlayer('Test');
-    player.status.hunger = 50;
-    player.status.sobriety = 50;
-    player.status.energy = 50;
-    player.status.mood = 50;
-    player.status.health = 50;
-  });
-
-  it('increases a status by delta', () => {
-    adjustStatus(player, 'hunger', 20);
-    expect(player.status.hunger).toBe(70);
-  });
-
-  it('decreases a status by negative delta', () => {
-    adjustStatus(player, 'hunger', -30);
-    expect(player.status.hunger).toBe(20);
-  });
-
-  it('clamps to 0 on underflow', () => {
-    adjustStatus(player, 'hunger', -200);
-    expect(player.status.hunger).toBe(0);
-  });
-
-  it('clamps to 100 on overflow', () => {
-    adjustStatus(player, 'hunger', 200);
-    expect(player.status.hunger).toBe(100);
-  });
-
-  it('delegates money to adjustMoney (no clamping)', () => {
-    player.status.money = 0;
-    adjustStatus(player, 'money', -999);
-    expect(player.status.money).toBe(-999);
-  });
-
-  it('is a no-op for unknown status key', () => {
-    expect(() => adjustStatus(player, 'fakekey', 10)).not.toThrow();
-  });
-});
-
-// ---------------------------------------------------------------------------
 // adjustMoney
 // ---------------------------------------------------------------------------
 
@@ -379,37 +279,6 @@ describe('adjustMoney', () => {
     adjustMoney(player, 25);
     adjustMoney(player, -10);
     expect(player.status.money).toBe(15);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// addTrauma
-// ---------------------------------------------------------------------------
-
-describe('addTrauma', () => {
-  let player;
-
-  beforeEach(() => {
-    player = createPlayer('Test');
-  });
-
-  it('adds a trauma to psyche.traumas', () => {
-    addTrauma(player, { id: 'mugged', name: 'Mugged', description: 'Someone took your wallet.', source: 'event_mugging', effects: {} });
-    expect(player.psyche.traumas).toHaveLength(1);
-    expect(player.psyche.traumas[0].id).toBe('mugged');
-  });
-
-  it('does not mutate the original trauma object', () => {
-    const t = { id: 'mugged', name: 'Mugged', description: 'X', source: 'Y', effects: {} };
-    addTrauma(player, t);
-    player.psyche.traumas[0].name = 'Different';
-    expect(t.name).toBe('Mugged');
-  });
-
-  it('accumulates multiple traumas', () => {
-    addTrauma(player, { id: 'a', name: 'A', description: '', source: '', effects: {} });
-    addTrauma(player, { id: 'b', name: 'B', description: '', source: '', effects: {} });
-    expect(player.psyche.traumas).toHaveLength(2);
   });
 });
 

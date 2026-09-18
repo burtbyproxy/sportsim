@@ -38,62 +38,6 @@ export function createLocation(data) {
 }
 
 /**
- * Return the appropriate description string for the given context.
- * Falls back to "default" if no specific variant matches.
- * Pure — does not mutate location.
- *
- * Context keys checked in priority order:
- *   player status-based: "drunk", "exhausted", "starving"
- *   time-based: "night", "morning", "afternoon", "evening"
- *   visit-based: "repeat" (visitCount > 1)
- *   fallback: "default"
- *
- * @param {import('./types').Location} location
- * @param {{ timeOfDay?: string, playerStatus?: Object, visitCount?: number }} context
- * @returns {string}
- */
-export function getDescription(location, context = {}) {
-  const descs = location.descriptions ?? {}
-  const { timeOfDay, playerStatus, visitCount } = context
-
-  // Status-based variants take highest priority
-  if (playerStatus) {
-    if (playerStatus.sobriety !== undefined && playerStatus.sobriety < 30) {
-      if (descs.drunk) return descs.drunk
-    }
-    if (playerStatus.energy !== undefined && playerStatus.energy < 20) {
-      if (descs.exhausted) return descs.exhausted
-    }
-    if (playerStatus.hunger !== undefined && playerStatus.hunger < 20) {
-      if (descs.starving) return descs.starving
-    }
-  }
-
-  // Time-based variants
-  if (timeOfDay && descs[timeOfDay]) {
-    return descs[timeOfDay]
-  }
-
-  // Repeat visit
-  if (visitCount !== undefined && visitCount > 1 && descs.repeat) {
-    return descs.repeat
-  }
-
-  return descs.default ?? ''
-}
-
-/**
- * Return the available exits for a location.
- * Pure — does not mutate location.
- *
- * @param {import('./types').Location} location
- * @returns {import('./types').Exit[]}
- */
-export function getAvailableExits(location) {
-  return location.exits ?? []
-}
-
-/**
  * Check whether a location is open at a given hour (0-23).
  * Pure — does not mutate location.
  *

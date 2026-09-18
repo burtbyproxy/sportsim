@@ -8,7 +8,12 @@
  * @vitest-environment node
  */
 import { describe, it, expect } from 'vitest'
-import { menuEntriesBuild, EXIT_KEYS } from '../src/utils/menu.js'
+import {
+  menuEntriesBuild,
+  EXIT_KEYS,
+  exitKeyFor,
+  shortcutLabelParts,
+} from '../src/utils/menu.js'
 
 const actions = [
   { id: 'raid_fridge', label: 'Raid the fridge', available: true },
@@ -83,5 +88,59 @@ describe('menuEntriesBuild — event choices', () => {
   it('no choices means the ordinary menu', () => {
     const entries = menuEntriesBuild({ actions, exits, exitAvailable: allOpen, choices: [] })
     expect(entries.map((e) => e.kind)).toEqual(['action', 'action', 'exit', 'exit'])
+  })
+})
+
+describe('exitKeyFor', () => {
+  it('letters the exits from a', () => {
+    expect(exitKeyFor({ index: 0 })).toBe('a')
+    expect(exitKeyFor({ index: 3 })).toBe('d')
+    expect(exitKeyFor({ index: 25 })).toBe('z')
+  })
+
+  it("runs out of alphabet with a '?'", () => {
+    expect(exitKeyFor({ index: 26 })).toBe('?')
+  })
+
+  it('agrees with the keys the menu entries are built with', () => {
+    const entries = menuEntriesBuild({
+      actions: [],
+      exits: [{ locationId: 'a' }, { locationId: 'b' }],
+      exitAvailable: () => true,
+    })
+    expect(entries.map((e) => e.key)).toEqual([exitKeyFor({ index: 0 }), exitKeyFor({ index: 1 })])
+  })
+})
+
+describe('shortcutLabelParts', () => {
+  it('brackets the shortcut letter at the start of a label', () => {
+    expect(shortcutLabelParts({ label: 'New Game', shortcut: 'n' })).toEqual([
+      { text: '[N]', isKey: true },
+      { text: 'ew Game', isKey: false },
+    ])
+  })
+
+  it('brackets a shortcut letter in the middle, keeping the label\'s own case', () => {
+    expect(shortcutLabelParts({ label: 'Quit', shortcut: 'i' })).toEqual([
+      { text: 'Qu', isKey: false },
+      { text: '[i]', isKey: true },
+      { text: 't', isKey: false },
+    ])
+  })
+
+  it('brackets a shortcut letter at the end', () => {
+    expect(shortcutLabelParts({ label: 'Load', shortcut: 'D' })).toEqual([
+      { text: 'Loa', isKey: false },
+      { text: '[d]', isKey: true },
+    ])
+  })
+
+  it('leaves the label whole when there is no shortcut or the letter is not in it', () => {
+    expect(shortcutLabelParts({ label: 'Load Game', shortcut: null })).toEqual([
+      { text: 'Load Game', isKey: false },
+    ])
+    expect(shortcutLabelParts({ label: 'Load Game', shortcut: 'z' })).toEqual([
+      { text: 'Load Game', isKey: false },
+    ])
   })
 })

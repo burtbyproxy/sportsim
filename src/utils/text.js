@@ -72,33 +72,3 @@ export function toNarrativeText(str, style = {}) {
     ],
   }
 }
-
-/**
- * Builds a NarrativeText from an array of token definitions.
- * Each entry can be a string (uses defaults) or a partial NarrativeToken object.
- * @param {Array<string|Partial<NarrativeToken>>} entries
- * @returns {NarrativeText}
- */
-export function buildNarrativeText(entries) {
-  const tokens = entries.map((entry) => {
-    if (typeof entry === 'string') {
-      return {
-        text: entry,
-        style: 'normal',
-        color: null,
-        speed: 'normal',
-        pauseAfter: 0,
-        effect: 'none',
-      }
-    }
-    return {
-      text: entry.text || '',
-      style: entry.style || 'normal',
-      color: entry.color || null,
-      speed: entry.speed || 'normal',
-      pauseAfter: entry.pauseAfter !== undefined ? entry.pauseAfter : 0,
-      effect: entry.effect || 'none',
-    }
-  })
-  return { tokens }
-}

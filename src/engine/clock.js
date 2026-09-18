@@ -5,6 +5,7 @@
  */
 
 const TICKS_PER_HOUR = 4
+const MINUTES_PER_TICK = 60 / TICKS_PER_HOUR
 
 const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 
@@ -94,3 +95,18 @@ export function formatTime(gameTime) {
  * @property {string} period - "morning" | "afternoon" | "evening" | "night" | "late_night"
  * @property {string} dayOfWeek - "monday" through "sunday"
  */
+
+/**
+ * A span of ticks as the menu shows it: "15m", "1h", "2h 30m". Nothing for
+ * no time at all.
+ * @param {{ ticks: number }} input
+ * @returns {string}
+ */
+export function durationFormat({ ticks }) {
+  if (!ticks) return ''
+  const minutes = ticks * MINUTES_PER_TICK
+  if (minutes < 60) return `${minutes}m`
+  const hours = Math.floor(minutes / 60)
+  const rem = minutes % 60
+  return rem > 0 ? `${hours}h ${rem}m` : `${hours}h`
+}

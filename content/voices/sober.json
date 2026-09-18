@@ -10,6 +10,7 @@
     "inspiration.status.none": "nothing",
     "scavenge.found": "You come up with {item}.",
     "scavenge.nothing": "Nothing. Or nothing you'd pick up, which today is a distinction you still make.",
-    "scavenge.picked_clean": "You've been through this already. It's picked clean, and you're the one who picked it."
+    "scavenge.picked_clean": "You've been through this already. It's picked clean, and you're the one who picked it.",
+    "item.used": "You finish the {item}. It does what it does."
   }
 }

@@ -12,19 +12,17 @@ import { describe, it, expect } from 'vitest';
 import {
   createPlayer,
   START_MONEY,
-  getEffectiveStat,
   addModifier,
   tickModifiers,
   addItem,
   removeItem,
   hasItem,
-  adjustStatus,
   adjustMoney,
-  addTrauma,
   feedObsession,
   updateArchetypeScore,
   incrementCounter,
 } from '../../src/models/player.js';
+import { statEffective } from '../../src/engine/dice.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -64,13 +62,13 @@ describe('player lifecycle — create, mutate, serialize, restore', () => {
     expect(loaded.stats.charm.modifiers[0].duration).toBe(3);
   });
 
-  it('getEffectiveStat works on deserialized player', () => {
+  it('the dice read a deserialized player the same way', () => {
     const player = createPlayer('Test');
     player.stats.wits.base = 15;
     addModifier(player, 'wits', { source: 'test', value: -3, duration: 2 });
 
     const loaded = saveAndLoad(player);
-    expect(getEffectiveStat(loaded, 'wits')).toBe(12);
+    expect(statEffective({ player: loaded, statName: 'wits' })).toBe(12);
   });
 
   it('tickModifiers works on deserialized player — expires correctly', () => {
@@ -112,7 +110,7 @@ describe('player lifecycle — create, mutate, serialize, restore', () => {
 
   it('status adjustments survive round-trip', () => {
     const player = createPlayer('Test');
-    adjustStatus(player, 'hunger', -20);
+    player.status.hunger -= 20;
     adjustMoney(player, -50);
 
     const loaded = saveAndLoad(player);
@@ -122,7 +120,7 @@ describe('player lifecycle — create, mutate, serialize, restore', () => {
 
   it('psyche state survives round-trip', () => {
     const player = createPlayer('Test');
-    addTrauma(player, { id: 'mugged', name: 'Mugged', description: 'X', source: 'Y', effects: {} });
+    player.psyche.traumas.push({ id: 'mugged', name: 'Mugged', description: 'X', source: 'Y', effects: {} });
     player.psyche.obsessions.push({ id: 'booze', name: 'Booze', strength: 20, relatedActions: [], effects: {} });
     feedObsession(player, 'booze', 15);
 
@@ -146,18 +144,6 @@ describe('player lifecycle — create, mutate, serialize, restore', () => {
     incrementCounter(loaded, 'drinks_consumed', 1);
     expect(loaded.archetypeScores.burnout).toBe(15);
     expect(loaded.counters.drinks_consumed).toBe(6);
-  });
-
-  it('status clamping still enforced after round-trip', () => {
-    const player = createPlayer('Test');
-    player.status.mood = 5;
-    const loaded = saveAndLoad(player);
-
-    adjustStatus(loaded, 'mood', -100);
-    expect(loaded.status.mood).toBe(0);
-
-    adjustStatus(loaded, 'mood', 200);
-    expect(loaded.status.mood).toBe(100);
   });
 
   it('money can go deeply negative after round-trip (debt)', () => {

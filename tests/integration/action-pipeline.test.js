@@ -12,7 +12,8 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, resolve } from 'path';
-import { createPlayer, addModifier, tickModifiers, getEffectiveStat } from '../../src/models/player.js';
+import { createPlayer, addModifier, tickModifiers } from '../../src/models/player.js';
+import { statEffective } from '../../src/engine/dice.js';
 import { createLocation } from '../../src/models/location.js';
 import { getAvailableActions, resolveAction } from '../../src/engine/actions.js';
 import { getStatDecayEffects } from '../../src/engine/stats.js';
@@ -461,13 +462,13 @@ describe('tickModifiers — multi-tick expiry', () => {
     player.stats.charm.base = 12;
     addModifier(player, 'charm', { source: 'liquid_courage', value: 6, duration: 3 });
 
-    expect(getEffectiveStat(player, 'charm')).toBe(18);
+    expect(statEffective({ player, statName: 'charm' })).toBe(18);
 
     tickModifiers(player);
     tickModifiers(player);
     tickModifiers(player); // expired
 
-    expect(getEffectiveStat(player, 'charm')).toBe(12);
+    expect(statEffective({ player, statName: 'charm' })).toBe(12);
   });
 
   it('multiple modifiers with different durations expire independently', () => {
@@ -494,6 +495,6 @@ describe('tickModifiers — multi-tick expiry', () => {
     }
 
     expect(player.stats.karma.modifiers).toHaveLength(1);
-    expect(getEffectiveStat(player, 'karma')).toBe(player.stats.karma.base - 5);
+    expect(statEffective({ player, statName: 'karma' })).toBe(player.stats.karma.base - 5);
   });
 });

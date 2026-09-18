@@ -16,7 +16,11 @@
 
 import { useGameStore } from '../stores/game.js'
 import { resolveAction, getAvailableActions, actionApplies } from '../engine/actions.js'
-import { getStatDecayEffects } from '../engine/stats.js'
+import {
+  getStatDecayEffects,
+  STAT_XP_CHECK_SUCCESS,
+  STAT_XP_CHECK_FAILURE,
+} from '../engine/stats.js'
 import {
   tickModifiers,
   addItem,
@@ -186,7 +190,8 @@ export function useGameLoop({
   function resolveEventChoice({ choiceIndex }) {
     const event = game.activeEvent
     if (!event || !game.player) return
-    const { outcome } = resolveEvent(event, game.player, choiceIndex, rng)
+    const { outcome, diceResult } = resolveEvent(event, game.player, choiceIndex, rng)
+    _checkTrain(diceResult)
     game.clearActiveEvent()
     _eventOutcomeApply(outcome, { kind: 'event', id: event.id })
     _refreshActions()
@@ -210,6 +215,31 @@ export function useGameLoop({
     }
   }
 
+  /**
+   * A rolled check trains the stat it rolled on, pass or fail.
+   * @param {Object|null} diceResult
+   */
+  function _checkTrain(diceResult) {
+    if (!diceResult?.stat) return
+    game.applyStatXp({
+      statName: diceResult.stat,
+      amount: diceResult.success ? STAT_XP_CHECK_SUCCESS : STAT_XP_CHECK_FAILURE,
+    })
+  }
+
+  /**
+   * Use one of something the player carries. It takes a tick, like
+   * finishing a beer does.
+   * @param {{ itemId: string }} input
+   */
+  async function useItem({ itemId }) {
+    if (!game.player || game.activeEvent) return
+    const result = game.applyItemUse({ itemId, rng })
+    if (!result.ok) return
+    _voiceEnqueue({ code: 'item.used', params: { item: result.data.item.name } })
+    await tick(1)
+  }
+
   /** A line in the voice of whoever is in charge, if the renderer is listening. */
   function _voiceEnqueue({ code, params = {} }) {
     if (!narrative) return
@@ -224,6 +254,7 @@ export function useGameLoop({
   function _scavenge() {
     const result = game.applyScavenge({ rng })
     if (!result.ok) return
+    _checkTrain(result.data.check)
     const { itemId, entry, pickedClean } = result.data
     if (!itemId) {
       _voiceEnqueue({ code: pickedClean ? 'scavenge.picked_clean' : 'scavenge.nothing' })
@@ -264,7 +295,7 @@ export function useGameLoop({
     if (!game.player) return
 
     const characters = game.charactersAtCurrentLocation
-    const result = resolveAction(game.player, action, game.time, characters)
+    const result = resolveAction(game.player, action, game.time, characters, rng)
 
     _narrativeEnqueue(generateActionNarrative(result))
 
@@ -276,6 +307,7 @@ export function useGameLoop({
     const outcome = result.outcome
     if (!outcome) return
 
+    _checkTrain(result.diceResult)
     _outcomeApply(outcome, { kind: 'action', id: action.id })
 
     // Looking around: what turns up is the engine's call, not the content's.
@@ -362,11 +394,6 @@ export function useGameLoop({
       }
     }
 
-    // Trauma
-    if (outcome.traumaGained) {
-      // Trauma definition lookup would go here — for now skip if no registry
-    }
-
     // Obsession feeding
     if (outcome.obsessionFed) {
       feedObsession(game.player, outcome.obsessionFed, 5)
@@ -430,6 +457,7 @@ export function useGameLoop({
     travel,
     resolvePlayerAction,
     resolveEventChoice,
+    useItem,
     onLocationEntered,
   }
 }

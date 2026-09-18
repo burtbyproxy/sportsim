@@ -362,3 +362,29 @@ describe('actionApplies', () => {
     )
   })
 })
+
+// --- obsessions reorder the menu ---
+
+describe('getAvailableActions — obsessions', () => {
+  const location = { id: 'bar', actionIds: ['sensible', 'compulsion'] }
+  const registry = [
+    { id: 'sensible', weight: 50, obsessionIds: [] },
+    { id: 'compulsion', weight: 40, obsessionIds: ['booze'] },
+  ]
+  const time = { hour: 14 }
+  const order = (player) => getAvailableActions(player, location, time, registry).map((a) => a.id)
+
+  it('without the obsession the heavier action leads', () => {
+    expect(order({ status: {}, psyche: { obsessions: [] } })).toEqual(['sensible', 'compulsion'])
+  })
+
+  it('a full-strength obsession adds half again to its action and takes the lead', () => {
+    const player = { status: {}, psyche: { obsessions: [{ id: 'booze', strength: 100 }] } }
+    expect(order(player)).toEqual(['compulsion', 'sensible'])
+  })
+
+  it('a weak obsession is not enough', () => {
+    const player = { status: {}, psyche: { obsessions: [{ id: 'booze', strength: 20 }] } }
+    expect(order(player)).toEqual(['sensible', 'compulsion'])
+  })
+})

@@ -106,7 +106,9 @@
                 v-for="item in game.playerInventory"
                 :key="item.id"
                 class="status-inventory__item"
+                :class="{ 'status-inventory__item--usable': item.type === 'consumable' }"
                 :title="item.description"
+                @click="useItem(item)"
               >
                 <span class="status-inventory__name">{{ item.name }}</span>
                 <span v-if="item.quantity > 1" class="status-inventory__quantity">
@@ -133,6 +135,7 @@ import { useSave } from '../../composables/useSave.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
 import { loadActions, loadEvents } from '../../data/loader.js'
 import { formatTime } from '../../engine/clock.js'
+import { STATUS_BAR_STATS, statusBarFillClass } from '../../utils/statusBar.js'
 import GameHeader from './GameHeader.vue'
 import GameFooter from './GameFooter.vue'
 import LocationView from '../game/LocationView.vue'
@@ -184,32 +187,20 @@ const formattedMoney = computed(() => {
   return m.toFixed(2)
 })
 
-const statusStats = computed(() => [
-  { key: 'health', label: 'Health', icon: '♥', value: game.playerHealth },
-  { key: 'energy', label: 'Energy', icon: '⚡', value: game.playerEnergy },
-  { key: 'mood', label: 'Mood', icon: '◈', value: game.playerMood },
-  { key: 'sobriety', label: 'Sobriety', icon: '◎', value: game.playerSobriety },
-  { key: 'hunger', label: 'Hunger', icon: '◆', value: game.playerHunger },
-])
+const statusStats = computed(() =>
+  STATUS_BAR_STATS.map((stat) => ({ ...stat, value: game.player?.status?.[stat.key] ?? 0 }))
+)
 
 function barFillClass(key, value) {
-  // Each stat has its own threshold logic
-  if (key === 'hunger') {
-    // Hunger: low hunger = starving — danger below 20
-    if (value <= 20) return 'status-stat__fill--danger'
-    if (value <= 40) return 'status-stat__fill--warning'
-    return ''
-  }
-  if (key === 'sobriety') {
-    // Sobriety: low = drunk — warning below 50, danger below 25
-    if (value <= 25) return 'status-stat__fill--danger'
-    if (value <= 50) return 'status-stat__fill--warning'
-    return ''
-  }
-  // Default: danger below 20, warning below 40
-  if (value <= 20) return 'status-stat__fill--danger'
-  if (value <= 40) return 'status-stat__fill--warning'
-  return ''
+  return statusBarFillClass({ key, value })
+}
+
+// === Inventory ===
+
+/** Use one of a consumable. The loop owns what that means. */
+function useItem(item) {
+  if (item.type !== 'consumable') return
+  gameLoop.useItem({ itemId: item.id })
 }
 </script>
 
@@ -425,6 +416,15 @@ function barFillClass(key, value) {
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.15rem 0;
+}
+
+.status-inventory__item--usable {
+  cursor: pointer;
+  color: $color-text-primary;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .status-inventory__quantity {

@@ -171,14 +171,24 @@ describe('simulateTick — full tier', () => {
     expect(updates[0].statusChanges.hunger).toBe(-1)
   })
 
-  it('biases toward bar when sobriety is very low', () => {
-    const char = makeFull('drunk_protagonist', { sobriety: 10 })
-    // sobriety < 30 → bias toward 'bar'
-    // Schedule has a bar entry with type: 'bar'
-    const gameTime = makeGameTime(20) // evening — bar shift (17-02) is active
+  it('a drunk heads for the bar at nine in the morning; sober, the same schedule keeps them home', () => {
+    // At 9:00 the schedule says home (0–11) and the bar shift (17–02) is hours
+    // away, so the bias is the only thing that can send anyone to the bar.
+    const gameTime = makeGameTime(9)
     const alwaysPresent = () => 0
-    const updates = simulateTick([char], gameTime, alwaysPresent)
-    expect(updates[0].locationId).toBe('bar')
+    const drunk = makeFull('drunk_protagonist', { sobriety: 10 })
+    const sober = makeFull('sober_protagonist', { sobriety: 80 })
+    expect(simulateTick([drunk], gameTime, alwaysPresent)[0].locationId).toBe('bar')
+    expect(simulateTick([sober], gameTime, alwaysPresent)[0].locationId).toBe('home')
+  })
+
+  it('the drunk line is sobriety 30: at it they keep their schedule, under it they do not', () => {
+    const gameTime = makeGameTime(9)
+    const alwaysPresent = () => 0
+    const at = makeFull('at_the_line', { sobriety: 30 })
+    const under = makeFull('under_the_line', { sobriety: 29 })
+    expect(simulateTick([at], gameTime, alwaysPresent)[0].locationId).toBe('home')
+    expect(simulateTick([under], gameTime, alwaysPresent)[0].locationId).toBe('bar')
   })
 
   it('full-sim character with no status tracks no decay', () => {
