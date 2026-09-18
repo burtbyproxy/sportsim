@@ -149,6 +149,28 @@ describe('inspirationStrike', () => {
     expect(inspirationActive({ player }).dominantPersonaId).toBe('telepath')
   })
 
+  it('the snapshot is a copy: changing the live blend in place cannot rewrite the idea', () => {
+    const blend = {
+      ...blendSober(),
+      weights: [{ personaId: 'priest', weight: 0.6, source: 'substance', sourceId: 'whiskey' }],
+      soberWeight: 0.4,
+      dominantPersonaId: 'priest',
+    }
+    const player = makePlayer({ blend })
+    const { data } = inspirationStrike({
+      player,
+      source: wood,
+      strength: 50,
+      ticksTotal: 4,
+      gameTime: at(0),
+    })
+    player.blend.weights[0].personaId = 'telepath'
+    player.blend.weights.push({ personaId: 'yeller', weight: 0.1 })
+    expect(data.struck.personaSnapshot.weights).toEqual([
+      { personaId: 'priest', weight: 0.6, source: 'substance', sourceId: 'whiskey' },
+    ])
+  })
+
   it('a new strike replaces the active one and records what replaced it', () => {
     const player = inspiredPlayer()
     const { data } = inspirationStrike({

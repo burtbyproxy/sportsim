@@ -3,6 +3,10 @@
  * Pure functions. No side effects. No Vue. No DOM.
  */
 
+/** A rolled check trains the stat it rolled on. You learn more when it works. */
+export const STAT_XP_CHECK_SUCCESS = 2
+export const STAT_XP_CHECK_FAILURE = 1
+
 /**
  * XP required to gain a stat point.
  * Simple linear for now — can be tuned to a curve later.
@@ -37,72 +41,6 @@ export function statXpApply({ stat, amount }) {
   }
   if (next.base === 100 && next.xp >= _xpThreshold(100)) next.xp = 0
   return { stat: next, leveledUp }
-}
-
-/**
- * Adds XP to a player stat. Returns the updated stat object (does NOT
- * mutate input).
- *
- * @param {Object} player
- * @param {string} statName
- * @param {number} amount - XP to add
- * @returns {{ updatedStat: Object, leveledUp: boolean }}
- */
-export function gainStatXP(player, statName, amount) {
-  const stat = player.stats?.[statName]
-  if (!stat) {
-    return { updatedStat: null, leveledUp: false }
-  }
-  const { stat: updatedStat, leveledUp } = statXpApply({ stat, amount })
-  return { updatedStat, leveledUp }
-}
-
-/**
- * Calculates a character level as an aggregate of all stats.
- * Level = average of all stat bases, rounded down.
- *
- * @param {Object} player
- * @returns {number}
- */
-export function calculateLevel(player) {
-  const stats = player.stats
-  if (!stats) return 1
-
-  const statValues = Object.values(stats).map((s) => s.base || 0)
-  if (statValues.length === 0) return 1
-
-  const sum = statValues.reduce((acc, v) => acc + v, 0)
-  return Math.max(1, Math.floor(sum / statValues.length))
-}
-
-/**
- * Checks archetype scores against recognition thresholds.
- * Returns array of archetype IDs that have newly crossed a threshold.
- *
- * Each archetype definition should have:
- *   { id: string, thresholds: number[] } — sorted ascending
- *
- * @param {Object} player
- * @param {Object[]} archetypeDefinitions
- * @param {Object<string, number>} previouslyCrossed - map of archetypeId -> highest crossed threshold
- * @returns {{ archetypeId: string, threshold: number }[]}
- */
-export function checkArchetypeThresholds(player, archetypeDefinitions, previouslyCrossed = {}) {
-  const newly = []
-  const scores = player.archetypeScores || {}
-
-  for (const archetype of archetypeDefinitions) {
-    const score = scores[archetype.id] ?? 0
-    const crossed = previouslyCrossed[archetype.id] ?? -1
-
-    for (const threshold of archetype.thresholds) {
-      if (score >= threshold && crossed < threshold) {
-        newly.push({ archetypeId: archetype.id, threshold })
-      }
-    }
-  }
-
-  return newly
 }
 
 /**

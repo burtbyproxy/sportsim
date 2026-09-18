@@ -175,32 +175,41 @@ describe('simulateTick — full tier — normal path', () => {
 // ---------------------------------------------------------------------------
 
 describe('simulateTick — full tier — bias fires, entry found', () => {
-  it('resolves to biased location when bias type matches a schedule entry', () => {
-    // Give rival a bar-typed entry so low_sobriety bias can resolve
-    const c = makeFull({
-      status: { hunger: 60, sobriety: 10, energy: 65, mood: 45, health: 90 }, // sobriety < 30 triggers low_sobriety
-      schedule: {
-        entries: [
-          {
-            locationId: 'blue_parrot',
-            type: 'bar',
-            startHour: 0,
-            endHour: 24,
-            probability: 1.0,
-            days: ['all'],
-          },
-          {
-            locationId: 'columbia_park',
-            startHour: 0,
-            endHour: 24,
-            probability: 1.0,
-            days: ['all'],
-          },
-        ],
+  // The park comes first in the schedule, so ordinary resolution lands there.
+  // Only the bias can pick the bar, which makes the bias the thing under test.
+  const parkThenBar = {
+    entries: [
+      {
+        locationId: 'columbia_park',
+        startHour: 0,
+        endHour: 24,
+        probability: 1.0,
+        days: ['all'],
       },
+      {
+        locationId: 'blue_parrot',
+        type: 'bar',
+        startHour: 0,
+        endHour: 24,
+        probability: 1.0,
+        days: ['all'],
+      },
+    ],
+  }
+  const withSobriety = (sobriety) =>
+    makeFull({
+      status: { hunger: 60, sobriety, energy: 65, mood: 45, health: 90 },
+      schedule: parkThenBar,
     })
-    const result = simulateTick([c], makeTime(10), alwaysRng)
+
+  it('a drunk character skips the first scheduled stop for the bar-typed entry', () => {
+    const result = simulateTick([withSobriety(10)], makeTime(10), alwaysRng)
     expect(result[0].locationId).toBe('blue_parrot')
+  })
+
+  it('the same character sober keeps the schedule', () => {
+    const result = simulateTick([withSobriety(70)], makeTime(10), alwaysRng)
+    expect(result[0].locationId).toBe('columbia_park')
   })
 })
 

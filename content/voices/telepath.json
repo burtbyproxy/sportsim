@@ -6,6 +6,7 @@
     "inspiration.status.fresh": "genius, incoming",
     "inspiration.status.fading": "genius, still incoming",
     "scavenge.found": "There: {item}. It was calling you. You heard it from across the street.",
-    "scavenge.picked_clean": "Everything here already told you everything it knows."
+    "scavenge.picked_clean": "Everything here already told you everything it knows.",
+    "item.used": "The {item} is gone. You are fairly sure you're the one who had it."
   }
 }

@@ -28,7 +28,7 @@
         @mouseenter="selectedIndex = i"
       >
         <span
-          v-for="(part, j) in renderShortcutLabel(item.label, item.shortcut)"
+          v-for="(part, j) in shortcutLabelParts({ label: item.label, shortcut: item.shortcut })"
           :key="j"
           :class="part.isKey ? 'shortcut-key' : ''"
           >{{ part.text }}</span
@@ -42,7 +42,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '../../stores/game.js'
-import { useMetaStore } from '../../stores/meta.js'
 import { useSave } from '../../composables/useSave.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
 import { useKeyboardNav } from '../../composables/useKeyboardNav.js'
@@ -58,10 +57,12 @@ import {
 } from '../../data/loader.js'
 import { createPlayer } from '../../models/player.js'
 import { createCharacter } from '../../models/character.js'
+import { createLocation } from '../../models/location.js'
+import { createItem } from '../../models/item.js'
+import { shortcutLabelParts } from '../../utils/menu.js'
 
 const router = useRouter()
 const game = useGameStore()
-const meta = useMetaStore()
 const save = useSave()
 const menuEl = ref(null)
 
@@ -71,7 +72,7 @@ const hasSave = ref(false)
 // are definitions, not run state, and persist across game resets.
 const allItems = loadItems()
 for (const item of Object.values(allItems)) {
-  game.registerItem(item)
+  game.registerItem(createItem(item))
 }
 for (const substance of Object.values(loadSubstances())) {
   game.registerSubstance({ substance })
@@ -90,14 +91,13 @@ for (const table of Object.values(loadScavengeTables())) {
 }
 
 onMounted(() => {
-  meta.load()
   hasSave.value = save.listSaves().length > 0
   // Auto-focus so keyboard works immediately, no click required
   menuEl.value?.focus()
 })
 
 const bootLines = [
-  'SPORTSIM v0.7.0',
+  'SPORTSIM v0.8.0',
   'Portland Art Scene Simulation Engine',
   'Loading city data...',
   'Generating despair...',
@@ -113,7 +113,7 @@ function startNewGame() {
   // Register all Kenton locations from content/
   const locations = loadLocations('kenton')
   for (const location of Object.values(locations)) {
-    game.registerLocation({ ...location })
+    game.registerLocation(createLocation(location))
   }
 
   // Register all characters from content/
@@ -140,23 +140,7 @@ function loadGame() {
 const menuItems = computed(() => [
   { id: 'new', label: 'New Game', shortcut: 'n', disabled: false, action: startNewGame },
   { id: 'load', label: 'Load Game', shortcut: 'l', disabled: !hasSave.value, action: loadGame },
-  { id: 'unlocks', label: 'Unlocks', shortcut: 'u', disabled: true, action: () => {} },
 ])
-
-/**
- * Split a label around a shortcut letter to render as:
- * "[n]ew Game" — the shortcut letter gets brackets and a highlight class.
- */
-function renderShortcutLabel(label, shortcut) {
-  if (!shortcut) return [{ text: label, isKey: false }]
-  const idx = label.toLowerCase().indexOf(shortcut.toLowerCase())
-  if (idx === -1) return [{ text: label, isKey: false }]
-  const parts = []
-  if (idx > 0) parts.push({ text: label.slice(0, idx), isKey: false })
-  parts.push({ text: `[${label[idx]}]`, isKey: true })
-  if (idx + 1 < label.length) parts.push({ text: label.slice(idx + 1), isKey: false })
-  return parts
-}
 
 const { selectedIndex, onKeydown: navKeydown } = useKeyboardNav(menuItems, {
   onSelect: (item) => {
@@ -166,7 +150,7 @@ const { selectedIndex, onKeydown: navKeydown } = useKeyboardNav(menuItems, {
   loop: true,
 })
 
-// Letter shortcuts: n → new game, l → load game, u → unlocks etc.
+// Letter shortcuts: n → new game, l → load game.
 // Arrow nav + Enter handled by useKeyboardNav via navKeydown.
 useKeyboard({
   n: (e) => {
@@ -178,13 +162,6 @@ useKeyboard({
   },
   l: (e) => {
     const item = menuItems.value.find((m) => m.shortcut === 'l' && !m.disabled)
-    if (item) {
-      e.preventDefault()
-      item.action()
-    }
-  },
-  u: (e) => {
-    const item = menuItems.value.find((m) => m.shortcut === 'u' && !m.disabled)
     if (item) {
       e.preventDefault()
       item.action()

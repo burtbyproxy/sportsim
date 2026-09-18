@@ -6,6 +6,7 @@
     "inspiration.status.fresh": "called",
     "inspiration.status.fading": "called, and stalling",
     "scavenge.found": "Somebody left behind {item}. You take it into your care. Somebody has to.",
-    "scavenge.nothing": "Nothing. The Lord provides, but not on a schedule."
+    "scavenge.nothing": "Nothing. The Lord provides, but not on a schedule.",
+    "item.used": "You finish the {item} and look around for someone to share the next one with. Or to forgive."
   }
 }

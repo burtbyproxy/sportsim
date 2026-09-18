@@ -11,7 +11,10 @@ import {
 } from '../engine/inspiration.js'
 import { voiceLine } from '../engine/voice.js'
 import { scavengeSearch, scavengedCounterName } from '../engine/scavenge.js'
-import { addItem, incrementCounter } from '../models/player.js'
+import { addItem, removeItem, addModifier, incrementCounter } from '../models/player.js'
+import { incrementVisitCount } from '../models/location.js'
+import { itemUseResolve } from '../engine/items.js'
+import { statXpApply } from '../engine/stats.js'
 
 /**
  * Add a map of deltas onto a map of levels, dropping any key that reaches zero.
@@ -189,7 +192,7 @@ export const useGameStore = defineStore('game', {
         this.player.currentLocationId = locationId
       }
       if (this.locations[locationId]) {
-        this.locations[locationId].visitCount = (this.locations[locationId].visitCount ?? 0) + 1
+        incrementVisitCount(this.locations[locationId])
       }
     },
 
@@ -309,6 +312,48 @@ export const useGameStore = defineStore('game', {
           )
         }
       }
+    },
+
+    /**
+     * Using a stat trains it. Experience lands on the stat, and the stat
+     * levels on its own curve.
+     * @param {{ statName: string, amount: number }} input
+     * @returns {{ ok: boolean, data: { leveledUp: boolean }|null, error: Object|null }}
+     */
+    applyStatXp({ statName, amount }) {
+      const stat = this.player?.stats?.[statName]
+      if (!stat) {
+        return {
+          ok: false,
+          data: null,
+          error: { code: 'STAT_UNKNOWN', message: `No stat '${statName}' to train` },
+        }
+      }
+      const { stat: next, leveledUp } = statXpApply({ stat, amount })
+      this.player.stats[statName] = next
+      return { ok: true, data: { leveledUp }, error: null }
+    },
+
+    /**
+     * Use one of something the player carries. Effects land on statuses or
+     * become timed stat modifiers, doses go to the blend, and one is used up.
+     * @param {{ itemId: string, rng?: () => number }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the items engine's result
+     */
+    applyItemUse({ itemId, rng = Math.random }) {
+      const result = itemUseResolve({ player: this.player, itemId })
+      if (!result.ok) {
+        console.warn(`[game] applyItemUse: ${result.error.code}`, result.error.message)
+        return result
+      }
+      const { statusChanges, statModifiers, doses } = result.data
+      for (const { statName, modifier } of statModifiers) {
+        addModifier(this.player, statName, modifier)
+      }
+      if (doses.length > 0) this.applyDoses({ doses, rng })
+      removeItem(this.player, itemId)
+      this.applyStatusChanges(statusChanges)
+      return result
     },
 
     /**

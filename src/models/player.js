@@ -103,21 +103,6 @@ export function createPlayer(name) {
 }
 
 /**
- * Return the effective value of a stat (base + sum of modifier values).
- * Pure — does not mutate player.
- *
- * @param {import('./types').Player} player
- * @param {string} statName
- * @returns {number}
- */
-export function getEffectiveStat(player, statName) {
-  const stat = player.stats[statName]
-  if (!stat) return 0
-  const total = stat.modifiers.reduce((sum, mod) => sum + mod.value, stat.base)
-  return clamp(total, 0, 100)
-}
-
-/**
  * Decrement all modifier durations, remove expired ones.
  * Mutates player in place. Called every game tick.
  *
@@ -203,29 +188,6 @@ export function hasItem(player, itemId) {
 }
 
 /**
- * Adjust a status value by delta, clamping to valid range.
- * money is NOT clamped — use adjustMoney for that.
- * sobriety is derived from intoxications and cannot be adjusted here — dose
- * the player through the blend engine instead. Mutates player in place.
- *
- * Status ranges: hunger/energy/mood/health all 0-100.
- *
- * @param {import('./types').Player} player
- * @param {string} statusName
- * @param {number} delta
- * @returns {void}
- */
-export function adjustStatus(player, statusName, delta) {
-  if (statusName === 'money') {
-    adjustMoney(player, delta)
-    return
-  }
-  if (statusName === 'sobriety') return
-  if (!(statusName in player.status)) return
-  player.status[statusName] = clamp(player.status[statusName] + delta, 0, 100)
-}
-
-/**
  * Adjust the player's money by delta.
  * Can go negative (debt). No clamping.
  * Mutates player in place.
@@ -236,18 +198,6 @@ export function adjustStatus(player, statusName, delta) {
  */
 export function adjustMoney(player, delta) {
   player.status.money += delta
-}
-
-/**
- * Add a trauma to the player's psyche.
- * Mutates player in place.
- *
- * @param {import('./types').Player} player
- * @param {import('./types').Trauma} trauma
- * @returns {void}
- */
-export function addTrauma(player, trauma) {
-  player.psyche.traumas.push({ ...trauma })
 }
 
 /**

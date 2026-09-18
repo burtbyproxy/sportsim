@@ -3,12 +3,21 @@
  *
  * Covers: validation, versioning, export/import, save slot limit.
  *
- * The node test environment has no DOM / localStorage, so we mock it here.
- * A simple in-memory store suffices.
+ * The node test environment has no localStorage, so an in-memory one is
+ * installed. The composable and the store are the real ones.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { validateSave, SAVE_VERSION, MAX_SAVES } from '../src/composables/useSave.js'
+import { createPinia, setActivePinia } from 'pinia'
+import {
+  useSave,
+  validateSave,
+  saveMigrate,
+  SAVE_VERSION,
+  MAX_SAVES,
+} from '../src/composables/useSave.js'
+import { useGameStore } from '../src/stores/game.js'
+import { blendSober } from '../src/engine/blend.js'
 
 // ---------------------------------------------------------------------------
 // localStorage mock
@@ -159,135 +168,20 @@ describe('MAX_SAVES', () => {
 })
 
 // ---------------------------------------------------------------------------
-// useSave — wired up with mocked localStorage and mocked pinia store
-//
-// We can't run pinia in the node test environment without a full app mount,
-// so we test the composable's internals by directly exercising the exported
-// pure functions (validateSave, SAVE_VERSION, MAX_SAVES) and then test the
-// stateful functions via a thin harness that replaces localStorage and
-// injects a fake game store.
+// useSave — the real composable, a real Pinia store, and an in-memory
+// localStorage. Nothing here is a stand-in for the code under test.
 // ---------------------------------------------------------------------------
 
 /**
- * Build a lightweight stand-in for useSave that uses an injected localStorage
- * mock and a fake game store. Mirrors the real composable exactly so that
- * changes to useSave.js break these tests in the right way.
+ * Stand up the real save system over an in-memory localStorage, with the
+ * real game store patched to the given state.
  */
-function buildSaveSystem(lsMock, fakeGame = {}) {
-  const SAVE_PREFIX = 'sportsim_save_'
-  const SAVE_INDEX_KEY = 'sportsim_saves'
-
-  function listSaves() {
-    try {
-      const raw = lsMock.getItem(SAVE_INDEX_KEY)
-      if (!raw) return []
-      return JSON.parse(raw)
-    } catch {
-      return []
-    }
-  }
-
-  function _indexSave(entry) {
-    const saves = listSaves()
-    saves.push(entry)
-    lsMock.setItem(SAVE_INDEX_KEY, JSON.stringify(saves))
-  }
-
-  function deleteSave(id) {
-    lsMock.removeItem(SAVE_PREFIX + id)
-    const saves = listSaves().filter((s) => s.id !== id)
-    lsMock.setItem(SAVE_INDEX_KEY, JSON.stringify(saves))
-  }
-
-  function save(name) {
-    const saves = listSaves()
-    if (saves.length >= MAX_SAVES) {
-      console.warn(`[save] Save limit reached (${MAX_SAVES}).`)
-      return null
-    }
-
-    const id = 'mock-uuid-' + Math.random().toString(36).slice(2)
-    const timestamp = Date.now()
-    const displayName =
-      name ?? `Day ${fakeGame.time?.day ?? 1} — ${fakeGame.time?.period ?? 'morning'}`
-
-    const saveData = {
-      id,
-      name: displayName,
-      timestamp,
-      version: SAVE_VERSION,
-      player: fakeGame.player ?? null,
-      time: fakeGame.time ?? {},
-      locations: fakeGame.locations ?? {},
-      characters: fakeGame.characters ?? {},
-      firedEventIds: fakeGame.firedEventIds ?? [],
-      counters: fakeGame.counters ?? {},
-    }
-
-    try {
-      lsMock.setItem(SAVE_PREFIX + id, JSON.stringify(saveData))
-      _indexSave({ id, name: displayName, timestamp })
-    } catch (e) {
-      return null
-    }
-    return id
-  }
-
-  function load(id) {
-    try {
-      const raw = lsMock.getItem(SAVE_PREFIX + id)
-      if (!raw) return null
-      const data = JSON.parse(raw)
-      if (!validateSave(data)) {
-        console.warn(`[save] Save "${id}" failed validation — discarding.`)
-        return null
-      }
-      return data
-    } catch (e) {
-      return null
-    }
-  }
-
-  function exportSave(id) {
-    const data = load(id)
-    if (!data) return null
-    return JSON.stringify(data, null, 2)
-  }
-
-  function importSave(jsonString) {
-    let data
-    try {
-      data = JSON.parse(jsonString)
-    } catch {
-      return null
-    }
-    if (!validateSave(data)) return null
-
-    const saves = listSaves()
-    if (saves.length >= MAX_SAVES) {
-      console.warn(`[save] importSave: save limit reached (${MAX_SAVES}).`)
-      return null
-    }
-
-    const newId = 'import-uuid-' + Math.random().toString(36).slice(2)
-    const importedData = { ...data, id: newId }
-    try {
-      lsMock.setItem(SAVE_PREFIX + newId, JSON.stringify(importedData))
-      _indexSave({ id: newId, name: importedData.name, timestamp: importedData.timestamp })
-    } catch {
-      return null
-    }
-    return newId
-  }
-
-  function autoSave() {
-    const saves = listSaves()
-    const existing = saves.find((s) => s.name === 'auto')
-    if (existing) deleteSave(existing.id)
-    return save('auto')
-  }
-
-  return { save, load, listSaves, deleteSave, autoSave, exportSave, importSave }
+function buildSaveSystem(lsMock, gameState = {}) {
+  globalThis.localStorage = lsMock
+  setActivePinia(createPinia())
+  const game = useGameStore()
+  game.$patch(gameState)
+  return useSave()
 }
 
 // ---------------------------------------------------------------------------
@@ -708,8 +602,6 @@ describe('resilience — corrupted index', () => {
 // saveMigrate — v1 saves know only a sobriety number
 // ---------------------------------------------------------------------------
 
-import { saveMigrate } from '../src/composables/useSave.js'
-import { blendSober } from '../src/engine/blend.js'
 
 describe('saveMigrate', () => {
   function makeV1Save() {
@@ -785,5 +677,69 @@ describe('saveMigrate', () => {
     const migrated = saveMigrate({ save: current })
     expect(migrated).toEqual(current)
     expect(migrated).not.toBe(current)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Old saves on disk, and imports, through the real load path
+// ---------------------------------------------------------------------------
+
+describe('load() and importSave() — old saves and fresh ids', () => {
+  let ls
+  let sys
+
+  beforeEach(() => {
+    ls = createLocalStorageMock()
+    sys = buildSaveSystem(ls)
+  })
+
+  function v1OnDisk() {
+    const v1 = makeValidSave({ id: 'old-one', version: 1 })
+    v1.player.status = { hunger: 50, sobriety: 35, energy: 70, mood: 40, health: 100, money: 2 }
+    ls.setItem('sportsim_save_old-one', JSON.stringify(v1))
+    ls.setItem(
+      'sportsim_saves',
+      JSON.stringify([{ id: 'old-one', name: v1.name, timestamp: v1.timestamp }])
+    )
+    return v1
+  }
+
+  it('a v1 save read off disk comes back migrated, not as it was written', () => {
+    v1OnDisk()
+    const loaded = sys.load('old-one')
+    expect(loaded.version).toBe(SAVE_VERSION)
+    expect(loaded.player.intoxications).toEqual({})
+    expect(loaded.player.skills).toEqual({})
+    expect(loaded.player.inspirations).toEqual([])
+    expect(loaded.player.status.sobriety).toBe(100)
+  })
+
+  it('loading does not rewrite what is on disk', () => {
+    const v1 = v1OnDisk()
+    sys.load('old-one')
+    expect(JSON.parse(ls.getItem('sportsim_save_old-one'))).toEqual(v1)
+  })
+
+  it('an import gets an id of its own and leaves the original id unwritten', () => {
+    const foreign = makeValidSave({ id: 'somebody-elses' })
+    const newId = sys.importSave(JSON.stringify(foreign))
+    expect(newId).not.toBeNull()
+    expect(newId).not.toBe('somebody-elses')
+    expect(ls.getItem('sportsim_save_somebody-elses')).toBeNull()
+    expect(sys.load(newId).id).toBe(newId)
+  })
+
+  it('importing the same file twice makes two saves, not one overwritten', () => {
+    const json = JSON.stringify(makeValidSave({ id: 'dupe' }))
+    const first = sys.importSave(json)
+    const second = sys.importSave(json)
+    expect(first).not.toBe(second)
+    expect(sys.listSaves()).toHaveLength(2)
+  })
+
+  it('an imported v1 save is stored already migrated', () => {
+    const v1 = makeValidSave({ id: 'ancient', version: 1 })
+    const newId = sys.importSave(JSON.stringify(v1))
+    expect(JSON.parse(ls.getItem(`sportsim_save_${newId}`)).version).toBe(SAVE_VERSION)
   })
 })

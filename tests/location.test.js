@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
   createLocation,
-  getDescription,
-  getAvailableExits,
   isOpen,
   exitMeetsRequirements,
   incrementVisitCount,
@@ -65,97 +63,6 @@ describe('createLocation', () => {
     const loc = createLocation(raw);
     const serialized = JSON.parse(JSON.stringify(loc));
     expect(serialized.id).toBe('blue_parrot');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// getDescription
-// ---------------------------------------------------------------------------
-
-describe('getDescription', () => {
-  const loc = createLocation({
-    id: 'test',
-    type: 'bar',
-    variant: null,
-    display: 'Test',
-    descriptions: {
-      default: 'Default desc.',
-      night: 'Night desc.',
-      drunk: 'Drunk desc.',
-      exhausted: 'Exhausted desc.',
-      starving: 'Starving desc.',
-      repeat: 'Repeat desc.',
-    },
-  });
-
-  it('returns default description with no context', () => {
-    expect(getDescription(loc)).toBe('Default desc.');
-  });
-
-  it('returns drunk description when sobriety < 30', () => {
-    expect(getDescription(loc, { playerStatus: { sobriety: 20 } })).toBe('Drunk desc.');
-  });
-
-  it('returns exhausted description when energy < 20', () => {
-    expect(getDescription(loc, { playerStatus: { energy: 10 } })).toBe('Exhausted desc.');
-  });
-
-  it('returns starving description when hunger < 20', () => {
-    expect(getDescription(loc, { playerStatus: { hunger: 5 } })).toBe('Starving desc.');
-  });
-
-  it('drunk takes priority over time-of-day', () => {
-    expect(getDescription(loc, { timeOfDay: 'night', playerStatus: { sobriety: 10 } })).toBe('Drunk desc.');
-  });
-
-  it('returns night description for timeOfDay night', () => {
-    expect(getDescription(loc, { timeOfDay: 'night' })).toBe('Night desc.');
-  });
-
-  it('returns repeat description when visitCount > 1', () => {
-    expect(getDescription(loc, { visitCount: 2 })).toBe('Repeat desc.');
-  });
-
-  it('does NOT use repeat when visitCount === 1', () => {
-    expect(getDescription(loc, { visitCount: 1 })).toBe('Default desc.');
-  });
-
-  it('returns empty string when no default exists', () => {
-    const bare = createLocation({ id: 'bare', type: 'park', variant: null, display: 'Bare' });
-    expect(getDescription(bare)).toBe('');
-  });
-
-  it('sobriety at exactly 30 does not trigger drunk', () => {
-    // threshold is < 30, so exactly 30 should not match
-    expect(getDescription(loc, { playerStatus: { sobriety: 30 } })).toBe('Default desc.');
-  });
-
-  it('ignores status keys that are not below threshold', () => {
-    // energy = 50 should not trigger exhausted
-    expect(getDescription(loc, { playerStatus: { energy: 50 } })).toBe('Default desc.');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// getAvailableExits
-// ---------------------------------------------------------------------------
-
-describe('getAvailableExits', () => {
-  it('returns exits array', () => {
-    const loc = createLocation({
-      id: 'x', type: 'bar', variant: null, display: 'X',
-      exits: [
-        { locationId: 'y', label: 'Go to Y', travelTime: 1, requirements: null },
-      ],
-    });
-    const exits = getAvailableExits(loc);
-    expect(exits).toHaveLength(1);
-    expect(exits[0].locationId).toBe('y');
-  });
-
-  it('returns empty array when no exits', () => {
-    const loc = createLocation({ id: 'x', type: 'park', variant: null, display: 'X' });
-    expect(getAvailableExits(loc)).toEqual([]);
   });
 });
 

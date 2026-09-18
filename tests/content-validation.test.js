@@ -262,6 +262,11 @@ function validateOutcome(outcome, label) {
     ).toBeUndefined();
   }
   validateDoses(outcome.doses, label);
+  // Nothing in the game can grant a trauma yet; a non-null value would be silently ignored.
+  expect(
+    outcome.traumaGained ?? null,
+    `${label}: traumaGained is not supported — there are no trauma definitions to grant`
+  ).toBeNull();
   if (outcome.inspiration !== undefined && outcome.inspiration !== null) {
     const ins = outcome.inspiration;
     expect(ins.strength, `${label}: inspiration.strength must be 1-100`).toBeGreaterThanOrEqual(1);
@@ -359,6 +364,11 @@ function validateItem(data, file) {
         effect.target,
         `${file} '${data.id}': effects cannot target sobriety — declare doses instead`
       ).not.toBe('sobriety');
+      // An effect lands on a status, or on a stat as a timed modifier. Nothing else exists.
+      expect(
+        [...VALID_STATUS_KEYS, ...VALID_STATS],
+        `${file} '${data.id}': effect target '${effect.target}' is neither a status nor a stat`
+      ).toContain(effect.target);
     }
   }
   validateDoses(data.doses, `${file} '${data.id}'`);
@@ -514,11 +524,6 @@ describe('content/characters/*.json — Character contract', () => {
     expect(existsSync(charactersDir)).toBe(true);
   });
 
-  if (files.length === 0) {
-    it('(no character files yet — validation will run when files are added)', () => {
-      expect(true).toBe(true);
-    });
-  }
 
   for (const { file, data } of files) {
     it(`${file} — valid Character`, () => {
@@ -548,11 +553,6 @@ describe('content/maps/*/locations/*.json — Location contract', () => {
     expect(existsSync(join(CONTENT_ROOT, 'maps'))).toBe(true);
   });
 
-  if (allFiles.length === 0) {
-    it('(no location files yet — validation will run when files are added)', () => {
-      expect(true).toBe(true);
-    });
-  }
 
   for (const { file, data } of allFiles) {
     it(`${file} — valid Location`, () => {
@@ -571,11 +571,6 @@ describe('content/maps/*/actions/*.json — Action contract', () => {
     loadJsonFiles(join(mapDir, 'actions'))
   );
 
-  if (allFiles.length === 0) {
-    it('(no action files yet — validation will run when files are added)', () => {
-      expect(true).toBe(true);
-    });
-  }
 
   for (const { file, data } of allFiles) {
     // Action files can be arrays or objects (keyed by action ID)
@@ -656,11 +651,6 @@ describe('content/items/*.json — Item contract', () => {
     expect(existsSync(itemsDir)).toBe(true);
   });
 
-  if (files.length === 0) {
-    it('(no item files yet — validation will run when files are added)', () => {
-      expect(true).toBe(true);
-    });
-  }
 
   for (const { file, data } of files) {
     // Item files can be arrays or objects keyed by item ID
@@ -862,11 +852,6 @@ describe('cross-reference validation', () => {
   const substanceFiles = loadJsonFiles(join(CONTENT_ROOT, 'substances'));
   const knownSubstanceIds = new Set(substanceFiles.map(({ data }) => data.id).filter(Boolean));
 
-  if (characterFiles.length === 0 && locationFiles.length === 0) {
-    it('(no content files yet — cross-reference validation will run when files are added)', () => {
-      expect(true).toBe(true);
-    });
-  }
 
   // Character intoxications / habituations name real substances
   for (const { file, data: character } of characterFiles) {

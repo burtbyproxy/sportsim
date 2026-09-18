@@ -2,7 +2,9 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, resolve } from 'path';
-import { createLocation, isOpen, getDescription } from '../src/models/location.js';
+import { createLocation, isOpen } from '../src/models/location.js';
+import { createPlayer } from '../src/models/player.js';
+import { generateLocationNarrative } from '../src/composables/useNarrative.js';
 
 // Load Kenton locations from content/ (keyed by ID)
 const locDir = resolve('content/maps/kenton/locations');
@@ -127,11 +129,13 @@ describe('kentonLocations data integrity', () => {
     }
   });
 
-  it('getDescription returns non-empty string for all default descriptions', () => {
+  it('every location narrates its own default description to a fresh arrival', () => {
+    const player = createPlayer('Test');
+    const morning = { period: 'morning', hour: 9 };
     for (const id of EXPECTED_IDS) {
       const loc = createLocation(kentonLocations[id]);
-      const desc = getDescription(loc);
-      expect(desc, `${id}: default description should not be empty`).toBeTruthy();
+      const text = generateLocationNarrative(loc, player, morning).tokens.map((t) => t.text).join('');
+      expect(text, `${id}: narrated description`).toContain(kentonLocations[id].descriptions.default.slice(0, 40));
     }
   });
 });
