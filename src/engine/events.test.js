@@ -294,3 +294,24 @@ describe('resolveEvent — checked choice with a failure outcome', () => {
     expect(outcome).toBe(win)
   })
 })
+
+describe('outdoors — the street happens on the street', () => {
+  const street = { id: 'curb', type: 'random', probability: 1, conditions: { outdoors: true } }
+  const indoors = { id: 'ceiling', type: 'random', probability: 1, conditions: { outdoors: false } }
+  const either = { id: 'rain', type: 'random', probability: 1, conditions: {} }
+  const registry = [street, indoors, either]
+  const time = { hour: 12, tick: 0 }
+  const fired = (location) =>
+    checkRandomEvents({ stats: {}, status: {} }, location, time, registry, [], () => 0).map(
+      (e) => e.id
+    )
+
+  it('a street event finds you in a parking lot and not in a basement', () => {
+    expect(fired({ id: 'lot', type: 'market', outdoors: true })).toEqual(['curb', 'rain'])
+    expect(fired({ id: 'basement', type: 'home', outdoors: false })).toEqual(['ceiling', 'rain'])
+  })
+
+  it('a place that never said is indoors', () => {
+    expect(fired({ id: 'old_save_location', type: 'home' })).toEqual(['ceiling', 'rain'])
+  })
+})

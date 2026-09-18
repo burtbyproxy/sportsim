@@ -1,6 +1,6 @@
 {
   "name": "sportsim",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "Take the Portland art world by storm in the early turn of the Millennium.",
   "type": "module",
   "scripts": {

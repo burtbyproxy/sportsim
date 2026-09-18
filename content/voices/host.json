@@ -2,6 +2,14 @@
   "id": "host",
   "lines": {
     "game.karaoke.pushed": "You've left the stage. You're working the room with the mic, asking people how their night's going while the song plays on without you. The cord runs out at the pool table.",
-    "game.karaoke.held": "You hold the mic out to a booth so they can sing it. They don't want to. You wait. The song doesn't."
+    "game.karaoke.held": "You hold the mic out to a booth so they can sing it. They don't want to. You wait. The song doesn't.",
+    "inspiration.struck": "An idea! Everybody should hear about it. You tell the nearest person, and then the next nearest. One of them nods. You take it as a commission.",
+    "inspiration.expired": "It got away while you were making sure everybody had a drink. Somebody had to. It's fine. Who needs a top-up.",
+    "scavenge.found": "You find {item} and immediately try to give it to somebody. Nobody's here. You hold onto it for them.",
+    "scavenge.nothing": "Nothing. You apologise to the place for not bringing anything.",
+    "item.used": "You finish the {item} and look around to see who else needs one. Everyone. Everyone needs one.",
+    "making.started": "You start, and you leave room beside you in case anyone wants to join in.",
+    "piece.artist.solid": "Done: {work}. It's for everybody. You'd like that understood. It's for the whole room.",
+    "piece.artist.rough": "Done: {work}. It's a bit heavy on one side, like a drink you poured yourself. You'd still offer it to a guest."
   }
 }

@@ -4,6 +4,7 @@
   "variant": "elementary",
   "display": "Chief Joseph Elementary",
   "pieceAs": "outside Chief Joseph Elementary",
+  "outdoors": true,
   "descriptions": {
     "default": "An elementary school. You are not a child and have no business here. The chain-link fence runs the length of the block. The playground equipment is the solid metal kind from the seventies that you could break an arm on. The school day ends at 3pm. After that, the yard is technically public. You try not to look suspicious. This is harder than it sounds when you're a grown adult standing alone on an elementary school playground.",
     "night": "The school is dark. The playground is accessible. Sitting on a metal slide at midnight is a legitimate activity if you keep it moving. The chain-link fence throws grid shadows across the blacktop. The monkey bars are cold. Everything is cold.",

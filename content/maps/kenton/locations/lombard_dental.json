@@ -4,6 +4,7 @@
   "variant": "dental",
   "display": "Lombard Dental",
   "pieceAs": "in the waiting room at Lombard Dental",
+  "outdoors": false,
   "descriptions": {
     "default": "The waiting room has a fish tank where one fish circles endlessly and the other fish do not move. There are magazines from 1997. A sign says 'Financing Available' and underneath, someone has written in ballpoint pen, 'You'll need it.' The receptionist has heard all the jokes about dentists and has achieved a kind of transcendence beyond them.",
     "night": "Closed. The fish continue regardless. The circling one still circles. The still ones are still still. The parking lot light catches the tank through the window. It's oddly beautiful for a dental office at midnight.",

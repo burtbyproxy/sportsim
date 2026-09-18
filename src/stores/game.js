@@ -56,16 +56,16 @@ export const useGameStore = defineStore('game', {
     /** @type {import('../engine/clock.js').GameTime} */
     time: createClock(),
 
-    /** @type {import('../../comms/docs/data-contracts.js').Player|null} */
+    /** @type {Object|null} */
     player: null,
 
     /** Current location ID */
     currentLocationId: null,
 
-    /** @type {Object<string, import('../../comms/docs/data-contracts.js').Location>} */
+    /** @type {Object<string, Object>} */
     locations: {},
 
-    /** @type {Object<string, import('../../comms/docs/data-contracts.js').Character>} */
+    /** @type {Object<string, Object>} */
     characters: {},
 
     /** IDs of one-time events that have fired this run */
@@ -77,7 +77,7 @@ export const useGameStore = defineStore('game', {
     /** General-purpose counters */
     counters: {},
 
-    /** @type {Object<string, import('../../comms/docs/data-contracts.js').Item>} */
+    /** @type {Object<string, Object>} */
     items: {},
 
     /** Substance definitions, keyed by id. Loaded once at init from content/substances. */

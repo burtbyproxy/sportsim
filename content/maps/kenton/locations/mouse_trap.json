@@ -4,6 +4,7 @@
   "variant": "tavern",
   "display": "The Mouse Trap",
   "pieceAs": "at the Mouse Trap",
+  "outdoors": false,
   "descriptions": {
     "default": "The Mouse Trap has five pool tables. This is three more pool tables than there are people, on a good day. The bar has been known to close without notice when the only bartender is in jail, which happens. The light fixtures are the kind that made sense in 1978. The carpet is the color of a mistake. There's a table out front on the sidewalk where people smoke. It's not a porch. It's a table.",
     "night": "The same three guys are here who were here last time. You're not sure they ever leave. One of them nods at you like you're old friends. You don't know his name. You have the sense that learning it would be a commitment you're not ready for.",

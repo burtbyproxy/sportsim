@@ -2,6 +2,14 @@
   "id": "yeller",
   "lines": {
     "game.karaoke.pushed": "You're screaming. Not the words. The words left a while ago. Just screaming, on the beat, more or less, at a bar in Kenton.",
-    "game.karaoke.held": "You scream the quiet part too."
+    "game.karaoke.held": "You scream the quiet part too.",
+    "inspiration.struck": "AN IDEA. A dog two streets over starts barking back.",
+    "inspiration.expired": "IT'S GONE. WHERE DID IT GO. Somebody closes a window.",
+    "scavenge.found": "You find {item}, loudly. A man across the way looks up, decides it isn't about him, and walks faster.",
+    "scavenge.nothing": "NOTHING. Pigeons leave.",
+    "item.used": "You finish the {item}. Your knee is going like a sewing machine. It would like another.",
+    "making.started": "You start, all at once, everywhere on it, at a speed that alarms the materials.",
+    "piece.artist.solid": "Done: {work}. IT'S GOOD. You've told it so several times.",
+    "piece.artist.rough": "Done: {work}. You did it very fast. You can tell. Anyone could tell. IT'S FINE."
   }
 }

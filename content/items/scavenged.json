@@ -75,7 +75,8 @@
     "effects": [],
     "foundAs": "a spray can with about one bad decision left in it",
     "mediumIds": ["tagging", "painting"],
-    "pieceAs": "the last of a spray can"
+    "pieceAs": "the last of a spray can",
+    "spentOnUse": true
   },
   {
     "id": "pocket_knife",
@@ -101,7 +102,8 @@
     "effects": [],
     "foundAs": "a matchbook from a bar that closed",
     "mediumIds": ["drawing"],
-    "pieceAs": "burnt match"
+    "pieceAs": "burnt match",
+    "spentOnUse": true
   },
   {
     "id": "grandmas_paints",

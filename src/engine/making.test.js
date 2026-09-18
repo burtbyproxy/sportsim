@@ -248,6 +248,22 @@ describe('makingStart', () => {
     expect(player.makings).toEqual([])
   })
 
+  it('a tool with one job left in it goes into the piece; any other tool survives', () => {
+    const lastCan = { ...items, spray: { ...items.spray, spentOnUse: true } }
+    const start = (registry) =>
+      makingStart({
+        player: playerWith({ carrying: ['spray'], mediumId: 'tagging' }),
+        location: alley,
+        items: registry,
+        mediums,
+        plan: wallPlan,
+        gameState: {},
+        gameTime: { tick: 0 },
+      })
+    expect(start(lastCan).data.itemIdsConsumed).toEqual(['spray'])
+    expect(start(items).data.itemIdsConsumed).toEqual([])
+  })
+
   it('uses up nothing when the surface is a wall', () => {
     const player = playerWith({ carrying: ['spray'] })
     const result = makingStart({

@@ -68,7 +68,12 @@
       "itemId": "pocket_knife",
       "weight": 4,
       "rare": true,
-      "unique": false
+      "unique": false,
+      "inspiration": {
+        "mediumId": "carving",
+        "strength": 35,
+        "ticksTotal": 14
+      }
     }
   ]
 }

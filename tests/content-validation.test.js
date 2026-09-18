@@ -195,7 +195,7 @@ function validateCharacter(data, file) {
 // Location validation
 // ---------------------------------------------------------------------------
 
-const LOCATION_REQUIRED_FIELDS = ['id', 'type', 'display', 'descriptions', 'exits', 'availability', 'surfaces'];
+const LOCATION_REQUIRED_FIELDS = ['id', 'type', 'display', 'descriptions', 'exits', 'availability', 'surfaces', 'pieceAs', 'outdoors'];
 
 function validateLocation(data, file) {
   for (const field of LOCATION_REQUIRED_FIELDS) {
@@ -217,6 +217,9 @@ function validateLocation(data, file) {
     expect(exit, `${file}: exit missing travelTime`).toHaveProperty('travelTime');
     expect(exit.travelTime, `${file}: travelTime must be >= 1`).toBeGreaterThanOrEqual(1);
   }
+
+  expect(typeof data.outdoors, `${file}: outdoors must be boolean — can the street find you here?`).toBe('boolean');
+  expect(typeof data.pieceAs, `${file}: pieceAs must be string`).toBe('string');
 
   // surfaces — what the place itself offers to work on ([] for nothing)
   expect(Array.isArray(data.surfaces), `${file}: surfaces must be an array`).toBe(true);
@@ -417,6 +420,10 @@ function validateItem(data, file) {
   }
   if (data.type === 'surface') {
     expect(data.mediumIds?.length, `${file} '${data.id}': a surface must take at least one medium`).toBeGreaterThan(0);
+  }
+  if (data.spentOnUse !== undefined) {
+    expect(typeof data.spentOnUse, `${file} '${data.id}': spentOnUse must be boolean`).toBe('boolean');
+    expect(data.type, `${file} '${data.id}': only a tool can be spent on use`).toBe('tool');
   }
   if (['tool', 'surface', 'ingredient'].includes(data.type)) {
     // Anything that can end up in a piece has to read inside the piece's sentence.

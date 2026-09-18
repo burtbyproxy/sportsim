@@ -4,6 +4,13 @@
     "game.rhymes.picked": "{word}! You point at the ground when you say it. Twice. A sprinkler comes on somewhere in the cul-de-sac of your heart.",
     "piece.artist.rough": "Done: {work}. That was hard. That was street. Nobody was here to see it, which is how you know it was real.",
     "inspiration.urge": "You've got bars. Right now. They're not going to keep. Somebody should be writing this down, and nobody is, and that's their loss.",
-    "making.encore": "That was only the first verse. There are, by your count, about forty more."
+    "making.encore": "That was only the first verse. There are, by your count, about forty more.",
+    "inspiration.struck": "It comes to you hard, like everything does out here, in the streets, of the cul-de-sac. You nod slowly at nobody.",
+    "inspiration.expired": "It's gone. Whatever. You didn't even want it. You say so, out loud, to a mailbox.",
+    "scavenge.found": "You find {item}. You hold it sideways.",
+    "scavenge.nothing": "Nothing. These streets gave you nothing. They're mostly driveways.",
+    "item.used": "You finish the {item}, after pouring a little out first for the ones who aren't here. They're at work. It's a weekday.",
+    "making.started": "You throw up a sign at the thing you're about to make. Neither of you knows what it means.",
+    "piece.artist.solid": "Done: {work}. That's real. That's the realest thing anyone from your mom's neighbourhood has ever made."
   }
 }

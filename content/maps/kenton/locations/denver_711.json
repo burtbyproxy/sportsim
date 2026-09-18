@@ -4,6 +4,7 @@
   "variant": "convenience",
   "display": "7-11",
   "pieceAs": "outside the Denver Ave 7-11",
+  "outdoors": true,
   "descriptions": {
     "default": "The Denver Ave 7-11 is the kind of place where the Slurpee machine is always one flavor from being completely out of something. The parking lot has good light, which means it sees a lot of business after the bars close. The dumpster out back is not locked. You have noticed this.",
     "night": "Post-bar crowd cycles through in waves. Drunk people making decisions about nachos. You are one of these people, or close enough. The parking lot is bright enough to read by. People stand in it talking like it's a living room. Someone is sitting on the hood of a car that may or may not be theirs.",
