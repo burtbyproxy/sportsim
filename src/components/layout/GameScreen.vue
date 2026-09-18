@@ -106,6 +106,7 @@ import { useRouter } from 'vue-router'
 import { useGameStore } from '../../stores/game.js'
 import { useNarrative, narrativeSkipBindings } from '../../composables/useNarrative.js'
 import { useGameLoop } from '../../composables/useGameLoop.js'
+import { useSave } from '../../composables/useSave.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
 import { loadActions } from '../../data/loader.js'
 import { formatTime } from '../../engine/clock.js'
@@ -132,7 +133,8 @@ provide('narrative', narrative)
 // Space skips the running narrative from anywhere on the screen
 useKeyboard(narrativeSkipBindings({ narrative }))
 
-const gameLoop = useGameLoop({ actionRegistry, narrative })
+const save = useSave()
+const gameLoop = useGameLoop({ actionRegistry, narrative, save })
 provide('gameLoop', gameLoop)
 
 // Selected character — set by LocationView when player clicks a character,

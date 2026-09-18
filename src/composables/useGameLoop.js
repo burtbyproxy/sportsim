@@ -29,13 +29,19 @@ import { generateActionNarrative } from './useNarrative.js'
 import { sim } from '../workers/simulation-api.js'
 
 /**
- * @param {{ actionRegistry?: Object[], narrative?: ReturnType<import('./useNarrative.js').useNarrative>|null }} input
+ * @param {{
+ *   actionRegistry?: Object[],
+ *   narrative?: ReturnType<import('./useNarrative.js').useNarrative>|null,
+ *   save?: ReturnType<import('./useSave.js').useSave>|null,
+ * }} input
  *   actionRegistry — array of Action objects to evaluate against
  *   narrative — the renderer that receives action and event prose. Passed in
  *   explicitly: the screen that owns the loop also owns the renderer, and a
  *   component cannot inject what it provided itself.
+ *   save — the save module; when present, arriving somewhere writes the
+ *   auto-save slot so a closed tab costs at most the current scene.
  */
-export function useGameLoop({ actionRegistry = [], narrative = null } = {}) {
+export function useGameLoop({ actionRegistry = [], narrative = null, save = null } = {}) {
   const game = useGameStore()
 
   /**
@@ -109,6 +115,7 @@ export function useGameLoop({ actionRegistry = [], narrative = null } = {}) {
    */
   async function travel(locationId, travelTicks = 0) {
     await tick(travelTicks > 0 ? travelTicks : 1, locationId)
+    if (save) save.autoSave()
   }
 
   /**
