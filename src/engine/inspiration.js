@@ -18,6 +18,7 @@
 
 import { v4 as uuidv4 } from 'uuid'
 import { blendSober } from './blend.js'
+import { resultOk, resultFail } from './result.js'
 
 /** Enumerated error codes for every inspiration result. The code is the contract. */
 export const INSPIRATION_ERROR_CODES = Object.freeze({
@@ -41,17 +42,12 @@ export const INSPIRATION_STATUSES = Object.freeze({
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-function _ok(data) {
-  return { ok: true, data, error: null }
-}
-
-function _fail(code, message) {
-  return { ok: false, data: null, error: { code, message } }
-}
-
 function _playerCheck(player, fn) {
   if (!player || typeof player !== 'object') {
-    return _fail(INSPIRATION_ERROR_CODES.PLAYER_MISSING, `${fn} needs a player`)
+    return resultFail({
+      code: INSPIRATION_ERROR_CODES.PLAYER_MISSING,
+      message: `${fn} needs a player`,
+    })
   }
   return null
 }
@@ -130,19 +126,22 @@ export function inspirationStrike({
   const bad = _playerCheck(player, 'inspirationStrike')
   if (bad) return bad
   if (!_sourceValid(source)) {
-    return _fail(INSPIRATION_ERROR_CODES.SOURCE_INVALID, 'source needs a kind and an id')
+    return resultFail({
+      code: INSPIRATION_ERROR_CODES.SOURCE_INVALID,
+      message: 'source needs a kind and an id',
+    })
   }
   if (!Number.isFinite(strength) || strength < 1 || strength > 100) {
-    return _fail(
-      INSPIRATION_ERROR_CODES.STRENGTH_INVALID,
-      `strength must be 1–100, got ${strength}`
-    )
+    return resultFail({
+      code: INSPIRATION_ERROR_CODES.STRENGTH_INVALID,
+      message: `strength must be 1–100, got ${strength}`,
+    })
   }
   if (!Number.isInteger(ticksTotal) || ticksTotal < 1) {
-    return _fail(
-      INSPIRATION_ERROR_CODES.TICKS_INVALID,
-      `ticksTotal must be >= 1, got ${ticksTotal}`
-    )
+    return resultFail({
+      code: INSPIRATION_ERROR_CODES.TICKS_INVALID,
+      message: `ticksTotal must be >= 1, got ${ticksTotal}`,
+    })
   }
 
   const tick = gameTime?.tick ?? 0
@@ -172,7 +171,11 @@ export function inspirationStrike({
   }
   inspirations.push(struck)
 
-  return _ok({ inspirations, struck: { ...struck }, replaced: replaced ? { ...replaced } : null })
+  return resultOk({
+    inspirations,
+    struck: { ...struck },
+    replaced: replaced ? { ...replaced } : null,
+  })
 }
 
 /**
@@ -186,24 +189,24 @@ export function inspirationTick({ player, ticksElapsed, gameTime }) {
   const bad = _playerCheck(player, 'inspirationTick')
   if (bad) return bad
   if (!Number.isFinite(ticksElapsed) || ticksElapsed < 0) {
-    return _fail(
-      INSPIRATION_ERROR_CODES.TICKS_INVALID,
-      `ticksElapsed must be >= 0, got ${ticksElapsed}`
-    )
+    return resultFail({
+      code: INSPIRATION_ERROR_CODES.TICKS_INVALID,
+      message: `ticksElapsed must be >= 0, got ${ticksElapsed}`,
+    })
   }
 
   const inspirations = _copies(player)
   const active = inspirations.find((r) => r.status === INSPIRATION_STATUSES.ACTIVE)
-  if (!active || ticksElapsed === 0) return _ok({ inspirations, expired: null })
+  if (!active || ticksElapsed === 0) return resultOk({ inspirations, expired: null })
 
   const tick = gameTime?.tick ?? active.updatedAtTick
   active.ticksRemaining = Math.max(0, active.ticksRemaining - ticksElapsed)
   active.updatedAtTick = tick
-  if (active.ticksRemaining > 0) return _ok({ inspirations, expired: null })
+  if (active.ticksRemaining > 0) return resultOk({ inspirations, expired: null })
 
   active.status = INSPIRATION_STATUSES.EXPIRED
   active.endedBy = { kind: 'clock', id: 'clock' }
-  return _ok({ inspirations, expired: { ...active } })
+  return resultOk({ inspirations, expired: { ...active } })
 }
 
 /**
@@ -224,18 +227,19 @@ export function inspirationUrge({ player, personas = {}, ticksElapsed, rng = Mat
   const bad = _playerCheck(player, 'inspirationUrge')
   if (bad) return bad
   if (!Number.isFinite(ticksElapsed) || ticksElapsed < 0) {
-    return _fail(
-      INSPIRATION_ERROR_CODES.TICKS_INVALID,
-      `ticksElapsed must be >= 0, got ${ticksElapsed}`
-    )
+    return resultFail({
+      code: INSPIRATION_ERROR_CODES.TICKS_INVALID,
+      message: `ticksElapsed must be >= 0, got ${ticksElapsed}`,
+    })
   }
   const personaId = (player.blend ?? blendSober()).dominantPersonaId
-  if (inspirationActive({ player }) || ticksElapsed === 0) return _ok({ urge: null, personaId })
+  if (inspirationActive({ player }) || ticksElapsed === 0)
+    return resultOk({ urge: null, personaId })
   for (const urge of personas[personaId]?.urges ?? []) {
     const chanceOverall = 1 - Math.pow(1 - urge.chancePerTick, ticksElapsed)
-    if (rng() < chanceOverall) return _ok({ urge: { ...urge }, personaId })
+    if (rng() < chanceOverall) return resultOk({ urge: { ...urge }, personaId })
   }
-  return _ok({ urge: null, personaId })
+  return resultOk({ urge: null, personaId })
 }
 
 /**
@@ -250,7 +254,10 @@ export function inspirationInterrupt({ player, reason, gameTime }) {
   const bad = _playerCheck(player, 'inspirationInterrupt')
   if (bad) return bad
   if (!_sourceValid(reason)) {
-    return _fail(INSPIRATION_ERROR_CODES.SOURCE_INVALID, 'reason needs a kind and an id')
+    return resultFail({
+      code: INSPIRATION_ERROR_CODES.SOURCE_INVALID,
+      message: 'reason needs a kind and an id',
+    })
   }
   const inspirations = _copies(player)
   const interrupted = _activeClose({
@@ -259,7 +266,7 @@ export function inspirationInterrupt({ player, reason, gameTime }) {
     endedBy: reason,
     tick: gameTime?.tick ?? 0,
   })
-  return _ok({ inspirations, interrupted: interrupted ? { ...interrupted } : null })
+  return resultOk({ inspirations, interrupted: interrupted ? { ...interrupted } : null })
 }
 
 /**
@@ -273,7 +280,10 @@ export function inspirationSpend({ player, spentOn, gameTime }) {
   const bad = _playerCheck(player, 'inspirationSpend')
   if (bad) return bad
   if (!_sourceValid(spentOn)) {
-    return _fail(INSPIRATION_ERROR_CODES.SOURCE_INVALID, 'spentOn needs a kind and an id')
+    return resultFail({
+      code: INSPIRATION_ERROR_CODES.SOURCE_INVALID,
+      message: 'spentOn needs a kind and an id',
+    })
   }
   const inspirations = _copies(player)
   const spent = _activeClose({
@@ -283,7 +293,10 @@ export function inspirationSpend({ player, spentOn, gameTime }) {
     tick: gameTime?.tick ?? 0,
   })
   if (!spent) {
-    return _fail(INSPIRATION_ERROR_CODES.NONE_ACTIVE, 'Nothing is moving the player')
+    return resultFail({
+      code: INSPIRATION_ERROR_CODES.NONE_ACTIVE,
+      message: 'Nothing is moving the player',
+    })
   }
-  return _ok({ inspirations, spent: { ...spent } })
+  return resultOk({ inspirations, spent: { ...spent } })
 }

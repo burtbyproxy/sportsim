@@ -11,6 +11,7 @@
 
 import { applyEffects } from '../models/item.js'
 import { STATUS_IDS_WRITABLE_DEFAULT } from '../models/defaults.js'
+import { resultOk, resultFail } from './result.js'
 
 /** Enumerated error codes for every items result. The code is the contract. */
 export const ITEM_ERROR_CODES = Object.freeze({
@@ -22,10 +23,6 @@ export const ITEM_ERROR_CODES = Object.freeze({
 
 /** Statuses an effect may change directly. Sobriety is derived; money has its own door. */
 export const ITEM_EFFECT_STATUSES = STATUS_IDS_WRITABLE_DEFAULT
-
-function _fail(code, message) {
-  return { ok: false, data: null, error: { code, message } }
-}
 
 /**
  * Work out what using one of an item does.
@@ -41,14 +38,20 @@ function _fail(code, message) {
  */
 export function itemUseResolve({ player, itemId, statusIds = ITEM_EFFECT_STATUSES }) {
   if (!player || typeof player !== 'object') {
-    return _fail(ITEM_ERROR_CODES.PLAYER_MISSING, 'itemUseResolve needs a player')
+    return resultFail({
+      code: ITEM_ERROR_CODES.PLAYER_MISSING,
+      message: 'itemUseResolve needs a player',
+    })
   }
   const item = (player.inventory ?? []).find((i) => i.id === itemId && (i.quantity ?? 1) > 0)
   if (!item) {
-    return _fail(ITEM_ERROR_CODES.ITEM_MISSING, `Not carrying '${itemId}'`)
+    return resultFail({ code: ITEM_ERROR_CODES.ITEM_MISSING, message: `Not carrying '${itemId}'` })
   }
   if (item.type !== 'consumable') {
-    return _fail(ITEM_ERROR_CODES.ITEM_NOT_CONSUMABLE, `'${itemId}' is not something you use up`)
+    return resultFail({
+      code: ITEM_ERROR_CODES.ITEM_NOT_CONSUMABLE,
+      message: `'${itemId}' is not something you use up`,
+    })
   }
 
   const statusChanges = {}
@@ -62,21 +65,17 @@ export function itemUseResolve({ player, itemId, statusIds = ITEM_EFFECT_STATUSE
         modifier: { source: item.id, value: effect.value, duration: effect.duration ?? null },
       })
     } else {
-      return _fail(
-        ITEM_ERROR_CODES.EFFECT_TARGET_UNKNOWN,
-        `'${itemId}' has an effect on '${effect.target}', which is neither a status nor a stat`
-      )
+      return resultFail({
+        code: ITEM_ERROR_CODES.EFFECT_TARGET_UNKNOWN,
+        message: `'${itemId}' has an effect on '${effect.target}', which is neither a status nor a stat`,
+      })
     }
   }
 
-  return {
-    ok: true,
-    data: {
-      item: { ...item },
-      statusChanges,
-      statModifiers,
-      doses: (item.doses ?? []).map((d) => ({ ...d })),
-    },
-    error: null,
-  }
+  return resultOk({
+    item: { ...item },
+    statusChanges,
+    statModifiers,
+    doses: (item.doses ?? []).map((d) => ({ ...d })),
+  })
 }

@@ -21,6 +21,7 @@ import {
   isCriticalFailure,
 } from './dice.js'
 import { statXpApply } from './stats.js'
+import { resultOk, resultFail } from './result.js'
 
 /** Enumerated error codes for every skills result. The code is the contract. */
 export const SKILL_ERROR_CODES = Object.freeze({
@@ -39,14 +40,6 @@ export const CHECK_ITEM_SOURCES = Object.freeze({
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
-
-function _ok(data) {
-  return { ok: true, data, error: null }
-}
-
-function _fail(code, message) {
-  return { ok: false, data: null, error: { code, message } }
-}
 
 function _round(value) {
   return parseFloat(value.toFixed(2))
@@ -107,10 +100,16 @@ export function skillCellGet({ player, mediumId, personaId }) {
  */
 export function skillEffective({ player, mediumId, mediums = {} }) {
   if (!player || typeof player !== 'object') {
-    return _fail(SKILL_ERROR_CODES.PLAYER_MISSING, 'skillEffective needs a player')
+    return resultFail({
+      code: SKILL_ERROR_CODES.PLAYER_MISSING,
+      message: 'skillEffective needs a player',
+    })
   }
   if (!mediums[mediumId]) {
-    return _fail(SKILL_ERROR_CODES.MEDIUM_UNKNOWN, `Unknown medium '${mediumId}'`)
+    return resultFail({
+      code: SKILL_ERROR_CODES.MEDIUM_UNKNOWN,
+      message: `Unknown medium '${mediumId}'`,
+    })
   }
   const contributions = _personaWeights({ player }).map(({ personaId, weight }) => ({
     personaId,
@@ -118,7 +117,7 @@ export function skillEffective({ player, mediumId, mediums = {} }) {
     cellValue: _cellValue(skillCellGet({ player, mediumId, personaId })),
   }))
   const value = _round(contributions.reduce((sum, c) => sum + c.weight * c.cellValue, 0))
-  return _ok({ value, contributions })
+  return resultOk({ value, contributions })
 }
 
 /**
@@ -131,13 +130,22 @@ export function skillEffective({ player, mediumId, mediums = {} }) {
  */
 export function skillGain({ player, mediumId, mediums = {}, amount }) {
   if (!player || typeof player !== 'object') {
-    return _fail(SKILL_ERROR_CODES.PLAYER_MISSING, 'skillGain needs a player')
+    return resultFail({
+      code: SKILL_ERROR_CODES.PLAYER_MISSING,
+      message: 'skillGain needs a player',
+    })
   }
   if (!mediums[mediumId]) {
-    return _fail(SKILL_ERROR_CODES.MEDIUM_UNKNOWN, `Unknown medium '${mediumId}'`)
+    return resultFail({
+      code: SKILL_ERROR_CODES.MEDIUM_UNKNOWN,
+      message: `Unknown medium '${mediumId}'`,
+    })
   }
   if (!Number.isFinite(amount) || amount <= 0) {
-    return _fail(SKILL_ERROR_CODES.AMOUNT_INVALID, `amount must be > 0, got ${amount}`)
+    return resultFail({
+      code: SKILL_ERROR_CODES.AMOUNT_INVALID,
+      message: `amount must be > 0, got ${amount}`,
+    })
   }
 
   const cells = {}
@@ -157,7 +165,7 @@ export function skillGain({ player, mediumId, mediums = {}, amount }) {
     if (leveledUp) personaIdsLeveled.push(personaId)
   }
 
-  return _ok({ cells, allocations, personaIdsLeveled })
+  return resultOk({ cells, allocations, personaIdsLeveled })
 }
 
 /**
@@ -184,14 +192,23 @@ export function skillCheckRoll({
   rng = Math.random,
 }) {
   if (!player || typeof player !== 'object') {
-    return _fail(SKILL_ERROR_CODES.PLAYER_MISSING, 'skillCheckRoll needs a player')
+    return resultFail({
+      code: SKILL_ERROR_CODES.PLAYER_MISSING,
+      message: 'skillCheckRoll needs a player',
+    })
   }
   const medium = mediums[mediumId]
   if (!medium) {
-    return _fail(SKILL_ERROR_CODES.MEDIUM_UNKNOWN, `Unknown medium '${mediumId}'`)
+    return resultFail({
+      code: SKILL_ERROR_CODES.MEDIUM_UNKNOWN,
+      message: `Unknown medium '${mediumId}'`,
+    })
   }
   if (!Number.isFinite(dc)) {
-    return _fail(SKILL_ERROR_CODES.DC_INVALID, `dc must be a number, got ${dc}`)
+    return resultFail({
+      code: SKILL_ERROR_CODES.DC_INVALID,
+      message: `dc must be a number, got ${dc}`,
+    })
   }
 
   const skill = skillEffective({ player, mediumId, mediums }).data
@@ -216,7 +233,7 @@ export function skillCheckRoll({
     })),
   ]
 
-  return _ok({
+  return resultOk({
     natural,
     modifier,
     total,

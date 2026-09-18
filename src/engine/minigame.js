@@ -25,6 +25,7 @@
  */
 
 import { weightedPick, shuffle } from '../utils/random.js'
+import { resultOk, resultFail } from './result.js'
 
 /** Enumerated error codes for every minigame result. The code is the contract. */
 export const GAME_ERROR_CODES = Object.freeze({
@@ -49,14 +50,6 @@ export const GAME_MODIFIER_SOURCE_ID = 'game'
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
-
-function _ok(data) {
-  return { ok: true, data, error: null }
-}
-
-function _fail(code, message) {
-  return { ok: false, data: null, error: { code, message } }
-}
 
 function _clamp(value, min, max) {
   return Math.max(min, Math.min(max, value))
@@ -284,14 +277,21 @@ const _SHAPES = {
 
 function _shapeOf(game) {
   if (!game || typeof game !== 'object' || typeof game.shape !== 'string') {
-    return _fail(GAME_ERROR_CODES.GAME_INVALID, 'A game needs a shape')
+    return resultFail({ code: GAME_ERROR_CODES.GAME_INVALID, message: 'A game needs a shape' })
   }
   if (!game.lines || typeof game.lines !== 'object') {
-    return _fail(GAME_ERROR_CODES.GAME_INVALID, `Game '${game.id}' has no lines`)
+    return resultFail({
+      code: GAME_ERROR_CODES.GAME_INVALID,
+      message: `Game '${game.id}' has no lines`,
+    })
   }
   const shape = _SHAPES[game.shape]
-  if (!shape) return _fail(GAME_ERROR_CODES.SHAPE_UNKNOWN, `Unknown game shape '${game.shape}'`)
-  return _ok(shape)
+  if (!shape)
+    return resultFail({
+      code: GAME_ERROR_CODES.SHAPE_UNKNOWN,
+      message: `Unknown game shape '${game.shape}'`,
+    })
+  return resultOk(shape)
 }
 
 // ---------------------------------------------------------------------------
@@ -308,7 +308,7 @@ function _shapeOf(game) {
 export function gameStart({ game, personaId, rng = Math.random }) {
   const shape = _shapeOf(game)
   if (!shape.ok) return shape
-  return _ok(shape.data.start({ game, personaId, rng }))
+  return resultOk(shape.data.start({ game, personaId, rng }))
 }
 
 /**
@@ -342,15 +342,25 @@ export function gameRoundResolve({
 }) {
   const shape = _shapeOf(game)
   if (!shape.ok) return shape
-  if (!state?.offer) return _fail(GAME_ERROR_CODES.GAME_OVER, 'This game has no round to play')
+  if (!state?.offer)
+    return resultFail({
+      code: GAME_ERROR_CODES.GAME_OVER,
+      message: 'This game has no round to play',
+    })
   const choice = state.offer.choices.find((c) => c.id === choiceId)
   if (!choice) {
-    return _fail(GAME_ERROR_CODES.CHOICE_UNKNOWN, `'${choiceId}' is not on offer this round`)
+    return resultFail({
+      code: GAME_ERROR_CODES.CHOICE_UNKNOWN,
+      message: `'${choiceId}' is not on offer this round`,
+    })
   }
   if (!choice.available) {
-    return _fail(GAME_ERROR_CODES.CHOICE_FORBIDDEN, choice.reason ?? `'${choiceId}' is forbidden`)
+    return resultFail({
+      code: GAME_ERROR_CODES.CHOICE_FORBIDDEN,
+      message: choice.reason ?? `'${choiceId}' is forbidden`,
+    })
   }
-  return _ok(shape.data.resolve({ game, state, choiceId, personaId, skillValue, rng }))
+  return resultOk(shape.data.resolve({ game, state, choiceId, personaId, skillValue, rng }))
 }
 
 /**
@@ -362,7 +372,7 @@ export function gameRoundResolve({
 export function gameScore({ game, state }) {
   const shape = _shapeOf(game)
   if (!shape.ok) return shape
-  return _ok({
+  return resultOk({
     modifier: { sourceId: GAME_MODIFIER_SOURCE_ID, value: shape.data.score({ game, state }) },
     words: (state.words ?? []).map((w) => w.word),
   })

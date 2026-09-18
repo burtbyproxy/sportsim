@@ -15,6 +15,7 @@
 
 import { rollCheck } from './dice.js'
 import { weightedPick } from '../utils/random.js'
+import { resultOk, resultFail } from './result.js'
 
 /** Enumerated error codes for every scavenge result. The code is the contract. */
 export const SCAVENGE_ERROR_CODES = Object.freeze({
@@ -44,14 +45,6 @@ export function scavengedCounterName({ itemId }) {
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
-
-function _ok(data) {
-  return { ok: true, data, error: null }
-}
-
-function _fail(code, message) {
-  return { ok: false, data: null, error: { code, message } }
-}
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -102,21 +95,30 @@ export function scavengeSearch({
   rng = Math.random,
 }) {
   if (!player || typeof player !== 'object') {
-    return _fail(SCAVENGE_ERROR_CODES.PLAYER_MISSING, 'scavengeSearch needs a player')
+    return resultFail({
+      code: SCAVENGE_ERROR_CODES.PLAYER_MISSING,
+      message: 'scavengeSearch needs a player',
+    })
   }
   if (!location || typeof location !== 'object') {
-    return _fail(SCAVENGE_ERROR_CODES.LOCATION_MISSING, 'scavengeSearch needs a location')
+    return resultFail({
+      code: SCAVENGE_ERROR_CODES.LOCATION_MISSING,
+      message: 'scavengeSearch needs a location',
+    })
   }
   const table = tables[location.scavengeTableId]
   if (!table) {
-    return _fail(
-      SCAVENGE_ERROR_CODES.TABLE_UNKNOWN,
-      `Location '${location.id}' names no known scavenge table ('${location.scavengeTableId}')`
-    )
+    return resultFail({
+      code: SCAVENGE_ERROR_CODES.TABLE_UNKNOWN,
+      message: `Location '${location.id}' names no known scavenge table ('${location.scavengeTableId}')`,
+    })
   }
   const unknown = table.entries.find((entry) => !items[entry.itemId])
   if (unknown) {
-    return _fail(SCAVENGE_ERROR_CODES.ITEM_UNKNOWN, `Unknown item '${unknown.itemId}'`)
+    return resultFail({
+      code: SCAVENGE_ERROR_CODES.ITEM_UNKNOWN,
+      message: `Unknown item '${unknown.itemId}'`,
+    })
   }
 
   const tick = gameTime?.tick ?? 0
@@ -143,7 +145,7 @@ export function scavengeSearch({
         updatedAtTick: location.scavenge?.updatedAtTick ?? tick,
       }
 
-  return _ok({
+  return resultOk({
     itemId: entry ? entry.itemId : null,
     entry: entry ? { ...entry } : null,
     check,

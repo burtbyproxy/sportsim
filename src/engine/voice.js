@@ -12,6 +12,7 @@
  */
 
 import { SOBER_PERSONA_ID } from './blend.js'
+import { resultOk, resultFail } from './result.js'
 
 /** Enumerated error codes for every voice result. The code is the contract. */
 export const VOICE_ERROR_CODES = Object.freeze({
@@ -46,27 +47,15 @@ function _interpolate({ text, params }) {
 export function voiceLine({ code, personaId = SOBER_PERSONA_ID, voices = {}, params = {} }) {
   const sober = voices[SOBER_PERSONA_ID]
   if (!sober) {
-    return {
-      ok: false,
-      data: null,
-      error: { code: VOICE_ERROR_CODES.SOBER_MISSING, message: 'No sober voice catalog' },
-    }
+    return resultFail({ code: VOICE_ERROR_CODES.SOBER_MISSING, message: 'No sober voice catalog' })
   }
   const own = voices[personaId]?.lines?.[code]
   if (typeof own === 'string') {
-    return { ok: true, data: { text: _interpolate({ text: own, params }), personaId }, error: null }
+    return resultOk({ text: _interpolate({ text: own, params }), personaId })
   }
   const fallback = sober.lines?.[code]
   if (typeof fallback === 'string') {
-    return {
-      ok: true,
-      data: { text: _interpolate({ text: fallback, params }), personaId: SOBER_PERSONA_ID },
-      error: null,
-    }
+    return resultOk({ text: _interpolate({ text: fallback, params }), personaId: SOBER_PERSONA_ID })
   }
-  return {
-    ok: false,
-    data: null,
-    error: { code: VOICE_ERROR_CODES.CODE_UNKNOWN, message: `No line for '${code}'` },
-  }
+  return resultFail({ code: VOICE_ERROR_CODES.CODE_UNKNOWN, message: `No line for '${code}'` })
 }

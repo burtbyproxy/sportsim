@@ -31,6 +31,14 @@ import { incrementVisitCount, locationRestore } from '../models/location.js'
 import { itemUseResolve } from '../engine/items.js'
 import { statXpApply } from '../engine/stats.js'
 import { statusBarFillClass } from '../utils/statusBar.js'
+import { resultOk, resultFail } from '../engine/result.js'
+
+/** Enumerated error codes for the store's own refusals. Engine results pass through with theirs. */
+export const GAME_ERROR_CODES = Object.freeze({
+  NONE_IN_PROGRESS: 'NONE_IN_PROGRESS',
+  PLAYER_MISSING: 'PLAYER_MISSING',
+  STAT_UNKNOWN: 'STAT_UNKNOWN',
+})
 
 /**
  * Add a map of deltas onto a map of levels, dropping any key that reaches zero.
@@ -357,7 +365,7 @@ export const useGameStore = defineStore('game', {
      */
     applyDoses({ doses, rng = Math.random }) {
       if (!this.player)
-        return { ok: false, data: null, error: { code: 'PLAYER_MISSING', message: 'No player' } }
+        return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
       this.player.intoxications ??= {}
       this.player.habituations ??= {}
       const result = dosesApply({ player: this.player, substances: this.substances, doses, rng })
@@ -431,15 +439,14 @@ export const useGameStore = defineStore('game', {
     applyStatXp({ statName, amount }) {
       const stat = this.player?.stats?.[statName]
       if (!stat) {
-        return {
-          ok: false,
-          data: null,
-          error: { code: 'STAT_UNKNOWN', message: `No stat '${statName}' to train` },
-        }
+        return resultFail({
+          code: GAME_ERROR_CODES.STAT_UNKNOWN,
+          message: `No stat '${statName}' to train`,
+        })
       }
       const { stat: next, leveledUp } = statXpApply({ stat, amount })
       this.player.stats[statName] = next
-      return { ok: true, data: { leveledUp }, error: null }
+      return resultOk({ leveledUp })
     },
 
     /**
@@ -631,7 +638,7 @@ export const useGameStore = defineStore('game', {
      */
     applyScavenge({ rng = Math.random } = {}) {
       if (!this.player) {
-        return { ok: false, data: null, error: { code: 'PLAYER_MISSING', message: 'No player' } }
+        return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
       }
       const result = scavengeSearch({
         player: this.player,
@@ -681,7 +688,7 @@ export const useGameStore = defineStore('game', {
      */
     applyInspirationStrike({ source, mediumId = null, strength, ticksTotal }) {
       if (!this.player) {
-        return { ok: false, data: null, error: { code: 'PLAYER_MISSING', message: 'No player' } }
+        return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
       }
       const result = inspirationStrike({
         player: this.player,
@@ -708,7 +715,7 @@ export const useGameStore = defineStore('game', {
      */
     applyInspirationUrge({ ticksElapsed, rng = Math.random }) {
       if (!this.player) {
-        return { ok: false, data: null, error: { code: 'PLAYER_MISSING', message: 'No player' } }
+        return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
       }
       const rolled = inspirationUrge({
         player: this.player,
@@ -720,7 +727,7 @@ export const useGameStore = defineStore('game', {
         console.warn(`[game] applyInspirationUrge: ${rolled.error.code}`, rolled.error.message)
         return rolled
       }
-      if (!rolled.data.urge) return { ok: true, data: { struck: null }, error: null }
+      if (!rolled.data.urge) return resultOk({ struck: null })
       const { mediumId, strength, ticksTotal } = rolled.data.urge
       const struck = this.applyInspirationStrike({
         source: { kind: 'persona', id: rolled.data.personaId },
@@ -729,7 +736,7 @@ export const useGameStore = defineStore('game', {
         ticksTotal,
       })
       if (!struck.ok) return struck
-      return { ok: true, data: { struck: struck.data.struck }, error: null }
+      return resultOk({ struck: struck.data.struck })
     },
 
     /**
@@ -739,7 +746,7 @@ export const useGameStore = defineStore('game', {
      */
     applyInspirationTick({ ticksElapsed }) {
       if (!this.player) {
-        return { ok: false, data: null, error: { code: 'PLAYER_MISSING', message: 'No player' } }
+        return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
       }
       const result = inspirationTick({ player: this.player, ticksElapsed, gameTime: this.time })
       if (!result.ok) {
@@ -757,7 +764,7 @@ export const useGameStore = defineStore('game', {
      */
     applyInspirationInterrupt({ reason }) {
       if (!this.player) {
-        return { ok: false, data: null, error: { code: 'PLAYER_MISSING', message: 'No player' } }
+        return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
       }
       const result = inspirationInterrupt({ player: this.player, reason, gameTime: this.time })
       if (!result.ok) {
@@ -775,7 +782,7 @@ export const useGameStore = defineStore('game', {
      */
     applyInspirationSpend({ spentOn }) {
       if (!this.player) {
-        return { ok: false, data: null, error: { code: 'PLAYER_MISSING', message: 'No player' } }
+        return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
       }
       const result = inspirationSpend({ player: this.player, spentOn, gameTime: this.time })
       if (!result.ok) {
@@ -794,7 +801,7 @@ export const useGameStore = defineStore('game', {
      */
     applySkillGain({ mediumId, amount }) {
       if (!this.player) {
-        return { ok: false, data: null, error: { code: 'PLAYER_MISSING', message: 'No player' } }
+        return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
       }
       const result = skillGain({ player: this.player, mediumId, mediums: this.mediums, amount })
       if (!result.ok) {
@@ -860,11 +867,10 @@ export const useGameStore = defineStore('game', {
     applyMakingRound({ choiceId, rng = Math.random }) {
       const making = this.makingActive
       if (!making) {
-        return {
-          ok: false,
-          data: null,
-          error: { code: 'NONE_IN_PROGRESS', message: 'The player is not making anything' },
-        }
+        return resultFail({
+          code: GAME_ERROR_CODES.NONE_IN_PROGRESS,
+          message: 'The player is not making anything',
+        })
       }
       const minigame = this.games[making.game.id]
       const skill = skillEffective({

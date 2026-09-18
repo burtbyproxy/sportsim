@@ -14,6 +14,7 @@
  */
 
 import { roll } from '../utils/random.js'
+import { resultOk, resultFail } from './result.js'
 
 /** Enumerated error codes for every blend result. The code is the contract. */
 export const BLEND_ERROR_CODES = Object.freeze({
@@ -36,14 +37,6 @@ export const PERSONA_SOURCES = Object.freeze({
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
-
-function _ok(data) {
-  return { ok: true, data, error: null }
-}
-
-function _fail(code, message) {
-  return { ok: false, data: null, error: { code, message } }
-}
 
 function _round(value) {
   return parseFloat(value.toFixed(2))
@@ -176,11 +169,17 @@ export function sobrietyDerive({ intoxications }) {
  */
 export function blendCompute({ player, substances = {}, conditions = {} }) {
   if (!player || typeof player !== 'object') {
-    return _fail(BLEND_ERROR_CODES.PLAYER_MISSING, 'blendCompute needs a player')
+    return resultFail({
+      code: BLEND_ERROR_CODES.PLAYER_MISSING,
+      message: 'blendCompute needs a player',
+    })
   }
   const unknown = _unknownSubstanceId({ player, substances })
   if (unknown !== null) {
-    return _fail(BLEND_ERROR_CODES.SUBSTANCE_UNKNOWN, `Unknown substance '${unknown}'`)
+    return resultFail({
+      code: BLEND_ERROR_CODES.SUBSTANCE_UNKNOWN,
+      message: `Unknown substance '${unknown}'`,
+    })
   }
 
   const intoxications = player.intoxications ?? {}
@@ -274,7 +273,7 @@ export function blendCompute({ player, substances = {}, conditions = {} }) {
   const dominantPersonaId =
     heaviest && heaviest.weight > soberWeight ? heaviest.personaId : SOBER_PERSONA_ID
 
-  return _ok({ weights, dominantPersonaId, soberWeight, modifiers, modifierSources, families })
+  return resultOk({ weights, dominantPersonaId, soberWeight, modifiers, modifierSources, families })
 }
 
 /**
@@ -286,14 +285,23 @@ export function blendCompute({ player, substances = {}, conditions = {} }) {
  */
 export function blendDecay({ player, substances = {}, ticksElapsed }) {
   if (!player || typeof player !== 'object') {
-    return _fail(BLEND_ERROR_CODES.PLAYER_MISSING, 'blendDecay needs a player')
+    return resultFail({
+      code: BLEND_ERROR_CODES.PLAYER_MISSING,
+      message: 'blendDecay needs a player',
+    })
   }
   if (!Number.isFinite(ticksElapsed) || ticksElapsed < 0) {
-    return _fail(BLEND_ERROR_CODES.TICKS_INVALID, `ticksElapsed must be >= 0, got ${ticksElapsed}`)
+    return resultFail({
+      code: BLEND_ERROR_CODES.TICKS_INVALID,
+      message: `ticksElapsed must be >= 0, got ${ticksElapsed}`,
+    })
   }
   const unknown = _unknownSubstanceId({ player, substances })
   if (unknown !== null) {
-    return _fail(BLEND_ERROR_CODES.SUBSTANCE_UNKNOWN, `Unknown substance '${unknown}'`)
+    return resultFail({
+      code: BLEND_ERROR_CODES.SUBSTANCE_UNKNOWN,
+      message: `Unknown substance '${unknown}'`,
+    })
   }
 
   const intoxicationChanges = {}
@@ -308,7 +316,7 @@ export function blendDecay({ player, substances = {}, ticksElapsed }) {
     if (delta !== 0) habituationChanges[id] = _round(delta)
   }
 
-  return _ok({ intoxicationChanges, habituationChanges })
+  return resultOk({ intoxicationChanges, habituationChanges })
 }
 
 /**
@@ -326,7 +334,10 @@ export function blendDecay({ player, substances = {}, ticksElapsed }) {
  */
 export function dosesApply({ player, substances = {}, doses = [], rng = Math.random }) {
   if (!player || typeof player !== 'object') {
-    return _fail(BLEND_ERROR_CODES.PLAYER_MISSING, 'dosesApply needs a player')
+    return resultFail({
+      code: BLEND_ERROR_CODES.PLAYER_MISSING,
+      message: 'dosesApply needs a player',
+    })
   }
 
   const intoxicationChanges = {}
@@ -338,14 +349,23 @@ export function dosesApply({ player, substances = {}, doses = [], rng = Math.ran
   for (const dose of doses) {
     const substance = substances[dose?.substanceId]
     if (!substance) {
-      return _fail(BLEND_ERROR_CODES.SUBSTANCE_UNKNOWN, `Unknown substance '${dose?.substanceId}'`)
+      return resultFail({
+        code: BLEND_ERROR_CODES.SUBSTANCE_UNKNOWN,
+        message: `Unknown substance '${dose?.substanceId}'`,
+      })
     }
     if (!Number.isFinite(dose.value) || dose.value <= 0) {
-      return _fail(BLEND_ERROR_CODES.DOSE_INVALID, `Dose of '${substance.id}' must be > 0`)
+      return resultFail({
+        code: BLEND_ERROR_CODES.DOSE_INVALID,
+        message: `Dose of '${substance.id}' must be > 0`,
+      })
     }
     const chance = dose.chance ?? 1
     if (!Number.isFinite(chance) || chance < 0 || chance > 1) {
-      return _fail(BLEND_ERROR_CODES.DOSE_INVALID, `Dose chance of '${substance.id}' must be 0–1`)
+      return resultFail({
+        code: BLEND_ERROR_CODES.DOSE_INVALID,
+        message: `Dose chance of '${substance.id}' must be 0–1`,
+      })
     }
     if (chance < 1 && roll(1, 100, rng) > chance * 100) continue
 
@@ -365,5 +385,5 @@ export function dosesApply({ player, substances = {}, doses = [], rng = Math.ran
     substanceIdsTaken.push(id)
   }
 
-  return _ok({ intoxicationChanges, habituationChanges, substanceIdsTaken })
+  return resultOk({ intoxicationChanges, habituationChanges, substanceIdsTaken })
 }

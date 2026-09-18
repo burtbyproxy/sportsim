@@ -27,6 +27,7 @@ import { blendSober } from './blend.js'
 import { inspirationActive } from './inspiration.js'
 import { skillCheckRoll } from './skills.js'
 import { isOpen } from '../models/location.js'
+import { resultOk, resultFail } from './result.js'
 
 /** Enumerated error codes for every making result. The code is the contract. */
 export const MAKING_ERROR_CODES = Object.freeze({
@@ -119,14 +120,6 @@ export const MAKING_MODIFIER_SOURCE_IDS = Object.freeze({
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
-
-function _ok(data) {
-  return { ok: true, data, error: null }
-}
-
-function _fail(code, message) {
-  return { ok: false, data: null, error: { code, message } }
-}
 
 function _copies(player) {
   return (player.makings ?? []).map((record) => ({
@@ -225,14 +218,23 @@ export function makingActive({ player }) {
  */
 export function makingOptions({ player, location, items = {}, mediums = {}, gameTime }) {
   if (!player || typeof player !== 'object') {
-    return _fail(MAKING_ERROR_CODES.PLAYER_MISSING, 'makingOptions needs a player')
+    return resultFail({
+      code: MAKING_ERROR_CODES.PLAYER_MISSING,
+      message: 'makingOptions needs a player',
+    })
   }
   if (!location || typeof location !== 'object') {
-    return _fail(MAKING_ERROR_CODES.LOCATION_MISSING, 'makingOptions needs a location')
+    return resultFail({
+      code: MAKING_ERROR_CODES.LOCATION_MISSING,
+      message: 'makingOptions needs a location',
+    })
   }
   const inspiration = inspirationActive({ player })
   if (!inspiration) {
-    return _fail(MAKING_ERROR_CODES.INSPIRATION_NONE, 'Nothing is moving the player')
+    return resultFail({
+      code: MAKING_ERROR_CODES.INSPIRATION_NONE,
+      message: 'Nothing is moving the player',
+    })
   }
 
   const tools = _itemsCarriedOfType({ player, items, type: 'tool' })
@@ -281,7 +283,7 @@ export function makingOptions({ player, location, items = {}, mediums = {}, game
   const wanted = (plan) => (plan.mediumId === inspiration.mediumId ? 0 : 1)
   plans.sort((a, b) => wanted(a) - wanted(b))
 
-  return _ok({
+  return resultOk({
     plans,
     ingredientItemIds: _itemsCarriedOfType({ player, items, type: 'ingredient' }).map((i) => i.id),
   })
@@ -316,24 +318,36 @@ export function makingStart({
   gameTime,
 }) {
   if (!player || typeof player !== 'object') {
-    return _fail(MAKING_ERROR_CODES.PLAYER_MISSING, 'makingStart needs a player')
+    return resultFail({
+      code: MAKING_ERROR_CODES.PLAYER_MISSING,
+      message: 'makingStart needs a player',
+    })
   }
   if (!location || typeof location !== 'object') {
-    return _fail(MAKING_ERROR_CODES.LOCATION_MISSING, 'makingStart needs a location')
+    return resultFail({
+      code: MAKING_ERROR_CODES.LOCATION_MISSING,
+      message: 'makingStart needs a location',
+    })
   }
   if (makingActive({ player })) {
-    return _fail(MAKING_ERROR_CODES.ALREADY_MAKING, 'The player is already making something')
+    return resultFail({
+      code: MAKING_ERROR_CODES.ALREADY_MAKING,
+      message: 'The player is already making something',
+    })
   }
   const inspiration = inspirationActive({ player })
   if (!inspiration) {
-    return _fail(MAKING_ERROR_CODES.INSPIRATION_NONE, 'Nothing is moving the player')
+    return resultFail({
+      code: MAKING_ERROR_CODES.INSPIRATION_NONE,
+      message: 'Nothing is moving the player',
+    })
   }
   const medium = mediums[plan?.mediumId]
   if (!medium?.making) {
-    return _fail(
-      MAKING_ERROR_CODES.MEDIUM_UNKNOWN,
-      `'${plan?.mediumId}' is not a medium anything can be made in`
-    )
+    return resultFail({
+      code: MAKING_ERROR_CODES.MEDIUM_UNKNOWN,
+      message: `'${plan?.mediumId}' is not a medium anything can be made in`,
+    })
   }
 
   const { toolItemId = null, surfaceKind, surfaceId, ingredientItemId = null } = plan
@@ -345,13 +359,16 @@ export function makingStart({
       _takesMedium({ thing: tool, mediumId: medium.id }) &&
       _carried({ player, itemId: toolItemId })
     if (!usable) {
-      return _fail(
-        MAKING_ERROR_CODES.TOOL_INVALID,
-        `'${toolItemId}' is not a carried tool for ${medium.id}`
-      )
+      return resultFail({
+        code: MAKING_ERROR_CODES.TOOL_INVALID,
+        message: `'${toolItemId}' is not a carried tool for ${medium.id}`,
+      })
     }
   } else if (toolItemId !== null) {
-    return _fail(MAKING_ERROR_CODES.TOOL_INVALID, `${medium.id} takes no tool`)
+    return resultFail({
+      code: MAKING_ERROR_CODES.TOOL_INVALID,
+      message: `${medium.id} takes no tool`,
+    })
   }
 
   const surface =
@@ -361,10 +378,10 @@ export function makingStart({
         : null
       : _surfaceFind({ player, location, items, surfaceKind, surfaceId, gameTime })
   if (!surface || !_takesMedium({ thing: surface, mediumId: medium.id })) {
-    return _fail(
-      MAKING_ERROR_CODES.SURFACE_INVALID,
-      `'${surfaceId}' (${surfaceKind}) is not a surface here that takes ${medium.id}`
-    )
+    return resultFail({
+      code: MAKING_ERROR_CODES.SURFACE_INVALID,
+      message: `'${surfaceId}' (${surfaceKind}) is not a surface here that takes ${medium.id}`,
+    })
   }
 
   if (ingredientItemId !== null) {
@@ -375,21 +392,28 @@ export function makingStart({
       ingredient.type === 'ingredient' &&
       _carried({ player, itemId: ingredientItemId })
     if (!usable) {
-      return _fail(
-        MAKING_ERROR_CODES.INGREDIENT_INVALID,
-        `'${ingredientItemId}' is not a carried ingredient ${medium.id} can take`
-      )
+      return resultFail({
+        code: MAKING_ERROR_CODES.INGREDIENT_INVALID,
+        message: `'${ingredientItemId}' is not a carried ingredient ${medium.id} can take`,
+      })
     }
   }
 
   if (inspiration.ticksRemaining <= medium.making.ticksTotal) {
-    return _fail(MAKING_ERROR_CODES.TIME_SHORT, 'The idea will not last as long as the work')
+    return resultFail({
+      code: MAKING_ERROR_CODES.TIME_SHORT,
+      message: 'The idea will not last as long as the work',
+    })
   }
   const refusedReason = _refusal({ player, medium })
-  if (refusedReason) return _fail(MAKING_ERROR_CODES.PERSONA_REFUSES, refusedReason)
+  if (refusedReason)
+    return resultFail({ code: MAKING_ERROR_CODES.PERSONA_REFUSES, message: refusedReason })
   const moneyCost = surfaceKind === MAKING_SURFACE_KINDS.LOCATION ? (surface.cost ?? 0) : 0
   if ((player.status?.money ?? 0) < moneyCost) {
-    return _fail(MAKING_ERROR_CODES.MONEY_SHORT, `That costs ${moneyCost} and the player is short`)
+    return resultFail({
+      code: MAKING_ERROR_CODES.MONEY_SHORT,
+      message: `That costs ${moneyCost} and the player is short`,
+    })
   }
 
   const tick = gameTime?.tick ?? 0
@@ -416,7 +440,7 @@ export function makingStart({
   if (surfaceKind === MAKING_SURFACE_KINDS.ITEM) itemIdsConsumed.push(surfaceId)
   if (ingredientItemId !== null) itemIdsConsumed.push(ingredientItemId)
 
-  return _ok({
+  return resultOk({
     makings: [..._copies(player), making],
     making: { ...making },
     itemIdsConsumed,
@@ -435,24 +459,34 @@ export function makingStart({
  */
 export function makingWork({ player, ticksWorked, gameState, workDone = false, gameTime }) {
   if (!player || typeof player !== 'object') {
-    return _fail(MAKING_ERROR_CODES.PLAYER_MISSING, 'makingWork needs a player')
+    return resultFail({
+      code: MAKING_ERROR_CODES.PLAYER_MISSING,
+      message: 'makingWork needs a player',
+    })
   }
   if (!Number.isInteger(ticksWorked) || ticksWorked < 1) {
-    return _fail(
-      MAKING_ERROR_CODES.TICKS_INVALID,
-      `ticksWorked must be an integer >= 1, got ${ticksWorked}`
-    )
+    return resultFail({
+      code: MAKING_ERROR_CODES.TICKS_INVALID,
+      message: `ticksWorked must be an integer >= 1, got ${ticksWorked}`,
+    })
   }
   const makings = _copies(player)
   const making = makings.find((r) => r.status === MAKING_STATUSES.IN_PROGRESS)
   if (!making) {
-    return _fail(MAKING_ERROR_CODES.NONE_IN_PROGRESS, 'The player is not making anything')
+    return resultFail({
+      code: MAKING_ERROR_CODES.NONE_IN_PROGRESS,
+      message: 'The player is not making anything',
+    })
   }
   making.ticksDone = Math.min(making.ticksTotal, making.ticksDone + ticksWorked)
   if (workDone) making.ticksTotal = making.ticksDone
   making.game = { ...making.game, state: gameState }
   making.updatedAtTick = gameTime?.tick ?? making.updatedAtTick
-  return _ok({ makings, making: { ...making }, workDone: making.ticksDone >= making.ticksTotal })
+  return resultOk({
+    makings,
+    making: { ...making },
+    workDone: making.ticksDone >= making.ticksTotal,
+  })
 }
 
 /**
@@ -495,29 +529,44 @@ export function makingFinish({
   rng = Math.random,
 }) {
   if (!player || typeof player !== 'object') {
-    return _fail(MAKING_ERROR_CODES.PLAYER_MISSING, 'makingFinish needs a player')
+    return resultFail({
+      code: MAKING_ERROR_CODES.PLAYER_MISSING,
+      message: 'makingFinish needs a player',
+    })
   }
   if (!location || typeof location !== 'object') {
-    return _fail(MAKING_ERROR_CODES.LOCATION_MISSING, 'makingFinish needs a location')
+    return resultFail({
+      code: MAKING_ERROR_CODES.LOCATION_MISSING,
+      message: 'makingFinish needs a location',
+    })
   }
   const makings = _copies(player)
   const making = makings.find((r) => r.status === MAKING_STATUSES.IN_PROGRESS)
   if (!making) {
-    return _fail(MAKING_ERROR_CODES.NONE_IN_PROGRESS, 'The player is not making anything')
+    return resultFail({
+      code: MAKING_ERROR_CODES.NONE_IN_PROGRESS,
+      message: 'The player is not making anything',
+    })
   }
   if (making.ticksDone < making.ticksTotal) {
-    return _fail(MAKING_ERROR_CODES.WORK_UNFINISHED, 'There is still work to do')
+    return resultFail({
+      code: MAKING_ERROR_CODES.WORK_UNFINISHED,
+      message: 'There is still work to do',
+    })
   }
   const inspiration = inspirationActive({ player })
   if (!inspiration || inspiration.id !== making.inspirationId) {
-    return _fail(MAKING_ERROR_CODES.INSPIRATION_NONE, 'The idea behind this work is gone')
+    return resultFail({
+      code: MAKING_ERROR_CODES.INSPIRATION_NONE,
+      message: 'The idea behind this work is gone',
+    })
   }
   const medium = mediums[making.mediumId]
   if (!medium?.making) {
-    return _fail(
-      MAKING_ERROR_CODES.MEDIUM_UNKNOWN,
-      `'${making.mediumId}' is not a medium anything can be made in`
-    )
+    return resultFail({
+      code: MAKING_ERROR_CODES.MEDIUM_UNKNOWN,
+      message: `'${making.mediumId}' is not a medium anything can be made in`,
+    })
   }
 
   const modifiers = [
@@ -621,7 +670,7 @@ export function makingFinish({
       ? { mediumId: medium.id, strength: again.strength, ticksTotal: again.ticksTotal }
       : null
 
-  return _ok({
+  return resultOk({
     makings,
     making: { ...making },
     check,
@@ -642,7 +691,10 @@ export function makingFinish({
  */
 export function makingAbandon({ player, reason, gameTime }) {
   if (!player || typeof player !== 'object') {
-    return _fail(MAKING_ERROR_CODES.PLAYER_MISSING, 'makingAbandon needs a player')
+    return resultFail({
+      code: MAKING_ERROR_CODES.PLAYER_MISSING,
+      message: 'makingAbandon needs a player',
+    })
   }
   const valid =
     reason &&
@@ -652,15 +704,18 @@ export function makingAbandon({ player, reason, gameTime }) {
     typeof reason.id === 'string' &&
     reason.id.length > 0
   if (!valid) {
-    return _fail(MAKING_ERROR_CODES.REASON_INVALID, 'reason needs a kind and an id')
+    return resultFail({
+      code: MAKING_ERROR_CODES.REASON_INVALID,
+      message: 'reason needs a kind and an id',
+    })
   }
   const makings = _copies(player)
   const making = makings.find((r) => r.status === MAKING_STATUSES.IN_PROGRESS)
-  if (!making) return _ok({ makings, abandoned: null })
+  if (!making) return resultOk({ makings, abandoned: null })
   making.status = MAKING_STATUSES.ABANDONED
   making.endedBy = { ...reason }
   making.updatedAtTick = gameTime?.tick ?? making.updatedAtTick
-  return _ok({ makings, abandoned: { ...making } })
+  return resultOk({ makings, abandoned: { ...making } })
 }
 
 /**
