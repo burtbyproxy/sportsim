@@ -3,7 +3,7 @@
  * Serializable to JSON.
  */
 
-import { meetsRequirements } from '../engine/actions.js'
+import { requirementsMeet } from '../engine/actions.js'
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -74,7 +74,7 @@ export function locationRestore({ definition, saved }) {
  */
 export function exitMeetsRequirements({ exit, player, gameTime }) {
   if (!exit.requirements) return { meets: true, reasonCode: null, reasonParams: {} }
-  return meetsRequirements(player, { requirements: exit.requirements }, gameTime)
+  return requirementsMeet({ player, action: { requirements: exit.requirements }, gameTime })
 }
 
 /**

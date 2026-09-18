@@ -17,7 +17,7 @@ import { createPlayer } from '../../src/models/player.js'
 import { createLocation } from '../../src/models/location.js'
 import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
-import { meetsRequirements } from '../../src/engine/actions.js'
+import { requirementsMeet } from '../../src/engine/actions.js'
 import { INSPIRATION_STATUSES } from '../../src/engine/inspiration.js'
 
 const loadDir = (dir) =>
@@ -225,17 +225,23 @@ describe('inspiration pipeline', () => {
     const loop = useGameLoop()
     const make = { id: 'make_something', requirements: { requiresInspiration: true } }
 
-    expect(meetsRequirements(game.player, make, game.time).meets).toBe(false)
+    expect(requirementsMeet({ player: game.player, action: make, gameTime: game.time }).meets).toBe(
+      false
+    )
     game.applyInspirationStrike({
       source: { kind: 'event', id: 'test' },
       mediumId: 'painting',
       strength: 50,
       ticksTotal: 2,
     })
-    expect(meetsRequirements(game.player, make, game.time).meets).toBe(true)
+    expect(requirementsMeet({ player: game.player, action: make, gameTime: game.time }).meets).toBe(
+      true
+    )
 
     await loop.tick(2)
-    expect(meetsRequirements(game.player, make, game.time).meets).toBe(false)
+    expect(requirementsMeet({ player: game.player, action: make, gameTime: game.time }).meets).toBe(
+      false
+    )
   })
 
   it('spending it closes the record against what it made, and spending nothing is refused', () => {

@@ -440,7 +440,7 @@ export function generateLocationNarrative(location, player, gameTime) {
 /**
  * Generates narrative text for an action resolution result.
  *
- * @param {Object} actionResult - result from resolveAction()
+ * @param {Object} actionResult - result from actionResolve()
  * @returns {NarrativeText}
  */
 export function generateActionNarrative(actionResult) {

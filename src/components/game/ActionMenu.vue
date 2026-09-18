@@ -83,7 +83,7 @@
 <script setup>
 import { computed, inject, ref, watch } from 'vue'
 import { useGameStore } from '../../stores/game.js'
-import { meetsRequirements, REQUIREMENT_CODES } from '../../engine/actions.js'
+import { requirementsMeet, REQUIREMENT_CODES } from '../../engine/actions.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
 import { useKeyboardNav } from '../../composables/useKeyboardNav.js'
 import { isOpen, exitMeetsRequirements } from '../../models/location.js'
@@ -188,7 +188,11 @@ async function executeAction(action) {
 function disabledReason(action) {
   if (!game.player) return ''
   if (action.unavailableReason) return action.unavailableReason
-  const { meets, reasonCode, reasonParams } = meetsRequirements(game.player, action, game.time)
+  const { meets, reasonCode, reasonParams } = requirementsMeet({
+    player: game.player,
+    action,
+    gameTime: game.time,
+  })
   return meets ? '' : game.requirementReason({ code: reasonCode, params: reasonParams })
 }
 

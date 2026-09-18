@@ -3,8 +3,8 @@
  * Integration: Action pipeline
  *
  * Tests:
- *   getAvailableActions() with real Kenton location data (from content/)
- *   resolveAction() with a real action fixture
+ *   actionsAvailable() with real Kenton location data (from content/)
+ *   actionResolve() with a real action fixture
  *   Stat decay over realistic tick counts
  *   tickModifiers() expiry over N ticks
  */
@@ -15,7 +15,7 @@ import { join, resolve } from 'path'
 import { createPlayer, addModifier, tickModifiers } from '../../src/models/player.js'
 import { statEffective } from '../../src/engine/dice.js'
 import { createLocation } from '../../src/models/location.js'
-import { getAvailableActions, resolveAction } from '../../src/engine/actions.js'
+import { actionsAvailable, actionResolve } from '../../src/engine/actions.js'
 import { getStatDecayEffects } from '../../src/engine/stats.js'
 import { seededRandom } from '../../src/utils/random.js'
 
@@ -167,14 +167,19 @@ const CHARM_CHECK_ACTION = {
 }
 
 // ---------------------------------------------------------------------------
-// getAvailableActions with Kenton location data
+// actionsAvailable with Kenton location data
 // ---------------------------------------------------------------------------
 
-describe('getAvailableActions — real Kenton location data', () => {
+describe('actionsAvailable — real Kenton location data', () => {
   it('mouse_trap returns its own wired actions alongside "any" actions', () => {
     const location = createLocation(kentonLocations.mouse_trap)
     const player = createPlayer('Test')
-    const result = getAvailableActions(player, location, makeGameTime(), kentonActionRegistry)
+    const result = actionsAvailable({
+      player,
+      location,
+      gameTime: makeGameTime(),
+      actionRegistry: kentonActionRegistry,
+    })
     const ids = result.map((a) => a.id)
     expect(ids).toContain('play_pool_mouse_trap')
     expect(ids).toContain('smoke_out_front_mouse_trap')
@@ -188,7 +193,12 @@ describe('getAvailableActions — real Kenton location data', () => {
     const player = createPlayer('Test')
     player.status.money = 10
     // Blue Parrot is open at 14:00 (minHour: 11)
-    const result = getAvailableActions(player, location, makeGameTime(14), kentonActionRegistry)
+    const result = actionsAvailable({
+      player,
+      location,
+      gameTime: makeGameTime(14),
+      actionRegistry: kentonActionRegistry,
+    })
     expect(result.map((a) => a.id)).toContain('order_beer_parrot')
     // NPC interactions at blue_parrot use character names (talk_to_tina, talk_to_greg)
     const ids = result.map((a) => a.id)
@@ -199,7 +209,12 @@ describe('getAvailableActions — real Kenton location data', () => {
     const location = createLocation(kentonLocations.blue_parrot)
     const player = createPlayer('Test')
     // Bar actions require minHour: 11 — time-restricted actions should be absent at 9am
-    const result = getAvailableActions(player, location, makeGameTime(9), kentonActionRegistry)
+    const result = actionsAvailable({
+      player,
+      location,
+      gameTime: makeGameTime(9),
+      actionRegistry: kentonActionRegistry,
+    })
     // order_beer_parrot requires minHour: 11 — should not appear at 9am
     expect(result.map((a) => a.id)).not.toContain('order_beer_parrot')
   })
@@ -208,7 +223,12 @@ describe('getAvailableActions — real Kenton location data', () => {
     const location = createLocation(kentonLocations.moms_house)
     const player = createPlayer('Test')
     // At 14:00, sleep requires minHour: 21 so raid_fridge and stare_at_ceiling available
-    const result = getAvailableActions(player, location, makeGameTime(14), kentonActionRegistry)
+    const result = actionsAvailable({
+      player,
+      location,
+      gameTime: makeGameTime(14),
+      actionRegistry: kentonActionRegistry,
+    })
     const ids = result.map((a) => a.id)
     expect(ids).toContain('raid_fridge')
     expect(ids).toContain('stare_at_ceiling')
@@ -218,7 +238,12 @@ describe('getAvailableActions — real Kenton location data', () => {
   it('sleep is available at moms_house after 9pm', () => {
     const location = createLocation(kentonLocations.moms_house)
     const player = createPlayer('Test')
-    const result = getAvailableActions(player, location, makeGameTime(21), kentonActionRegistry)
+    const result = actionsAvailable({
+      player,
+      location,
+      gameTime: makeGameTime(21),
+      actionRegistry: kentonActionRegistry,
+    })
     expect(result.map((a) => a.id)).toContain('sleep')
   })
 
@@ -227,7 +252,12 @@ describe('getAvailableActions — real Kenton location data', () => {
     const player = createPlayer('Test')
     player.status.money = 10
     player.status.sobriety = 30 // below minSobriety: 50
-    const result = getAvailableActions(player, location, makeGameTime(14), kentonActionRegistry)
+    const result = actionsAvailable({
+      player,
+      location,
+      gameTime: makeGameTime(14),
+      actionRegistry: kentonActionRegistry,
+    })
     const ids = result.map((a) => a.id)
     expect(ids).not.toContain('shoplift_plaid')
     expect(ids).toContain('buy_tallboy') // no sobriety requirement
@@ -236,14 +266,24 @@ describe('getAvailableActions — real Kenton location data', () => {
   it('look_for_change not available at night (maxHour: 22)', () => {
     const location = createLocation(kentonLocations.columbia_park)
     const player = createPlayer('Test')
-    const result = getAvailableActions(player, location, makeGameTime(23), kentonActionRegistry)
+    const result = actionsAvailable({
+      player,
+      location,
+      gameTime: makeGameTime(23),
+      actionRegistry: kentonActionRegistry,
+    })
     expect(result.map((a) => a.id)).not.toContain('look_for_change')
   })
 
   it('highest-weight location actions appear first at moms_house', () => {
     const location = createLocation(kentonLocations.moms_house)
     const player = createPlayer('Test')
-    const result = getAvailableActions(player, location, makeGameTime(14), kentonActionRegistry)
+    const result = actionsAvailable({
+      player,
+      location,
+      gameTime: makeGameTime(14),
+      actionRegistry: kentonActionRegistry,
+    })
     // raid_fridge weight=80 — must be the top location-specific action
     expect(result.map((a) => a.id)).toContain('raid_fridge')
     const raidIdx = result.findIndex((a) => a.id === 'raid_fridge')
@@ -256,7 +296,12 @@ describe('getAvailableActions — real Kenton location data', () => {
     const player = createPlayer('Test')
     const anyAction = { ...DRINK_ACTION, id: 'look_around', locationId: 'any', weight: 1 }
 
-    const result = getAvailableActions(player, location, makeGameTime(), [anyAction])
+    const result = actionsAvailable({
+      player,
+      location,
+      gameTime: makeGameTime(),
+      actionRegistry: [anyAction],
+    })
     expect(result.map((a) => a.id)).toContain('look_around')
   })
 
@@ -267,7 +312,12 @@ describe('getAvailableActions — real Kenton location data', () => {
     const earlyAction = { ...DRINK_ACTION, requirements: { minHour: 20 } }
 
     // It's 14:00, action requires hour >= 20 — should be filtered out
-    const result = getAvailableActions(player, location, makeGameTime(14), [earlyAction])
+    const result = actionsAvailable({
+      player,
+      location,
+      gameTime: makeGameTime(14),
+      actionRegistry: [earlyAction],
+    })
     expect(result).toHaveLength(0)
   })
 
@@ -282,7 +332,12 @@ describe('getAvailableActions — real Kenton location data', () => {
       id: 'charm_action',
       requirements: { minStats: { charm: 50 } },
     }
-    const result = getAvailableActions(player, location, makeGameTime(), [eliteAction])
+    const result = actionsAvailable({
+      player,
+      location,
+      gameTime: makeGameTime(),
+      actionRegistry: [eliteAction],
+    })
     expect(result).toHaveLength(0)
   })
 
@@ -294,10 +349,12 @@ describe('getAvailableActions — real Kenton location data', () => {
     const location = createLocation(locationData)
     const player = createPlayer('Test')
 
-    const result = getAvailableActions(player, location, makeGameTime(), [
-      DRINK_ACTION,
-      CHARM_CHECK_ACTION,
-    ])
+    const result = actionsAvailable({
+      player,
+      location,
+      gameTime: makeGameTime(),
+      actionRegistry: [DRINK_ACTION, CHARM_CHECK_ACTION],
+    })
     // DRINK_ACTION weight=10, CHARM_CHECK_ACTION weight=5
     expect(result[0].id).toBe('drink_pbr')
     expect(result[1].id).toBe('chat_up_bartender')
@@ -305,19 +362,19 @@ describe('getAvailableActions — real Kenton location data', () => {
 })
 
 // ---------------------------------------------------------------------------
-// resolveAction — full pipeline with dice
+// actionResolve — full pipeline with dice
 // ---------------------------------------------------------------------------
 
-describe('resolveAction — real Kenton action data', () => {
+describe('actionResolve — real Kenton action data', () => {
   it('raid_fridge auto-succeeds and returns hunger gain', () => {
     const player = createPlayer('Test')
-    const result = resolveAction(
+    const result = actionResolve({
       player,
-      kentonActions.raid_fridge,
-      makeGameTime(),
-      [],
-      seededRandom(1)
-    )
+      action: kentonActions.raid_fridge,
+      gameTime: makeGameTime(),
+      characters: [],
+      rng: seededRandom(1),
+    })
     expect(result.success).toBe(true)
     expect(result.diceResult).toBeNull()
     expect(result.outcome.statusChanges.hunger).toBe(25)
@@ -327,13 +384,13 @@ describe('resolveAction — real Kenton action data', () => {
   it('order_beer_parrot auto-succeeds, costs money, and doses beer', () => {
     const player = createPlayer('Test')
     player.status.money = 10
-    const result = resolveAction(
+    const result = actionResolve({
       player,
-      kentonActions.order_beer_parrot,
-      makeGameTime(14),
-      [],
-      seededRandom(1)
-    )
+      action: kentonActions.order_beer_parrot,
+      gameTime: makeGameTime(14),
+      characters: [],
+      rng: seededRandom(1),
+    })
     expect(result.success).toBe(true)
     expect(result.outcome.moneyChange).toBe(-3)
     expect(result.outcome.statusChanges.sobriety).toBeUndefined()
@@ -344,13 +401,13 @@ describe('resolveAction — real Kenton action data', () => {
   it('look_for_change critical success yields $20 on natural 20', () => {
     const player = createPlayer('Test')
     const alwaysMax = () => 0.9999 // natural 20
-    const result = resolveAction(
+    const result = actionResolve({
       player,
-      kentonActions.look_for_change,
-      makeGameTime(14),
-      [],
-      alwaysMax
-    )
+      action: kentonActions.look_for_change,
+      gameTime: makeGameTime(14),
+      characters: [],
+      rng: alwaysMax,
+    })
     expect(result.success).toBe(true)
     expect(result.outcome.moneyChange).toBe(20)
     expect(result.outcome.archetypeChanges.lucky_bastard).toBe(5)
@@ -359,13 +416,13 @@ describe('resolveAction — real Kenton action data', () => {
   it('look_for_change critical failure on natural 1 — crit outcome selected regardless of success', () => {
     const player = createPlayer('Test')
     const alwaysMin = () => 0 // natural 1 = criticalFailure
-    const result = resolveAction(
+    const result = actionResolve({
       player,
-      kentonActions.look_for_change,
-      makeGameTime(14),
-      [],
-      alwaysMin
-    )
+      action: kentonActions.look_for_change,
+      gameTime: makeGameTime(14),
+      characters: [],
+      rng: alwaysMin,
+    })
     // Natural 1 triggers criticalFailure outcome. Note: result.success may still be true if
     // luck modifier + natural 1 clears the dc — criticalFailure outcome is selected by
     // _selectOutcome before the success check. This is correct engine behavior.
@@ -377,22 +434,28 @@ describe('resolveAction — real Kenton action data', () => {
   it('shoplift_plaid blocked when sobriety below requirement', () => {
     const player = createPlayer('Test')
     player.status.sobriety = 30
-    const result = resolveAction(
+    const result = actionResolve({
       player,
-      kentonActions.shoplift_plaid,
-      makeGameTime(),
-      [],
-      seededRandom(1)
-    )
+      action: kentonActions.shoplift_plaid,
+      gameTime: makeGameTime(),
+      characters: [],
+      rng: seededRandom(1),
+    })
     expect(result.requirementFailure).toBeTruthy()
     expect(result.outcome).toBeNull()
   })
 })
 
-describe('resolveAction — full pipeline', () => {
+describe('actionResolve — full pipeline', () => {
   it('auto-success action returns correct outcome without a dice roll', () => {
     const player = createPlayer('Test')
-    const result = resolveAction(player, DRINK_ACTION, makeGameTime(), [], seededRandom(1))
+    const result = actionResolve({
+      player,
+      action: DRINK_ACTION,
+      gameTime: makeGameTime(),
+      characters: [],
+      rng: seededRandom(1),
+    })
 
     expect(result.success).toBe(true)
     expect(result.diceResult).toBeNull()
@@ -407,7 +470,13 @@ describe('resolveAction — full pipeline', () => {
     const player = createPlayer('Test')
     player.stats.charm.base = 15
 
-    const result = resolveAction(player, CHARM_CHECK_ACTION, makeGameTime(), [], seededRandom(42))
+    const result = actionResolve({
+      player,
+      action: CHARM_CHECK_ACTION,
+      gameTime: makeGameTime(),
+      characters: [],
+      rng: seededRandom(42),
+    })
 
     expect(result.diceResult).not.toBeNull()
     expect(result.diceResult.natural).toBeGreaterThanOrEqual(1)
@@ -422,7 +491,13 @@ describe('resolveAction — full pipeline', () => {
     player.stats.charm.base = 15
 
     const alwaysMax = () => 0.9999 // natural 20 = always success
-    const result = resolveAction(player, CHARM_CHECK_ACTION, makeGameTime(), [], alwaysMax)
+    const result = actionResolve({
+      player,
+      action: CHARM_CHECK_ACTION,
+      gameTime: makeGameTime(),
+      characters: [],
+      rng: alwaysMax,
+    })
 
     expect(result.success).toBe(true)
     expect(result.outcome.statusChanges.mood).toBe(10)
@@ -433,7 +508,13 @@ describe('resolveAction — full pipeline', () => {
     player.stats.charm.base = 1
 
     const alwaysMin = () => 0 // natural 1 = always failure
-    const result = resolveAction(player, CHARM_CHECK_ACTION, makeGameTime(), [], alwaysMin)
+    const result = actionResolve({
+      player,
+      action: CHARM_CHECK_ACTION,
+      gameTime: makeGameTime(),
+      characters: [],
+      rng: alwaysMin,
+    })
 
     expect(result.success).toBe(false)
     expect(result.outcome.statusChanges.mood).toBe(-5)
@@ -444,7 +525,13 @@ describe('resolveAction — full pipeline', () => {
     player.stats.charm.base = 5
 
     const gatedAction = { ...CHARM_CHECK_ACTION, requirements: { minStats: { charm: 50 } } }
-    const result = resolveAction(player, gatedAction, makeGameTime(), [], seededRandom(1))
+    const result = actionResolve({
+      player,
+      action: gatedAction,
+      gameTime: makeGameTime(),
+      characters: [],
+      rng: seededRandom(1),
+    })
 
     expect(result.requirementFailure).toBeTruthy()
     expect(result.outcome).toBeNull()
@@ -455,8 +542,20 @@ describe('resolveAction — full pipeline', () => {
     const player = createPlayer('Test')
     player.stats.charm.base = 15
 
-    const result1 = resolveAction(player, CHARM_CHECK_ACTION, makeGameTime(), [], seededRandom(100))
-    const result2 = resolveAction(player, CHARM_CHECK_ACTION, makeGameTime(), [], seededRandom(100))
+    const result1 = actionResolve({
+      player,
+      action: CHARM_CHECK_ACTION,
+      gameTime: makeGameTime(),
+      characters: [],
+      rng: seededRandom(100),
+    })
+    const result2 = actionResolve({
+      player,
+      action: CHARM_CHECK_ACTION,
+      gameTime: makeGameTime(),
+      characters: [],
+      rng: seededRandom(100),
+    })
 
     expect(result1.success).toBe(result2.success)
     expect(result1.diceResult.natural).toBe(result2.diceResult.natural)

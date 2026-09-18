@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { meetsRequirements, getAvailableActions, resolveAction, actionApplies } from './actions.js'
+import { requirementsMeet, actionsAvailable, actionResolve, actionApplies } from './actions.js'
 import { seededRandom } from '../utils/random.js'
 
 function makePlayer(overrides = {}) {
@@ -44,21 +44,25 @@ function makeAction(overrides = {}) {
   }
 }
 
-// --- meetsRequirements ---
+// --- requirementsMeet ---
 
-describe('meetsRequirements', () => {
+describe('requirementsMeet', () => {
   it('passes with no requirements', () => {
-    const { meets } = meetsRequirements(makePlayer(), makeAction(), makeGameTime())
+    const { meets } = requirementsMeet({
+      player: makePlayer(),
+      action: makeAction(),
+      gameTime: makeGameTime(),
+    })
     expect(meets).toBe(true)
   })
 
   it('fails when stat too low', () => {
     const action = makeAction({ requirements: { minStats: { charm: 20 } } })
-    const { meets, reasonCode, reasonParams } = meetsRequirements(
-      makePlayer(),
+    const { meets, reasonCode, reasonParams } = requirementsMeet({
+      player: makePlayer(),
       action,
-      makeGameTime()
-    )
+      gameTime: makeGameTime(),
+    })
     expect(meets).toBe(false)
     // A code and what it is about. The sentence is content's, not the engine's.
     expect(reasonCode).toBe('requirement.stat')
@@ -67,52 +71,52 @@ describe('meetsRequirements', () => {
 
   it('passes when stat meets minimum', () => {
     const action = makeAction({ requirements: { minStats: { charm: 10 } } })
-    const { meets } = meetsRequirements(makePlayer(), action, makeGameTime())
+    const { meets } = requirementsMeet({ player: makePlayer(), action, gameTime: makeGameTime() })
     expect(meets).toBe(true)
   })
 
   it('fails when required item not in inventory', () => {
     const action = makeAction({ requirements: { requiredItems: ['bus_pass'] } })
-    const { meets } = meetsRequirements(makePlayer(), action, makeGameTime())
+    const { meets } = requirementsMeet({ player: makePlayer(), action, gameTime: makeGameTime() })
     expect(meets).toBe(false)
   })
 
   it('passes when required item is in inventory', () => {
     const player = makePlayer({ inventory: [{ id: 'bus_pass', quantity: 1 }] })
     const action = makeAction({ requirements: { requiredItems: ['bus_pass'] } })
-    const { meets } = meetsRequirements(player, action, makeGameTime())
+    const { meets } = requirementsMeet({ player, action, gameTime: makeGameTime() })
     expect(meets).toBe(true)
   })
 
   it('fails when below minSobriety', () => {
     const player = makePlayer({ status: { ...makePlayer().status, sobriety: 10 } })
     const action = makeAction({ requirements: { minSobriety: 20 } })
-    const { meets } = meetsRequirements(player, action, makeGameTime())
+    const { meets } = requirementsMeet({ player, action, gameTime: makeGameTime() })
     expect(meets).toBe(false)
   })
 
   it('fails when above maxSobriety', () => {
     const player = makePlayer({ status: { ...makePlayer().status, sobriety: 90 } })
     const action = makeAction({ requirements: { maxSobriety: 50 } })
-    const { meets } = meetsRequirements(player, action, makeGameTime())
+    const { meets } = requirementsMeet({ player, action, gameTime: makeGameTime() })
     expect(meets).toBe(false)
   })
 
   it('fails when before minHour', () => {
     const action = makeAction({ requirements: { minHour: 20 } })
-    const { meets } = meetsRequirements(makePlayer(), action, makeGameTime(10))
+    const { meets } = requirementsMeet({ player: makePlayer(), action, gameTime: makeGameTime(10) })
     expect(meets).toBe(false)
   })
 
   it('fails when at or after maxHour', () => {
     const action = makeAction({ requirements: { maxHour: 12 } })
-    const { meets } = meetsRequirements(makePlayer(), action, makeGameTime(14))
+    const { meets } = requirementsMeet({ player: makePlayer(), action, gameTime: makeGameTime(14) })
     expect(meets).toBe(false)
   })
 
   it('fails when required trauma not present', () => {
     const action = makeAction({ requirements: { requiredTraumas: ['mugged'] } })
-    const { meets } = meetsRequirements(makePlayer(), action, makeGameTime())
+    const { meets } = requirementsMeet({ player: makePlayer(), action, gameTime: makeGameTime() })
     expect(meets).toBe(false)
   })
 
@@ -126,14 +130,56 @@ describe('meetsRequirements', () => {
       },
     })
     const action = makeAction({ requirements: { requiredTraumas: ['mugged'] } })
-    const { meets } = meetsRequirements(player, action, makeGameTime())
+    const { meets } = requirementsMeet({ player, action, gameTime: makeGameTime() })
     expect(meets).toBe(true)
   })
 })
 
-// --- getAvailableActions ---
+// --- actionsAvailable ---
 
-describe('getAvailableActions', () => {
+describe('requirementsMeet — minVisits', () => {
+  const action = makeAction({ requirements: { minVisits: 2 } })
+  const gameTime = makeGameTime()
+
+  it('refuses with the visits code until the player has been here often enough', () => {
+    const result = requirementsMeet({
+      player: makePlayer(),
+      action,
+      gameTime,
+      location: { visitCount: 1 },
+    })
+    expect(result).toEqual({ meets: false, reasonCode: 'requirement.visits', reasonParams: {} })
+  })
+
+  it('meets once the location has been visited enough', () => {
+    expect(
+      requirementsMeet({ player: makePlayer(), action, gameTime, location: { visitCount: 2 } })
+        .meets
+    ).toBe(true)
+  })
+
+  it('counts no visits when no location is given', () => {
+    expect(requirementsMeet({ player: makePlayer(), action, gameTime }).meets).toBe(false)
+  })
+
+  it('reads the count from the location, not from the player', () => {
+    const player = makePlayer({ _locationData: { visitCount: 9 } })
+    expect(requirementsMeet({ player, action, gameTime, location: { visitCount: 0 } }).meets).toBe(
+      false
+    )
+  })
+
+  it('actionsAvailable and actionResolve both pass the location through', () => {
+    const location = { id: 'test_location', actionIds: ['test_action'], visitCount: 2 }
+    const player = makePlayer()
+    expect(actionsAvailable({ player, location, gameTime, actionRegistry: [action] })).toHaveLength(
+      1
+    )
+    expect(actionResolve({ player, action, gameTime, location }).requirementFailure).toBeNull()
+  })
+})
+
+describe('actionsAvailable', () => {
   it('returns actions available at location', () => {
     const location = { id: 'bar', actionIds: ['drink', 'talk'] }
     const registry = [
@@ -141,7 +187,12 @@ describe('getAvailableActions', () => {
       makeAction({ id: 'talk', weight: 3 }),
       makeAction({ id: 'fight', weight: 8 }),
     ]
-    const result = getAvailableActions(makePlayer(), location, makeGameTime(), registry)
+    const result = actionsAvailable({
+      player: makePlayer(),
+      location,
+      gameTime: makeGameTime(),
+      actionRegistry: registry,
+    })
     expect(result.map((a) => a.id)).toContain('drink')
     expect(result.map((a) => a.id)).toContain('talk')
     expect(result.map((a) => a.id)).not.toContain('fight')
@@ -150,14 +201,24 @@ describe('getAvailableActions', () => {
   it('includes "any" location actions', () => {
     const location = { id: 'bar', actionIds: [] }
     const registry = [makeAction({ id: 'think', locationId: 'any', weight: 1 })]
-    const result = getAvailableActions(makePlayer(), location, makeGameTime(), registry)
+    const result = actionsAvailable({
+      player: makePlayer(),
+      location,
+      gameTime: makeGameTime(),
+      actionRegistry: registry,
+    })
     expect(result.map((a) => a.id)).toContain('think')
   })
 
   it('filters out actions where requirements not met', () => {
     const location = { id: 'bar', actionIds: ['vip_entrance'] }
     const registry = [makeAction({ id: 'vip_entrance', requirements: { minStats: { charm: 50 } } })]
-    const result = getAvailableActions(makePlayer(), location, makeGameTime(), registry)
+    const result = actionsAvailable({
+      player: makePlayer(),
+      location,
+      gameTime: makeGameTime(),
+      actionRegistry: registry,
+    })
     expect(result).toHaveLength(0)
   })
 
@@ -168,7 +229,12 @@ describe('getAvailableActions', () => {
       makeAction({ id: 'b', weight: 10 }),
       makeAction({ id: 'c', weight: 5 }),
     ]
-    const result = getAvailableActions(makePlayer(), location, makeGameTime(), registry)
+    const result = actionsAvailable({
+      player: makePlayer(),
+      location,
+      gameTime: makeGameTime(),
+      actionRegistry: registry,
+    })
     expect(result[0].id).toBe('b')
     expect(result[1].id).toBe('c')
     expect(result[2].id).toBe('a')
@@ -188,7 +254,12 @@ describe('getAvailableActions', () => {
       makeAction({ id: 'drink', weight: 5, obsessionIds: ['drinking'] }),
       makeAction({ id: 'talk', weight: 8 }),
     ]
-    const result = getAvailableActions(player, location, makeGameTime(), registry)
+    const result = actionsAvailable({
+      player,
+      location,
+      gameTime: makeGameTime(),
+      actionRegistry: registry,
+    })
     // drink gets obsession boost: 5 + (100/100 * 5 * 0.5) = 5 + 2.5 = 7.5, still less than talk's 8
     // but if we crank obsession strength to really dominate...
     // At strength=100, drink=7.5 < talk=8, so talk first
@@ -196,19 +267,31 @@ describe('getAvailableActions', () => {
   })
 })
 
-// --- resolveAction ---
+// --- actionResolve ---
 
-describe('resolveAction', () => {
+describe('actionResolve', () => {
   it('returns requirementFailure when requirements not met', () => {
     const action = makeAction({ requirements: { minStats: { charm: 999 } } })
-    const result = resolveAction(makePlayer(), action, makeGameTime(), [], seededRandom(1))
+    const result = actionResolve({
+      player: makePlayer(),
+      action,
+      gameTime: makeGameTime(),
+      characters: [],
+      rng: seededRandom(1),
+    })
     expect(result.requirementFailure).toBeTruthy()
     expect(result.outcome).toBeNull()
   })
 
   it('auto-succeeds when no check', () => {
     const action = makeAction({ check: null })
-    const result = resolveAction(makePlayer(), action, makeGameTime(), [], seededRandom(1))
+    const result = actionResolve({
+      player: makePlayer(),
+      action,
+      gameTime: makeGameTime(),
+      characters: [],
+      rng: seededRandom(1),
+    })
     expect(result.success).toBe(true)
     expect(result.outcome).toBe(action.success)
     expect(result.diceResult).toBeNull()
@@ -219,7 +302,13 @@ describe('resolveAction', () => {
     const action = makeAction({
       check: { stat: 'charm', dc: 1, opposedStat: null, opposedNpcId: null },
     })
-    const result = resolveAction(makePlayer(), action, makeGameTime(), [], seededRandom(1))
+    const result = actionResolve({
+      player: makePlayer(),
+      action,
+      gameTime: makeGameTime(),
+      characters: [],
+      rng: seededRandom(1),
+    })
     expect(result.diceResult).toBeTruthy()
     // Result depends on roll but dc=1, charm=10, should almost always succeed
     if (result.success) {
@@ -232,7 +321,13 @@ describe('resolveAction', () => {
     const action = makeAction({
       check: { stat: 'charm', dc: 100, opposedStat: null, opposedNpcId: null },
     })
-    const result = resolveAction(makePlayer(), action, makeGameTime(), [], seededRandom(1))
+    const result = actionResolve({
+      player: makePlayer(),
+      action,
+      gameTime: makeGameTime(),
+      characters: [],
+      rng: seededRandom(1),
+    })
     // Only a natural 1 is a crit fail, otherwise just failure
     expect(result.success).toBe(false)
     expect(result.outcome).toBe(action.failure)
@@ -245,7 +340,13 @@ describe('resolveAction', () => {
       criticalSuccess: critSuccessOutcome,
     })
     const alwaysMax = () => 0.9999 // natural 20
-    const result = resolveAction(makePlayer(), action, makeGameTime(), [], alwaysMax)
+    const result = actionResolve({
+      player: makePlayer(),
+      action,
+      gameTime: makeGameTime(),
+      characters: [],
+      rng: alwaysMax,
+    })
     expect(result.outcome).toBe(critSuccessOutcome)
   })
 
@@ -256,7 +357,13 @@ describe('resolveAction', () => {
       criticalFailure: critFailOutcome,
     })
     const alwaysMin = () => 0 // natural 1
-    const result = resolveAction(makePlayer(), action, makeGameTime(), [], alwaysMin)
+    const result = actionResolve({
+      player: makePlayer(),
+      action,
+      gameTime: makeGameTime(),
+      characters: [],
+      rng: alwaysMin,
+    })
     expect(result.outcome).toBe(critFailOutcome)
   })
 
@@ -270,7 +377,13 @@ describe('resolveAction', () => {
     const action = makeAction({
       check: { stat: 'charm', dc: 0, opposedStat: 'charm', opposedNpcId: 'bartender' },
     })
-    const result = resolveAction(makePlayer(), action, makeGameTime(), [npc], seededRandom(1))
+    const result = actionResolve({
+      player: makePlayer(),
+      action,
+      gameTime: makeGameTime(),
+      characters: [npc],
+      rng: seededRandom(1),
+    })
     expect(result.diceResult).toBeTruthy()
     expect(result.outcome).toBeTruthy()
   })
@@ -279,37 +392,49 @@ describe('resolveAction', () => {
     const action = makeAction({
       check: { stat: 'charm', dc: 0, opposedStat: 'charm', opposedNpcId: 'missing_npc' },
     })
-    const result = resolveAction(makePlayer(), action, makeGameTime(), [], seededRandom(1))
+    const result = actionResolve({
+      player: makePlayer(),
+      action,
+      gameTime: makeGameTime(),
+      characters: [],
+      rng: seededRandom(1),
+    })
     expect(result.success).toBe(true)
     expect(result.diceResult).toBeNull()
   })
 })
 
-describe('meetsRequirements — money floor', () => {
+describe('requirementsMeet — money floor', () => {
   const gameTime = { hour: 14 }
   const action = (minMoney) => ({ requirements: { minMoney } })
   const playerWith = (money) => ({ status: { money, sobriety: 100 }, stats: {}, inventory: [] })
 
   it('a player with at least the floor passes', () => {
-    expect(meetsRequirements(playerWith(3), action(3), gameTime).meets).toBe(true)
-    expect(meetsRequirements(playerWith(10), action(3), gameTime).meets).toBe(true)
+    expect(requirementsMeet({ player: playerWith(3), action: action(3), gameTime }).meets).toBe(
+      true
+    )
+    expect(requirementsMeet({ player: playerWith(10), action: action(3), gameTime }).meets).toBe(
+      true
+    )
   })
 
   it('a broke player is refused and told the price', () => {
-    const result = meetsRequirements(playerWith(1.5), action(3), gameTime)
+    const result = requirementsMeet({ player: playerWith(1.5), action: action(3), gameTime })
     expect(result.meets).toBe(false)
     expect(result.reasonCode).toBe('requirement.money')
     expect(result.reasonParams).toEqual({ cost: '$3.00', money: '$1.50' })
   })
 
   it('a null floor costs nothing', () => {
-    expect(meetsRequirements(playerWith(0), action(null), gameTime).meets).toBe(true)
+    expect(requirementsMeet({ player: playerWith(0), action: action(null), gameTime }).meets).toBe(
+      true
+    )
   })
 })
 
 // --- requiresInspiration ---
 
-describe('meetsRequirements — requiresInspiration', () => {
+describe('requirementsMeet — requiresInspiration', () => {
   const action = { id: 'make_something', requirements: { requiresInspiration: true } }
   const time = { hour: 14 }
   const record = (status) => ({
@@ -320,7 +445,11 @@ describe('meetsRequirements — requiresInspiration', () => {
   })
 
   it('refuses a player nothing is moving', () => {
-    const result = meetsRequirements({ status: {}, inspirations: [] }, action, time)
+    const result = requirementsMeet({
+      player: { status: {}, inspirations: [] },
+      action,
+      gameTime: time,
+    })
     expect(result).toEqual({
       meets: false,
       reasonCode: 'requirement.inspiration',
@@ -330,18 +459,21 @@ describe('meetsRequirements — requiresInspiration', () => {
 
   it('refuses a player whose inspiration already ended', () => {
     const player = { status: {}, inspirations: [record('expired'), record('interrupted')] }
-    expect(meetsRequirements(player, action, time).meets).toBe(false)
+    expect(requirementsMeet({ player, action, gameTime: time }).meets).toBe(false)
   })
 
   it('allows an inspired player', () => {
     const player = { status: {}, inspirations: [record('expired'), record('active')] }
-    expect(meetsRequirements(player, action, time).meets).toBe(true)
+    expect(requirementsMeet({ player, action, gameTime: time }).meets).toBe(true)
   })
 
   it('ignores the field when it is null or false', () => {
     for (const requiresInspiration of [null, false, undefined]) {
       const cold = { id: 'x', requirements: { requiresInspiration } }
-      expect(meetsRequirements({ status: {}, inspirations: [] }, cold, time).meets).toBe(true)
+      expect(
+        requirementsMeet({ player: { status: {}, inspirations: [] }, action: cold, gameTime: time })
+          .meets
+      ).toBe(true)
     }
   })
 })
@@ -376,14 +508,17 @@ describe('actionApplies', () => {
 
 // --- obsessions reorder the menu ---
 
-describe('getAvailableActions — obsessions', () => {
+describe('actionsAvailable — obsessions', () => {
   const location = { id: 'bar', actionIds: ['sensible', 'compulsion'] }
   const registry = [
     { id: 'sensible', weight: 50, obsessionIds: [] },
     { id: 'compulsion', weight: 40, obsessionIds: ['booze'] },
   ]
   const time = { hour: 14 }
-  const order = (player) => getAvailableActions(player, location, time, registry).map((a) => a.id)
+  const order = (player) =>
+    actionsAvailable({ player, location, gameTime: time, actionRegistry: registry }).map(
+      (a) => a.id
+    )
 
   it('without the obsession the heavier action leads', () => {
     expect(order({ status: {}, psyche: { obsessions: [] } })).toEqual(['sensible', 'compulsion'])

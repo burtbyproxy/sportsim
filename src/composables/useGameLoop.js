@@ -11,14 +11,14 @@
  * and feeding narrative results to the renderer.
  *
  * Everything that involves time passing flows through tick().
- * Everything that involves resolving player actions flows through resolveAction().
+ * Everything that involves resolving player actions flows through actionResolve().
  */
 
 import { useGameStore } from '../stores/game.js'
 import {
   REQUIREMENT_CODES,
-  resolveAction,
-  getAvailableActions,
+  actionResolve,
+  actionsAvailable,
   actionApplies,
 } from '../engine/actions.js'
 import {
@@ -577,7 +577,14 @@ export function useGameLoop({
     }
 
     const characters = game.charactersAtCurrentLocation
-    const result = resolveAction(game.player, action, game.time, characters, rng)
+    const result = actionResolve({
+      player: game.player,
+      action,
+      gameTime: game.time,
+      location: game.currentLocation,
+      characters,
+      rng,
+    })
 
     _narrativeEnqueue(generateActionNarrative(result))
 
@@ -718,12 +725,12 @@ export function useGameLoop({
       return
     }
 
-    const actions = getAvailableActions(
-      game.player,
-      game.currentLocation,
-      game.time,
-      actionRegistry
-    )
+    const actions = actionsAvailable({
+      player: game.player,
+      location: game.currentLocation,
+      gameTime: game.time,
+      actionRegistry,
+    })
 
     // Annotate with availability flag (for ActionMenu disabled state)
     const annotated = actions.map((a) => ({ ...a, available: true }))

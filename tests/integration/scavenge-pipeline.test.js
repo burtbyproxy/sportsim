@@ -16,7 +16,7 @@ import { useGameStore } from '../../src/stores/game.js'
 import { createPlayer } from '../../src/models/player.js'
 import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
-import { getAvailableActions } from '../../src/engine/actions.js'
+import { actionsAvailable } from '../../src/engine/actions.js'
 import { SCAVENGE_TICKS_PER_RESTOCK, scavengeDepletion } from '../../src/engine/scavenge.js'
 
 const loadDir = (dir) =>
@@ -79,7 +79,12 @@ describe('scavenge pipeline', () => {
     const game = startGame()
     for (const location of locations) {
       expect(game.scavengeTables[location.scavengeTableId], location.id).toBeTruthy()
-      const menu = getAvailableActions(game.player, location, game.time, [scavengeAction])
+      const menu = actionsAvailable({
+        player: game.player,
+        location,
+        gameTime: game.time,
+        actionRegistry: [scavengeAction],
+      })
       expect(
         menu.map((a) => a.id),
         location.id
@@ -90,7 +95,14 @@ describe('scavenge pipeline', () => {
   it('a place with nothing to find does not offer the action', () => {
     const game = startGame()
     const sealed = { ...locations[0], scavengeTableId: null }
-    expect(getAvailableActions(game.player, sealed, game.time, [scavengeAction])).toEqual([])
+    expect(
+      actionsAvailable({
+        player: game.player,
+        location: sealed,
+        gameTime: game.time,
+        actionRegistry: [scavengeAction],
+      })
+    ).toEqual([])
   })
 
   it('the first thing in the basement is the wood, and the wood is an idea', async () => {

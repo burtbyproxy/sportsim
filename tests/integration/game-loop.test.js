@@ -26,6 +26,15 @@ const momsHouseActions = JSON.parse(
   readFileSync(resolve('content/maps/kenton/actions/moms_house.json'), 'utf-8')
 )
 const byId = (id) => momsHouseActions.find((a) => a.id === id)
+const mocksCrest = JSON.parse(
+  readFileSync(resolve('content/maps/kenton/locations/mocks_crest.json'), 'utf-8')
+)
+const talkToDale = JSON.parse(
+  readFileSync(resolve('content/maps/kenton/actions/npc_interactions.json'), 'utf-8')
+).find((a) => a.id === 'talk_to_dale')
+const voices = readdirSync(resolve('content/voices')).map((file) =>
+  JSON.parse(readFileSync(resolve('content/voices', file), 'utf-8'))
+)
 const substances = readdirSync(resolve('content/substances')).map((file) =>
   JSON.parse(readFileSync(resolve('content/substances', file), 'utf-8'))
 )
@@ -391,5 +400,56 @@ describe('useGameLoop → scene order on arrival', () => {
 
     expect(entries).toHaveLength(2)
     expect(entries[1]).toContain('You okay down there')
+  })
+})
+
+describe('useGameLoop → visits', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  // Dale talks to regulars. His action is put on the bar's menu here; the
+  // requirement under test is his own, from content.
+  function startAtTheBar() {
+    setActivePinia(createPinia())
+    const game = useGameStore()
+    game.registerLocation(createLocation(momsHouse))
+    game.registerLocation(
+      createLocation({ ...mocksCrest, actionIds: [...mocksCrest.actionIds, talkToDale.id] })
+    )
+    for (const substance of substances) game.registerSubstance({ substance })
+    for (const voice of voices) game.registerVoice({ voice })
+    game.startNewGame(createPlayer('Tester'), 'moms_house')
+    return game
+  }
+
+  const onTheMenu = (game) => game.availableActions.find((a) => a.id === talkToDale.id)
+
+  it('a first-time visitor sees Dale greyed out, and asking anyway is refused', async () => {
+    const game = startAtTheBar()
+    const narrative = useNarrative()
+    const loop = useGameLoop({ actionRegistry: [talkToDale], narrative, rng: () => 0.9 })
+    game.moveTo('mocks_crest')
+    await loop.tick()
+
+    expect(onTheMenu(game).available).toBe(false)
+    await loop.resolvePlayerAction(talkToDale)
+    const entries = await settle(narrative)
+
+    expect(entries.at(-1)).toBe(voices.find((v) => v.id === 'sober').lines['requirement.visits'])
+    expect(game.player.archetypeScores.social).toBeUndefined()
+  })
+
+  it('a regular gets Dale on the menu, and talking to him goes through', async () => {
+    const game = startAtTheBar()
+    const loop = useGameLoop({ actionRegistry: [talkToDale], rng: () => 0.9 })
+    game.moveTo('mocks_crest')
+    game.moveTo('moms_house')
+    game.moveTo('mocks_crest')
+    await loop.tick()
+
+    expect(onTheMenu(game).available).toBe(true)
+    await loop.resolvePlayerAction(talkToDale)
+
+    expect(game.player.archetypeScores.social).toBe(talkToDale.success.archetypeChanges.social)
   })
 })

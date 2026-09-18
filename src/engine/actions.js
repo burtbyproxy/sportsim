@@ -35,13 +35,12 @@ function _refuse(reasonCode, reasonParams = {}) {
 
 /**
  * Checks whether a player meets the requirements for an action.
- * @param {Object} player - Player per data contract
- * @param {Object} action - Action per data contract
- * @param {Object} gameTime - GameTime per data contract
+ * @param {{ player: Object, action: Object, gameTime: Object, location?: Object|null }} input
+ *   location — where the player is; its visitCount is what minVisits reads.
  * @returns {{ meets: boolean, reasonCode: string|null, reasonParams: Object<string, string> }}
  *   reasonCode — a voice code (content/voices) for why not; the words are content, never this module's.
  */
-export function meetsRequirements(player, action, gameTime) {
+export function requirementsMeet({ player, action, gameTime, location = null }) {
   const req = action.requirements
   if (!req) return _MET
 
@@ -95,8 +94,8 @@ export function meetsRequirements(player, action, gameTime) {
 
   // Visit count requirements
   if (req.minVisits !== null && req.minVisits !== undefined) {
-    const locationData = player._locationData // visit counts injected by store if needed
-    const visits = locationData?.visitCount ?? 0
+    // How often the player has been HERE. The same count the event engine reads.
+    const visits = location?.visitCount ?? 0
     if (visits < req.minVisits) {
       return _refuse(REQUIREMENT_CODES.VISITS)
     }
@@ -150,19 +149,17 @@ export function actionApplies({ action, location }) {
  * filtered by requirements and sorted by effective weight.
  * Obsessions boost weight of related actions.
  *
- * @param {Object} player
- * @param {Object} location
- * @param {Object} gameTime
- * @param {Object[]} actionRegistry - all action definitions
+ * @param {{ player: Object, location: Object, gameTime: Object, actionRegistry: Object[] }} input
+ *   actionRegistry — all action definitions
  * @returns {Object[]} - sorted array of available actions
  */
-export function getAvailableActions(player, location, gameTime, actionRegistry) {
+export function actionsAvailable({ player, location, gameTime, actionRegistry }) {
   // Actions listed here, plus "any" location actions the place can support
   const eligible = actionRegistry.filter((action) => actionApplies({ action, location }))
 
   // Filter by requirements
   const available = eligible.filter((action) => {
-    const { meets } = meetsRequirements(player, action, gameTime)
+    const { meets } = requirementsMeet({ player, action, gameTime, location })
     return meets
   })
 
@@ -220,16 +217,25 @@ function _selectOutcome(action, diceResult) {
  * Resolves a player action. Does NOT mutate player state.
  * Returns the outcome and any changes to be applied by the store.
  *
- * @param {Object} player
- * @param {Object} action - Action per data contract
- * @param {Object} gameTime
- * @param {Object[]} npcs - NPCs present at the location
- * @param {(() => number)} [rng=Math.random]
+ * @param {{ player: Object, action: Object, gameTime: Object, location?: Object|null, characters?: Object[], rng?: (() => number) }} input
+ *   characters — those present at the location; rng defaults to Math.random.
  * @returns {{ success: boolean, outcome: Object, diceResult: Object|null, requirementFailure: { code: string, params: Object }|null }}
  */
-export function resolveAction(player, action, gameTime, npcs = [], rng = Math.random) {
+export function actionResolve({
+  player,
+  action,
+  gameTime,
+  location = null,
+  characters = [],
+  rng = Math.random,
+}) {
   // Check requirements first
-  const { meets, reasonCode, reasonParams } = meetsRequirements(player, action, gameTime)
+  const { meets, reasonCode, reasonParams } = requirementsMeet({
+    player,
+    action,
+    gameTime,
+    location,
+  })
   if (!meets) {
     return {
       success: false,
@@ -253,7 +259,7 @@ export function resolveAction(player, action, gameTime, npcs = [], rng = Math.ra
 
   // Contested roll
   if (check.opposedStat && check.opposedNpcId) {
-    const npc = npcs.find((n) => n.id === check.opposedNpcId)
+    const npc = characters.find((c) => c.id === check.opposedNpcId)
     if (!npc) {
       // NPC not present — treat as auto-success (can't contest an absent opponent)
       return {
