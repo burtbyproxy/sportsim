@@ -18,7 +18,12 @@
       "travelTime": 2,
       "requirements": null
     },
-    { "locationId": "arbys", "label": "Head to Arby's", "travelTime": 1, "requirements": null },
+    {
+      "locationId": "arbys",
+      "label": "Head to Arby's",
+      "travelTime": 1,
+      "requirements": null
+    },
     {
       "locationId": "mouse_trap",
       "label": "Walk to the Mouse Trap",
@@ -33,8 +38,15 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": [],
+  "actionIds": [
+    "buy_cigarettes_toads",
+    "bum_smoke_toads"
+  ],
   "discovered": false,
-  "availability": { "openHour": 0, "closeHour": 23, "closedMessage": null },
+  "availability": {
+    "openHour": 0,
+    "closeHour": 23,
+    "closedMessage": null
+  },
   "visitCount": 0
 }

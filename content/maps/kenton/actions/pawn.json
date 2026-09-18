@@ -1,0 +1,128 @@
+[
+  {
+    "id": "pawn_karaoke_tape_glitters",
+    "label": "Try to pawn the karaoke tape",
+    "locationId": "glitters",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": [
+        "karaoke_tape"
+      ],
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 9,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "One of the brothers plays four seconds of it. He stops the tape. He looks at you for a long time. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 400,
+            "effect": "none"
+          },
+          {
+            "text": "'Three dollars,' he says, 'because you had the nerve.' You take the three dollars. The tape goes in a drawer with the other things nobody will buy.",
+            "style": "normal",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": -4
+      },
+      "statChanges": null,
+      "moneyChange": 3,
+      "itemsGained": null,
+      "itemsLost": [
+        "karaoke_tape"
+      ],
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "items_pawned": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 50,
+    "obsessionIds": []
+  },
+  {
+    "id": "browse_glitters",
+    "label": "Browse the cases",
+    "locationId": "glitters",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 9,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "A saxophone, a power drill, a wedding ring. Together they tell a story you can fill in yourself. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "The brothers don't follow you around. They don't need to. Everything in here has already been stolen once, so you'd only be returning it to the wild. You leave with an idea for a piece.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": 6
+      },
+      "statChanges": {
+        "creativity": 1
+      },
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "pawn_visits": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 45,
+    "obsessionIds": []
+  }
+]

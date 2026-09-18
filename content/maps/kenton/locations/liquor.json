@@ -38,7 +38,10 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": [],
+  "actionIds": [
+    "buy_fifth_liquor",
+    "ask_clerk_liquor"
+  ],
   "discovered": false,
   "availability": {
     "openHour": 9,

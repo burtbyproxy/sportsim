@@ -32,7 +32,10 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": [],
+  "actionIds": [
+    "food_pantry_abundant_life",
+    "sit_in_back_abundant_life"
+  ],
   "discovered": false,
   "availability": {
     "openHour": 8,

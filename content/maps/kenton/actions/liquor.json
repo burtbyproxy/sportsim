@@ -1,0 +1,169 @@
+[
+  {
+    "id": "buy_fifth_liquor",
+    "label": "Buy a fifth of the cheap stuff",
+    "locationId": "liquor",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 9,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Seven ninety-five for a plastic bottle with a label that's mostly a color. The clerk bags it without being asked, which is the only courtesy the state provides. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "You take the first pull in the alley. It tastes like a decision. You've made it.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "sobriety": -35,
+        "mood": 12,
+        "health": -3
+      },
+      "statChanges": null,
+      "moneyChange": -7.95,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": {
+        "barfly": 3
+      },
+      "counterChanges": {
+        "fifths_bought": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 60,
+    "obsessionIds": []
+  },
+  {
+    "id": "ask_clerk_liquor",
+    "label": "Ask the clerk what's good",
+    "locationId": "liquor",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 9,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "charm",
+      "dc": 10,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "He's been here since the state acquired it. He looks at you, then at the shelf, then back at you, and points at a bottle of Canadian whiskey nobody has heard of. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "'That one doesn't hurt,' he says. It's the most useful sentence anyone has said to you this week.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": 6
+      },
+      "statChanges": {
+        "wits": 1
+      },
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "clerk_conversations": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "He looks at the sign by the door. ",
+            "style": "normal",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 400,
+            "effect": "none"
+          },
+          {
+            "text": "'We reserve the right,' he says, not finishing it, not needing to. You buy nothing. You were going to buy nothing anyway. That's not the point.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": -8
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "refused_service": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 35,
+    "obsessionIds": []
+  }
+]
