@@ -242,15 +242,16 @@ describe('resolveEvent', () => {
     expect(diceResult.stat).toBe('charm')
   })
 
-  it('falls back to automatic outcome for invalid choice index', () => {
+  it('refuses an invalid choice index instead of applying the automatic outcome', () => {
     const event = makeEvent({
       choices: [
         { label: 'Only choice', check: null, outcome: { narrative: 'A', statChanges: null } },
       ],
     })
-    // Index 99 is invalid
-    const { outcome } = resolveEvent(event, makePlayer(), 99)
-    expect(outcome).toBe(event.outcome)
+    // Index 99 is invalid: nobody picked the automatic outcome, so nobody gets it.
+    const { outcome, error } = resolveEvent(event, makePlayer(), 99)
+    expect(outcome).toBeNull()
+    expect(error.code).toBe('CHOICE_INVALID')
   })
 })
 
@@ -313,5 +314,27 @@ describe('outdoors — the street happens on the street', () => {
 
   it('a place that never said is indoors', () => {
     expect(fired({ id: 'old_save_location', type: 'home' })).toEqual(['ceiling', 'rain'])
+  })
+})
+
+describe('resolveEvent — a choice the event never offered', () => {
+  const event = {
+    id: 'fork',
+    choices: [{ label: 'left', outcome: { moneyChange: 1 } }],
+    outcome: { moneyChange: -100 },
+  }
+
+  it('resolves nothing and says so, rather than applying the automatic outcome', () => {
+    const result = resolveEvent(event, { stats: {} }, 7, () => 0.5)
+    expect(result.outcome).toBeNull()
+    expect(result.error.code).toBe('CHOICE_INVALID')
+  })
+
+  it('a real choice still resolves, and an event with no choices still resolves itself', () => {
+    expect(resolveEvent(event, { stats: {} }, 0, () => 0.5).outcome).toEqual({ moneyChange: 1 })
+    const automatic = { id: 'rain', choices: [], outcome: { moneyChange: -1 } }
+    expect(resolveEvent(automatic, { stats: {} }, null, () => 0.5).outcome).toEqual({
+      moneyChange: -1,
+    })
   })
 })

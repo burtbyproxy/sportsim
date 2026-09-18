@@ -126,12 +126,12 @@ function _findBiasedEntry(schedule, bias, dayOfWeek) {
   if (!schedule || !schedule.entries) return null
 
   for (const entry of schedule.entries) {
+    // Not today: a Saturday-only stop is no answer to a Tuesday's hunger.
+    if (entry.days && !entry.days.includes('all') && !entry.days.includes(dayOfWeek)) continue
     // Check entry type field (preferred)
     if (entry.type && entry.type === bias) return entry
     // Fall back to loose locationId match
     if (entry.locationId && entry.locationId.includes(bias)) return entry
-    // Check day match
-    if (entry.days && !entry.days.includes('all') && !entry.days.includes(dayOfWeek)) continue
   }
   return null
 }

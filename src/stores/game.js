@@ -231,7 +231,7 @@ export const useGameStore = defineStore('game', {
           id: experience.id,
           workText: experience.workText,
           artistText: experience.artistText,
-          whereabouts: line.ok ? line.data.text : '',
+          whereabouts: line.ok ? line.data.text : `[${code}]`,
         }
       })
     },
@@ -253,7 +253,7 @@ export const useGameStore = defineStore('game', {
             : 'inspiration.status.fading'
       }
       const line = voiceLine({ code, personaId: this.personaInCharge, voices: state.voices })
-      return line.ok ? line.data.text : ''
+      return line.ok ? line.data.text : `[${code}]`
     },
   },
 
@@ -667,8 +667,9 @@ export const useGameStore = defineStore('game', {
         params,
       })
       if (!line.ok) {
+        // A line nobody wrote shows up as its code, in play, instead of vanishing.
         console.warn(`[game] voiceLine: ${line.error.code}`, line.error.message)
-        return ''
+        return `[${code}]`
       }
       return line.data.text
     },
@@ -1044,8 +1045,7 @@ export const useGameStore = defineStore('game', {
       this.time = save.time
       this.currentLocationId = save.player.currentLocationId
       this.locations = save.locations
-      // Support both old saves (npcs key) and new saves (characters key)
-      this.characters = save.characters ?? save.npcs ?? {}
+      this.characters = save.characters
       this.firedEventIds = save.firedEventIds
       this.activeEvent = save.activeEvent ?? null
       this.counters = save.counters

@@ -222,7 +222,9 @@ export function useGameLoop({
   function resolveEventChoice({ choiceIndex }) {
     const event = game.activeEvent
     if (!event || !game.player) return
-    const { outcome, diceResult } = resolveEvent(event, game.player, choiceIndex, rng)
+    const { outcome, diceResult, error } = resolveEvent(event, game.player, choiceIndex, rng)
+    // A choice the event never offered resolves nothing: the event keeps waiting.
+    if (error) return
     _checkTrain(diceResult)
     game.clearActiveEvent()
     _eventOutcomeApply(outcome, { kind: 'event', id: event.id })

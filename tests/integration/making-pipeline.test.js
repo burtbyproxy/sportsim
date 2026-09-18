@@ -1075,6 +1075,54 @@ describe('making pipeline', () => {
     expect(open.data.statusChanges).toEqual({ nerve: 10 })
   })
 
+  // ── Bugs the cleanup found ────────────────────────────────────────────────
+
+  it('a choice the event never offered resolves nothing: the event keeps waiting and nothing is applied', async () => {
+    const fork = {
+      id: 'test_fork',
+      type: 'triggered',
+      title: 'A fork',
+      oneTime: true,
+      conditions: {},
+      narrative: { tokens: [{ text: 'A fork.', style: 'normal', speed: 'normal', pauseAfter: 0 }] },
+      choices: [{ label: 'Left', check: null, outcome: { moneyChange: 1 } }],
+      outcome: { moneyChange: -100 },
+    }
+    const ctx = startGame({ events: [fork] })
+    await ctx.loop.tick(1)
+    expect(ctx.game.activeEvent?.id).toBe('test_fork')
+    const moneyBefore = ctx.game.playerMoney
+    ctx.loop.resolveEventChoice({ choiceIndex: 5 })
+    expect(ctx.game.activeEvent?.id).toBe('test_fork')
+    expect(ctx.game.playerMoney).toBe(moneyBefore)
+    ctx.loop.resolveEventChoice({ choiceIndex: 0 })
+    expect(ctx.game.activeEvent).toBeNull()
+    expect(ctx.game.playerMoney).toBe(moneyBefore + 1)
+  })
+
+  it('a line nobody wrote shows up as its code instead of vanishing', () => {
+    const { game } = startGame()
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    expect(game.voiceLine({ code: 'making.no_such_line' })).toBe('[making.no_such_line]')
+    warn.mockRestore()
+  })
+
+  it('a pause leaves no timers behind, whether time or a skip ends it', async () => {
+    const narrative = useNarrative()
+    const pausing = (text) => ({
+      tokens: [{ text, style: 'normal', speed: 'instant', pauseAfter: 400, effect: 'none' }],
+    })
+    narrative.enqueue(pausing('First.'))
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(vi.getTimerCount()).toBe(0)
+
+    narrative.enqueue(pausing('Second.'))
+    await vi.advanceTimersByTimeAsync(50)
+    narrative.skip()
+    await vi.advanceTimersByTimeAsync(100)
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
   it('work caught mid-stroke by an older save is abandoned on load, not left unplayable', () => {
     const player = createPlayer('Old')
     player.makings = [

@@ -6,6 +6,11 @@
 import { chance } from '../utils/random.js'
 import { rollCheck } from './dice.js'
 
+/** Enumerated error codes for event resolution. The code is the contract. */
+export const EVENT_ERROR_CODES = Object.freeze({
+  CHOICE_INVALID: 'CHOICE_INVALID',
+})
+
 /**
  * Checks whether the current game state satisfies event conditions.
  * @param {Object} event - GameEvent per data contract
@@ -148,15 +153,24 @@ export function checkTriggeredEvents(
  * @param {Object} player
  * @param {number|null} [choiceIndex=null] - which choice the player made (null = no choices)
  * @param {(() => number)} [rng=Math.random]
- * @returns {{ outcome: Object, diceResult: Object|null }}
+ * @returns {{ outcome: Object|null, diceResult: Object|null, error?: { code: string, message: string } }}
+ *   error — the choice asked for is not one the event offers; nothing was resolved.
  */
 export function resolveEvent(event, player, choiceIndex = null, rng = Math.random) {
   // Choice-based event
   if (event.choices && event.choices.length > 0 && choiceIndex !== null) {
     const choice = event.choices[choiceIndex]
     if (!choice) {
-      // Invalid choice index — fall through to automatic outcome
-    } else if (choice.check) {
+      return {
+        outcome: null,
+        diceResult: null,
+        error: {
+          code: EVENT_ERROR_CODES.CHOICE_INVALID,
+          message: `Event '${event.id}' has no choice ${choiceIndex}`,
+        },
+      }
+    }
+    if (choice.check) {
       const diceResult = rollCheck(player, choice.check.stat, [], choice.check.dc, rng)
       const outcome = diceResult.success
         ? choice.outcome

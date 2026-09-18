@@ -261,3 +261,33 @@ describe('simulateTick — performance', () => {
     expect(elapsed).toBeLessThan(5)
   })
 })
+
+describe('full-tier bias respects the day of the week', () => {
+  it('a hungry character is not sent to a stop that only exists on another day', () => {
+    const char = {
+      id: 'eater',
+      simulation: 'full',
+      currentLocationId: 'home',
+      status: { hunger: 5, sobriety: 100, mood: 80, energy: 80, health: 100 },
+      decisionWeights: { low_hunger: { bias: 'food', weight: 1 } },
+      schedule: {
+        entries: [
+          {
+            locationId: 'saturday_food_cart',
+            type: 'food',
+            startHour: 0,
+            endHour: 24,
+            days: ['saturday'],
+            probability: 1,
+          },
+          { locationId: 'home', startHour: 0, endHour: 24, days: ['all'], probability: 1 },
+        ],
+      },
+    }
+    const onDay = (dayOfWeek) =>
+      simulateTick([char], { hour: 12, minute: 0, tick: 0, day: 1, dayOfWeek }, () => 0)[0]
+        .locationId
+    expect(onDay('saturday')).toBe('saturday_food_cart')
+    expect(onDay('tuesday')).not.toBe('saturday_food_cart')
+  })
+})

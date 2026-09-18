@@ -300,20 +300,18 @@ export function useNarrative() {
         resolve()
         return
       }
-      const timeout = setTimeout(() => resolve(), ms)
-      // Watch for skip during pause
-      const check = setInterval(() => {
-        if (skipRequested) {
-          clearTimeout(timeout)
-          clearInterval(check)
-          resolve()
-        }
+      // Whichever ends the pause — time or a skip — takes the other timer with it.
+      let watcher = null
+      const timeout = setTimeout(() => {
+        clearInterval(watcher)
+        resolve()
+      }, ms)
+      watcher = setInterval(() => {
+        if (!skipRequested) return
+        clearTimeout(timeout)
+        clearInterval(watcher)
+        resolve()
       }, 16)
-      // Clean up check when pause resolves normally
-      Promise.resolve().then(() => {
-        // interval will clear when pause resolves — but we need to also clear check
-        setTimeout(() => clearInterval(check), ms + 50)
-      })
     })
   }
 

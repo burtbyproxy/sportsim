@@ -67,16 +67,6 @@ export function locationRestore({ definition, saved }) {
 }
 
 /**
- * Check whether a location is open at a given hour (0-23).
- * Pure — does not mutate location.
- *
- * Handles overnight windows (e.g. openHour=20, closeHour=2).
- *
- * @param {import('./types').Location} location
- * @param {number} hour - 0 to 23
- * @returns {boolean}
- */
-/**
  * Check whether the player meets an exit's requirements.
  * Exits share the requirement vocabulary of actions, so the same rules apply.
  * @param {{ exit: Object, player: Object, gameTime: Object }} input
@@ -87,6 +77,16 @@ export function exitMeetsRequirements({ exit, player, gameTime }) {
   return meetsRequirements(player, { requirements: exit.requirements }, gameTime)
 }
 
+/**
+ * Check whether a location is open at a given hour (0-23).
+ * Pure — does not mutate location.
+ *
+ * Handles overnight windows (e.g. openHour=20, closeHour=2).
+ *
+ * @param {import('./types').Location} location
+ * @param {number} hour - 0 to 23
+ * @returns {boolean}
+ */
 export function isOpen(location, hour) {
   const { openHour, closeHour } = location.availability
   if (openHour === 0 && closeHour === 23) return true // always open
