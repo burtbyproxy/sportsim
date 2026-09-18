@@ -19,6 +19,7 @@ const _characterFiles = import.meta.glob('/content/characters/*.json', { eager: 
 const _itemFiles = import.meta.glob('/content/items/*.json', { eager: true })
 const _substanceFiles = import.meta.glob('/content/substances/*.json', { eager: true })
 const _conditionFiles = import.meta.glob('/content/conditions/*.json', { eager: true })
+const _mediumFiles = import.meta.glob('/content/mediums/*.json', { eager: true })
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -148,4 +149,13 @@ export function loadSubstances() {
 export function loadConditions() {
   const modules = _extractModules(_conditionFiles)
   return _mergeById(modules, 'loadConditions()')
+}
+
+/**
+ * Load all mediums (global). One file per medium.
+ * @returns {Object<string, Object>}
+ */
+export function loadMediums() {
+  const modules = _extractModules(_mediumFiles)
+  return _mergeById(modules, 'loadMediums()')
 }

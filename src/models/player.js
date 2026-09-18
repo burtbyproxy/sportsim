@@ -83,6 +83,8 @@ export function createPlayer(name) {
     habituations: {},
     /** Engine-written snapshot of every persona acting on the player. See engine/blend.js. */
     blend: blendSober(),
+    /** The skill grid: skills[mediumId][personaId] = { base, modifiers, xp }. See engine/skills.js. */
+    skills: {},
     psyche: {
       traumas: [],
       obsessions: [],

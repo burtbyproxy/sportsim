@@ -113,6 +113,7 @@ export function createCharacter(data) {
     intoxications,
     habituations,
     blend: data.blend ?? blendSober(),
+    skills: data.skills ? JSON.parse(JSON.stringify(data.skills)) : {},
     psyche: data.psyche ?? {
       traumas: [],
       obsessions: [],

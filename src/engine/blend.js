@@ -109,9 +109,14 @@ function _conditionActive({ condition, status }) {
   return false
 }
 
-function _modifiersAdd(totals, modifiers) {
+/**
+ * Add a persona's modifiers to the running totals and the itemized list.
+ * @param {{ totals: Object<string, number>, sources: Object[], modifiers: Object[], personaId: string, source: string, sourceId: string }} input
+ */
+function _modifiersAdd({ totals, sources, modifiers, personaId, source, sourceId }) {
   for (const mod of modifiers ?? []) {
     totals[mod.stat] = (totals[mod.stat] ?? 0) + mod.value
+    sources.push({ personaId, source, sourceId, stat: mod.stat, value: mod.value })
   }
 }
 
@@ -126,6 +131,7 @@ function _modifiersAdd(totals, modifiers) {
  *   dominantPersonaId: string,
  *   soberWeight: number,
  *   modifiers: Object<string, number>,
+ *   modifierSources: { personaId: string, source: string, sourceId: string, stat: string, value: number }[],
  *   families: Object<string, number>,
  * }}
  */
@@ -135,6 +141,7 @@ export function blendSober() {
     dominantPersonaId: SOBER_PERSONA_ID,
     soberWeight: 1,
     modifiers: {},
+    modifierSources: [],
     families: {},
   }
 }
@@ -179,6 +186,7 @@ export function blendCompute({ player, substances = {}, conditions = {} }) {
   const intoxications = player.intoxications ?? {}
   const habituations = player.habituations ?? {}
   const modifiers = {}
+  const modifierSources = []
   const raw = []
 
   for (const substance of Object.values(substances)) {
@@ -194,7 +202,16 @@ export function blendCompute({ player, substances = {}, conditions = {} }) {
         family: substance.family,
       })
       const band = _bandActive({ substance, intoxication })
-      if (band) _modifiersAdd(modifiers, band.modifiers)
+      if (band) {
+        _modifiersAdd({
+          totals: modifiers,
+          sources: modifierSources,
+          modifiers: band.modifiers,
+          personaId: substance.persona.id,
+          source: PERSONA_SOURCES.SUBSTANCE,
+          sourceId: substance.id,
+        })
+      }
     }
 
     if (_withdrawalActive({ substance, intoxication, habituation })) {
@@ -205,7 +222,14 @@ export function blendCompute({ player, substances = {}, conditions = {} }) {
         sourceId: substance.id,
         family: null,
       })
-      _modifiersAdd(modifiers, substance.withdrawal.modifiers)
+      _modifiersAdd({
+        totals: modifiers,
+        sources: modifierSources,
+        modifiers: substance.withdrawal.modifiers,
+        personaId: substance.withdrawal.persona.id,
+        source: PERSONA_SOURCES.WITHDRAWAL,
+        sourceId: substance.id,
+      })
     }
   }
 
@@ -218,7 +242,14 @@ export function blendCompute({ player, substances = {}, conditions = {} }) {
       sourceId: condition.id,
       family: null,
     })
-    _modifiersAdd(modifiers, condition.modifiers)
+    _modifiersAdd({
+      totals: modifiers,
+      sources: modifierSources,
+      modifiers: condition.modifiers,
+      personaId: condition.persona.id,
+      source: PERSONA_SOURCES.CONDITION,
+      sourceId: condition.id,
+    })
   }
 
   const total = raw.reduce((sum, entry) => sum + entry.weight, 0)
@@ -243,7 +274,7 @@ export function blendCompute({ player, substances = {}, conditions = {} }) {
   const dominantPersonaId =
     heaviest && heaviest.weight > soberWeight ? heaviest.personaId : SOBER_PERSONA_ID
 
-  return _ok({ weights, dominantPersonaId, soberWeight, modifiers, families })
+  return _ok({ weights, dominantPersonaId, soberWeight, modifiers, modifierSources, families })
 }
 
 /**

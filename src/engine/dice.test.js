@@ -6,6 +6,8 @@ import {
   isCriticalSuccess,
   isCriticalFailure,
   statEffective,
+  statModifierItems,
+  STAT_ITEM_SOURCES,
   checkModifier,
 } from './dice.js'
 import { seededRandom } from '../utils/random.js'
@@ -39,9 +41,19 @@ function makePlayer(overrides = {}) {
   }
 }
 
-/** A blend snapshot carrying only the given stat modifiers. */
+/** A blend snapshot carrying only the given stat modifiers, attributed to one test persona. */
 function withBlend(player, modifiers) {
-  player.blend = { ...blendSober(), modifiers }
+  player.blend = {
+    ...blendSober(),
+    modifiers,
+    modifierSources: Object.entries(modifiers).map(([stat, value]) => ({
+      personaId: 'test_persona',
+      source: 'substance',
+      sourceId: 'test_substance',
+      stat,
+      value,
+    })),
+  }
   return player
 }
 
@@ -136,6 +148,45 @@ describe('statEffective', () => {
     })
   })
 
+  describe('statModifierItems', () => {
+    it('itemizes base, each modifier, each persona, each ability, each trauma — no cap', () => {
+      const player = withBlend(makePlayer(), { charm: 3 })
+      player.blend.modifierSources.push({
+        personaId: 'hollow',
+        source: 'condition',
+        sourceId: 'starving',
+        stat: 'charm',
+        value: -1,
+      })
+      player.stats.charm.modifiers = [
+        { source: 'clean_shirt', value: 2, duration: null },
+        { source: 'black_eye', value: -4, duration: null },
+      ]
+      player.psyche.abilities = [
+        { id: 'gift_of_gab', active: true, effects: { diceModifiers: { charm: 5 } } },
+        { id: 'asleep', active: false, effects: { diceModifiers: { charm: 50 } } },
+      ]
+      player.psyche.traumas = [{ id: 'mugged_in_park', effects: { statModifiers: { charm: -2 } } }]
+
+      const items = statModifierItems({ player, statName: 'charm' })
+      expect(items).toEqual([
+        { source: STAT_ITEM_SOURCES.BASE, sourceId: 'charm', value: 10 },
+        { source: STAT_ITEM_SOURCES.MODIFIER, sourceId: 'clean_shirt', value: 2 },
+        { source: STAT_ITEM_SOURCES.MODIFIER, sourceId: 'black_eye', value: -4 },
+        { source: 'substance', sourceId: 'test_persona', value: 3 },
+        { source: 'condition', sourceId: 'hollow', value: -1 },
+        { source: STAT_ITEM_SOURCES.ABILITY, sourceId: 'gift_of_gab', value: 5 },
+        { source: STAT_ITEM_SOURCES.TRAUMA, sourceId: 'mugged_in_park', value: -2 },
+      ])
+      expect(statEffective({ player, statName: 'charm' })).toBe(13)
+    })
+
+    it('an unknown stat has no items and an effective value of zero', () => {
+      expect(statModifierItems({ player: makePlayer(), statName: 'swagger' })).toEqual([])
+      expect(statEffective({ player: makePlayer(), statName: 'swagger' })).toBe(0)
+    })
+  })
+
   it('includes active ability dice modifiers', () => {
     const player = makePlayer()
     player.psyche.abilities = [
@@ -175,6 +226,18 @@ describe('statEffective', () => {
 // --- rollCheck ---
 
 describe('rollCheck', () => {
+  it('returns every modifier itemized, situational ones included', () => {
+    const player = withBlend(makePlayer(), { charm: 3 })
+    const result = rollCheck(player, 'charm', [2, -1], 10, () => 0.5)
+    expect(result.modifierItems).toEqual([
+      { source: STAT_ITEM_SOURCES.BASE, sourceId: 'charm', value: 10 },
+      { source: 'substance', sourceId: 'test_persona', value: 3 },
+      { source: 'situational', sourceId: null, value: 2 },
+      { source: 'situational', sourceId: null, value: -1 },
+    ])
+    expect(result.modifier).toBe(1 + 2 - 1)
+  })
+
   it('returns a DiceResult with all required fields', () => {
     const player = makePlayer()
     const result = rollCheck(player, 'charm', [], 15, seededRandom(1))
