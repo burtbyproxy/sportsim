@@ -15,6 +15,9 @@ export const SAVE_VERSION = 1
  */
 export const MAX_SAVES = 20
 
+/** Display name that marks the single auto-save slot. */
+export const AUTO_SAVE_NAME = 'auto'
+
 /**
  * Required top-level fields for a save to be considered valid.
  * These are the bones of the save. Without them it is nothing.
@@ -156,16 +159,17 @@ export function useSave() {
   }
 
   /**
-   * Auto-save current state (used on location change).
-   * Overwrites the auto-save slot.
+   * Auto-save current state. The game loop calls this on arrival at a
+   * location. There is one auto-save slot; each call replaces it.
+   * @returns {string|null} save ID, or null if the write failed
    */
   function autoSave() {
     const saves = listSaves()
-    const existing = saves.find((s) => s.name === 'auto')
+    const existing = saves.find((s) => s.name === AUTO_SAVE_NAME)
     if (existing) {
       deleteSave(existing.id)
     }
-    save('auto')
+    return save(AUTO_SAVE_NAME)
   }
 
   /**

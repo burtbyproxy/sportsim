@@ -93,3 +93,101 @@ describe('useGameLoop → narrative', () => {
     expect(game.time.tick).toBe(1)
   })
 })
+
+// ---------------------------------------------------------------------------
+// Auto-save on arrival
+// ---------------------------------------------------------------------------
+
+import { useSave, AUTO_SAVE_NAME } from '../../src/composables/useSave.js'
+
+const columbiaPark = JSON.parse(
+  readFileSync(resolve('content/maps/kenton/locations/columbia_park.json'), 'utf-8')
+)
+
+function installLocalStorage() {
+  let store = {}
+  globalThis.localStorage = {
+    getItem: (key) => store[key] ?? null,
+    setItem: (key, value) => {
+      store[key] = String(value)
+    },
+    removeItem: (key) => {
+      delete store[key]
+    },
+    clear: () => {
+      store = {}
+    },
+  }
+}
+
+describe('useGameLoop → auto-save', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    installLocalStorage()
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+    delete globalThis.localStorage
+  })
+
+  it('arriving somewhere writes the auto-save slot with the new location and time', async () => {
+    const game = startGame()
+    game.registerLocation(createLocation(columbiaPark))
+    const save = useSave()
+    const loop = useGameLoop({ actionRegistry: momsHouseActions, save })
+
+    await loop.travel('columbia_park', 2)
+
+    const saves = save.listSaves()
+    expect(saves).toHaveLength(1)
+    expect(saves[0].name).toBe(AUTO_SAVE_NAME)
+
+    const data = save.load(saves[0].id)
+    expect(data.player.currentLocationId).toBe('columbia_park')
+    expect(data.time.tick).toBe(2)
+    expect(data.locations.columbia_park.visitCount).toBe(1)
+  })
+
+  it('the auto-save slot is replaced, not accumulated', async () => {
+    const game = startGame()
+    game.registerLocation(createLocation(columbiaPark))
+    const save = useSave()
+    const loop = useGameLoop({ actionRegistry: momsHouseActions, save })
+
+    await loop.travel('columbia_park', 1)
+    await loop.travel('moms_house', 1)
+
+    const saves = save.listSaves()
+    expect(saves).toHaveLength(1)
+    expect(save.load(saves[0].id).player.currentLocationId).toBe('moms_house')
+  })
+
+  it('a fresh store restored from the auto-save resumes where the player was', async () => {
+    const game = startGame()
+    game.registerLocation(createLocation(columbiaPark))
+    const save = useSave()
+    const loop = useGameLoop({ actionRegistry: momsHouseActions, save })
+    await loop.resolvePlayerAction(byId('raid_fridge'))
+    await loop.travel('columbia_park', 1)
+    const hungerAtSave = game.player.status.hunger
+
+    setActivePinia(createPinia())
+    const restored = useGameStore()
+    expect(restored.isRunning).toBe(false)
+    const [entry] = useSave().listSaves()
+    restored.loadSave(useSave().load(entry.id))
+
+    expect(restored.isRunning).toBe(true)
+    expect(restored.currentLocationId).toBe('columbia_park')
+    expect(restored.player.status.hunger).toBe(hungerAtSave)
+    expect(restored.time.tick).toBe(2)
+  })
+
+  it('actions alone do not write a save', async () => {
+    startGame()
+    const save = useSave()
+    const loop = useGameLoop({ actionRegistry: momsHouseActions, save })
+    await loop.resolvePlayerAction(byId('raid_fridge'))
+    expect(save.listSaves()).toHaveLength(0)
+  })
+})
