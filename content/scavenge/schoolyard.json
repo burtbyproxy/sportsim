@@ -1,0 +1,50 @@
+{
+  "id": "schoolyard",
+  "display": "The schoolyard fence line",
+  "stat": "wits",
+  "dc": 10,
+  "entries": [
+    {
+      "itemId": "sidewalk_chalk",
+      "weight": 25,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "golf_pencil",
+      "weight": 20,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "single_sock",
+      "weight": 15,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "cardboard",
+      "weight": 15,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "lone_shoe",
+      "weight": 10,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "paperback",
+      "weight": 10,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "sharpie",
+      "weight": 6,
+      "rare": true,
+      "unique": false
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "id": "bar_back",
+  "display": "Under the stools and out in the alley",
+  "stat": "luck",
+  "dc": 10,
+  "entries": [
+    {
+      "itemId": "bar_napkin",
+      "weight": 30,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "coaster",
+      "weight": 25,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "matchbook",
+      "weight": 20,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "pool_chalk",
+      "weight": 12,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "golf_pencil",
+      "weight": 12,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "lone_shoe",
+      "weight": 8,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "single_sock",
+      "weight": 6,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "brut_aftershave",
+      "weight": 5,
+      "rare": true,
+      "unique": false
+    },
+    {
+      "itemId": "sharpie",
+      "weight": 5,
+      "rare": true,
+      "unique": false
+    },
+    {
+      "itemId": "pocket_knife",
+      "weight": 3,
+      "rare": true,
+      "unique": false
+    }
+  ]
+}

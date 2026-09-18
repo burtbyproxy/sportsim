@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { meetsRequirements, getAvailableActions, resolveAction } from './actions.js'
+import { meetsRequirements, getAvailableActions, resolveAction, actionApplies } from './actions.js'
 import { seededRandom } from '../utils/random.js'
 
 function makePlayer(overrides = {}) {
@@ -332,5 +332,33 @@ describe('meetsRequirements — requiresInspiration', () => {
       const cold = { id: 'x', requirements: { requiresInspiration } }
       expect(meetsRequirements({ status: {}, inspirations: [] }, cold, time).meets).toBe(true)
     }
+  })
+})
+
+// --- actionApplies ---
+
+describe('actionApplies', () => {
+  const place = { id: 'bar', actionIds: ['order_beer'], scavengeTableId: 'bar_back' }
+
+  it('an action the location lists applies', () => {
+    expect(actionApplies({ action: { id: 'order_beer' }, location: place })).toBe(true)
+  })
+
+  it('an action the location does not list does not', () => {
+    expect(actionApplies({ action: { id: 'pray' }, location: place })).toBe(false)
+  })
+
+  it('an "any" action applies everywhere', () => {
+    expect(actionApplies({ action: { id: 'loiter', locationId: 'any' }, location: place })).toBe(
+      true
+    )
+  })
+
+  it('looking around applies only where there is a table to draw from', () => {
+    const scavenge = { id: 'scavenge', locationId: 'any', kind: 'scavenge' }
+    expect(actionApplies({ action: scavenge, location: place })).toBe(true)
+    expect(actionApplies({ action: scavenge, location: { ...place, scavengeTableId: null } })).toBe(
+      false
+    )
   })
 })

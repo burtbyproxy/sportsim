@@ -42,6 +42,7 @@
     "buy_cigarettes_toads",
     "bum_smoke_toads"
   ],
+  "scavengeTableId": "lot",
   "discovered": false,
   "availability": {
     "openHour": 0,

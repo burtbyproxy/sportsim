@@ -36,6 +36,28 @@ describe('createItem', () => {
     expect(item.doses).toEqual([]);
   });
 
+  it('carries the mediums a tool or surface works in, and how it reads when found', () => {
+    const sharpie = createItem({
+      id: 'sharpie',
+      name: 'Sharpie',
+      type: 'tool',
+      mediumIds: ['tagging', 'drawing'],
+      foundAs: 'a Sharpie with some life left in it',
+    });
+    expect(sharpie.mediumIds).toEqual(['tagging', 'drawing']);
+    expect(sharpie.foundAs).toBe('a Sharpie with some life left in it');
+  });
+
+  it('defaults mediumIds to empty and foundAs to null, and copies the array', () => {
+    const rock = createItem({ id: 'rock', name: 'Rock' });
+    expect(rock.mediumIds).toEqual([]);
+    expect(rock.foundAs).toBeNull();
+    const source = { id: 'x', name: 'X', mediumIds: ['painting'] };
+    const item = createItem(source);
+    item.mediumIds.push('carving');
+    expect(source.mediumIds).toEqual(['painting']);
+  });
+
   it('does not share the doses array reference with source', () => {
     const item = createItem(raw);
     item.doses[0].value = 99;

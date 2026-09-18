@@ -1,0 +1,73 @@
+{
+  "id": "basement",
+  "display": "Mom's basement",
+  "stat": "wits",
+  "dc": 8,
+  "entries": [
+    {
+      "itemId": "nice_piece_of_wood",
+      "weight": 30,
+      "rare": false,
+      "unique": true,
+      "inspiration": {
+        "mediumId": "painting",
+        "strength": 50,
+        "ticksTotal": 12
+      }
+    },
+    {
+      "itemId": "single_sock",
+      "weight": 25,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "cat_toy",
+      "weight": 25,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "cardboard",
+      "weight": 20,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "paperback",
+      "weight": 15,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "vhs_tape",
+      "weight": 15,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "magazine",
+      "weight": 15,
+      "rare": false,
+      "unique": false
+    },
+    {
+      "itemId": "dried_brush",
+      "weight": 8,
+      "rare": true,
+      "unique": false
+    },
+    {
+      "itemId": "house_paint",
+      "weight": 6,
+      "rare": true,
+      "unique": false
+    },
+    {
+      "itemId": "cabinet_door",
+      "weight": 6,
+      "rare": true,
+      "unique": false
+    }
+  ]
+}

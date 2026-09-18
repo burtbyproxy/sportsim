@@ -10,6 +10,8 @@ import {
   inspirationSpend,
 } from '../engine/inspiration.js'
 import { voiceLine } from '../engine/voice.js'
+import { scavengeSearch, scavengedCounterName } from '../engine/scavenge.js'
+import { addItem, incrementCounter } from '../models/player.js'
 
 /**
  * Add a map of deltas onto a map of levels, dropping any key that reaches zero.
@@ -72,6 +74,9 @@ export const useGameStore = defineStore('game', {
     /** Voice catalogs, keyed by persona id. Loaded once at init from content/voices. */
     voices: {},
 
+    /** Scavenge loot tables, keyed by id. Loaded once at init from content/scavenge. */
+    scavengeTables: {},
+
     /** Actions currently available at this location */
     availableActions: [],
 
@@ -106,6 +111,16 @@ export const useGameStore = defineStore('game', {
     playerMood: (state) => state.player?.status?.mood ?? 50,
     playerSobriety: (state) => state.player?.status?.sobriety ?? 100,
     playerHunger: (state) => state.player?.status?.hunger ?? 100,
+
+    /** What the player is carrying, as the inventory panel lists it. */
+    playerInventory: (state) =>
+      (state.player?.inventory ?? []).map((item) => ({
+        id: item.id,
+        name: item.name,
+        type: item.type,
+        quantity: item.quantity ?? 1,
+        description: item.description ?? '',
+      })),
 
     /** The inspiration moving the player right now, or null. */
     inspirationActive: (state) =>
@@ -407,13 +422,56 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
+     * Register a scavenge loot table. Called at init from loadScavengeTables().
+     * @param {{ table: Object }} input
+     */
+    registerScavengeTable({ table }) {
+      this.scavengeTables[table.id] = table
+    },
+
+    /**
+     * Look around the current location. A find goes into the inventory, is
+     * remembered in the counters, and works the spot over.
+     * @param {{ rng?: () => number }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the scavenge engine's result
+     */
+    applyScavenge({ rng = Math.random } = {}) {
+      if (!this.player) {
+        return { ok: false, data: null, error: { code: 'PLAYER_MISSING', message: 'No player' } }
+      }
+      const result = scavengeSearch({
+        player: this.player,
+        location: this.currentLocation,
+        tables: this.scavengeTables,
+        items: this.items,
+        gameTime: this.time,
+        rng,
+      })
+      if (!result.ok) {
+        console.warn(`[game] applyScavenge: ${result.error.code}`, result.error.message)
+        return result
+      }
+      this.currentLocation.scavenge = result.data.scavenge
+      if (result.data.itemId) {
+        addItem(this.player, this.items[result.data.itemId])
+        incrementCounter(this.player, scavengedCounterName({ itemId: result.data.itemId }))
+      }
+      return result
+    },
+
+    /**
      * A line of prose for a message code, in the voice of the persona in
      * charge. Empty when nobody has a line, which content validation forbids.
-     * @param {{ code: string }} input
+     * @param {{ code: string, params?: Object<string, string> }} input
      * @returns {string}
      */
-    voiceLine({ code }) {
-      const line = voiceLine({ code, personaId: this.personaInCharge, voices: this.voices })
+    voiceLine({ code, params = {} }) {
+      const line = voiceLine({
+        code,
+        personaId: this.personaInCharge,
+        voices: this.voices,
+        params,
+      })
       if (!line.ok) {
         console.warn(`[game] voiceLine: ${line.error.code}`, line.error.message)
         return ''

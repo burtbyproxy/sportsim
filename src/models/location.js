@@ -30,6 +30,10 @@ export function createLocation(data) {
       ? { ...data.availability }
       : { openHour: 0, closeHour: 23, closedMessage: null },
     visitCount: data.visitCount ?? 0,
+    // Which loot table looking around here draws from; null means there is nothing to find.
+    scavengeTableId: data.scavengeTableId ?? null,
+    // How picked-over the place is, and when it was last worked. See engine/scavenge.js.
+    scavenge: data.scavenge ? { ...data.scavenge } : { depletion: 0, updatedAtTick: 0 },
   }
 }
 

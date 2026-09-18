@@ -28,6 +28,7 @@
   ],
   "npcSlots": ["ray", "dale"],
   "actionIds": ["buy_tallboy", "shoplift_plaid"],
+  "scavengeTableId": "lot",
   "discovered": false,
   "availability": { "openHour": 0, "closeHour": 23, "closedMessage": null },
   "visitCount": 0

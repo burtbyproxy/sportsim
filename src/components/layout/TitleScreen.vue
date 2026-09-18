@@ -54,6 +54,7 @@ import {
   loadConditions,
   loadMediums,
   loadVoices,
+  loadScavengeTables,
 } from '../../data/loader.js'
 import { createPlayer } from '../../models/player.js'
 import { createCharacter } from '../../models/character.js'
@@ -84,6 +85,9 @@ for (const medium of Object.values(loadMediums())) {
 for (const voice of Object.values(loadVoices())) {
   game.registerVoice({ voice })
 }
+for (const table of Object.values(loadScavengeTables())) {
+  game.registerScavengeTable({ table })
+}
 
 onMounted(() => {
   meta.load()
@@ -93,7 +97,7 @@ onMounted(() => {
 })
 
 const bootLines = [
-  'SPORTSIM v0.6.0',
+  'SPORTSIM v0.7.0',
   'Portland Art Scene Simulation Engine',
   'Loading city data...',
   'Generating despair...',

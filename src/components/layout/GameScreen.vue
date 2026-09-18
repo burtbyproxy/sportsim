@@ -98,7 +98,22 @@
         <div v-if="activeTab === 'inventory'" class="sidebar-panel sidebar-panel--inventory">
           <div class="status-section status-section--grow">
             <div class="status-section__label">carrying</div>
-            <div class="status-inventory-empty">nothing</div>
+            <div v-if="game.playerInventory.length === 0" class="status-inventory-empty">
+              nothing
+            </div>
+            <ul v-else class="status-inventory">
+              <li
+                v-for="item in game.playerInventory"
+                :key="item.id"
+                class="status-inventory__item"
+                :title="item.description"
+              >
+                <span class="status-inventory__name">{{ item.name }}</span>
+                <span v-if="item.quantity > 1" class="status-inventory__quantity">
+                  ×{{ item.quantity }}
+                </span>
+              </li>
+            </ul>
           </div>
         </div>
       </aside>
@@ -395,6 +410,26 @@ function barFillClass(key, value) {
 }
 
 // Inventory
+
+.status-inventory {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: $font-mono;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.status-inventory__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.15rem 0;
+}
+
+.status-inventory__quantity {
+  color: $color-text-muted;
+}
 
 .status-inventory-empty {
   font-size: $font-size-sm;

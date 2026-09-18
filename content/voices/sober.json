@@ -7,6 +7,9 @@
     "inspiration.interrupted": "And it's gone. Just like that. You could feel exactly where it had been.",
     "inspiration.status.fresh": "inspired",
     "inspiration.status.fading": "inspired, fading",
-    "inspiration.status.none": "nothing"
+    "inspiration.status.none": "nothing",
+    "scavenge.found": "You come up with {item}.",
+    "scavenge.nothing": "Nothing. Or nothing you'd pick up, which today is a distinction you still make.",
+    "scavenge.picked_clean": "You've been through this already. It's picked clean, and you're the one who picked it."
   }
 }
