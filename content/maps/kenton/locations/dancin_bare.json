@@ -32,7 +32,10 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": [],
+  "actionIds": [
+    "steak_bites_bare",
+    "amateur_night_bare"
+  ],
   "discovered": false,
   "availability": {
     "openHour": 11,

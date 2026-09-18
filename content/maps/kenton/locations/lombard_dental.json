@@ -32,7 +32,10 @@
     }
   ],
   "npcSlots": [],
-  "actionIds": [],
+  "actionIds": [
+    "free_toothbrush_dental",
+    "read_magazines_dental"
+  ],
   "discovered": false,
   "availability": {
     "openHour": 8,

@@ -1,0 +1,338 @@
+[
+  {
+    "id": "play_pool_mouse_trap",
+    "label": "Play pool",
+    "locationId": "mouse_trap",
+    "timeCost": 2,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 11,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "wits",
+      "dc": 11,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Five tables, one other player, and he wants a game. You run three balls in a row and something in your shoulders unclenches. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "You lose eventually, but slowly, with dignity. He buys you a beer for the trouble.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": 10,
+        "sobriety": -8,
+        "energy": -4
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": {
+        "barfly": 1
+      },
+      "counterChanges": {
+        "pool_games": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "The felt on table three has a rip you didn't see. Your cue ball finds it. Then finds it again. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "Your opponent says nothing about the rip and nothing about your game. He just racks for the next one and you realize you're not in it.",
+            "style": "normal",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": -7,
+        "energy": -4
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "pool_games": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 55,
+    "obsessionIds": []
+  },
+  {
+    "id": "smoke_out_front_mouse_trap",
+    "label": "Sit at the table out front",
+    "locationId": "mouse_trap",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 11,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "It's not a porch. It's a table. You sit at it. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          },
+          {
+            "text": "Somebody's dog is tied to the leg and looks at you with total understanding. The bartender is not in jail today. It's a decent afternoon.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": 7,
+        "energy": 3
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "sidewalk_sits": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 50,
+    "obsessionIds": []
+  },
+  {
+    "id": "steak_bites_bare",
+    "label": "Two-dollar steak bites",
+    "locationId": "dancin_bare",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 11,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Two dollars. They come in a paper boat with a toothpick and a side of ranch that nobody asked for. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 200,
+            "effect": "none"
+          },
+          {
+            "text": "You eat them at the bar with your back to the stage, which is a choice everybody in here respects. They are, and this is the tragedy, genuinely good.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "hunger": 25,
+        "mood": 4
+      },
+      "statChanges": null,
+      "moneyChange": -2,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": {
+        "barfly": 1
+      },
+      "counterChanges": {
+        "steak_bites_eaten": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 70,
+    "obsessionIds": []
+  },
+  {
+    "id": "amateur_night_bare",
+    "label": "Get up on amateur night",
+    "locationId": "dancin_bare",
+    "timeCost": 2,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": 70,
+      "minHour": 20,
+      "maxHour": null,
+      "minVisits": null,
+      "requiredTraumas": null,
+      "requiredAbilities": null
+    },
+    "check": {
+      "stat": "charm",
+      "dc": 13,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You are not a dancer. You are a person on a stage with a zig-zag pool table in your eyeline and a room that has decided to be kind. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 400,
+            "effect": "none"
+          },
+          {
+            "text": "Change hits the boards. Quarters, mostly. You gather eleven dollars and something you're going to have to think about later.",
+            "style": "normal",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": 15,
+        "energy": -10,
+        "sobriety": -5
+      },
+      "statChanges": null,
+      "moneyChange": 11,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": {
+        "drifter": 3
+      },
+      "counterChanges": {
+        "amateur_nights": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Somebody throws a nickel. ",
+            "style": "bold",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 500,
+            "effect": "none"
+          },
+          {
+            "text": "Not at you. Just near you, in the general direction of the idea of you. The DJ cuts the song early as a mercy. You collect the nickel. It's five cents you didn't have.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": -20,
+        "energy": -10
+      },
+      "statChanges": null,
+      "moneyChange": 0.05,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "amateur_nights": 1
+      },
+      "traumaGained": null,
+      "obsessionFed": null
+    },
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 25,
+    "obsessionIds": []
+  }
+]
