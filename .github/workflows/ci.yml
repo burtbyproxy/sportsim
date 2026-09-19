@@ -24,5 +24,8 @@ jobs:
       - run: npm run lint
       - run: npm run format:check
       - run: npm run test:run
+      # conform judges releases against master's first-parent line, so master
+      # must exist as a local branch; checkout creates only the one it built.
+      - run: git show-ref --verify --quiet refs/heads/master || git branch master origin/master
       # bfd is pinned in tools/go.mod; it runs from the repo root.
       - run: '"$(go -C tools tool -n bfd)" conform'

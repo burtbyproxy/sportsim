@@ -21,4 +21,7 @@ conform:
   stage: gates
   image: golang:1.25.8
   script:
+    # conform judges releases against master's first-parent line; the checkout
+    # is a detached head, so master is made a local branch first.
+    - git show-ref --verify --quiet refs/heads/master || git branch master origin/master
     - '"$(go -C tools tool -n bfd)" conform'
