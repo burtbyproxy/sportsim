@@ -351,30 +351,6 @@ export function narrativeSkipBindings({ narrative }) {
 // ---------------------------------------------------------------------------
 
 /**
- * Applies insanity perception filters to a description string.
- * perceptionFilter shape: { substitutions: [[from, to], ...], prefix: string, suffix: string }
- * @param {string} text
- * @param {Object[]} insanities
- * @returns {string}
- */
-function perceptionFiltersApply({ text, insanities }) {
-  if (!insanities || insanities.length === 0) return text
-  let result = text
-  for (const insanity of insanities) {
-    const filter = insanity.perceptionFilter
-    if (!filter) continue
-    if (filter.substitutions) {
-      for (const [from, to] of filter.substitutions) {
-        result = result.replaceAll(from, to)
-      }
-    }
-    if (filter.prefix) result = filter.prefix + ' ' + result
-    if (filter.suffix) result = result + ' ' + filter.suffix
-  }
-  return result
-}
-
-/**
  * Builds the context object for variant selection.
  * @param {Object} player
  * @param {Object} gameTime
@@ -407,25 +383,25 @@ function narrativeContextBuild({ player, gameTime, location, tuning }) {
 
 /**
  * Generates the narrative description for a location.
- * Picks the best variant, applies perception filters, templates in variables.
+ * Picks the best variant and templates in variables.
+ * A place the player does not know is described by its looks alone.
  *
- * @param {{ location: Object, player: Object, gameTime: Object, tuning: Object }} input
- *   location — Location per data contract
+ * @param {{ location: Object, known: boolean, player: Object, gameTime: Object, tuning: Object }} input
+ *   location — Location per data contract; known — whether the player knows what it is
  * @returns {NarrativeText}
  */
-export function narrativeLocation({ location, player, gameTime, tuning }) {
+export function narrativeLocation({ location, known, player, gameTime, tuning }) {
   const context = narrativeContextBuild({ player, gameTime, location, tuning })
-  let text = textVariantPick({ variants: location.descriptions || {}, context })
-  text = textFill({
-    text,
+  const seen = known ? location : location.appearance
+  const text = textFill({
+    text: textVariantPick({ variants: seen.descriptions, context }),
     params: {
-      location: location.display || '',
+      location: seen.display,
       playerName: player.name || 'you',
       day: gameTime?.day ?? 1,
       hour: gameTime?.hour ?? 0,
     },
   })
-  text = perceptionFiltersApply({ text, insanities: player.psyche?.insanities })
   return narrativeTextCreate({ text })
 }
 
@@ -454,21 +430,11 @@ export function narrativeAction(actionResult) {
  */
 export function narrativeEvent({ event, player }) {
   if (!event.narrative) return narrativeTextCreate({ text: '' })
-  if (event.narrative.tokens) {
-    const insanities = player.psyche?.insanities ?? []
-    if (insanities.length === 0) return event.narrative
-    const filteredTokens = event.narrative.tokens.map((token) => ({
-      ...token,
-      text: perceptionFiltersApply({ text: token.text, insanities }),
-    }))
-    return { tokens: filteredTokens }
-  }
+  if (event.narrative.tokens) return event.narrative
   if (typeof event.narrative === 'string') {
-    const filtered = perceptionFiltersApply({
+    return narrativeTextCreate({
       text: textFill({ text: event.narrative, params: { playerName: player.name || 'you' } }),
-      insanities: player.psyche?.insanities,
     })
-    return narrativeTextCreate({ text: filtered })
   }
   return narrativeTextCreate({ text: '' })
 }

@@ -33,6 +33,21 @@ describe('content/game.json — what a new game is', () => {
     ).toContain(config.start.locationId)
   })
 
+  it('says which places the player already knows, starting with where they wake up', () => {
+    const mapDir = join(CONTENT_ROOT, 'maps', config.mapId)
+    const locationIds = loadJsonFiles(join(mapDir, 'locations')).map(({ data }) => data.id)
+    const known = config.start.knownLocationIds
+    expect(Array.isArray(known), 'game.json: start.knownLocationIds must be an array').toBe(true)
+    for (const locationId of known) {
+      expect(locationIds, `game.json: known place '${locationId}' is not on the map`).toContain(
+        locationId
+      )
+    }
+    expect(known, 'game.json: the player knows the place they wake up in').toContain(
+      config.start.locationId
+    )
+  })
+
   it('says who the player is and what they start with', () => {
     const { start } = config
     expect(typeof start.playerName).toBe('string')

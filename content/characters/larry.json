@@ -6,20 +6,50 @@
   "voice": "Minimal. 'Yep.' 'Nope.' 'What'll it be.' Larry doesn't start conversations. If you start one, he'll participate the way a wall participates in a game of catch — he's there, but he's not throwing anything back.",
   "simulation": "fixed",
   "stats": {
-    "stamina": { "base": 50, "modifiers": [], "xp": 0 },
-    "toughness": { "base": 55, "modifiers": [], "xp": 0 },
-    "wits": { "base": 40, "modifiers": [], "xp": 0 },
-    "creativity": { "base": 15, "modifiers": [], "xp": 0 },
-    "charm": { "base": 25, "modifiers": [], "xp": 0 },
-    "reputation": { "base": 35, "modifiers": [], "xp": 0 },
-    "luck": { "base": 30, "modifiers": [], "xp": 0 },
-    "karma": { "base": 50, "modifiers": [], "xp": 0 }
+    "stamina": {
+      "base": 50,
+      "modifiers": [],
+      "xp": 0
+    },
+    "toughness": {
+      "base": 55,
+      "modifiers": [],
+      "xp": 0
+    },
+    "wits": {
+      "base": 40,
+      "modifiers": [],
+      "xp": 0
+    },
+    "creativity": {
+      "base": 15,
+      "modifiers": [],
+      "xp": 0
+    },
+    "charm": {
+      "base": 25,
+      "modifiers": [],
+      "xp": 0
+    },
+    "reputation": {
+      "base": 35,
+      "modifiers": [],
+      "xp": 0
+    },
+    "luck": {
+      "base": 30,
+      "modifiers": [],
+      "xp": 0
+    },
+    "karma": {
+      "base": 50,
+      "modifiers": [],
+      "xp": 0
+    }
   },
   "status": null,
   "psyche": {
-    "traumas": [],
-    "obsessions": [],
-    "insanities": [],
+    "marks": [],
     "abilities": []
   },
   "schedule": {

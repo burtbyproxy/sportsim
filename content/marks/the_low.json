@@ -1,0 +1,38 @@
+{
+  "id": "the_low",
+  "kind": "affective",
+  "display": "The floor under the floor",
+  "targetKinds": [],
+  "polarity": null,
+  "confusion": 0,
+  "avoids": false,
+  "draws": 0,
+  "fit": {
+    "trigger": {
+      "kind": "status",
+      "status": "mood",
+      "below": 25
+    },
+    "chancePerTick": 0.3,
+    "ticks": 6,
+    "weight": 0.55,
+    "persona": {
+      "id": "the_hole",
+      "display": "The hole",
+      "compulsion": "Lie down in it. It's the right size."
+    },
+    "modifiers": [
+      {
+        "stat": "creativity",
+        "value": 3
+      },
+      {
+        "stat": "stamina",
+        "value": -4
+      }
+    ],
+    "confusion": 5,
+    "lineCode": "psyche.fit.the_hole"
+  },
+  "lineCode": "psyche.mark.the_low"
+}

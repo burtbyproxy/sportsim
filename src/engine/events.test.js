@@ -10,7 +10,7 @@ function makePlayer(statusOverrides = {}) {
     stats: { charm: { base: 10, modifiers: [], xp: 0 } },
     status: { hunger: 50, sobriety: 80, energy: 80, mood: 50, health: 100, ...statusOverrides },
     inventory: [],
-    psyche: { traumas: [], obsessions: [], insanities: [], abilities: [] },
+    psyche: { marks: [], abilities: [], grooves: {} },
   }
 }
 
@@ -449,5 +449,26 @@ describe('eventResolve — a choice the event never offered', () => {
     ).toEqual({
       moneyChange: -1,
     })
+  })
+})
+
+describe('event conditions — marks', () => {
+  const event = makeEvent({ type: 'triggered', conditions: { requiredMarkIds: ['phobia'] } })
+  const fires = (marks) =>
+    eventsTriggeredCheck({
+      player: { ...makePlayer(), psyche: { marks, abilities: [], grooves: {} } },
+      location: makeLocation({}),
+      gameTime: makeGameTime(),
+      events: [event],
+      firedEventIds: [],
+    }).length
+
+  it('only happens to somebody carrying the mark it needs', () => {
+    expect(fires([])).toBe(0)
+    expect(fires([{ markId: 'phobia', status: 'active' }])).toBe(1)
+  })
+
+  it('a mark that is not active does not count', () => {
+    expect(fires([{ markId: 'phobia', status: 'cured' }])).toBe(0)
   })
 })

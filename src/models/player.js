@@ -7,7 +7,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { blendSober, sobrietyDerive } from '../engine/blend.js'
 import { STAT_IDS_DEFAULT } from './defaults.js'
-import { numberClamp } from '../utils/number.js'
 import { randomInt } from '../utils/random.js'
 import { statCreate } from '../engine/stats.js'
 
@@ -26,6 +25,7 @@ import { statCreate } from '../engine/stats.js'
 export const PLAYER_START_DEFAULTS = Object.freeze({
   statIds: STAT_IDS_DEFAULT,
   locationId: 'moms_house',
+  knownLocationIds: Object.freeze(['moms_house']),
   money: 2,
   statRoll: Object.freeze({ min: 10, max: 20 }),
   status: Object.freeze({ hunger: 50, energy: 70, mood: 40, health: 100 }),
@@ -38,7 +38,7 @@ export const START_MONEY = PLAYER_START_DEFAULTS.money
  * Create a new Player with default starting values.
  * Stats are randomized slightly around starting ranges.
  *
- * @param {{ name: string, start?: { statIds?: string[], locationId?: string, money?: number, statRoll?: { min: number, max: number }, status?: Object<string, number> }, rng?: (() => number) }} input
+ * @param {{ name: string, start?: { statIds?: string[], locationId?: string, knownLocationIds?: string[], money?: number, statRoll?: { min: number, max: number }, status?: Object<string, number> }, rng?: (() => number) }} input
  *   where, and with what, the player begins (content/game.json `start`)
  * @returns {import('./types').Player}
  */
@@ -53,6 +53,8 @@ export function playerCreate({ name, start = PLAYER_START_DEFAULTS, rng = Math.r
     status: {
       hunger: begin.status.hunger,
       sobriety: sobrietyDerive({ intoxications: {} }),
+      // Derived like sobriety: see engine/perception.js confusionDerive.
+      confusion: 0,
       energy: begin.status.energy,
       mood: begin.status.mood,
       health: begin.status.health,
@@ -62,6 +64,8 @@ export function playerCreate({ name, start = PLAYER_START_DEFAULTS, rng = Math.r
     intoxications: {},
     /** Per-substance habituation, 0–100. Past a substance's threshold, its absence is a condition. */
     habituations: {},
+    /** A knock to the head, 0–100, wearing off. One of the things confusion is made of. */
+    dazed: 0,
     /** Engine-written snapshot of every persona acting on the player. See engine/blend.js. */
     blend: blendSober(),
     /** The skill grid: skills[mediumId][personaId] = { base, modifiers, xp }. See engine/skills.js. */
@@ -74,14 +78,20 @@ export function playerCreate({ name, start = PLAYER_START_DEFAULTS, rng = Math.r
     experiences: [],
     /** The pieces the player can carry. Pieces left on walls live on the location. */
     portfolio: [],
+    /**
+     * What stays: marks (engine/psyche.js) never wear off; abilities are
+     * what the player can do that others can't; grooves count the ticks each
+     * persona has been in charge, toward the next save.
+     */
     psyche: {
-      traumas: [],
-      obsessions: [],
-      insanities: [],
+      marks: [],
       abilities: [],
+      grooves: {},
     },
     inventory: [],
     currentLocationId: begin.locationId,
+    /** The places the player knows for what they are. Everywhere else is just how it looks. */
+    knownLocationIds: [...begin.knownLocationIds],
     archetypeScores: {},
     counters: {},
   }
@@ -166,20 +176,6 @@ export function inventoryRemove({ player, itemId }) {
  */
 export function moneyAdjust({ player, delta }) {
   player.status.money += delta
-}
-
-/**
- * Feed an obsession — increase its strength, clamp to 0-100.
- * If the obsession doesn't exist in psyche, this is a no-op.
- * Mutates player in place.
- *
- * @param {{ player: import('./types').Player, obsessionId: string, amount: number }} input
- * @returns {void}
- */
-export function obsessionFeed({ player, obsessionId, amount }) {
-  const obs = player.psyche.obsessions.find((o) => o.id === obsessionId)
-  if (!obs) return
-  obs.strength = numberClamp({ value: obs.strength + amount, min: 0, max: 100 })
 }
 
 /**

@@ -6,6 +6,7 @@
 import { checkRoll, checkContestedRoll, CONTEST_WINNERS } from './dice.js'
 import { inspirationActive } from './inspiration.js'
 import { inventoryHas } from './items.js'
+import { MARK_STATUSES, psycheDraw } from './psyche.js'
 import { moneyFormat } from '../utils/money.js'
 import { listSortBy } from '../utils/list.js'
 
@@ -22,7 +23,8 @@ export const REQUIREMENT_CODES = Object.freeze({
   hourEarly: 'requirement.hour.early',
   hourLate: 'requirement.hour.late',
   visits: 'requirement.visits',
-  trauma: 'requirement.trauma',
+  mark: 'requirement.mark',
+  avoid: 'requirement.avoid',
   ability: 'requirement.ability',
   inspiration: 'requirement.inspiration',
   time: 'requirement.time',
@@ -106,12 +108,14 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
     }
   }
 
-  // Trauma requirements
-  if (req.requiredTraumas) {
-    const playerTraumaIds = player.psyche?.traumas?.map((t) => t.id) ?? []
-    for (const traumaId of req.requiredTraumas) {
-      if (!playerTraumaIds.includes(traumaId)) {
-        return refuse({ reasonCode: REQUIREMENT_CODES.trauma, reasonParams: { traumaId } })
+  // Some things only somebody marked by something can do
+  if (req.requiredMarkIds) {
+    const carried = (player.psyche?.marks ?? [])
+      .filter((mark) => mark.status === MARK_STATUSES.active)
+      .map((mark) => mark.markId)
+    for (const markId of req.requiredMarkIds) {
+      if (!carried.includes(markId)) {
+        return refuse({ reasonCode: REQUIREMENT_CODES.mark, reasonParams: { markId } })
       }
     }
   }
@@ -134,36 +138,58 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
   return MET
 }
 
+/** Action kinds the engine gives a meaning to. Content picks one with `kind`. */
+export const ACTION_KINDS = Object.freeze({
+  scavenge: 'scavenge',
+  make: 'make',
+  look: 'look',
+  investigate: 'investigate',
+})
+
 /**
  * Whether an action belongs on a location's menu at all, before any
  * requirement is checked. The action says where it lives: one place, or
- * anywhere. An action of a kind the place cannot support is left off, and
- * an action with someone is left off when they are not here.
+ * anywhere. A place the player does not know keeps its own business to
+ * itself: only what can be done anywhere is offered, and finding out what
+ * the place is. An action of a kind the place cannot support is left off,
+ * and an action with someone is left off when they are not here.
  *
- * @param {{ action: Object, location: Object, characters: Object[] }} input
- *   characters — those present at the location.
+ * @param {{ action: Object, location: Object, known: boolean, characters: Object[] }} input
+ *   known — whether the player knows the place; characters — those present at the location.
  * @returns {boolean}
  */
-export function actionApplies({ action, location, characters }) {
+export function actionApplies({ action, location, known, characters }) {
   if (action.locationId !== 'any' && action.locationId !== location.id) return false
-  if (action.kind === 'scavenge' && !location.scavengeTableId) return false
+  if (!known && action.locationId !== 'any') return false
+  if (action.kind === ACTION_KINDS.investigate && known) return false
+  if (action.kind === ACTION_KINDS.scavenge && !location.scavengeTableId) return false
   if (action.characterId && !characters.some((c) => c.id === action.characterId)) return false
   return true
 }
 
 /**
  * Returns the list of available actions at the current location,
- * filtered by requirements and sorted by effective weight.
- * Obsessions boost weight of related actions.
+ * filtered by requirements and sorted by effective weight. A mark that
+ * draws the player toward something moves what is about it up the menu.
  *
- * @param {{ player: Object, location: Object, characters: Object[], gameTime: Object, actionRegistry: Object[] }} input
- *   characters — those present at the location; actionRegistry — all action definitions
+ * @param {{ player: Object, location: Object, known: boolean, characters: Object[], gameTime: Object, actionRegistry: Object[], marks: Object<string, Object> }} input
+ *   known — whether the player knows the place; characters — those present at
+ *   the location; actionRegistry — all action definitions; marks — the mark
+ *   definitions (content/marks)
  * @returns {Object[]} - sorted array of available actions
  */
-export function actionsAvailable({ player, location, characters, gameTime, actionRegistry }) {
+export function actionsAvailable({
+  player,
+  location,
+  known,
+  characters,
+  gameTime,
+  actionRegistry,
+  marks,
+}) {
   // Actions that live here or anywhere, that the place and the company support
   const eligible = actionRegistry.filter((action) =>
-    actionApplies({ action, location, characters })
+    actionApplies({ action, location, known, characters })
   )
 
   // Filter by requirements
@@ -172,38 +198,15 @@ export function actionsAvailable({ player, location, characters, gameTime, actio
     return meets
   })
 
-  // Build obsession lookup: obsessionId -> strength
-  const obsessionStrengths = {}
-  if (player.psyche?.obsessions) {
-    for (const obs of player.psyche.obsessions) {
-      obsessionStrengths[obs.id] = obs.strength
-    }
-  }
-
-  // Sort by effective weight (descending)
+  // Heaviest first; what the player's marks pull toward weighs more.
   return listSortBy({
     items: available,
-    keyOf: (action) => weightEffective({ action, obsessionStrengths }),
+    keyOf: (action) => {
+      const weight = action.weight ?? 0
+      return weight + weight * psycheDraw({ subject: player, marks, action })
+    },
     descending: true,
   })
-}
-
-/**
- * Calculates the effective display weight of an action, boosted by obsessions.
- * @param {Object} action
- * @param {Object<string, number>} obsessionStrengths
- * @returns {number}
- */
-function weightEffective({ action, obsessionStrengths }) {
-  let weight = action.weight || 0
-  if (action.obsessionIds) {
-    for (const obsId of action.obsessionIds) {
-      const strength = obsessionStrengths[obsId] ?? 0
-      // Obsession strength (0-100) can add up to 50% of original weight
-      weight += (strength / 100) * (action.weight || 0) * 0.5
-    }
-  }
-  return weight
 }
 
 /**

@@ -2,6 +2,7 @@
   "id": "weed",
   "display": "Weed",
   "family": "cannabis",
+  "confusionFactor": 0.5,
   "persona": {
     "id": "telepath",
     "display": "The telepath",

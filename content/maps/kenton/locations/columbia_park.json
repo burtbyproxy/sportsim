@@ -2,6 +2,15 @@
   "id": "columbia_park",
   "type": "park",
   "display": "Columbia Park",
+  "displayInline": "Columbia Park",
+  "appearance": {
+    "display": "A park with enormous firs",
+    "displayInline": "a park with firs the size of buildings",
+    "descriptions": {
+      "default": "A park. A big one. Firs so tall the sky has to go around them. Dogs, kids, a guy throwing a frisbee badly. Paths go off in every direction and not one of them says where.",
+      "night": "A black wall of trees with paths going into it. Things move between the trunks. It is the kind of dark that is paying attention."
+    }
+  },
   "pieceAs": "in Columbia Park",
   "outdoors": true,
   "descriptions": {
@@ -15,25 +24,25 @@
   "exits": [
     {
       "locationId": "moms_house",
-      "label": "Head back to Mom's",
+      "label": "Head back to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "blue_parrot",
-      "label": "Walk to the Blue Parrot",
+      "label": "Walk to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "mocks_crest",
-      "label": "Head to Mock's Crest",
+      "label": "Head to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "denver_711",
-      "label": "Walk to the Denver 7-11",
+      "label": "Walk to {place}",
       "travelTime": 2,
       "requirements": null
     }
@@ -59,7 +68,6 @@
       "mediumIds": ["performance"]
     }
   ],
-  "discovered": false,
   "availability": {
     "openHour": 0,
     "closeHour": 23,

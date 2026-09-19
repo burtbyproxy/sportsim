@@ -312,26 +312,6 @@ describe('failures are shown in play, never swallowed', () => {
   })
 })
 
-describe('obsessions', () => {
-  it('an outcome that feeds an obsession strengthens it by what tuning says', async () => {
-    const game = startGame()
-    // An amount nothing else uses, so only reading tuning can produce it.
-    game.tuningRegister({ tuning: { ...tuning, obsession: { feedAmount: 17 } } })
-    game.player.psyche.obsessions = [{ id: 'booze', strength: 50 }]
-    const feed = {
-      id: 'feed',
-      locationId: 'any',
-      timeCost: 0,
-      requirements: {},
-      check: null,
-      success: { narrative: 'Another.', obsessionFed: 'booze' },
-      failure: null,
-    }
-    await useGameLoop().resolvePlayerAction(feed)
-    expect(game.player.psyche.obsessions[0].strength).toBe(67)
-  })
-})
-
 describe('the store keeps statuses in bounds', () => {
   it('clamps to 0 and 100 whatever an outcome asks for', () => {
     const game = startGame()

@@ -1,8 +1,8 @@
 <template>
   <div class="location-view">
     <!-- Location name — this is a PLACE -->
-    <h1 v-if="location" class="location-name">
-      {{ location.display ?? location.id }}
+    <h1 v-if="place" class="location-name">
+      {{ place.display }}
     </h1>
 
     <!-- Characters present — woven into the scene, not a widget -->
@@ -30,8 +30,9 @@ import { EXIT_KEYS } from '../../utils/menu.js'
 const game = useGameStore()
 const gameLoop = inject('gameLoop')
 
-const location = computed(() => game.currentLocation)
-const charactersPresent = computed(() => game.charactersAtCurrentLocation)
+// The place and the people as the player takes them to be.
+const place = computed(() => game.scenePlace)
+const charactersPresent = computed(() => game.scenePeople)
 
 // The scene itself (log, description, events, actions) is the game loop's.
 onMounted(() => {

@@ -2,18 +2,50 @@
   "id": "vernon",
   "name": "Vernon",
   "description": "Age unclear — could be sixty, could be seventy-five. Black man, lean, wearing a green army jacket that's older than most of the people in Kenton. Vernon sits on the same bench in Columbia Park every day, surrounded by kids and dogs and joggers and all the noise of a neighborhood being alive, and he is perfectly still in the middle of it. He watches everything. He has a face that has been through weather — not metaphorical weather, real weather, years of it, on that bench, in the rain, because Vernon is here rain or shine. He has a paper bag with something in it. Nobody asks.",
-  "habit": "Feeds the pigeons. Not scattered tosses — deliberate, individual portions. He has a system. The pigeons know the system. They line up. This is the most organized thing in Columbia Park.",
+  "habit": "Feeds the pigeons. Not scattered tosses — deliberate, individual portions. He has a system. The pigeons know the system. They line up. This is the most organized thing in the park.",
   "voice": "Slow. Considered. Vernon does not speak unless he means it. When he does, it comes out dry and sideways — the kind of thing that sounds like a throwaway and then sits in your head for three days. He asks questions he already knows the answer to. He lets the silence after the question do the teaching.",
   "simulation": "fixed",
   "stats": {
-    "stamina": { "base": 30, "modifiers": [], "xp": 0 },
-    "toughness": { "base": 45, "modifiers": [], "xp": 0 },
-    "wits": { "base": 70, "modifiers": [], "xp": 0 },
-    "creativity": { "base": 40, "modifiers": [], "xp": 0 },
-    "charm": { "base": 50, "modifiers": [], "xp": 0 },
-    "reputation": { "base": 55, "modifiers": [], "xp": 0 },
-    "luck": { "base": 35, "modifiers": [], "xp": 0 },
-    "karma": { "base": 75, "modifiers": [], "xp": 0 }
+    "stamina": {
+      "base": 30,
+      "modifiers": [],
+      "xp": 0
+    },
+    "toughness": {
+      "base": 45,
+      "modifiers": [],
+      "xp": 0
+    },
+    "wits": {
+      "base": 70,
+      "modifiers": [],
+      "xp": 0
+    },
+    "creativity": {
+      "base": 40,
+      "modifiers": [],
+      "xp": 0
+    },
+    "charm": {
+      "base": 50,
+      "modifiers": [],
+      "xp": 0
+    },
+    "reputation": {
+      "base": 55,
+      "modifiers": [],
+      "xp": 0
+    },
+    "luck": {
+      "base": 35,
+      "modifiers": [],
+      "xp": 0
+    },
+    "karma": {
+      "base": 75,
+      "modifiers": [],
+      "xp": 0
+    }
   },
   "status": null,
   "psyche": {
@@ -26,7 +58,9 @@
         "name": "The Read",
         "description": "Vernon looks at you and says something about your life that he should not know. He's not psychic. He's just been watching people from that bench for longer than you've been alive. Or he's psychic. The game does not clarify.",
         "requiredStates": [],
-        "effects": { "infoReveal": true },
+        "effects": {
+          "infoReveal": true
+        },
         "active": true
       }
     ]

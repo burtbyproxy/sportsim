@@ -61,6 +61,9 @@ export function useBoot({ load = contentLoad } = {}) {
         CONTENT_KINDS.voices,
         CONTENT_KINDS.scavengeTables,
         CONTENT_KINDS.games,
+        CONTENT_KINDS.marks,
+        CONTENT_KINDS.psycheTables,
+        CONTENT_KINDS.topics,
         CONTENT_KINDS.actions,
         CONTENT_KINDS.events,
       ],
@@ -90,6 +93,15 @@ export function useBoot({ load = contentLoad } = {}) {
     }
     for (const minigame of Object.values(content[CONTENT_KINDS.games])) {
       game.minigameRegister({ minigame })
+    }
+    for (const mark of Object.values(content[CONTENT_KINDS.marks])) {
+      game.markRegister({ mark })
+    }
+    for (const table of Object.values(content[CONTENT_KINDS.psycheTables])) {
+      game.psycheTableRegister({ table })
+    }
+    for (const topic of Object.values(content[CONTENT_KINDS.topics])) {
+      game.topicRegister({ topic })
     }
     for (const action of Object.values(content[CONTENT_KINDS.actions])) {
       game.actionRegister({ action })

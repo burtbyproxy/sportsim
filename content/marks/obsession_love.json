@@ -1,0 +1,36 @@
+{
+  "id": "obsession_love",
+  "kind": "obsession",
+  "display": "Can't stop thinking about it",
+  "targetKinds": ["location", "character", "item", "substance", "topic"],
+  "polarity": "love",
+  "confusion": 0,
+  "avoids": false,
+  "draws": 0.5,
+  "fit": {
+    "trigger": {
+      "kind": "target"
+    },
+    "chancePerTick": 0.3,
+    "ticks": 3,
+    "weight": 0.55,
+    "persona": {
+      "id": "devotee",
+      "display": "The devotee",
+      "compulsion": "It's the best thing that ever happened. Tell everyone. Tell it."
+    },
+    "modifiers": [
+      {
+        "stat": "creativity",
+        "value": 4
+      },
+      {
+        "stat": "wits",
+        "value": -3
+      }
+    ],
+    "confusion": 5,
+    "lineCode": "psyche.fit.devotee"
+  },
+  "lineCode": "psyche.mark.obsession_love"
+}

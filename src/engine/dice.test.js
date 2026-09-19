@@ -37,7 +37,7 @@ function makePlayer(overrides = {}) {
       health: 100,
       money: 0,
     },
-    psyche: { traumas: [], obsessions: [], insanities: [], abilities: [] },
+    psyche: { marks: [], abilities: [], grooves: {} },
     intoxications: {},
     habituations: {},
     blend: blendSober(),
@@ -153,7 +153,7 @@ describe('statEffective', () => {
   })
 
   describe('statModifierItems', () => {
-    it('itemizes base, each modifier, each persona, each ability, each trauma — no cap', () => {
+    it('itemizes base, each modifier, each persona, each mark, each ability — no cap', () => {
       const player = withBlend({ player: makePlayer(), modifiers: { charm: 3 } })
       player.blend.modifierSources.push({
         personaId: 'hollow',
@@ -170,7 +170,14 @@ describe('statEffective', () => {
         { id: 'gift_of_gab', active: true, effects: { diceModifiers: { charm: 5 } } },
         { id: 'asleep', active: false, effects: { diceModifiers: { charm: 50 } } },
       ]
-      player.psyche.traumas = [{ id: 'mugged_in_park', effects: { statModifiers: { charm: -2 } } }]
+      // A mark's standing effect comes through the blend, with no persona behind it.
+      player.blend.modifierSources.push({
+        personaId: null,
+        source: 'mark',
+        sourceId: 'scar',
+        stat: 'charm',
+        value: -2,
+      })
 
       const items = statModifierItems({ player, statName: 'charm' })
       expect(items).toEqual([
@@ -179,8 +186,8 @@ describe('statEffective', () => {
         { source: STAT_ITEM_SOURCES.modifier, sourceId: 'black_eye', value: -4 },
         { source: 'substance', sourceId: 'test_persona', value: 3 },
         { source: 'condition', sourceId: 'hollow', value: -1 },
+        { source: 'mark', sourceId: 'scar', value: -2 },
         { source: STAT_ITEM_SOURCES.ability, sourceId: 'gift_of_gab', value: 5 },
-        { source: STAT_ITEM_SOURCES.trauma, sourceId: 'mugged_in_park', value: -2 },
       ])
       expect(statEffective({ player, statName: 'charm' })).toBe(13)
     })
@@ -213,17 +220,6 @@ describe('statEffective', () => {
       },
     ]
     expect(statEffective({ player: player, statName: 'luck' })).toBe(5)
-  })
-
-  it('includes trauma stat modifiers', () => {
-    const player = makePlayer()
-    player.psyche.traumas = [
-      {
-        id: 'mugged_in_park',
-        effects: { statModifiers: { charm: -2 } },
-      },
-    ]
-    expect(statEffective({ player: player, statName: 'charm' })).toBe(8)
   })
 })
 

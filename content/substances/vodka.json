@@ -2,6 +2,7 @@
   "id": "vodka",
   "display": "Vodka",
   "family": "alcohol",
+  "confusionFactor": 0.4,
   "persona": {
     "id": "host",
     "display": "The host",
@@ -19,27 +20,57 @@
       "compulsion": "Get to a bar. Any bar."
     },
     "modifiers": [
-      { "stat": "toughness", "value": -3 },
-      { "stat": "charm", "value": -2 },
-      { "stat": "creativity", "value": 3 }
+      {
+        "stat": "toughness",
+        "value": -3
+      },
+      {
+        "stat": "charm",
+        "value": -2
+      },
+      {
+        "stat": "creativity",
+        "value": 3
+      }
     ]
   },
   "bands": [
     {
       "atLeast": 15,
       "modifiers": [
-        { "stat": "charm", "value": 4 },
-        { "stat": "wits", "value": -3 },
-        { "stat": "stamina", "value": -1 }
+        {
+          "stat": "charm",
+          "value": 4
+        },
+        {
+          "stat": "wits",
+          "value": -3
+        },
+        {
+          "stat": "stamina",
+          "value": -1
+        }
       ]
     },
     {
       "atLeast": 50,
       "modifiers": [
-        { "stat": "charm", "value": 2 },
-        { "stat": "reputation", "value": 2 },
-        { "stat": "wits", "value": -9 },
-        { "stat": "creativity", "value": -2 }
+        {
+          "stat": "charm",
+          "value": 2
+        },
+        {
+          "stat": "reputation",
+          "value": 2
+        },
+        {
+          "stat": "wits",
+          "value": -9
+        },
+        {
+          "stat": "creativity",
+          "value": -2
+        }
       ]
     }
   ]

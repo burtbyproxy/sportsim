@@ -2,6 +2,15 @@
   "id": "greeley_plaid",
   "type": "market",
   "display": "Plaid Pantry",
+  "displayInline": "the Greeley Plaid",
+  "appearance": {
+    "display": "Another corner store with a plaid sign",
+    "displayInline": "another corner store with a plaid sign",
+    "descriptions": {
+      "default": "A corner store with a plaid sign. You could swear you've been here. You've been somewhere exactly like it. Hot dogs on rollers, a fluorescent hum, and a clerk who looks up at you like he knows you.",
+      "night": "A moth is working the parking lot light. The clerk inside is watching it. There's nobody else here, which means the clerk is going to look at you next."
+    }
+  },
   "pieceAs": "outside the Greeley Plaid",
   "outdoors": true,
   "descriptions": {
@@ -15,19 +24,19 @@
   "exits": [
     {
       "locationId": "greeley_711",
-      "label": "Walk to Greeley 7-11",
+      "label": "Walk to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "glitters",
-      "label": "Walk to All That Glitters",
+      "label": "Walk to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "liquor",
-      "label": "Head to Kenton Liquor",
+      "label": "Head to {place}",
       "travelTime": 2,
       "requirements": null
     }
@@ -41,7 +50,6 @@
       "mediumIds": ["tagging", "drawing"]
     }
   ],
-  "discovered": false,
   "availability": {
     "openHour": 0,
     "closeHour": 23,

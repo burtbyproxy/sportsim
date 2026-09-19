@@ -34,6 +34,7 @@ export const PERSONA_SOURCES = Object.freeze({
   substance: 'substance',
   withdrawal: 'withdrawal',
   condition: 'condition',
+  mark: 'mark',
 })
 
 // ---------------------------------------------------------------------------
@@ -120,7 +121,10 @@ function modifiersAdd({ totals, sources, modifiers, personaId, source, sourceId 
  *   modifiers: Object<string, number>,
  *   modifierSources: { personaId: string, source: string, sourceId: string, stat: string, value: number }[],
  *   families: Object<string, number>,
+ *   confusion: number,
  * }}
+ *   confusion — how much the substances and conditions acting on the player
+ *   jumble what they see, before anything else adds to it (engine/perception.js)
  */
 export function blendSober() {
   return {
@@ -130,6 +134,7 @@ export function blendSober() {
     modifiers: {},
     modifierSources: [],
     families: {},
+    confusion: 0,
   }
 }
 
@@ -152,16 +157,21 @@ export function sobrietyDerive({ intoxications }) {
  * active condition contributes its declared weight. Sober takes whatever
  * remains; when the total passes one, everything is normalised and sober is
  * zero. Modifiers are the sum of the highest active band per substance, the
- * active withdrawals, and the active conditions.
+ * active withdrawals, and the active conditions. Confusion is each
+ * substance's intoxication times its confusionFactor, plus each active
+ * condition's confusion. The psyche's sources (engine/psyche.js
+ * psycheBlendSources) add theirs: a fit is a persona with a weight like any
+ * other; a mark's standing effect bends stats and confusion with no persona.
  *
  * @param {{
  *   player: Object,
  *   substances: Object<string, Object>,
  *   conditions: Object<string, Object>,
+ *   psyche?: Array<{ sourceId: string, personaId: string|null, weight: number, modifiers: Object[], confusion: number }>,
  * }} input
  * @returns {{ ok: boolean, data: ReturnType<typeof blendSober>|null, error: {code: string, message: string}|null }}
  */
-export function blendCompute({ player, substances = {}, conditions = {} }) {
+export function blendCompute({ player, substances = {}, conditions = {}, psyche = [] }) {
   if (!player || typeof player !== 'object') {
     return resultFail({
       code: BLEND_ERROR_CODES.playerMissing,
@@ -181,12 +191,14 @@ export function blendCompute({ player, substances = {}, conditions = {} }) {
   const modifiers = {}
   const modifierSources = []
   const raw = []
+  let confusion = 0
 
   for (const substance of Object.values(substances)) {
     const intoxication = intoxications[substance.id] ?? 0
     const habituation = habituations[substance.id] ?? 0
 
     if (intoxication > 0) {
+      confusion += intoxication * substance.confusionFactor
       raw.push({
         personaId: substance.persona.id,
         weight: intoxication / 100,
@@ -228,6 +240,7 @@ export function blendCompute({ player, substances = {}, conditions = {} }) {
 
   for (const condition of Object.values(conditions)) {
     if (!conditionActive({ condition, status: player.status })) continue
+    confusion += condition.confusion
     raw.push({
       personaId: condition.persona.id,
       weight: condition.weight,
@@ -242,6 +255,27 @@ export function blendCompute({ player, substances = {}, conditions = {} }) {
       personaId: condition.persona.id,
       source: PERSONA_SOURCES.condition,
       sourceId: condition.id,
+    })
+  }
+
+  for (const entry of psyche) {
+    confusion += entry.confusion
+    if (entry.personaId) {
+      raw.push({
+        personaId: entry.personaId,
+        weight: entry.weight,
+        source: PERSONA_SOURCES.mark,
+        sourceId: entry.sourceId,
+        family: null,
+      })
+    }
+    modifiersAdd({
+      totals: modifiers,
+      sources: modifierSources,
+      modifiers: entry.modifiers,
+      personaId: entry.personaId,
+      source: PERSONA_SOURCES.mark,
+      sourceId: entry.sourceId,
     })
   }
 
@@ -270,7 +304,15 @@ export function blendCompute({ player, substances = {}, conditions = {} }) {
   const dominantPersonaId =
     heaviest && heaviest.weight > soberWeight ? heaviest.personaId : SOBER_PERSONA_ID
 
-  return resultOk({ weights, dominantPersonaId, soberWeight, modifiers, modifierSources, families })
+  return resultOk({
+    weights,
+    dominantPersonaId,
+    soberWeight,
+    modifiers,
+    modifierSources,
+    families,
+    confusion: numberRound({ value: confusion, places: 2 }),
+  })
 }
 
 /**

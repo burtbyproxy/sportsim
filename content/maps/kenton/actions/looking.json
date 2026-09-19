@@ -1,0 +1,96 @@
+[
+  {
+    "id": "look_closer",
+    "label": "Look closer",
+    "locationId": "any",
+    "kind": "look",
+    "timeCost": 0,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": null,
+      "maxHour": null,
+      "minVisits": null,
+      "minMoney": null,
+      "requiredAbilities": null,
+      "requiredMarkIds": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You stop and actually look at it, which you almost never do. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": null,
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 5
+  },
+  {
+    "id": "investigate",
+    "label": "Find out what this place is",
+    "locationId": "any",
+    "kind": "investigate",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": null,
+      "maxHour": null,
+      "minVisits": null,
+      "minMoney": null,
+      "requiredAbilities": null,
+      "requiredMarkIds": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You get close enough to read the sign, and then you read it, which takes longer than it should. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 300,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": null,
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 45
+  }
+]

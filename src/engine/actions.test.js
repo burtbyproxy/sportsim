@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { requirementsMeet, actionsAvailable, actionResolve, actionApplies } from './actions.js'
+import {
+  REQUIREMENT_CODES,
+  requirementsMeet,
+  actionsAvailable,
+  actionResolve,
+  actionApplies,
+} from './actions.js'
 import { randomSeeded } from '../utils/random.js'
 import { tuningContent } from '../../tests/helpers/content.js'
 
@@ -20,7 +26,7 @@ function makePlayer(overrides = {}) {
       money: 0,
     },
     inventory: [],
-    psyche: { traumas: [], obsessions: [], insanities: [], abilities: [] },
+    psyche: { marks: [], abilities: [], grooves: {} },
     ...overrides,
   }
 }
@@ -117,24 +123,31 @@ describe('requirementsMeet', () => {
     expect(meets).toBe(false)
   })
 
-  it('fails when required trauma not present', () => {
-    const action = makeAction({ requirements: { requiredTraumas: ['mugged'] } })
-    const { meets } = requirementsMeet({ player: makePlayer(), action, gameTime: makeGameTime() })
-    expect(meets).toBe(false)
+  it('fails when the mark it takes is not carried', () => {
+    const action = makeAction({ requirements: { requiredMarkIds: ['phobia'] } })
+    const result = requirementsMeet({ player: makePlayer(), action, gameTime: makeGameTime() })
+    expect(result).toEqual({
+      meets: false,
+      reasonCode: REQUIREMENT_CODES.mark,
+      reasonParams: { markId: 'phobia' },
+    })
   })
 
-  it('passes when required trauma present', () => {
+  it('passes when the mark it takes is carried and active', () => {
     const player = makePlayer({
-      psyche: {
-        traumas: [{ id: 'mugged', effects: {} }],
-        obsessions: [],
-        insanities: [],
-        abilities: [],
-      },
+      psyche: { marks: [{ markId: 'phobia', status: 'active' }], abilities: [], grooves: {} },
     })
-    const action = makeAction({ requirements: { requiredTraumas: ['mugged'] } })
+    const action = makeAction({ requirements: { requiredMarkIds: ['phobia'] } })
     const { meets } = requirementsMeet({ player, action, gameTime: makeGameTime() })
     expect(meets).toBe(true)
+  })
+
+  it('a mark that is not active does not count', () => {
+    const player = makePlayer({
+      psyche: { marks: [{ markId: 'phobia', status: 'cured' }], abilities: [], grooves: {} },
+    })
+    const action = makeAction({ requirements: { requiredMarkIds: ['phobia'] } })
+    expect(requirementsMeet({ player, action, gameTime: makeGameTime() }).meets).toBe(false)
   })
 })
 
@@ -176,7 +189,15 @@ describe('requirementsMeet — minVisits', () => {
     const location = { id: 'test_location', visitCount: 2 }
     const player = makePlayer()
     expect(
-      actionsAvailable({ player, location, characters: [], gameTime, actionRegistry: [action] })
+      actionsAvailable({
+        marks: {},
+        known: true,
+        player,
+        location,
+        characters: [],
+        gameTime,
+        actionRegistry: [action],
+      })
     ).toHaveLength(1)
     expect(
       actionResolve({ tuning, player, action, gameTime, location }).requirementFailure
@@ -193,6 +214,8 @@ describe('actionsAvailable', () => {
       makeAction({ id: 'fight', locationId: 'alley', weight: 8 }),
     ]
     const result = actionsAvailable({
+      marks: {},
+      known: true,
       player: makePlayer(),
       location,
       characters: [],
@@ -208,6 +231,8 @@ describe('actionsAvailable', () => {
     const location = { id: 'bar' }
     const registry = [makeAction({ id: 'think', locationId: 'any', weight: 1 })]
     const result = actionsAvailable({
+      marks: {},
+      known: true,
       player: makePlayer(),
       location,
       characters: [],
@@ -227,6 +252,8 @@ describe('actionsAvailable', () => {
       }),
     ]
     const result = actionsAvailable({
+      marks: {},
+      known: true,
       player: makePlayer(),
       location,
       characters: [],
@@ -244,6 +271,8 @@ describe('actionsAvailable', () => {
       makeAction({ id: 'c', locationId: 'bar', weight: 5 }),
     ]
     const result = actionsAvailable({
+      marks: {},
+      known: true,
       player: makePlayer(),
       location,
       characters: [],
@@ -253,33 +282,6 @@ describe('actionsAvailable', () => {
     expect(result[0].id).toBe('b')
     expect(result[1].id).toBe('c')
     expect(result[2].id).toBe('a')
-  })
-
-  it('boosts weight for actions matching active obsessions', () => {
-    const player = makePlayer({
-      psyche: {
-        traumas: [],
-        insanities: [],
-        abilities: [],
-        obsessions: [{ id: 'drinking', strength: 100, relatedActions: ['drink'], effects: {} }],
-      },
-    })
-    const location = { id: 'bar' }
-    const registry = [
-      makeAction({ id: 'drink', locationId: 'bar', weight: 5, obsessionIds: ['drinking'] }),
-      makeAction({ id: 'talk', locationId: 'bar', weight: 8 }),
-    ]
-    const result = actionsAvailable({
-      player,
-      location,
-      characters: [],
-      gameTime: makeGameTime(),
-      actionRegistry: registry,
-    })
-    // drink gets obsession boost: 5 + (100/100 * 5 * 0.5) = 5 + 2.5 = 7.5, still less than talk's 8
-    // but if we crank obsession strength to really dominate...
-    // At strength=100, drink=7.5 < talk=8, so talk first
-    expect(result[0].id).toBe('talk')
   })
 })
 
@@ -394,7 +396,7 @@ describe('actionResolve', () => {
       id: 'bartender',
       stats: { charm: { base: 8, modifiers: [], xp: 0 } },
       status: { sobriety: 100, energy: 80, mood: 50 },
-      psyche: { traumas: [], abilities: [] },
+      psyche: { marks: [], abilities: [], grooves: {} },
     }
     const action = makeAction({
       check: { stat: 'charm', dc: 0, opposedStat: 'charm', opposedNpcId: 'bartender' },
@@ -506,8 +508,8 @@ describe('requirementsMeet — requiresInspiration', () => {
 
 describe('actionApplies', () => {
   const place = { id: 'bar', scavengeTableId: 'bar_back' }
-  const applies = ({ action, location = place, characters = [] }) =>
-    actionApplies({ action, location, characters })
+  const applies = ({ action, location = place, known = true, characters = [] }) =>
+    actionApplies({ known, action, location, characters })
 
   it('an action that lives here applies', () => {
     expect(applies({ action: { id: 'order_beer', locationId: 'bar' } })).toBe(true)
@@ -534,6 +536,22 @@ describe('actionApplies', () => {
     expect(applies({ action: talk })).toBe(false)
   })
 
+  it('a place the player does not know keeps its own business to itself', () => {
+    expect(applies({ action: { id: 'order_beer', locationId: 'bar' }, known: false })).toBe(false)
+    expect(applies({ action: { id: 'loiter', locationId: 'any' }, known: false })).toBe(true)
+  })
+
+  it('finding out what a place is only applies where the player does not know it', () => {
+    const investigate = { id: 'investigate', locationId: 'any', kind: 'investigate' }
+    expect(applies({ action: investigate, known: false })).toBe(true)
+    expect(applies({ action: investigate, known: true })).toBe(false)
+  })
+
+  it('someone at a place the player does not know is dealt with only by what goes anywhere', () => {
+    const talk = { id: 'talk_to_dale', locationId: 'bar', characterId: 'dale' }
+    expect(applies({ action: talk, known: false, characters: [{ id: 'dale' }] })).toBe(false)
+  })
+
   it('an "any" action with someone follows them, and only them', () => {
     const talk = { id: 'talk_to_maurice', locationId: 'any', characterId: 'maurice' }
     expect(applies({ action: talk, characters: [{ id: 'maurice' }] })).toBe(true)
@@ -541,35 +559,50 @@ describe('actionApplies', () => {
   })
 })
 
-// --- obsessions reorder the menu ---
+// --- marks reorder the menu ---
 
-describe('actionsAvailable — obsessions', () => {
+describe('actionsAvailable — what a mark pulls toward', () => {
   const location = { id: 'bar' }
   const registry = [
-    { id: 'sensible', locationId: 'bar', weight: 50, obsessionIds: [] },
-    { id: 'compulsion', locationId: 'bar', weight: 40, obsessionIds: ['booze'] },
+    { id: 'sensible', locationId: 'bar', weight: 50 },
+    {
+      id: 'compulsion',
+      locationId: 'bar',
+      weight: 40,
+      success: { doses: [{ substanceId: 'whiskey', value: 10 }] },
+    },
   ]
+  const marks = {
+    love: { id: 'love', draws: 0.5 },
+    faint: { id: 'faint', draws: 0.2 },
+  }
   const time = { hour: 14 }
   const order = (player) =>
     actionsAvailable({
+      known: true,
       player,
       location,
       characters: [],
       gameTime: time,
       actionRegistry: registry,
+      marks,
     }).map((a) => a.id)
-
-  it('without the obsession the heavier action leads', () => {
-    expect(order({ status: {}, psyche: { obsessions: [] } })).toEqual(['sensible', 'compulsion'])
+  const carrying = (markId) => ({
+    status: {},
+    psyche: {
+      marks: [{ markId, status: 'active', target: { kind: 'substance', id: 'whiskey' } }],
+    },
   })
 
-  it('a full-strength obsession adds half again to its action and takes the lead', () => {
-    const player = { status: {}, psyche: { obsessions: [{ id: 'booze', strength: 100 }] } }
-    expect(order(player)).toEqual(['compulsion', 'sensible'])
+  it('without a pull the heavier action leads', () => {
+    expect(order({ status: {}, psyche: { marks: [] } })).toEqual(['sensible', 'compulsion'])
   })
 
-  it('a weak obsession is not enough', () => {
-    const player = { status: {}, psyche: { obsessions: [{ id: 'booze', strength: 20 }] } }
-    expect(order(player)).toEqual(['sensible', 'compulsion'])
+  it('a strong pull toward what an action is about adds to it, and it takes the lead', () => {
+    expect(order(carrying('love'))).toEqual(['compulsion', 'sensible'])
+  })
+
+  it('a faint pull is not enough', () => {
+    expect(order(carrying('faint'))).toEqual(['sensible', 'compulsion'])
   })
 })

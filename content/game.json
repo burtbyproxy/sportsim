@@ -20,6 +20,7 @@
   "start": {
     "playerName": "You",
     "locationId": "moms_house",
+    "knownLocationIds": ["moms_house"],
     "money": 2,
     "statRoll": {
       "min": 10,

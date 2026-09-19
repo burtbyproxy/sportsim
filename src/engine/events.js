@@ -7,6 +7,7 @@ import { randomChance } from '../utils/random.js'
 import { checkRoll } from './dice.js'
 import { inventoryHas } from './items.js'
 import { resultOk, resultFail } from './result.js'
+import { MARK_STATUSES } from './psyche.js'
 
 /** Enumerated error codes for event resolution. The code is the contract. */
 export const EVENT_ERROR_CODES = Object.freeze({
@@ -78,11 +79,13 @@ function eventConditionsMeet({ event, player, location, gameTime, firedEventIds 
     }
   }
 
-  // Trauma requirements
-  if (cond.requiredTraumas) {
-    const playerTraumaIds = player.psyche?.traumas?.map((t) => t.id) ?? []
-    for (const traumaId of cond.requiredTraumas) {
-      if (!playerTraumaIds.includes(traumaId)) return false
+  // Some things only happen to somebody marked by something
+  if (cond.requiredMarkIds) {
+    const carried = (player.psyche?.marks ?? [])
+      .filter((mark) => mark.status === MARK_STATUSES.active)
+      .map((mark) => mark.markId)
+    for (const markId of cond.requiredMarkIds) {
+      if (!carried.includes(markId)) return false
     }
   }
 

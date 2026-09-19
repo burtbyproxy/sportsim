@@ -2,6 +2,15 @@
   "id": "greeley_711",
   "type": "market",
   "display": "7-11",
+  "displayInline": "the Greeley 7-11",
+  "appearance": {
+    "display": "A convenience store that looks too clean",
+    "displayInline": "a convenience store that looks too clean",
+    "descriptions": {
+      "default": "Another convenience store with a number for a name. This one is clean. Weirdly clean. There are more cars in the lot than people inside, and the two guys behind the counter are smiling, which is the most suspicious thing about it.",
+      "night": "The lot is quiet and full of cars with nobody in them. Inside, two guys are keeping a pot of coffee fresh for no one."
+    }
+  },
   "pieceAs": "outside the Greeley 7-11",
   "outdoors": true,
   "descriptions": {
@@ -15,25 +24,25 @@
   "exits": [
     {
       "locationId": "denver_711",
-      "label": "Walk north to Denver 7-11",
+      "label": "Walk north to {place}",
       "travelTime": 3,
       "requirements": null
     },
     {
       "locationId": "greeley_plaid",
-      "label": "Walk to the Greeley Plaid",
+      "label": "Walk to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "glitters",
-      "label": "Head to All That Glitters",
+      "label": "Head to {place}",
       "travelTime": 2,
       "requirements": null
     },
     {
       "locationId": "dancin_bare",
-      "label": "Walk to the Dancin' Bare",
+      "label": "Walk to {place}",
       "travelTime": 2,
       "requirements": null
     }
@@ -47,7 +56,6 @@
       "mediumIds": ["tagging", "writing"]
     }
   ],
-  "discovered": false,
   "availability": {
     "openHour": 0,
     "closeHour": 23,

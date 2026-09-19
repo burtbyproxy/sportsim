@@ -2,6 +2,15 @@
   "id": "chief_joseph",
   "type": "school",
   "display": "Chief Joseph Elementary",
+  "displayInline": "Chief Joseph",
+  "appearance": {
+    "display": "A school behind a chain-link fence",
+    "displayInline": "a school behind a chain-link fence",
+    "descriptions": {
+      "default": "A low brick school behind a chain-link fence that runs the whole block. Metal playground equipment from the decade that broke arms. You are a grown adult standing outside it for no reason, which is the kind of thing people call someone about.",
+      "night": "A dark school. The fence throws a grid of shadows across the blacktop. The slide catches the streetlight. It's cold out here, and it looks colder over there."
+    }
+  },
   "pieceAs": "outside Chief Joseph Elementary",
   "outdoors": true,
   "descriptions": {
@@ -15,19 +24,19 @@
   "exits": [
     {
       "locationId": "lombard_dental",
-      "label": "Walk to Lombard Dental",
+      "label": "Walk to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "abundant_life",
-      "label": "Head to Abundant Life Church",
+      "label": "Head to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "moms_house",
-      "label": "Walk back toward Mom's",
+      "label": "Walk back toward {place}",
       "travelTime": 3,
       "requirements": null
     }
@@ -47,7 +56,6 @@
       "mediumIds": ["tagging", "painting"]
     }
   ],
-  "discovered": false,
   "availability": {
     "openHour": 0,
     "closeHour": 23,

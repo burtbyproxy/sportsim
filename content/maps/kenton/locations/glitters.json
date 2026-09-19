@@ -2,6 +2,15 @@
   "id": "glitters",
   "type": "market",
   "display": "All That Glitters",
+  "displayInline": "All That Glitters",
+  "appearance": {
+    "display": "A shop with a mannequin out front",
+    "displayInline": "a shop with a mannequin out front",
+    "descriptions": {
+      "default": "A shop with barred windows and a blonde mannequin out front, spinning a sign that says 'Grate Deals.' The window has a saxophone, a power drill and a wedding ring in it. That's three people's worst week, priced to move.",
+      "night": "Shut. The mannequin is still out there spinning her sign, working a shift nobody asked her to work. The wedding ring in the window doesn't catch the light."
+    }
+  },
   "pieceAs": "outside Glitters, under the Grate Deals sign",
   "outdoors": true,
   "descriptions": {
@@ -15,25 +24,25 @@
   "exits": [
     {
       "locationId": "greeley_plaid",
-      "label": "Walk back to Greeley Plaid",
+      "label": "Walk back to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "greeley_711",
-      "label": "Head to Greeley 7-11",
+      "label": "Head to {place}",
       "travelTime": 2,
       "requirements": null
     },
     {
       "locationId": "liquor",
-      "label": "Walk to Kenton Liquor",
+      "label": "Walk to {place}",
       "travelTime": 2,
       "requirements": null
     },
     {
       "locationId": "dancin_bare",
-      "label": "Walk to the Dancin' Bare",
+      "label": "Walk to {place}",
       "travelTime": 1,
       "requirements": null
     }
@@ -47,7 +56,6 @@
       "mediumIds": ["tagging", "writing"]
     }
   ],
-  "discovered": false,
   "availability": {
     "openHour": 9,
     "closeHour": 18,

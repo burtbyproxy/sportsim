@@ -17,7 +17,6 @@ import {
   inventoryAdd,
   inventoryRemove,
   moneyAdjust,
-  obsessionFeed,
   archetypeScoreAdd,
   counterAdd,
 } from '../../src/models/player.js'
@@ -123,26 +122,21 @@ describe('player lifecycle — create, mutate, serialize, restore', () => {
 
   it('psyche state survives round-trip', () => {
     const player = playerCreate({ name: 'Test' })
-    player.psyche.traumas.push({
-      id: 'mugged',
-      name: 'Mugged',
-      description: 'X',
-      source: 'Y',
-      effects: {},
+    player.psyche.marks.push({
+      id: 'm1',
+      markId: 'phobia',
+      target: { kind: 'location', id: 'blue_parrot' },
+      source: { kind: 'event', id: 'cop_hassle' },
+      status: 'active',
+      fitTicksRemaining: 2,
+      acquiredAtTick: 10,
+      updatedAtTick: 12,
     })
-    player.psyche.obsessions.push({
-      id: 'booze',
-      name: 'Booze',
-      strength: 20,
-      relatedActions: [],
-      effects: {},
-    })
-    obsessionFeed({ player, obsessionId: 'booze', amount: 15 })
+    player.psyche.grooves.priest = 30
 
     const loaded = saveAndLoad(player)
-    expect(loaded.psyche.traumas).toHaveLength(1)
-    expect(loaded.psyche.traumas[0].id).toBe('mugged')
-    expect(loaded.psyche.obsessions[0].strength).toBe(35)
+    expect(loaded.psyche.marks).toEqual(player.psyche.marks)
+    expect(loaded.psyche.grooves).toEqual({ priest: 30 })
   })
 
   it('archetype scores and counters survive round-trip', () => {

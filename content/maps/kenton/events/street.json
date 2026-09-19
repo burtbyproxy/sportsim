@@ -15,9 +15,9 @@
       "minStatus": null,
       "maxStatus": null,
       "requiredItems": null,
-      "requiredTraumas": null,
       "minVisits": null,
-      "outdoors": true
+      "outdoors": true,
+      "requiredMarkIds": null
     },
     "narrative": {
       "tokens": [
@@ -64,8 +64,6 @@
       "counterChanges": {
         "hit_by_car_objects": 1
       },
-      "traumaGained": null,
-      "obsessionFed": null,
       "inspiration": {
         "mediumId": "drawing",
         "strength": 40,
@@ -90,8 +88,8 @@
       "minStatus": null,
       "maxStatus": null,
       "requiredItems": null,
-      "requiredTraumas": null,
-      "minVisits": null
+      "minVisits": null,
+      "requiredMarkIds": null
     },
     "narrative": {
       "tokens": [
@@ -120,9 +118,7 @@
       "archetypeChanges": null,
       "counterChanges": {
         "change_found": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "nextEventId": null
   },
@@ -142,8 +138,8 @@
       "minStatus": null,
       "maxStatus": null,
       "requiredItems": null,
-      "requiredTraumas": null,
-      "minVisits": null
+      "minVisits": null,
+      "requiredMarkIds": null
     },
     "narrative": {
       "tokens": [
@@ -172,8 +168,6 @@
       "locationDiscovered": null,
       "archetypeChanges": null,
       "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null,
       "inspiration": {
         "mediumId": "writing",
         "strength": 30,
@@ -200,9 +194,9 @@
         "sobriety": 40
       },
       "requiredItems": null,
-      "requiredTraumas": null,
       "minVisits": null,
-      "outdoors": true
+      "outdoors": true,
+      "requiredMarkIds": null
     },
     "narrative": {
       "tokens": [
@@ -262,9 +256,7 @@
           "eventTriggered": null,
           "locationDiscovered": null,
           "archetypeChanges": null,
-          "counterChanges": null,
-          "traumaGained": null,
-          "obsessionFed": null
+          "counterChanges": null
         },
         "failureOutcome": {
           "narrative": {
@@ -290,9 +282,7 @@
           "eventTriggered": null,
           "locationDiscovered": null,
           "archetypeChanges": null,
-          "counterChanges": null,
-          "traumaGained": null,
-          "obsessionFed": null
+          "counterChanges": null
         }
       },
       {
@@ -325,9 +315,7 @@
           "eventTriggered": null,
           "locationDiscovered": null,
           "archetypeChanges": null,
-          "counterChanges": null,
-          "traumaGained": null,
-          "obsessionFed": null
+          "counterChanges": null
         },
         "failureOutcome": {
           "narrative": {
@@ -356,8 +344,13 @@
           "counterChanges": {
             "times_detained": 1
           },
-          "traumaGained": null,
-          "obsessionFed": null
+          "trauma": {
+            "save": {
+              "stat": "toughness",
+              "dc": 11
+            },
+            "tableId": "trauma"
+          }
         }
       },
       {
@@ -391,9 +384,7 @@
           "eventTriggered": null,
           "locationDiscovered": null,
           "archetypeChanges": null,
-          "counterChanges": null,
-          "traumaGained": null,
-          "obsessionFed": null
+          "counterChanges": null
         },
         "failureOutcome": {
           "narrative": {
@@ -418,9 +409,7 @@
           "eventTriggered": null,
           "locationDiscovered": null,
           "archetypeChanges": null,
-          "counterChanges": null,
-          "traumaGained": null,
-          "obsessionFed": null
+          "counterChanges": null
         }
       }
     ],
@@ -445,8 +434,8 @@
         "hunger": 15
       },
       "requiredItems": null,
-      "requiredTraumas": null,
-      "minVisits": null
+      "minVisits": null,
+      "requiredMarkIds": null
     },
     "narrative": {
       "tokens": [
@@ -483,9 +472,7 @@
       "archetypeChanges": null,
       "counterChanges": {
         "times_starving": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "nextEventId": null
   },
@@ -507,8 +494,8 @@
         "sobriety": 25
       },
       "requiredItems": null,
-      "requiredTraumas": null,
-      "minVisits": null
+      "minVisits": null,
+      "requiredMarkIds": null
     },
     "narrative": {
       "tokens": [
@@ -548,8 +535,6 @@
       "counterChanges": {
         "blackouts_remembered": 1
       },
-      "traumaGained": null,
-      "obsessionFed": null,
       "inspiration": {
         "mediumId": "painting",
         "strength": 60,

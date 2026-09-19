@@ -13,8 +13,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": 2,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -50,15 +50,12 @@
       },
       "counterChanges": {
         "tallboys_purchased": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 70,
-    "obsessionIds": []
+    "weight": 70
   },
   {
     "id": "shoplift_plaid",
@@ -74,8 +71,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "wits",
@@ -118,9 +115,7 @@
       },
       "counterChanges": {
         "successful_shoplifts": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": {
       "narrative": {
@@ -163,9 +158,7 @@
       "archetypeChanges": null,
       "counterChanges": {
         "failed_shoplifts": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "criticalSuccess": null,
     "criticalFailure": {
@@ -210,11 +203,8 @@
       "counterChanges": {
         "police_encounters": 1,
         "failed_shoplifts": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
-    "weight": 30,
-    "obsessionIds": []
+    "weight": 30
   }
 ]

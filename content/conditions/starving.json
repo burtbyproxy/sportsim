@@ -1,16 +1,29 @@
 {
   "id": "starving",
   "display": "Starving",
-  "source": { "status": "hunger", "below": 15 },
+  "source": {
+    "status": "hunger",
+    "below": 15
+  },
   "weight": 0.3,
+  "confusion": 10,
   "persona": {
     "id": "hollow",
     "display": "Hollow",
     "compulsion": "Food is the only subject. Everything else is sharper and smaller."
   },
   "modifiers": [
-    { "stat": "creativity", "value": 3 },
-    { "stat": "wits", "value": -3 },
-    { "stat": "charm", "value": -1 }
+    {
+      "stat": "creativity",
+      "value": 3
+    },
+    {
+      "stat": "wits",
+      "value": -3
+    },
+    {
+      "stat": "charm",
+      "value": -1
+    }
   ]
 }

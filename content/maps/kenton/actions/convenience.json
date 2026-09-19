@@ -13,8 +13,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": 0.89,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -48,15 +48,12 @@
       "archetypeChanges": null,
       "counterChanges": {
         "coffees_bought": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 70,
-    "obsessionIds": []
+    "weight": 70
   },
   {
     "id": "dumpster_dive_denver",
@@ -72,8 +69,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "luck",
@@ -117,9 +114,7 @@
       },
       "counterChanges": {
         "dumpster_dives": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": {
       "narrative": {
@@ -155,14 +150,11 @@
       "archetypeChanges": null,
       "counterChanges": {
         "dumpster_dives": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 35,
-    "obsessionIds": []
+    "weight": 35
   },
   {
     "id": "buy_corn_dog_greeley",
@@ -178,8 +170,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": 1,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -213,15 +205,12 @@
       "archetypeChanges": null,
       "counterChanges": {
         "corn_dogs_bought": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 70,
-    "obsessionIds": []
+    "weight": 70
   },
   {
     "id": "chat_clerks_greeley",
@@ -237,8 +226,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "charm",
@@ -281,9 +270,7 @@
       "archetypeChanges": null,
       "counterChanges": {
         "clerk_conversations": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": {
       "narrative": {
@@ -318,14 +305,11 @@
       "archetypeChanges": null,
       "counterChanges": {
         "clerk_conversations": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 45,
-    "obsessionIds": []
+    "weight": 45
   },
   {
     "id": "buy_hot_dog_greeley_plaid",
@@ -341,8 +325,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": 1.49,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -376,15 +360,12 @@
       "archetypeChanges": null,
       "counterChanges": {
         "hot_dogs_bought": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 70,
-    "obsessionIds": []
+    "weight": 70
   },
   {
     "id": "shoplift_greeley_plaid",
@@ -400,8 +381,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": 0.5,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "wits",
@@ -442,9 +423,7 @@
       },
       "counterChanges": {
         "successful_shoplifts": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": {
       "narrative": {
@@ -479,9 +458,7 @@
       "archetypeChanges": null,
       "counterChanges": {
         "failed_shoplifts": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "criticalSuccess": null,
     "criticalFailure": {
@@ -518,11 +495,8 @@
       "counterChanges": {
         "failed_shoplifts": 1,
         "police_encounters": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
-    "weight": 30,
-    "obsessionIds": []
+    "weight": 30
   }
 ]

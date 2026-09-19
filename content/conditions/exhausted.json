@@ -1,17 +1,33 @@
 {
   "id": "exhausted",
   "display": "Exhausted",
-  "source": { "status": "energy", "below": 20 },
+  "source": {
+    "status": "energy",
+    "below": 20
+  },
   "weight": 0.3,
+  "confusion": 25,
   "persona": {
     "id": "sleepwalker",
     "display": "The sleepwalker",
     "compulsion": "Sit down. Lie down. Anything horizontal."
   },
   "modifiers": [
-    { "stat": "creativity", "value": 2 },
-    { "stat": "stamina", "value": -3 },
-    { "stat": "toughness", "value": -3 },
-    { "stat": "wits", "value": -3 }
+    {
+      "stat": "creativity",
+      "value": 2
+    },
+    {
+      "stat": "stamina",
+      "value": -3
+    },
+    {
+      "stat": "toughness",
+      "value": -3
+    },
+    {
+      "stat": "wits",
+      "value": -3
+    }
   ]
 }

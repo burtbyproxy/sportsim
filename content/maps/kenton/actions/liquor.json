@@ -13,8 +13,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": 7.95,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -42,7 +42,12 @@
         "mood": 12,
         "health": -3
       },
-      "doses": [{ "substanceId": "vodka", "value": 35 }],
+      "doses": [
+        {
+          "substanceId": "vodka",
+          "value": 35
+        }
+      ],
       "statChanges": null,
       "moneyChange": -7.95,
       "itemsGained": null,
@@ -54,15 +59,12 @@
       },
       "counterChanges": {
         "fifths_bought": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 60,
-    "obsessionIds": []
+    "weight": 60
   },
   {
     "id": "ask_clerk_liquor",
@@ -78,8 +80,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "charm",
@@ -122,9 +124,7 @@
       "archetypeChanges": null,
       "counterChanges": {
         "clerk_conversations": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": {
       "narrative": {
@@ -159,13 +159,10 @@
       "archetypeChanges": null,
       "counterChanges": {
         "refused_service": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 35,
-    "obsessionIds": []
+    "weight": 35
   }
 ]

@@ -1,15 +1,25 @@
 {
   "id": "depressed",
   "display": "Depressed",
-  "source": { "status": "mood", "below": 20 },
+  "source": {
+    "status": "mood",
+    "below": 20
+  },
   "weight": 0.3,
+  "confusion": 0,
   "persona": {
     "id": "tortured",
     "display": "The tortured artist",
     "compulsion": "Nothing is worth doing. Do it anyway, and make it hurt."
   },
   "modifiers": [
-    { "stat": "creativity", "value": 3 },
-    { "stat": "charm", "value": -5 }
+    {
+      "stat": "creativity",
+      "value": 3
+    },
+    {
+      "stat": "charm",
+      "value": -5
+    }
   ]
 }

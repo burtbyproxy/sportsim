@@ -1,0 +1,38 @@
+{
+  "id": "the_high",
+  "kind": "affective",
+  "display": "Up and gone",
+  "targetKinds": [],
+  "polarity": null,
+  "confusion": 0,
+  "avoids": false,
+  "draws": 0,
+  "fit": {
+    "trigger": {
+      "kind": "status",
+      "status": "mood",
+      "above": 75
+    },
+    "chancePerTick": 0.25,
+    "ticks": 4,
+    "weight": 0.55,
+    "persona": {
+      "id": "the_rocket",
+      "display": "The rocket",
+      "compulsion": "Everything, now, all of it, with everyone, forever."
+    },
+    "modifiers": [
+      {
+        "stat": "charm",
+        "value": 4
+      },
+      {
+        "stat": "wits",
+        "value": -4
+      }
+    ],
+    "confusion": 10,
+    "lineCode": "psyche.fit.the_rocket"
+  },
+  "lineCode": "psyche.mark.the_high"
+}

@@ -726,13 +726,52 @@ describe('saveMigrate', () => {
       ],
     ])
     const migrated = saveMigrate({ save: v6 })
-    expect(migrated.version).toBe(7)
+    expect(migrated.version).toBe(SAVE_VERSION)
     expect(migrated).not.toHaveProperty('counters')
     expect(migrated.player).not.toHaveProperty('level')
     expect(migrated.player).not.toHaveProperty('xp')
     expect(migrated.player.counters).toEqual(Object.fromEntries([['hoops_sessions', 3]]))
-    expect(migrated.characters.tina).toEqual({ id: 'tina', want: 'To be liked.' })
+    expect(migrated.characters.tina).toEqual({
+      id: 'tina',
+      want: 'To be liked.',
+      dazed: 0,
+      psyche: { marks: [], abilities: [], grooves: {} },
+    })
     expect(migrated.locations.blue_parrot).toEqual({ id: 'blue_parrot', visitCount: 4 })
+  })
+
+  it('a v7 save knows the places it had found or been to, and where it stands', () => {
+    const v7 = makeValidSave({ version: 7 })
+    v7.player.currentLocationId = 'arbys'
+    v7.locations = Object.fromEntries([
+      ['moms_house', { id: 'moms_house', discovered: true, visitCount: 0 }],
+      ['blue_parrot', { id: 'blue_parrot', discovered: false, visitCount: 2 }],
+      ['glitters', { id: 'glitters', discovered: false, visitCount: 0 }],
+      ['arbys', { id: 'arbys', discovered: false, visitCount: 0 }],
+    ])
+    const migrated = saveMigrate({ save: v7 })
+    expect(migrated.version).toBe(SAVE_VERSION)
+    expect(migrated.player.knownLocationIds).toEqual(['moms_house', 'blue_parrot', 'arbys'])
+    for (const location of Object.values(migrated.locations)) {
+      expect(location).not.toHaveProperty('discovered')
+    }
+  })
+
+  it('a v7 psyche becomes marks: clean, with abilities kept, for the player and everyone else', () => {
+    const v7 = makeValidSave({ version: 7 })
+    const old = {
+      traumas: [{ id: 'mugged', effects: {} }],
+      obsessions: [{ id: 'booze', strength: 40 }],
+      insanities: [],
+      abilities: [{ id: 'abil_dish_hustle', active: true }],
+    }
+    v7.player.psyche = old
+    v7.characters = { maurice: { id: 'maurice', psyche: old } }
+    const migrated = saveMigrate({ save: v7 })
+    const clean = { marks: [], abilities: old.abilities, grooves: {} }
+    expect(migrated.player.psyche).toEqual(clean)
+    expect(migrated.characters.maurice.psyche).toEqual(clean)
+    expect(migrated.player.dazed).toBe(0)
   })
 
   it('does not mutate the input', () => {

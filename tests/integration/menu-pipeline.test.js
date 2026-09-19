@@ -44,19 +44,28 @@ describe('the menu', () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
 
-  it("keeps the engine's order, so an obsession moves its action up the menu", () => {
+  it("keeps the engine's order, so what a mark pulls toward moves up the menu", () => {
     const game = startGame()
+    for (const mark of contentDir({ dir: 'content/marks' })) game.markRegister({ mark })
     const actions = [
-      { id: 'sensible', label: 'Sensible', locationId: 'moms_house', weight: 50, obsessionIds: [] },
+      { id: 'sensible', label: 'Sensible', locationId: 'moms_house', weight: 50 },
       {
         id: 'compulsion',
         label: 'Compulsion',
         locationId: 'moms_house',
         weight: 40,
-        obsessionIds: ['booze'],
+        success: { doses: [{ substanceId: 'whiskey', value: 10 }] },
       },
     ]
-    game.player.psyche.obsessions = [{ id: 'booze', strength: 100 }]
+    game.player.psyche.marks = [
+      {
+        id: 'm1',
+        markId: 'obsession_love',
+        target: { kind: 'substance', id: 'whiskey' },
+        status: 'active',
+        fitTicksRemaining: 0,
+      },
+    ]
     useGameLoop({ actionRegistry: actions }).onLocationEntered()
     expect(game.menuEntries.filter((e) => e.kind === 'action').map((e) => e.action.id)).toEqual([
       'compulsion',
@@ -72,16 +81,26 @@ describe('the menu', () => {
     expect(sleep.reason).toBe(sober('requirement.hour.early'))
   })
 
-  it("an exit to a place that is shut is greyed out with the place's own words", () => {
+  it("an exit to a shut place the player knows is greyed out with the place's own words", () => {
     const game = startGame()
+    game.locationLearnApply({ locationId: 'blue_parrot' })
     useGameLoop().onLocationEntered()
     const parrot = game.menuEntries.find((e) => e.exit?.locationId === 'blue_parrot')
     expect(parrot.available).toBe(false)
     expect(parrot.reason).toBe(game.locations.blue_parrot.availability.closedMessage)
   })
 
+  it('an exit to a shut place the player does not know is just shut: its words would name it', () => {
+    const game = startGame()
+    useGameLoop().onLocationEntered()
+    const parrot = game.menuEntries.find((e) => e.exit?.locationId === 'blue_parrot')
+    expect(parrot.available).toBe(false)
+    expect(parrot.reason).toBe(sober('requirement.closed'))
+  })
+
   it('walking into a shut place is refused, out loud, and nobody moves', async () => {
     const game = startGame()
+    game.locationLearnApply({ locationId: 'blue_parrot' })
     const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ narrative })
     await loop.travel({ locationId: 'blue_parrot' })
@@ -113,6 +132,7 @@ describe('the menu', () => {
 
   it('picking someone out shows their actions; leaving lets them go', async () => {
     const game = startGame({ at: 'mocks_crest' })
+    game.locationLearnApply({ locationId: 'mocks_crest' })
     game.characterRegister({ character: characterCreate(dale) })
     game.characterLocationSet({ characterId: 'dale', locationId: 'mocks_crest' })
     const talk = {

@@ -2,6 +2,15 @@
   "id": "dancin_bare",
   "type": "bar",
   "display": "The Dancin' Bare",
+  "displayInline": "the Dancin' Bare",
+  "appearance": {
+    "display": "A windowless club with a bear on the sign",
+    "displayInline": "a windowless club with a bear on the sign",
+    "descriptions": {
+      "default": "A windowless building painted a color that gave up. The sign has a cartoon bear on it, and the bear is wearing less than a bear usually does. A board by the door says STEAK BITES $2, and nothing about why you'd eat them here.",
+      "night": "Hair metal is leaking out through the walls. The door opens, a sound of coins hitting something comes out, and the door shuts. The bear on the sign is lit and looks pleased with itself."
+    }
+  },
   "pieceAs": "at the Dancin' Bare",
   "outdoors": false,
   "descriptions": {
@@ -15,19 +24,19 @@
   "exits": [
     {
       "locationId": "glitters",
-      "label": "Walk to All That Glitters",
+      "label": "Walk to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "greeley_711",
-      "label": "Head to Greeley 7-11",
+      "label": "Head to {place}",
       "travelTime": 2,
       "requirements": null
     },
     {
       "locationId": "liquor",
-      "label": "Walk to Kenton Liquor",
+      "label": "Walk to {place}",
       "travelTime": 2,
       "requirements": null
     }
@@ -47,7 +56,6 @@
       "mediumIds": ["carving"]
     }
   ],
-  "discovered": false,
   "availability": {
     "openHour": 11,
     "closeHour": 2,

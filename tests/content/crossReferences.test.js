@@ -100,6 +100,19 @@ describe('cross-reference validation', () => {
     }
   }
 
+  // A habit shows wherever the person is, so it never names a place: somewhere the
+  // player doesn't know would give its name away.
+  const placeNames = locationFiles.flatMap(({ data }) =>
+    [data.display, data.displayInline].map((name) => name.replace(/^the /i, ''))
+  )
+  for (const { file, data: character } of characterFiles) {
+    it(`${file}: habit names no place`, () => {
+      for (const name of placeNames) {
+        expect(character.habit, `'${character.id}' habit names '${name}'`).not.toContain(name)
+      }
+    })
+  }
+
   // Character schedule locationIds must exist in location data
   for (const { file, data: character } of characterFiles) {
     if (!character.schedule?.entries?.length) continue

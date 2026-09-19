@@ -15,8 +15,8 @@
       "minStatus": null,
       "maxStatus": null,
       "requiredItems": null,
-      "requiredTraumas": null,
-      "minVisits": null
+      "minVisits": null,
+      "requiredMarkIds": null
     },
     "narrative": {
       "tokens": [
@@ -60,9 +60,7 @@
       "counterChanges": {
         "beers_consumed": 1,
         "free_beers": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "nextEventId": null
   },
@@ -82,8 +80,8 @@
       "minStatus": null,
       "maxStatus": null,
       "requiredItems": null,
-      "requiredTraumas": null,
-      "minVisits": null
+      "minVisits": null,
+      "requiredMarkIds": null
     },
     "narrative": {
       "tokens": [
@@ -110,9 +108,7 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "nextEventId": null
   },
@@ -132,8 +128,8 @@
       "minStatus": null,
       "maxStatus": null,
       "requiredItems": null,
-      "requiredTraumas": null,
-      "minVisits": null
+      "minVisits": null,
+      "requiredMarkIds": null
     },
     "narrative": {
       "tokens": [
@@ -160,8 +156,6 @@
       "locationDiscovered": null,
       "archetypeChanges": null,
       "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null,
       "inspiration": {
         "mediumId": "karaoke",
         "strength": 45,

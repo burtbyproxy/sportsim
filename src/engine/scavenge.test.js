@@ -54,7 +54,7 @@ function makePlayer({ luck = 10, wits = 10, counters = {} } = {}) {
       luck: { base: luck, modifiers: [], xp: 0 },
       wits: { base: wits, modifiers: [], xp: 0 },
     },
-    psyche: { traumas: [], obsessions: [], insanities: [], abilities: [] },
+    psyche: { marks: [], abilities: [], grooves: {} },
     blend: blendSober(),
     counters,
   }

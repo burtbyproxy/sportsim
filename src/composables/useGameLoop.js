@@ -6,10 +6,13 @@
  *   2. the player's vitals decay
  *   3. stat modifiers expire
  *   4. the characters move (the simulation) and their vitals decay
- *   4b. what is in everyone wears off, and blends are recomputed
+ *   4b. what is in everyone wears off, a knock to the head too, and blends
+ *       are recomputed
  *   4c. the inspiration clock runs down
  *   4d. whoever is in charge may get an urge
+ *   4e. marks go off, and time in charge wears grooves
  *   5. the player moves, if they are travelling, and the new scene starts
+ *   5b. a change in how confused the player is changes what they get wrong
  *   6. at most one event happens
  *   6b. work whose idea died dies with it
  *   7. failures nobody was told about are told
@@ -23,6 +26,7 @@
 
 import { useGameStore } from '../stores/game.js'
 import {
+  ACTION_KINDS,
   REQUIREMENT_CODES,
   actionApplies,
   actionResolve,
@@ -35,14 +39,15 @@ import {
   modifiersTick,
   inventoryAdd,
   inventoryRemove,
-  obsessionFeed,
   archetypeScoreAdd,
   counterAdd,
 } from '../models/player.js'
 import { MAKING_SURFACE_KINDS, ARTIFACT_STATUSES, makingOptions } from '../engine/making.js'
 import { eventsRandomCheck, eventsTriggeredCheck, eventResolve } from '../engine/events.js'
+import { actionMisperceived, locationKnown } from '../engine/perception.js'
+import { MARK_TARGET_KINDS, psycheAvoids } from '../engine/psyche.js'
 import { narrativeAction, narrativeEvent, narrativeLocation } from './useNarrative.js'
-import { narrativeTextCreate } from '../utils/text.js'
+import { narrativeTextCreate, textFill } from '../utils/text.js'
 import { sim } from '../workers/simulation-api.js'
 import { moneyFormat } from '../utils/money.js'
 import { listSortBy } from '../utils/list.js'
@@ -126,7 +131,18 @@ export function useGameLoop({
           characters: charactersArray,
         })
         for (const update of simResult.characters) {
-          game.characterLocationSet({ characterId: update.id, locationId: update.locationId })
+          // Somebody who can't go back to a place doesn't turn up there.
+          const kept = update.locationId
+            ? psycheAvoids({
+                subject: game.characters[update.id],
+                marks: game.marks,
+                target: { kind: MARK_TARGET_KINDS.location, id: update.locationId },
+              })
+            : null
+          game.characterLocationSet({
+            characterId: update.id,
+            locationId: kept ? null : update.locationId,
+          })
         }
         game.charactersStatusApply({ updates: simResult.characters })
       }
@@ -138,6 +154,8 @@ export function useGameLoop({
     // 4b. Substances wear off — player and characters alike — and the blend
     // snapshot every roll reads is recomputed.
     game.blendDecayApply({ ticksElapsed: ticks })
+    const daze = game.playerDazedDecayApply({ ticksElapsed: ticks })
+    if (!daze.ok) failureShow(daze)
 
     // 4c. The inspiration clock runs down. An idea that ran out says so.
     const clock = game.inspirationTickApply({ ticksElapsed: ticks })
@@ -149,11 +167,32 @@ export function useGameLoop({
     if (!urge.ok) failureShow(urge)
     else if (urge.data.struck) voiceEnqueue({ code: 'inspiration.urge' })
 
+    // 4e. What stays with the player goes off when it's set off; what has
+    // been in charge too long wears a groove.
+    const psyche = game.psycheTickApply({
+      ticksElapsed: ticks,
+      topicIds: game.availableActions.flatMap((a) => a.topicIds ?? []),
+      rng,
+    })
+    if (!psyche.ok) failureShow(psyche)
+    else {
+      for (const mark of psyche.data.fitsStarted) {
+        voiceEnqueue({
+          code: game.marks[mark.markId].fit.lineCode,
+          params: { target: game.targetName({ target: mark.target }) },
+        })
+      }
+      for (const worn of psyche.data.grooves) traumaSpeak({ result: worn, quietOnSave: true })
+    }
+
     // 5. Move if requested — the new scene's prose goes into a fresh log
     if (locationId) {
       game.playerMove({ locationId })
       locationEnter()
     }
+
+    // 5b. Drink enough, or sober up enough, and the scene is seen afresh.
+    perceptionRefresh({ force: false })
 
     // 6. The world happens to the player: at most one event per tick.
     // After decay and after the move, so thresholds and the new place are
@@ -176,16 +215,10 @@ export function useGameLoop({
    * event is still waiting on them (say, after a load), put it back in front.
    */
   function locationEnter() {
+    perceptionRefresh({ force: true })
     if (narrative && game.currentLocation && game.player) {
       narrative.clearLog()
-      narrative.enqueue(
-        narrativeLocation({
-          tuning: game.tuning,
-          location: game.currentLocation,
-          player: game.player,
-          gameTime: game.time,
-        })
-      )
+      sceneDescribe({ closer: false })
       for (const mark of game.currentLocation.marks ?? []) {
         if (mark.status === ARTIFACT_STATUSES.fresh) {
           voiceEnqueue({ code: 'mark.still_here', params: { work: mark.workText } })
@@ -196,6 +229,46 @@ export function useGameLoop({
       }
     }
     refreshActions()
+  }
+
+  /**
+   * Roll what the player gets wrong about the scene: always for a new scene,
+   * and in one already under way whenever their band of confusion changes.
+   * If that puts them somewhere else, they look up and see where.
+   * @param {{ force: boolean }} input
+   */
+  function perceptionRefresh({ force }) {
+    if (!game.player || !game.currentLocation) return
+    const before = game.scene?.place.locationId
+    const rolled = game.perceptionRollApply({ rng, force })
+    if (!rolled.ok) return failureShow(rolled)
+    if (!force && rolled.data.rolled && game.scene.place.locationId !== before) {
+      sceneDescribe({ closer: true })
+    }
+  }
+
+  /**
+   * Say where the player takes themselves to be. The first time, the whole
+   * place (or, somewhere they do not know, its looks); coming back, a line
+   * that they are back. Looking closer is the whole place again.
+   * @param {{ closer: boolean }} input
+   */
+  function sceneDescribe({ closer }) {
+    const scene = game.scene
+    if (!narrative || !scene) return
+    if (!closer && game.currentLocation.visitCount > 1) {
+      voiceEnqueue({ code: 'location.return', params: { place: game.scenePlace.displayInline } })
+      return
+    }
+    narrative.enqueue(
+      narrativeLocation({
+        tuning: game.tuning,
+        location: game.locations[scene.place.locationId],
+        known: scene.place.known,
+        player: game.player,
+        gameTime: game.time,
+      })
+    )
   }
 
   /**
@@ -280,6 +353,26 @@ export function useGameLoop({
   function narrativeEnqueue(narrativeText) {
     if (narrative && narrativeText?.tokens?.length > 0) {
       narrative.enqueue(narrativeText)
+    }
+  }
+
+  /**
+   * What came of a save: a new mark says what it is about, in its own line;
+   * the same mark again, or a save that held, say so. A save nobody saw
+   * coming (a groove) that held stays quiet.
+   * @param {{ result: { saved: boolean, check: Object, mark: Object|null, duplicate: boolean }, quietOnSave: boolean }} input
+   */
+  function traumaSpeak({ result, quietOnSave }) {
+    checkTrain(result.check)
+    if (result.mark) {
+      voiceEnqueue({
+        code: game.marks[result.mark.markId].lineCode,
+        params: { target: game.targetName({ target: result.mark.target }) },
+      })
+    } else if (result.duplicate) {
+      voiceEnqueue({ code: 'psyche.mark.again' })
+    } else if (!quietOnSave) {
+      voiceEnqueue({ code: 'psyche.save.passed' })
     }
   }
 
@@ -646,7 +739,21 @@ export function useGameLoop({
       return
     }
 
+    // The player took the place, or the face, for something it isn't. What
+    // they reached for is not here; the act runs into what is, and reality
+    // gets through.
     const characters = game.charactersAtCurrentLocation
+    if (actionMisperceived({ action, location: game.currentLocation, characters })) {
+      const here = game.locationDisplay({
+        locationId: game.currentLocationId,
+        known: locationKnown({ player: game.player, locationId: game.currentLocationId }),
+      })
+      voiceEnqueue({ code: 'perception.misfire', params: { place: here.displayInline } })
+      game.perceptionClear()
+      await tick({ ticks: action.timeCost || 1 })
+      return
+    }
+
     const result = actionResolve({
       tuning: game.tuning,
       player: game.player,
@@ -674,14 +781,28 @@ export function useGameLoop({
     outcomeApply({ outcome, source: { kind: 'action', id: action.id } })
 
     // Taking stock costs no time: the menu becomes the making menu.
-    if (action.kind === 'make') {
+    if (action.kind === ACTION_KINDS.make) {
       makingPickerOpen()
       refreshActions()
       return
     }
 
+    // A closer look costs no time: the whole place, as the player sees it.
+    if (action.kind === ACTION_KINDS.look) {
+      sceneDescribe({ closer: true })
+      refreshActions()
+      return
+    }
+
+    // Reading the sign: the player finds out what this place really is.
+    if (action.kind === ACTION_KINDS.investigate) {
+      const learned = game.locationLearnApply({ locationId: game.currentLocationId })
+      if (!learned.ok) failureShow(learned)
+      else sceneDescribe({ closer: true })
+    }
+
     // Looking around: what turns up is the engine's call, not the content's.
-    if (action.kind === 'scavenge') scavengeRun()
+    if (action.kind === ACTION_KINDS.scavenge) scavengeRun()
 
     // Some actions are the interruption: sleep, mostly.
     if (action.interruptsInspiration) {
@@ -719,6 +840,11 @@ export function useGameLoop({
     // Doses — what went into the player. Hidden doses roll here.
     if (outcome.doses?.length > 0) {
       game.playerDosesApply({ doses: outcome.doses, rng })
+    }
+
+    // A knock to the head. What the player sees catches up on the next tick.
+    if (outcome.dazed) {
+      game.playerDazedApply({ amount: outcome.dazed })
     }
 
     // Inspiration — the world strikes. Snapshots the blend as it is now,
@@ -767,13 +893,18 @@ export function useGameLoop({
       }
     }
 
-    // Obsession feeding
-    if (outcome.obsessionFed) {
-      obsessionFeed({
-        player: game.player,
-        obsessionId: outcome.obsessionFed,
-        amount: game.tuning.obsession.feedAmount,
-      })
+    // Something that happened is the kind of thing that stays with you. What
+    // it leaves is about what content says, or else whoever the player was
+    // dealing with, or else the place it happened.
+    if (outcome.trauma) {
+      const target =
+        outcome.trauma.target ??
+        (actionOf({ source })?.characterId
+          ? { kind: MARK_TARGET_KINDS.character, id: actionOf({ source }).characterId }
+          : { kind: MARK_TARGET_KINDS.location, id: game.currentLocationId })
+      const marked = game.psycheTraumaApply({ trauma: outcome.trauma, target, source, rng })
+      if (!marked.ok) failureShow(marked)
+      else traumaSpeak({ result: marked.data, quietOnSave: false })
     }
 
     // Mark one-time events
@@ -781,11 +912,21 @@ export function useGameLoop({
       game.eventFiredMark({ eventId: outcome.eventTriggered })
     }
 
-    // Location discovery
+    // Somebody tells the player what a place is.
     if (outcome.locationDiscovered) {
-      const loc = game.locations[outcome.locationDiscovered]
-      if (loc) loc.discovered = true
+      const learned = game.locationLearnApply({ locationId: outcome.locationDiscovered })
+      if (!learned.ok) failureShow(learned)
     }
+  }
+
+  /**
+   * The content action an outcome came from, or null when it came from something else.
+   * @param {{ source: { kind: string, id: string } }} input
+   * @returns {Object|null}
+   */
+  function actionOf({ source }) {
+    if (source.kind !== 'action') return null
+    return actionRegistry.find((a) => a.id === source.id) ?? null
   }
 
   /**
@@ -805,23 +946,36 @@ export function useGameLoop({
       return
     }
 
-    const location = game.currentLocation
-    const characters = game.charactersAtCurrentLocation
+    // The menu offers the business of the place the player takes this to be,
+    // with the people they take to be here.
+    const { menu } = game.scene
+    const location = game.locations[menu.locationId]
+    const known = menu.known
+    const characters = game.scenePeople
     const actions = actionsAvailable({
       player: game.player,
       location,
+      known,
       characters,
       gameTime: game.time,
       actionRegistry,
+      marks: game.marks,
     })
 
-    // What can be done, in the engine's order (weight, obsessions and all),
-    // then what cannot yet, heaviest first, each saying why not.
-    const annotated = actions.map((a) => ({ ...a, available: true, unavailableReason: null }))
+    // What can be done, in the engine's order (weight, and whatever the
+    // player's marks pull toward), then what cannot yet, heaviest first, each
+    // saying why not. Somebody the player can't face is there, and greyed out.
+    const annotated = actions.map((a) => {
+      const avoided = a.characterId
+        ? game.playerAvoids({ target: { kind: MARK_TARGET_KINDS.character, id: a.characterId } })
+        : null
+      if (!avoided) return { ...a, available: true, unavailableReason: null }
+      return { ...a, available: false, unavailableReason: avoidReason({ mark: avoided }) }
+    })
     const disabledActions = listSortBy({
       items: actionRegistry.filter(
         (a) =>
-          actionApplies({ action: a, location, characters }) &&
+          actionApplies({ action: a, location, known, characters }) &&
           !annotated.find((x) => x.id === a.id)
       ),
       keyOf: (a) => a.weight ?? 0,
@@ -847,25 +1001,45 @@ export function useGameLoop({
   }
 
   /**
-   * An exit as the menu shows it: whether the player can go, and if not, why.
+   * An exit as the menu shows it: named for where the player takes it to
+   * lead, whether they can go, and if not, why.
    * @param {{ exit: Object }} input
-   * @returns {Object} the exit with available and unavailableReason
+   * @returns {Object} the exit with its label filled, available and unavailableReason
    */
-  function exitEntry({ exit }) {
+  function exitEntry({ exit: way }) {
+    const destination = game.locations[way.locationId]
+    if (!destination) {
+      return { ...way, available: false, unavailableReason: `[${LOOP_ERROR_CODES.exitUnknown}]` }
+    }
+    const seen = game.scene.exits.find((e) => e.locationId === way.locationId)
+    const place = game.locationDisplay({
+      locationId: seen.perceivedLocationId,
+      known: seen.known,
+    })
+    const exit = {
+      ...way,
+      label: textFill({ text: way.label, params: { place: place.displayInline } }),
+    }
     const blocked = (unavailableReason) => ({ ...exit, available: false, unavailableReason })
     if (game.makingActive) {
       return blocked(game.requirementReason({ code: REQUIREMENT_CODES.busy }))
     }
-    const destination = game.locations[exit.locationId]
-    if (!destination) return blocked(`[${LOOP_ERROR_CODES.exitUnknown}]`)
     if (!locationOpen({ location: destination, hour: game.time.hour })) {
+      // A place's own words about being shut name it: they are for a place
+      // the player knows, and knows this is the way to. Anywhere else is just shut.
+      const named = seen.known && seen.perceivedLocationId === way.locationId
       return blocked(
-        destination.availability?.closedMessage ||
+        (named && destination.availability?.closedMessage) ||
           game.requirementReason({ code: REQUIREMENT_CODES.closed })
       )
     }
+    // A place the player can't go back to: they can see the way, and can't take it.
+    const avoided = game.playerAvoids({
+      target: { kind: MARK_TARGET_KINDS.location, id: seen.perceivedLocationId },
+    })
+    if (avoided) return blocked(avoidReason({ mark: avoided }))
     const why = exitRequirementsMeet({
-      exit,
+      exit: way,
       player: game.player,
       gameTime: game.time,
       location: game.currentLocation,
@@ -876,9 +1050,21 @@ export function useGameLoop({
     return { ...exit, available: true, unavailableReason: null }
   }
 
+  /**
+   * Why the player won't, when a mark won't let them: about what it is about.
+   * @param {{ mark: Object }} input
+   * @returns {string}
+   */
+  function avoidReason({ mark }) {
+    return game.requirementReason({
+      code: REQUIREMENT_CODES.avoid,
+      params: { target: game.targetName({ target: mark.target }) },
+    })
+  }
+
   /** The ways out of here, each saying whether it is open to the player now. */
   function exitsRefresh() {
-    const exits = game.currentLocation?.exits ?? []
+    const exits = game.scene ? game.currentLocation.exits : []
     game.menuExitsSet({ exits: exits.map((exit) => exitEntry({ exit })) })
   }
 

@@ -148,11 +148,38 @@ describe('kentonLocations data integrity', () => {
     const morning = { period: 'morning', hour: 9 }
     for (const id of EXPECTED_IDS) {
       const loc = locationCreate(kentonLocations[id])
-      const text = narrativeLocation({ tuning, location: loc, player, gameTime: morning })
+      const text = narrativeLocation({
+        tuning,
+        location: loc,
+        known: true,
+        player,
+        gameTime: morning,
+      })
         .tokens.map((t) => t.text)
         .join('')
       expect(text, `${id}: narrated description`).toContain(
         kentonLocations[id].descriptions.default.slice(0, 40)
+      )
+    }
+  })
+
+  it('every location shows a stranger its looks, and never its name', () => {
+    const player = playerCreate({ name: 'Test' })
+    const morning = { period: 'morning', hour: 9 }
+    for (const id of EXPECTED_IDS) {
+      const loc = locationCreate(kentonLocations[id])
+      const text = narrativeLocation({
+        tuning,
+        location: loc,
+        known: false,
+        player,
+        gameTime: morning,
+      })
+        .tokens.map((t) => t.text)
+        .join('')
+      expect(text, `${id}: its looks`).toBe(kentonLocations[id].appearance.descriptions.default)
+      expect(text, `${id}: a stranger does not read the name`).not.toContain(
+        kentonLocations[id].displayInline
       )
     }
   })

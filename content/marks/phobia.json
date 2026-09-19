@@ -1,0 +1,36 @@
+{
+  "id": "phobia",
+  "kind": "phobia",
+  "display": "Can't go back",
+  "targetKinds": ["location", "character"],
+  "polarity": null,
+  "confusion": 0,
+  "avoids": true,
+  "draws": 0,
+  "fit": {
+    "trigger": {
+      "kind": "target"
+    },
+    "chancePerTick": 0.5,
+    "ticks": 2,
+    "weight": 0.6,
+    "persona": {
+      "id": "panic",
+      "display": "The panic",
+      "compulsion": "Get out. Get out. Get out."
+    },
+    "modifiers": [
+      {
+        "stat": "stamina",
+        "value": 3
+      },
+      {
+        "stat": "wits",
+        "value": -5
+      }
+    ],
+    "confusion": 20,
+    "lineCode": "psyche.fit.panic"
+  },
+  "lineCode": "psyche.mark.phobia"
+}

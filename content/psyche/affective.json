@@ -1,0 +1,14 @@
+{
+  "id": "affective",
+  "display": "Affective disorder",
+  "entries": [
+    {
+      "weight": 55,
+      "markId": "the_low"
+    },
+    {
+      "weight": 45,
+      "markId": "the_high"
+    }
+  ]
+}

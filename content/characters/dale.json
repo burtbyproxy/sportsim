@@ -2,18 +2,50 @@
   "id": "dale",
   "name": "Dale",
   "description": "Stocky, clean-shaven, short hair going gray at the temples. Dale wears a bar apron like other men wear a badge. He moves behind the Mock's Crest bar with an economy that comes from years of doing the same thing well. His hands are fast. His pours are heavy. He knows your name and if he doesn't, he'll give you one — it goes in the register system next to whatever he's decided to call you. You don't get to pick.",
-  "habit": "Assigns nicknames. Enters them in the register. You are not consulted. The nickname sticks. Regulars refer to each other by Dale's names. This is how identity works at Mock's Crest.",
+  "habit": "Assigns nicknames. Enters them in the register. You are not consulted. The nickname sticks. Regulars refer to each other by Dale's names. This is how identity works in here.",
   "voice": "Warm but brisk. Talks to you like you're the tenth person he's talked to in the last five minutes because you are. Never rude, never lingering. Calls you by your nickname. Remembers your order. 'The usual?' is the highest compliment Dale gives.",
   "simulation": "routine",
   "stats": {
-    "stamina": { "base": 60, "modifiers": [], "xp": 0 },
-    "toughness": { "base": 55, "modifiers": [], "xp": 0 },
-    "wits": { "base": 55, "modifiers": [], "xp": 0 },
-    "creativity": { "base": 30, "modifiers": [], "xp": 0 },
-    "charm": { "base": 65, "modifiers": [], "xp": 0 },
-    "reputation": { "base": 70, "modifiers": [], "xp": 0 },
-    "luck": { "base": 40, "modifiers": [], "xp": 0 },
-    "karma": { "base": 60, "modifiers": [], "xp": 0 }
+    "stamina": {
+      "base": 60,
+      "modifiers": [],
+      "xp": 0
+    },
+    "toughness": {
+      "base": 55,
+      "modifiers": [],
+      "xp": 0
+    },
+    "wits": {
+      "base": 55,
+      "modifiers": [],
+      "xp": 0
+    },
+    "creativity": {
+      "base": 30,
+      "modifiers": [],
+      "xp": 0
+    },
+    "charm": {
+      "base": 65,
+      "modifiers": [],
+      "xp": 0
+    },
+    "reputation": {
+      "base": 70,
+      "modifiers": [],
+      "xp": 0
+    },
+    "luck": {
+      "base": 40,
+      "modifiers": [],
+      "xp": 0
+    },
+    "karma": {
+      "base": 60,
+      "modifiers": [],
+      "xp": 0
+    }
   },
   "status": null,
   "psyche": {

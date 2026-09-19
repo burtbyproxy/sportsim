@@ -15,9 +15,14 @@ describe('locationCreate', () => {
     id: 'blue_parrot',
     type: 'bar',
     display: 'The Blue Parrot',
+    displayInline: 'the Blue Parrot',
+    appearance: {
+      display: 'A bar with a neon bird',
+      displayInline: 'a bar with a neon bird in the window',
+      descriptions: { default: 'A low bar.' },
+    },
     descriptions: { default: 'A dive bar.' },
     exits: [{ locationId: 'moms_house', label: 'Home', travelTime: 1, requirements: null }],
-    discovered: true,
     availability: { openHour: 11, closeHour: 2, closedMessage: 'Closed.' },
     visitCount: 3,
   }
@@ -29,7 +34,8 @@ describe('locationCreate', () => {
     expect(loc.display).toBe('The Blue Parrot')
     expect(loc.descriptions.default).toBe('A dive bar.')
     expect(loc.exits).toHaveLength(1)
-    expect(loc.discovered).toBe(true)
+    expect(loc.displayInline).toBe('the Blue Parrot')
+    expect(loc.appearance).toEqual(raw.appearance)
     expect(loc.availability.openHour).toBe(11)
     expect(loc.visitCount).toBe(3)
   })
@@ -38,7 +44,8 @@ describe('locationCreate', () => {
     const loc = locationCreate({ id: 'x', type: 'park', display: 'X' })
     expect(loc.descriptions).toEqual({ default: '' })
     expect(loc.exits).toEqual([])
-    expect(loc.discovered).toBe(false)
+    expect(loc.displayInline).toBe('X')
+    expect(loc.appearance).toBeNull()
     expect(loc.availability.openHour).toBe(0)
     expect(loc.availability.closeHour).toBe(23)
     expect(loc.visitCount).toBe(0)
@@ -47,7 +54,9 @@ describe('locationCreate', () => {
   it('does not share references with source data', () => {
     const loc = locationCreate(raw)
     loc.exits[0].label = 'MODIFIED'
+    loc.appearance.descriptions.default = 'MODIFIED'
     expect(raw.exits[0].label).toBe('Home')
+    expect(raw.appearance.descriptions.default).toBe('A low bar.')
   })
 
   it('serializes cleanly to JSON', () => {
@@ -134,7 +143,7 @@ describe('exitRequirementsMeet', () => {
     stats: { charisma: { base: 3 } },
     status: { sobriety: 80 },
     inventory: [{ id: 'bus_pass', quantity: 1 }],
-    psyche: { traumas: [], abilities: [] },
+    psyche: { marks: [], abilities: [], grooves: {} },
   }
 
   it('an exit with no requirements is always open', () => {

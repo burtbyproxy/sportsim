@@ -1,0 +1,26 @@
+{
+  "id": "insanity",
+  "display": "Random insanity",
+  "entries": [
+    {
+      "weight": 30,
+      "markId": "phobia"
+    },
+    {
+      "weight": 25,
+      "tableId": "obsession"
+    },
+    {
+      "weight": 20,
+      "tableId": "neurosis"
+    },
+    {
+      "weight": 10,
+      "tableId": "psychosis"
+    },
+    {
+      "weight": 15,
+      "tableId": "affective"
+    }
+  ]
+}

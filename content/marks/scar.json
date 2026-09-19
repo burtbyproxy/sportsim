@@ -1,0 +1,46 @@
+{
+  "id": "scar",
+  "kind": "trauma",
+  "display": "A scar",
+  "targetKinds": ["location", "character", "item", "substance", "topic"],
+  "polarity": null,
+  "modifiers": [
+    {
+      "stat": "toughness",
+      "value": 2
+    },
+    {
+      "stat": "charm",
+      "value": -2
+    }
+  ],
+  "confusion": 0,
+  "avoids": false,
+  "draws": 0,
+  "fit": {
+    "trigger": {
+      "kind": "target"
+    },
+    "chancePerTick": 0.3,
+    "ticks": 2,
+    "weight": 0.4,
+    "persona": {
+      "id": "flashback",
+      "display": "The flashback",
+      "compulsion": "It's happening again. It isn't. It is."
+    },
+    "modifiers": [
+      {
+        "stat": "toughness",
+        "value": 2
+      },
+      {
+        "stat": "wits",
+        "value": -4
+      }
+    ],
+    "confusion": 15,
+    "lineCode": "psyche.fit.flashback"
+  },
+  "lineCode": "psyche.mark.scar"
+}

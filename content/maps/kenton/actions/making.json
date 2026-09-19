@@ -14,9 +14,9 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
       "requiredAbilities": null,
-      "requiresInspiration": true
+      "requiresInspiration": true,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -40,14 +40,11 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 40,
-    "obsessionIds": []
+    "weight": 40
   }
 ]

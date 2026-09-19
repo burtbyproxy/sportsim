@@ -2,6 +2,7 @@
   "id": "nicotine",
   "display": "Nicotine",
   "family": "nicotine",
+  "confusionFactor": 0,
   "persona": {
     "id": "mr_cool",
     "display": "Mr. Cool",
@@ -19,19 +20,40 @@
       "compulsion": "Think about nothing else. Bum one off anybody."
     },
     "modifiers": [
-      { "stat": "charm", "value": -5 },
-      { "stat": "wits", "value": -3 },
-      { "stat": "toughness", "value": 2 }
+      {
+        "stat": "charm",
+        "value": -5
+      },
+      {
+        "stat": "wits",
+        "value": -3
+      },
+      {
+        "stat": "toughness",
+        "value": 2
+      }
     ]
   },
   "bands": [
     {
       "atLeast": 10,
       "modifiers": [
-        { "stat": "charm", "value": 3 },
-        { "stat": "creativity", "value": 1 },
-        { "stat": "stamina", "value": -2 },
-        { "stat": "toughness", "value": -1 }
+        {
+          "stat": "charm",
+          "value": 3
+        },
+        {
+          "stat": "creativity",
+          "value": 1
+        },
+        {
+          "stat": "stamina",
+          "value": -2
+        },
+        {
+          "stat": "toughness",
+          "value": -1
+        }
       ]
     }
   ]

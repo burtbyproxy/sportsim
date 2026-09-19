@@ -3,6 +3,7 @@
 import { describe, it, expect } from 'vitest'
 import { contentFile, tuningContent } from '../helpers/content.js'
 import { listSortBy } from '../../src/utils/list.js'
+import { DISTORTION_KINDS } from '../../src/engine/perception.js'
 
 const tuning = tuningContent()
 const vocabulary = contentFile({ path: 'content/vocabulary.json' })
@@ -18,7 +19,8 @@ describe('content/tuning.json — the game numbers', () => {
       'skills',
       'scavenge',
       'making',
-      'obsession',
+      'psyche',
+      'perception',
       'simulation',
       'narrative',
     ]) {
@@ -45,7 +47,6 @@ describe('content/tuning.json — the game numbers', () => {
       skills: tuning.skills,
       scavenge: tuning.scavenge,
       making: tuning.making,
-      obsession: tuning.obsession,
     })) {
       for (const [key, value] of Object.entries(values)) {
         expect(isNumber(value), `${section}.${key}`).toBe(true)
@@ -61,6 +62,27 @@ describe('content/tuning.json — the game numbers', () => {
     for (const need of tuning.simulation.needs) {
       expect(vitals, need.status).toContain(need.status)
       expect(isNumber(need.below), need.status).toBe(true)
+    }
+  })
+
+  it('confusion wears off, its bands climb, and every kind of distortion has a chance', () => {
+    const { perception } = tuning
+    expect(perception.dazedDecayPerTick).toBeGreaterThan(0)
+    const floors = perception.bands.map((band) => band.atLeast)
+    expect(floors.length).toBeGreaterThan(0)
+    expect(listSortBy({ items: floors, keyOf: (n) => n })).toEqual(floors)
+    expect(new Set(floors).size).toBe(floors.length)
+    expect(floors[0]).toBeGreaterThan(0)
+    expect(floors.at(-1)).toBeLessThanOrEqual(100)
+    expect(Object.keys(perception.chancePerPoint).sort()).toEqual(
+      Object.values(DISTORTION_KINDS).sort()
+    )
+    for (const [kind, chance] of Object.entries(perception.chancePerPoint)) {
+      expect(chance, kind).toBeGreaterThanOrEqual(0)
+      expect(
+        chance * 100,
+        `${kind}: at full confusion still a chance, not past certain`
+      ).toBeLessThanOrEqual(1)
     }
   })
 

@@ -2,6 +2,15 @@
   "id": "toads_express",
   "type": "fuel",
   "display": "Toad's Express",
+  "displayInline": "Toad's Express",
+  "appearance": {
+    "display": "A gas station behind bulletproof glass",
+    "displayInline": "a gas station with the clerk behind bulletproof glass",
+    "descriptions": {
+      "default": "A gas station with two pumps and a lot of security for two pumps. The clerk sits behind bulletproof glass. A hand-lettered sign says 'No checks No exceptions,' and somebody laminated it. There's a guard by the door who looks bored in a way that could change.",
+      "night": "The lights over the pumps buzz with bugs. The guard watches the lot. The clerk behind the glass watches the guard. Everything here gets paid for through a drawer."
+    }
+  },
   "pieceAs": "at the pumps at Toad's Express",
   "outdoors": true,
   "descriptions": {
@@ -15,25 +24,25 @@
   "exits": [
     {
       "locationId": "moms_house",
-      "label": "Walk back toward Mom's",
+      "label": "Walk back toward {place}",
       "travelTime": 2,
       "requirements": null
     },
     {
       "locationId": "arbys",
-      "label": "Head to Arby's",
+      "label": "Head to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "mouse_trap",
-      "label": "Walk to the Mouse Trap",
+      "label": "Walk to {place}",
       "travelTime": 2,
       "requirements": null
     },
     {
       "locationId": "ainsworth_plaid",
-      "label": "Head to Plaid Pantry",
+      "label": "Head to {place}",
       "travelTime": 2,
       "requirements": null
     }
@@ -53,7 +62,6 @@
       "mediumIds": ["tagging"]
     }
   ],
-  "discovered": false,
   "availability": {
     "openHour": 0,
     "closeHour": 23,

@@ -15,8 +15,8 @@
       "minStatus": null,
       "maxStatus": null,
       "requiredItems": null,
-      "requiredTraumas": null,
-      "minVisits": null
+      "minVisits": null,
+      "requiredMarkIds": null
     },
     "narrative": {
       "tokens": [
@@ -45,9 +45,7 @@
       "archetypeChanges": null,
       "counterChanges": {
         "times_profiled": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "nextEventId": null
   }

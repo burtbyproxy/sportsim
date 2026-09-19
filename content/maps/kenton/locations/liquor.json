@@ -2,6 +2,15 @@
   "id": "liquor",
   "type": "market",
   "display": "Kenton Liquor Store",
+  "displayInline": "Kenton Liquor",
+  "appearance": {
+    "display": "A store with a state seal on the door",
+    "displayInline": "a store with a state seal on the door",
+    "descriptions": {
+      "default": "A plain, low store with a state seal on the door and bars on the windows. It looks like it was designed by a committee that didn't like you personally. A sign by the door reserves the right to refuse service to somebody. It doesn't say who.",
+      "night": "Dark. The state seal on the door catches the streetlight. Whatever it sells, it isn't selling it to you tonight."
+    }
+  },
   "pieceAs": "in the parking lot of the state liquor store",
   "outdoors": true,
   "descriptions": {
@@ -15,25 +24,25 @@
   "exits": [
     {
       "locationId": "greeley_plaid",
-      "label": "Walk to Greeley Plaid",
+      "label": "Walk to {place}",
       "travelTime": 2,
       "requirements": null
     },
     {
       "locationId": "glitters",
-      "label": "Head to All That Glitters",
+      "label": "Head to {place}",
       "travelTime": 2,
       "requirements": null
     },
     {
       "locationId": "dancin_bare",
-      "label": "Walk to the Dancin' Bare",
+      "label": "Walk to {place}",
       "travelTime": 2,
       "requirements": null
     },
     {
       "locationId": "lombard_dental",
-      "label": "Walk to Lombard Dental",
+      "label": "Walk to {place}",
       "travelTime": 2,
       "requirements": null
     }
@@ -47,7 +56,6 @@
       "mediumIds": ["tagging", "painting"]
     }
   ],
-  "discovered": false,
   "availability": {
     "openHour": 9,
     "closeHour": 21,

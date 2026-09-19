@@ -14,8 +14,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -45,14 +45,11 @@
       },
       "counterChanges": {
         "times_scavenged": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 30,
-    "obsessionIds": []
+    "weight": 30
   }
 ]
