@@ -31,6 +31,7 @@ import { locationVisitAdd, locationRestore } from '../models/location.js'
 import { itemUseResolve, itemUsable } from '../engine/items.js'
 import { moneyFormat } from '../utils/money.js'
 import { menuEntriesBuild } from '../utils/menu.js'
+import { textFill } from '../utils/text.js'
 import { statXpApply, statusChangesApply } from '../engine/stats.js'
 import { statusBarFillClass } from '../utils/statusBar.js'
 import { resultOk, resultFail } from '../engine/result.js'
@@ -162,6 +163,26 @@ export const useGameStore = defineStore('game', {
 
     /** The player's money as they read it: "$3.50", "-$2.00". */
     playerMoneyText: (state) => moneyFormat({ amount: state.player?.status?.money ?? 0 }),
+
+    /** The screen's own words (content/vocabulary.json `ui`), or null before boot. */
+    ui: (state) => state.vocabulary?.ui ?? null,
+
+    /** What heads the menu: the waiting event, the person picked out, or the plain question. */
+    menuTitle() {
+      if (!this.ui) return ''
+      if (this.activeEvent) return this.activeEvent.title ?? this.ui.menu.title
+      return this.characterSelected?.name ?? this.ui.menu.title
+    },
+
+    /** What the menu says when it has nothing to offer. */
+    menuEmptyText() {
+      if (!this.ui) return ''
+      if (!this.characterSelected) return this.ui.menu.empty
+      return textFill({
+        text: this.ui.menu.emptyWith,
+        params: { name: this.characterSelected.name },
+      })
+    },
 
     /** The character picked out, or null. */
     characterSelected: (state) => state.characters[state.characterSelectedId] ?? null,

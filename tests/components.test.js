@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createMemoryHistory } from 'vue-router'
-import { readdirSync } from 'fs'
+import { readdirSync, readFileSync } from 'fs'
 import { resolve } from 'path'
 import GameFooter from '../src/components/layout/GameFooter.vue'
 import NarrativeLog from '../src/components/game/NarrativeLog.vue'
@@ -43,20 +43,20 @@ function installLocalStorage(initial = {}) {
 }
 
 describe('GameFooter', () => {
-  beforeEach(() => setActivePinia(createPinia()))
-
-  it('says there is no game when there is no game', () => {
-    const wrapper = mount(GameFooter)
-    expect(wrapper.text()).toBe('no active game')
+  const vocabulary = JSON.parse(readFileSync(resolve('content/vocabulary.json'), 'utf-8'))
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    useGameStore().registerVocabulary({ vocabulary })
   })
 
-  it('documents number keys for actions, letters for exits, and space to skip', () => {
+  it("says there is no game when there is no game, in content's words", () => {
+    expect(mount(GameFooter).text()).toBe(vocabulary.ui.footer.idle)
+  })
+
+  it('shows the keys once a game is running', () => {
     const game = useGameStore()
     game.startNewGame(playerCreate({ name: 'Tester' }), 'moms_house')
-    const text = mount(GameFooter).text()
-    expect(text).toContain('1–9 actions')
-    expect(text).toContain('a–z go')
-    expect(text).toContain('space skip')
+    expect(mount(GameFooter).text()).toBe(vocabulary.ui.footer.keys)
   })
 })
 

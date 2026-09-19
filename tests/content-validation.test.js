@@ -1097,6 +1097,34 @@ describe('content/mediums/*.json — Medium contract', () => {
 })
 
 describe("content/vocabulary.json — the game's words", () => {
+  it('the screen has every word it shows, and none is blank', () => {
+    const ui = VOCABULARY.ui
+    const paths = [
+      'menu.title',
+      'menu.empty',
+      'menu.emptyWith',
+      'narrative.skipHint',
+      'footer.idle',
+      'footer.keys',
+      'tabs.status',
+      'tabs.inventory',
+      'tabs.work',
+      'sections.time',
+      'sections.vitals',
+      'sections.muse',
+      'sections.funds',
+      'sections.carrying',
+      'sections.made',
+      'nothing',
+    ]
+    for (const path of paths) {
+      const word = path.split('.').reduce((node, key) => node?.[key], ui)
+      expect(typeof word, `ui.${path}`).toBe('string')
+      expect(word.length, `ui.${path}`).toBeGreaterThan(0)
+    }
+    expect(ui.menu.emptyWith, 'ui.menu.emptyWith names who').toContain('{name}')
+  })
+
   it('every stat and vital has an id and reads as something', () => {
     for (const entry of [...VOCABULARY.stats, ...VOCABULARY.statuses]) {
       expect(typeof entry.id).toBe('string')

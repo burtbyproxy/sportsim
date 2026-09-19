@@ -79,5 +79,33 @@
   "itemTypes": ["consumable", "tool", "surface", "ingredient", "junk", "key", "weapon"],
   "actionKinds": ["scavenge", "make"],
   "simulationTiers": ["fixed", "routine", "full"],
-  "substanceFamilies": ["alcohol", "cannabis", "stimulant", "nicotine"]
+  "substanceFamilies": ["alcohol", "cannabis", "stimulant", "nicotine"],
+  "ui": {
+    "menu": {
+      "title": "what now",
+      "empty": "nothing to do here",
+      "emptyWith": "nothing to say to {name}"
+    },
+    "narrative": {
+      "skipHint": "space to skip"
+    },
+    "footer": {
+      "idle": "no active game",
+      "keys": "1–9 actions · a–z go · space skip"
+    },
+    "tabs": {
+      "status": "status",
+      "inventory": "inventory",
+      "work": "work"
+    },
+    "sections": {
+      "time": "time",
+      "vitals": "vitals",
+      "muse": "muse",
+      "funds": "funds",
+      "carrying": "carrying",
+      "made": "made"
+    },
+    "nothing": "nothing"
+  }
 }

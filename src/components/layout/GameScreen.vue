@@ -29,21 +29,21 @@
             :class="{ 'sidebar-tab--active': activeTab === 'status' }"
             @click="activeTab = 'status'"
           >
-            status
+            {{ game.ui.tabs.status }}
           </button>
           <button
             class="sidebar-tab"
             :class="{ 'sidebar-tab--active': activeTab === 'inventory' }"
             @click="activeTab = 'inventory'"
           >
-            inventory
+            {{ game.ui.tabs.inventory }}
           </button>
           <button
             class="sidebar-tab"
             :class="{ 'sidebar-tab--active': activeTab === 'work' }"
             @click="activeTab = 'work'"
           >
-            work
+            {{ game.ui.tabs.work }}
           </button>
         </div>
 
@@ -51,7 +51,7 @@
         <div v-if="activeTab === 'status'" class="sidebar-panel">
           <!-- Time -->
           <div class="status-section">
-            <div class="status-section__label">time</div>
+            <div class="status-section__label">{{ game.ui.sections.time }}</div>
             <div class="status-time">
               {{ formattedTime }}
             </div>
@@ -59,7 +59,7 @@
 
           <!-- Stat bars -->
           <div class="status-section">
-            <div class="status-section__label">vitals</div>
+            <div class="status-section__label">{{ game.ui.sections.vitals }}</div>
             <div class="status-stats">
               <div
                 v-for="stat in statusStats"
@@ -85,7 +85,7 @@
 
           <!-- Muse -->
           <div class="status-section">
-            <div class="status-section__label">muse</div>
+            <div class="status-section__label">{{ game.ui.sections.muse }}</div>
             <div class="status-muse" :class="{ 'status-muse--active': game.inspirationActive }">
               {{ game.inspirationLabel }}
             </div>
@@ -93,7 +93,7 @@
 
           <!-- Money -->
           <div class="status-section">
-            <div class="status-section__label">funds</div>
+            <div class="status-section__label">{{ game.ui.sections.funds }}</div>
             <div class="status-money" :class="{ 'status-money--negative': game.playerMoney < 0 }">
               <span class="status-money__amount">{{ game.playerMoneyText }}</span>
             </div>
@@ -103,9 +103,9 @@
         <!-- Inventory tab -->
         <div v-if="activeTab === 'inventory'" class="sidebar-panel sidebar-panel--inventory">
           <div class="status-section status-section--grow">
-            <div class="status-section__label">carrying</div>
+            <div class="status-section__label">{{ game.ui.sections.carrying }}</div>
             <div v-if="game.playerInventory.length === 0" class="status-inventory-empty">
-              nothing
+              {{ game.ui.nothing }}
             </div>
             <ul v-else class="status-inventory">
               <li
@@ -128,8 +128,10 @@
         <!-- Work tab — everything the player has made, as they see it -->
         <div v-if="activeTab === 'work'" class="sidebar-panel sidebar-panel--work">
           <div class="status-section status-section--grow">
-            <div class="status-section__label">made</div>
-            <div v-if="game.playerWorks.length === 0" class="status-inventory-empty">nothing</div>
+            <div class="status-section__label">{{ game.ui.sections.made }}</div>
+            <div v-if="game.playerWorks.length === 0" class="status-inventory-empty">
+              {{ game.ui.nothing }}
+            </div>
             <ul v-else class="status-works">
               <li
                 v-for="work in game.playerWorks"

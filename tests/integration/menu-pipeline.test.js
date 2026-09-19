@@ -27,6 +27,7 @@ const momsHouseActions = load('content/maps/kenton/actions/moms_house.json')
 const voices = loadDir('content/voices')
 const items = loadDir('content/items').flat()
 const dale = load('content/characters/dale.json')
+const vocabulary = load('content/vocabulary.json')
 const sober = (code) => voices.find((v) => v.id === 'sober').lines[code]
 
 function startGame({ at = 'moms_house' } = {}) {
@@ -35,6 +36,7 @@ function startGame({ at = 'moms_house' } = {}) {
   for (const location of locations) game.registerLocation(locationCreate(location))
   for (const voice of voices) game.registerVoice({ voice })
   for (const item of items) game.registerItem(itemCreate(item))
+  game.registerVocabulary({ vocabulary })
   game.startNewGame(playerCreate({ name: 'Tester' }), at)
   return game
 }
@@ -154,6 +156,19 @@ describe('the menu', () => {
     )
     const usable = Object.fromEntries(game.playerInventory.map((i) => [i.id, i.usable]))
     expect(usable).toEqual({ tallboy_oly: true, single_sock: false })
+  })
+
+  it("the menu is headed by the question, the person picked out, or the event, in content's words", () => {
+    const game = startGame({ at: 'mocks_crest' })
+    game.registerCharacter(characterCreate(dale))
+    game.setCharacterLocation('dale', 'mocks_crest')
+    useGameLoop().onLocationEntered()
+    expect(game.menuTitle).toBe(vocabulary.ui.menu.title)
+    game.characterSelect({ characterId: 'dale' })
+    expect(game.menuTitle).toBe(dale.name)
+    expect(game.menuEmptyText).toBe(vocabulary.ui.menu.emptyWith.replace('{name}', dale.name))
+    game.setActiveEvent({ id: 'x', title: 'A knock', choices: [{ label: 'Answer' }] })
+    expect(game.menuTitle).toBe('A knock')
   })
 
   it('money reads as money', () => {

@@ -1,9 +1,7 @@
 <template>
   <div class="action-menu">
     <div class="action-menu__label ui-label">
-      <span v-if="game.activeEvent">{{ game.activeEvent.title ?? 'what now' }}</span>
-      <span v-else-if="game.characterSelected">{{ game.characterSelected.name }}</span>
-      <span v-else>what now</span>
+      <span>{{ game.menuTitle }}</span>
     </div>
 
     <!-- Event choices — the world is waiting on you -->
@@ -22,8 +20,7 @@
     </div>
 
     <div v-else-if="entries.length === 0" class="action-menu__empty">
-      <span v-if="game.characterSelected">nothing to say to {{ game.characterSelected.name }}</span>
-      <span v-else>nothing to do here</span>
+      <span>{{ game.menuEmptyText }}</span>
     </div>
 
     <div v-else class="action-menu__list">
