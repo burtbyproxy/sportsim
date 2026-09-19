@@ -11,8 +11,8 @@
         v-for="character in charactersPresent"
         :key="character.id"
         class="scene-person"
-        :class="{ 'scene-person--selected': selectedCharacterId === character.id }"
-        @click="selectCharacter(character.id)"
+        :class="{ 'scene-person--selected': game.characterSelectedId === character.id }"
+        @click="game.characterSelect({ characterId: character.id })"
       >
         <span class="scene-person__name">{{ character.name }}</span>
         <span v-if="character.habit" class="scene-person__habit">{{ character.habit }}</span>
@@ -22,83 +22,36 @@
 </template>
 
 <script setup>
-import { computed, inject, watch, onMounted } from 'vue'
+import { computed, inject, onMounted } from 'vue'
 import { useGameStore } from '../../stores/game.js'
-import { locationOpen, exitRequirementsMeet } from '../../models/location.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
+import { EXIT_KEYS } from '../../utils/menu.js'
 
 const game = useGameStore()
 const gameLoop = inject('gameLoop')
-const selectedCharacterId = inject('selectedCharacterId', null)
 
 const location = computed(() => game.currentLocation)
-const exits = computed(() => location.value?.exits ?? [])
 const charactersPresent = computed(() => game.charactersAtCurrentLocation)
 
-// Letter keys a–z for exit shortcuts
-const EXIT_KEYS = 'abcdefghijklmnopqrstuvwxyz'
-
-function selectCharacter(characterId) {
-  if (!selectedCharacterId) return
-  // Toggle: clicking the same character deselects
-  selectedCharacterId.value = selectedCharacterId.value === characterId ? null : characterId
-}
-
-function canTravel(exit) {
-  if (!exit) return false
-  // Check destination exists (is registered)
-  const dest = game.locations[exit.locationId]
-  if (!dest) return false
-  // Delegate availability check to the model — single source of truth
-  if (!locationOpen({ location: dest, hour: game.time.hour })) return false
-  // Honor exit requirements — same vocabulary as action requirements
-  return exitRequirementsMeet({
-    exit,
-    player: game.player,
-    gameTime: game.time,
-    location: game.currentLocation,
-  }).meets
-}
-
 // The scene itself (log, description, events, actions) is the game loop's.
-// This component only owns the character selection.
 onMounted(() => {
   if (gameLoop) gameLoop.onLocationEntered()
 })
-watch(
-  () => game.currentLocationId,
-  () => {
-    if (selectedCharacterId) selectedCharacterId.value = null
-  }
+
+// Letter keys a–z leave by the exit with that key; the loop decides whether you can.
+useKeyboard(
+  Object.fromEntries(
+    EXIT_KEYS.split('').map((letter) => [
+      letter,
+      (e) => {
+        const entry = game.menuEntries.find((m) => m.kind === 'exit' && m.key === letter)
+        if (!entry || !gameLoop) return
+        e.preventDefault()
+        gameLoop.travel({ locationId: entry.exit.locationId })
+      },
+    ])
+  )
 )
-
-function travel(exit) {
-  if (!canTravel(exit) || game.activeEvent) return
-  if (gameLoop) {
-    gameLoop.travel({ locationId: exit.locationId, travelTicks: exit.travelTime ?? 1 })
-  }
-}
-
-// ── Exit key shortcuts ───────────────────────────────────────────────────────
-// Letter keys a–z: each maps to the exit at that index position.
-// useKeyboard handles input exclusion and repeat filtering automatically.
-
-const exitKeyBindings = Object.fromEntries(
-  EXIT_KEYS.split('').map((letter, idx) => [
-    letter,
-    (e) => {
-      if (idx < exits.value.length) {
-        const exit = exits.value[idx]
-        if (canTravel(exit)) {
-          e.preventDefault()
-          travel(exit)
-        }
-      }
-    },
-  ])
-)
-
-useKeyboard(exitKeyBindings)
 </script>
 
 <style lang="scss" scoped>

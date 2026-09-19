@@ -153,7 +153,7 @@ describe('useGameLoop → auto-save', () => {
     const save = useSave()
     const loop = useGameLoop({ actionRegistry: momsHouseActions, save })
 
-    await loop.travel({ locationId: 'columbia_park', travelTicks: 2 })
+    await loop.travel({ locationId: 'columbia_park' })
 
     const saves = save.savesList().data
     expect(saves).toHaveLength(1)
@@ -161,7 +161,10 @@ describe('useGameLoop → auto-save', () => {
 
     const data = save.saveRead({ id: saves[0].id }).data
     expect(data.player.currentLocationId).toBe('columbia_park')
-    expect(data.time.tick).toBe(2)
+    // The walk takes what the exit says it takes.
+    expect(data.time.tick).toBe(
+      momsHouse.exits.find((e) => e.locationId === 'columbia_park').travelTime
+    )
     expect(data.locations.columbia_park.visitCount).toBe(1)
   })
 
@@ -171,8 +174,8 @@ describe('useGameLoop → auto-save', () => {
     const save = useSave()
     const loop = useGameLoop({ actionRegistry: momsHouseActions, save })
 
-    await loop.travel({ locationId: 'columbia_park', travelTicks: 1 })
-    await loop.travel({ locationId: 'moms_house', travelTicks: 1 })
+    await loop.travel({ locationId: 'columbia_park' })
+    await loop.travel({ locationId: 'moms_house' })
 
     const saves = save.savesList().data
     expect(saves).toHaveLength(1)
@@ -185,7 +188,7 @@ describe('useGameLoop → auto-save', () => {
     const save = useSave()
     const loop = useGameLoop({ actionRegistry: momsHouseActions, save })
     await loop.resolvePlayerAction(byId('raid_fridge'))
-    await loop.travel({ locationId: 'columbia_park', travelTicks: 1 })
+    await loop.travel({ locationId: 'columbia_park' })
     const hungerAtSave = game.player.status.hunger
 
     setActivePinia(createPinia())
@@ -210,7 +213,7 @@ describe('useGameLoop → auto-save', () => {
     const narrative = useNarrative()
     const loop = useGameLoop({ actionRegistry: momsHouseActions, narrative, save: useSave() })
 
-    await loop.travel({ locationId: 'columbia_park', travelTicks: 1 })
+    await loop.travel({ locationId: 'columbia_park' })
     const entries = await settle(narrative)
 
     expect(entries).toContain(voices.find((v) => v.id === 'sober').lines['save.failed'])
@@ -372,7 +375,7 @@ describe('useGameLoop → events', () => {
     })
     await loop.tick({ ticks: 16 }) // noon; nothing fires at home for a park event
 
-    await loop.travel({ locationId: 'columbia_park', travelTicks: 1 })
+    await loop.travel({ locationId: 'columbia_park' })
     expect(game.activeEvent?.id).toBe('park_acquaintance')
 
     setActivePinia(createPinia())
@@ -399,7 +402,7 @@ describe('useGameLoop → scene order on arrival', () => {
       rng: always,
     })
 
-    await loop.travel({ locationId: 'columbia_park', travelTicks: 1 })
+    await loop.travel({ locationId: 'columbia_park' })
     const entries = await settle(narrative)
 
     expect(entries).toHaveLength(2)

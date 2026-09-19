@@ -407,8 +407,9 @@ describe('making pipeline', () => {
     await pick(ctx, 'Make something')
     await pick(ctx, 'Cabinet Door')
 
-    await ctx.loop.travel({ locationId: 'blue_parrot', travelTicks: 1 })
+    await ctx.loop.travel({ locationId: 'columbia_park' })
     expect(game.currentLocationId).toBe('moms_house')
+    expect(await logOf(ctx.narrative)).toContain(voice('sober', 'requirement.busy'))
 
     await pick(ctx, 'Walk away')
     expect(game.player.makings[0]).toMatchObject({
@@ -418,8 +419,8 @@ describe('making pipeline', () => {
     // The idea is still there. The door is not.
     expect(game.inspirationActive).not.toBeNull()
     expect(await logOf(ctx.narrative)).toContain(voice('sober', 'making.abandoned.walked_away'))
-    await ctx.loop.travel({ locationId: 'blue_parrot', travelTicks: 1 })
-    expect(game.currentLocationId).toBe('blue_parrot')
+    await ctx.loop.travel({ locationId: 'columbia_park' })
+    expect(game.currentLocationId).toBe('columbia_park')
   })
 
   it('never mind closes the menu and costs nothing', async () => {
@@ -685,6 +686,12 @@ describe('making pipeline', () => {
     await pick(broke, 'Make something')
     expect(entry(broke.game, 'tape rolling').available).toBe(false)
     expect(entry(broke.game, 'tape rolling').unavailableReason).toContain('5.00')
+    // Picking it anyway (a stray key) says why, in words, and starts nothing.
+    await broke.loop.resolvePlayerAction(entry(broke.game, 'tape rolling'))
+    expect(broke.game.makingActive).toBeNull()
+    expect(await logOf(broke.narrative)).toContain(
+      entry(broke.game, 'tape rolling').unavailableReason
+    )
     await pick(broke, 'Karaoke: the karaoke machine')
     await pick(broke, 'Hand back the mic')
     // You did it. There is nothing to show for it, on the wall or in your pockets.

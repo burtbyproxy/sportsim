@@ -24,6 +24,15 @@ export function inventoryHas({ inventory, itemId }) {
   return (inventory ?? []).some((i) => i.id === itemId && i.quantity > 0)
 }
 
+/**
+ * Whether an item is something the player uses up by using it.
+ * @param {{ item: Object }} input
+ * @returns {boolean}
+ */
+export function itemUsable({ item }) {
+  return item?.type === 'consumable'
+}
+
 export const ITEM_ERROR_CODES = Object.freeze({
   PLAYER_MISSING: 'PLAYER_MISSING',
   ITEM_MISSING: 'ITEM_MISSING',
@@ -53,11 +62,11 @@ export function itemUseResolve({ player, itemId, statusIds = ITEM_EFFECT_STATUSE
       message: 'itemUseResolve needs a player',
     })
   }
-  const item = (player.inventory ?? []).find((i) => i.id === itemId && (i.quantity ?? 1) > 0)
-  if (!item) {
+  const item = (player.inventory ?? []).find((i) => i.id === itemId)
+  if (!inventoryHas({ inventory: player.inventory, itemId })) {
     return resultFail({ code: ITEM_ERROR_CODES.ITEM_MISSING, message: `Not carrying '${itemId}'` })
   }
-  if (item.type !== 'consumable') {
+  if (!itemUsable({ item })) {
     return resultFail({
       code: ITEM_ERROR_CODES.ITEM_NOT_CONSUMABLE,
       message: `'${itemId}' is not something you use up`,

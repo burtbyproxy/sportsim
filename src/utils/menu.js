@@ -10,19 +10,21 @@ export const EXIT_KEYS = 'abcdefghijklmnopqrstuvwxyz'
  * While an event waits on the player, its choices are the whole menu.
  * @param {{
  *   actions: Object[],
- *   exits: Object[],
- *   exitAvailable: (exit: Object) => boolean,
+ *   exits: Array<{ available: boolean }>,
  *   choices?: Object[],
  * }} input
- * @returns {Array<{ kind: 'action'|'exit'|'choice', key: string, label: string, available: boolean, action?: Object, exit?: Object, choiceIndex?: number }>}
+ * @returns {Array<{ kind: 'action'|'exit'|'choice', key: string, label: string, available: boolean, ticks: number, reason: string|null, action?: Object, exit?: Object, choiceIndex?: number }>}
+ *   ticks — how long it takes; reason — why not, when it is not available
  */
-export function menuEntriesBuild({ actions, exits, exitAvailable, choices = [] }) {
+export function menuEntriesBuild({ actions, exits, choices = [] }) {
   if (choices.length > 0) {
     return choices.map((choice, i) => ({
       kind: 'choice',
       key: i < 9 ? String(i + 1) : '',
       label: choice.label,
       available: true,
+      ticks: 0,
+      reason: null,
       choiceIndex: i,
     }))
   }
@@ -31,13 +33,17 @@ export function menuEntriesBuild({ actions, exits, exitAvailable, choices = [] }
     key: i < 9 ? String(i + 1) : '',
     label: action.label,
     available: Boolean(action.available),
+    ticks: action.timeCost ?? 0,
+    reason: action.unavailableReason ?? null,
     action,
   }))
   const exitEntries = exits.map((exit, i) => ({
     kind: 'exit',
     key: EXIT_KEYS[i] ?? '',
     label: exit.label,
-    available: exitAvailable(exit),
+    available: Boolean(exit.available),
+    ticks: exit.travelTime ?? 0,
+    reason: exit.unavailableReason ?? null,
     exit,
   }))
   return [...actionEntries, ...exitEntries]

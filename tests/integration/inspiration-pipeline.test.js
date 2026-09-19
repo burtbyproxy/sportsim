@@ -31,6 +31,7 @@ const conditions = loadDir('content/conditions')
 const mediums = loadDir('content/mediums')
 const voices = loadDir('content/voices')
 const momsHouse = loadFile('content/maps/kenton/locations/moms_house.json')
+const columbiaPark = loadFile('content/maps/kenton/locations/columbia_park.json')
 const momsHouseActions = loadFile('content/maps/kenton/actions/moms_house.json')
 const streetEvents = loadFile('content/maps/kenton/events/street.json')
 
@@ -203,7 +204,7 @@ describe('inspiration pipeline', () => {
     expect(entries).not.toContain(voice('sober', 'inspiration.expired'))
   })
 
-  it('an ordinary action does not interrupt, and the idea survives the walk home', async () => {
+  it('an ordinary action does not interrupt, and the idea survives the walk to the park', async () => {
     const game = startGame()
     const loop = useGameLoop({ actionRegistry: momsHouseActions })
     game.applyInspirationStrike({
@@ -213,11 +214,13 @@ describe('inspiration pipeline', () => {
       ticksTotal: 20,
     })
 
+    game.registerLocation(locationCreate(columbiaPark))
     await loop.resolvePlayerAction(actionById('raid_fridge'))
-    await loop.travel({ locationId: 'moms_house', travelTicks: 2 })
+    await loop.travel({ locationId: 'columbia_park' })
 
+    // One tick at the fridge, one on the walk: the exit says how long it takes.
     expect(game.inspirationActive).not.toBeNull()
-    expect(game.inspirationActive.ticksRemaining).toBe(17)
+    expect(game.inspirationActive.ticksRemaining).toBe(18)
   })
 
   it('an action can demand a muse: the gate opens on a strike and closes when it dies', async () => {

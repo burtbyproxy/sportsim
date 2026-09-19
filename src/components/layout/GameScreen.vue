@@ -94,9 +94,8 @@
           <!-- Money -->
           <div class="status-section">
             <div class="status-section__label">funds</div>
-            <div class="status-money" :class="{ 'status-money--negative': money < 0 }">
-              <span class="status-money__sign">$</span>
-              <span class="status-money__amount">{{ formattedMoney }}</span>
+            <div class="status-money" :class="{ 'status-money--negative': game.playerMoney < 0 }">
+              <span class="status-money__amount">{{ game.playerMoneyText }}</span>
             </div>
           </div>
         </div>
@@ -113,7 +112,7 @@
                 v-for="item in game.playerInventory"
                 :key="item.id"
                 class="status-inventory__item"
-                :class="{ 'status-inventory__item--usable': item.type === 'consumable' }"
+                :class="{ 'status-inventory__item--usable': item.usable }"
                 :title="item.description"
                 @click="useItem(item)"
               >
@@ -188,12 +187,6 @@ const save = useSave()
 const gameLoop = useGameLoop({ actionRegistry, eventRegistry, narrative, save })
 provide('gameLoop', gameLoop)
 
-// Selected character — set by LocationView when player clicks a character,
-// read by ActionMenu to filter to that character's interaction actions.
-// null = no character selected, show location actions only.
-const selectedCharacterId = ref(null)
-provide('selectedCharacterId', selectedCharacterId)
-
 /** Live entry state — driven by the narrative composable itself */
 const activeEntry = computed(() => narrative.activeEntryState.value)
 
@@ -204,20 +197,13 @@ const activeTab = ref('status')
 // === Status sidebar data ===
 
 const formattedTime = computed(() => clockFormat({ gameTime: game.time }))
-const money = computed(() => game.playerMoney)
-const formattedMoney = computed(() => {
-  const m = money.value
-  if (m < 0) return `-${Math.abs(m).toFixed(2)}`
-  return m.toFixed(2)
-})
 
 const statusStats = computed(() => game.statusBars)
 
 // === Inventory ===
 
-/** Use one of a consumable. The loop owns what that means. */
+/** Use an item. The loop owns what that means, including when it can't be used. */
 function useItem(item) {
-  if (item.type !== 'consumable') return
   gameLoop.useItem({ itemId: item.id })
 }
 </script>
@@ -406,11 +392,6 @@ function useItem(item) {
       color: $color-danger;
     }
   }
-}
-
-.status-money__sign {
-  font-size: 11px;
-  color: $color-accent;
 }
 
 .status-money__amount {

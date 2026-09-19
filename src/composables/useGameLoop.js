@@ -17,10 +17,12 @@
 import { useGameStore } from '../stores/game.js'
 import {
   REQUIREMENT_CODES,
+  actionApplies,
   actionResolve,
   actionsAvailable,
-  actionApplies,
+  requirementsMeet,
 } from '../engine/actions.js'
+import { locationOpen, exitRequirementsMeet } from '../models/location.js'
 import {
   statusDecayChanges,
   STAT_XP_CHECK_SUCCESS,
@@ -50,6 +52,8 @@ import { moneyFormat } from '../utils/money.js'
 export const LOOP_ERROR_CODES = Object.freeze({
   SIMULATION_FAILED: 'SIMULATION_FAILED',
   ITEM_UNKNOWN: 'ITEM_UNKNOWN',
+  EXIT_NONE: 'EXIT_NONE',
+  EXIT_UNKNOWN: 'EXIT_UNKNOWN',
 })
 
 /**
@@ -586,15 +590,24 @@ export function useGameLoop({
   }
 
   /**
-   * Travel to a location — advances time by travel cost, then moves.
-   * @param {{ locationId: string, travelTicks?: number }} input
+   * Leave by one of this place's exits. The exit sets how long it takes; the
+   * loop decides whether the player may go, and says why not when they can't.
+   * @param {{ locationId: string }} input
    * @returns {Promise<void>}
    */
-  async function travel({ locationId, travelTicks = 0 }) {
-    // Work in progress holds you where you are; walking away is a choice.
-    if (game.makingActive) return
+  async function travel({ locationId }) {
+    // While an event waits on the player, its choices are the only way on.
+    if (game.activeEvent) return
+    const way = (game.currentLocation?.exits ?? []).find((e) => e.locationId === locationId)
+    if (!way) {
+      return _failureShow({ error: { code: LOOP_ERROR_CODES.EXIT_NONE, params: { locationId } } })
+    }
+    // Work in progress holds you where you are (walking away is a choice on
+    // the making menu); a closed door or a requirement says why.
+    const exit = _exitEntry({ exit: way })
+    if (!exit.available) return _voiceLiteralEnqueue(exit.unavailableReason)
     game.makingPickerSet({ picker: null })
-    await tick({ ticks: travelTicks > 0 ? travelTicks : 1, locationId })
+    await tick({ ticks: exit.travelTime > 0 ? exit.travelTime : 1, locationId })
     if (save) {
       const saved = save.saveAuto()
       if (!saved.ok) _voiceEnqueue({ code: 'save.failed' })
@@ -609,6 +622,10 @@ export function useGameLoop({
    */
   async function resolvePlayerAction(action) {
     if (!game.player) return
+    // While an event waits on the player, its choices are the only way on.
+    if (game.activeEvent) return
+    // An entry the menu greyed out says why instead of doing anything.
+    if (action.available === false) return _voiceLiteralEnqueue(action.unavailableReason)
 
     if (action.kind?.startsWith('making_')) {
       await _makingEntryResolve(action)
@@ -757,6 +774,7 @@ export function useGameLoop({
    * Called internally after every tick and on location entry.
    */
   function _refreshActions() {
+    _exitsRefresh()
     if (!game.player || !game.currentLocation) {
       game.setAvailableActions([])
       return
@@ -778,20 +796,70 @@ export function useGameLoop({
       actionRegistry,
     })
 
-    // Annotate with availability flag (for ActionMenu disabled state)
-    const annotated = actions.map((a) => ({ ...a, available: true }))
-
-    // Also add disabled actions so they show as greyed-out
-    // (actions at this location that fail requirements)
+    // What can be done, in the engine's order (weight, obsessions and all),
+    // then what cannot yet, heaviest first, each saying why not.
+    const annotated = actions.map((a) => ({ ...a, available: true, unavailableReason: null }))
     const disabledActions = actionRegistry
       .filter(
         (a) =>
           actionApplies({ action: a, location, characters }) &&
           !annotated.find((x) => x.id === a.id)
       )
-      .map((a) => ({ ...a, available: false }))
+      .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
+      .map((a) => {
+        const why = requirementsMeet({
+          player: game.player,
+          action: a,
+          gameTime: game.time,
+          location,
+        })
+        return {
+          ...a,
+          available: false,
+          unavailableReason: game.requirementReason({
+            code: why.reasonCode,
+            params: why.reasonParams,
+          }),
+        }
+      })
 
     game.setAvailableActions([...annotated, ...disabledActions])
+  }
+
+  /**
+   * An exit as the menu shows it: whether the player can go, and if not, why.
+   * @param {{ exit: Object }} input
+   * @returns {Object} the exit with available and unavailableReason
+   */
+  function _exitEntry({ exit }) {
+    const blocked = (unavailableReason) => ({ ...exit, available: false, unavailableReason })
+    if (game.makingActive) {
+      return blocked(game.requirementReason({ code: REQUIREMENT_CODES.BUSY }))
+    }
+    const destination = game.locations[exit.locationId]
+    if (!destination) return blocked(`[${LOOP_ERROR_CODES.EXIT_UNKNOWN}]`)
+    if (!locationOpen({ location: destination, hour: game.time.hour })) {
+      return blocked(
+        destination.availability?.closedMessage ||
+          game.requirementReason({ code: REQUIREMENT_CODES.CLOSED })
+      )
+    }
+    const why = exitRequirementsMeet({
+      exit,
+      player: game.player,
+      gameTime: game.time,
+      location: game.currentLocation,
+    })
+    if (!why.meets) {
+      return blocked(game.requirementReason({ code: why.reasonCode, params: why.reasonParams }))
+    }
+    return { ...exit, available: true, unavailableReason: null }
+  }
+
+  /** The ways out of here, each saying whether it is open to the player now. */
+  function _exitsRefresh() {
+    const exits = game.currentLocation?.exits ?? []
+    game.setAvailableExits({ exits: exits.map((exit) => _exitEntry({ exit })) })
   }
 
   /**

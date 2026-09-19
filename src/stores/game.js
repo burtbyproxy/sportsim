@@ -28,7 +28,9 @@ import { gameStart, gameRoundResolve, gameScore } from '../engine/minigame.js'
 import { skillEffective } from '../engine/skills.js'
 import { inventoryAdd, inventoryRemove, modifierAdd, counterAdd } from '../models/player.js'
 import { locationVisitAdd, locationRestore } from '../models/location.js'
-import { itemUseResolve } from '../engine/items.js'
+import { itemUseResolve, itemUsable } from '../engine/items.js'
+import { moneyFormat } from '../utils/money.js'
+import { menuEntriesBuild } from '../utils/menu.js'
 import { statXpApply, statusChangesApply } from '../engine/stats.js'
 import { statusBarFillClass } from '../utils/statusBar.js'
 import { resultOk, resultFail } from '../engine/result.js'
@@ -133,6 +135,12 @@ export const useGameStore = defineStore('game', {
     /** Actions currently available at this location */
     availableActions: [],
 
+    /** This place's exits, each with available and unavailableReason. The loop fills it. */
+    availableExits: [],
+
+    /** The character the player has picked out to deal with, or null. */
+    characterSelectedId: null,
+
     /** Whether a game is actively running */
     isRunning: false,
   }),
@@ -151,6 +159,32 @@ export const useGameStore = defineStore('game', {
     },
 
     playerMoney: (state) => state.player?.status?.money ?? 0,
+
+    /** The player's money as they read it: "$3.50", "-$2.00". */
+    playerMoneyText: (state) => moneyFormat({ amount: state.player?.status?.money ?? 0 }),
+
+    /** The character picked out, or null. */
+    characterSelected: (state) => state.characters[state.characterSelectedId] ?? null,
+
+    /**
+     * The actions the menu offers: a picked-out character's own, or, with
+     * nobody picked out, the ones that are about the place.
+     */
+    menuActions: (state) =>
+      state.availableActions.filter((action) =>
+        state.characterSelectedId
+          ? action.characterId === state.characterSelectedId
+          : !action.characterId
+      ),
+
+    /** The one navigable list the menu shows: event choices, or actions then exits. */
+    menuEntries() {
+      return menuEntriesBuild({
+        actions: this.menuActions,
+        exits: this.availableExits,
+        choices: this.activeEvent?.choices ?? [],
+      })
+    },
     playerHealth: (state) => state.player?.status?.health ?? 100,
     playerEnergy: (state) => state.player?.status?.energy ?? 100,
     playerMood: (state) => state.player?.status?.mood ?? 50,
@@ -163,6 +197,7 @@ export const useGameStore = defineStore('game', {
         id: item.id,
         name: item.name,
         type: item.type,
+        usable: itemUsable({ item }),
         quantity: item.quantity ?? 1,
         description: item.description ?? '',
       })),
@@ -281,6 +316,8 @@ export const useGameStore = defineStore('game', {
       this.activeEvent = null
       this.characters = {}
       this.availableActions = []
+      this.availableExits = []
+      this.characterSelectedId = null
       this.makingPicker = null
       this.isRunning = true
       this.blendRefresh()
@@ -304,6 +341,7 @@ export const useGameStore = defineStore('game', {
       if (travelTicks > 0) {
         this.advanceTime(travelTicks)
       }
+      this.characterSelectedId = null
       this.currentLocationId = locationId
       if (this.player) {
         this.player.currentLocationId = locationId
@@ -511,6 +549,22 @@ export const useGameStore = defineStore('game', {
      */
     setAvailableActions(actions) {
       this.availableActions = actions
+    },
+
+    /**
+     * The exits as the menu shows them. Filled by the loop.
+     * @param {{ exits: Object[] }} input
+     */
+    setAvailableExits({ exits }) {
+      this.availableExits = exits
+    },
+
+    /**
+     * Pick out a character to deal with; picking the same one again lets go.
+     * @param {{ characterId: string }} input
+     */
+    characterSelect({ characterId }) {
+      this.characterSelectedId = this.characterSelectedId === characterId ? null : characterId
     },
 
     /**
@@ -1079,6 +1133,8 @@ export const useGameStore = defineStore('game', {
       this.firedEventIds = []
       this.activeEvent = null
       this.availableActions = []
+      this.availableExits = []
+      this.characterSelectedId = null
       this.makingPicker = null
       this.isRunning = false
       this.time = clockCreate()

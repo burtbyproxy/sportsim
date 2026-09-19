@@ -250,5 +250,16 @@ describe('GameScreen', () => {
     const offered = game.availableActions.filter((a) => a.available).map((a) => a.id)
     expect(offered).toContain('raid_fridge')
     expect(wrapper.text()).toContain(game.actions.raid_fridge.label)
+
+    // An exit on the menu goes where it says, through the loop.
+    const toPark = game.currentLocation.exits.find((e) => e.locationId === 'columbia_park')
+    const button = wrapper
+      .findAll('.action-item--exit')
+      .find((b) => b.text().includes(toPark.label))
+    await button.trigger('click')
+    await flushPromises()
+    expect(game.currentLocationId).toBe('columbia_park')
+    // Money reads as money.
+    expect(wrapper.find('.status-money__amount').text()).toBe(game.playerMoneyText)
   })
 })
