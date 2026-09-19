@@ -96,6 +96,12 @@ export const useGameStore = defineStore('game', {
     /** Substance definitions, keyed by id. Loaded once at init from content/substances. */
     substances: {},
 
+    /** The map's action definitions, keyed by id. Loaded at boot. */
+    actions: {},
+
+    /** The map's event definitions, keyed by id. Loaded at boot. */
+    events: {},
+
     /** Condition definitions, keyed by id. Loaded once at init from content/conditions. */
     conditions: {},
 
@@ -525,7 +531,7 @@ export const useGameStore = defineStore('game', {
 
     /**
      * Register an item definition in the item registry.
-     * Called at game init from loadItems() output.
+     * Called at boot.
      * @param {Object} item
      */
     registerItem(item) {
@@ -542,7 +548,23 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
-     * Register a substance definition. Called at init from loadSubstances().
+     * Register an action definition. Called at boot.
+     * @param {{ action: Object }} input
+     */
+    registerAction({ action }) {
+      this.actions[action.id] = action
+    },
+
+    /**
+     * Register an event definition. Called at boot.
+     * @param {{ event: Object }} input
+     */
+    registerEvent({ event }) {
+      this.events[event.id] = event
+    },
+
+    /**
+     * Register a substance definition. Called at boot.
      * @param {{ substance: Object }} input
      */
     registerSubstance({ substance }) {
@@ -550,7 +572,7 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
-     * Register a condition definition. Called at init from loadConditions().
+     * Register a condition definition. Called at boot.
      * @param {{ condition: Object }} input
      */
     registerCondition({ condition }) {
@@ -558,7 +580,7 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
-     * Register a medium definition. Called at init from loadMediums().
+     * Register a medium definition. Called at boot.
      * @param {{ medium: Object }} input
      */
     registerMedium({ medium }) {
@@ -566,7 +588,7 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
-     * Register a voice catalog. Called at init from loadVoices().
+     * Register a voice catalog. Called at boot.
      * @param {{ voice: Object }} input
      */
     registerVoice({ voice }) {
@@ -574,7 +596,7 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
-     * Register a scavenge loot table. Called at init from loadScavengeTables().
+     * Register a scavenge loot table. Called at boot.
      * @param {{ table: Object }} input
      */
     registerScavengeTable({ table }) {
@@ -582,7 +604,7 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
-     * Register the game's vocabulary. Called at init from loadVocabulary().
+     * Register the game's vocabulary. Called at boot.
      * @param {{ vocabulary: Object }} input
      */
     registerVocabulary({ vocabulary }) {
@@ -590,7 +612,7 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
-     * Register what a new game is. Called at init from loadGameConfig().
+     * Register what a new game is. Called at boot.
      * @param {{ config: Object }} input
      */
     registerConfig({ config }) {
@@ -610,7 +632,7 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
-     * Register a minigame definition. Called at init from loadGames().
+     * Register a minigame definition. Called at boot.
      * @param {{ game: Object }} input
      */
     registerGame({ game }) {
@@ -1041,9 +1063,8 @@ export const useGameStore = defineStore('game', {
       this.makingPicker = null
       this.isRunning = true
       this.blendRefresh()
-      // Note: items registry (this.items) is NOT restored from save —
-      // it is populated at init via loadItems() and persists across resets.
-      // The init flow (TitleScreen.vue) must call loadItems() before or after loadSave().
+      // Definitions (items, substances, actions...) are not in the save; boot
+      // registered them and they persist across resets.
     },
 
     resetGame() {

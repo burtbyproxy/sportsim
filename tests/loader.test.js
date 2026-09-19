@@ -1,0 +1,95 @@
+/**
+ * The content loader: what it merges, what it refuses, and the real content
+ * under content/ loaded through it.
+ *
+ * @vitest-environment node
+ */
+import { describe, it, expect } from 'vitest'
+import { readdirSync } from 'fs'
+import { resolve } from 'path'
+import { contentMerge, contentLoad, CONTENT_KINDS, LOADER_ERROR_CODES } from '../src/data/loader.js'
+
+const contentIds = (dir) =>
+  readdirSync(resolve(dir))
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => f.replace('.json', ''))
+    .sort()
+
+describe('contentMerge', () => {
+  it('keys entries by id, from files holding one entry or a list', () => {
+    const merged = contentMerge({
+      files: [
+        { path: 'a.json', value: { id: 'beer' } },
+        { path: 'b.json', value: [{ id: 'wine' }, { id: 'coffee' }] },
+      ],
+    })
+    expect(Object.keys(merged.data).sort()).toEqual(['beer', 'coffee', 'wine'])
+  })
+
+  it('refuses an entry that is not an object, naming the file', () => {
+    const merged = contentMerge({ files: [{ path: 'bad.json', value: ['just a string'] }] })
+    expect(merged.error).toMatchObject({
+      code: LOADER_ERROR_CODES.ENTRY_NOT_OBJECT,
+      params: { path: 'bad.json' },
+    })
+  })
+
+  it('refuses an entry with no id, naming the file', () => {
+    const merged = contentMerge({ files: [{ path: 'anon.json', value: { name: 'Nobody' } }] })
+    expect(merged.error).toMatchObject({
+      code: LOADER_ERROR_CODES.ENTRY_ID_MISSING,
+      params: { path: 'anon.json' },
+    })
+  })
+
+  it('refuses an id two entries share, instead of one quietly winning', () => {
+    const merged = contentMerge({
+      files: [
+        { path: 'first.json', value: { id: 'dale', role: 'bartender' } },
+        { path: 'second.json', value: { id: 'dale', role: 'impostor' } },
+      ],
+    })
+    expect(merged.error).toMatchObject({
+      code: LOADER_ERROR_CODES.ENTRY_ID_DUPLICATE,
+      params: { path: 'second.json', id: 'dale', pathFirst: 'first.json' },
+    })
+  })
+})
+
+describe('contentLoad — the real content', () => {
+  it('loads every collection keyed by the ids its files declare', () => {
+    for (const [kind, dir] of [
+      [CONTENT_KINDS.CHARACTERS, 'content/characters'],
+      [CONTENT_KINDS.SUBSTANCES, 'content/substances'],
+      [CONTENT_KINDS.CONDITIONS, 'content/conditions'],
+      [CONTENT_KINDS.MEDIUMS, 'content/mediums'],
+      [CONTENT_KINDS.VOICES, 'content/voices'],
+      [CONTENT_KINDS.SCAVENGE_TABLES, 'content/scavenge'],
+    ]) {
+      const loaded = contentLoad({ kind })
+      expect(loaded.ok, kind).toBe(true)
+      expect(Object.keys(loaded.data).sort(), kind).toEqual(contentIds(dir))
+    }
+  })
+
+  it('loads a map by its id, and nothing for a map that is not there', () => {
+    const kenton = contentLoad({ kind: CONTENT_KINDS.LOCATIONS, mapId: 'kenton' })
+    expect(Object.keys(kenton.data).sort()).toEqual(contentIds('content/maps/kenton/locations'))
+    expect(
+      contentLoad({ kind: CONTENT_KINDS.ACTIONS, mapId: 'kenton' }).data.raid_fridge
+    ).toBeDefined()
+    expect(contentLoad({ kind: CONTENT_KINDS.LOCATIONS, mapId: 'atlantis' }).data).toEqual({})
+  })
+
+  it('hands back the game config and the vocabulary as themselves', () => {
+    expect(contentLoad({ kind: CONTENT_KINDS.CONFIG }).data.mapId).toBe('kenton')
+    expect(contentLoad({ kind: CONTENT_KINDS.VOCABULARY }).data.stats.length).toBeGreaterThan(0)
+  })
+
+  it('refuses a kind that does not exist', () => {
+    expect(contentLoad({ kind: 'spells' }).error).toMatchObject({
+      code: LOADER_ERROR_CODES.KIND_UNKNOWN,
+      params: { kind: 'spells' },
+    })
+  })
+})

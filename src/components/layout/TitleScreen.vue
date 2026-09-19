@@ -12,8 +12,15 @@
       </div>
     </div>
 
-    <h1 class="title-screen__title">{{ config.title }}</h1>
-    <p class="title-screen__subtitle">{{ config.tagline }}</p>
+    <!-- Broken content: no words to use but its own code and file. -->
+    <p v-if="!booted.ok" class="title-screen__notice" role="alert">
+      [{{ booted.error.code }}] {{ booted.error.params.path ?? booted.error.params.kind }}
+    </p>
+
+    <template v-else>
+      <h1 class="title-screen__title">{{ config.title }}</h1>
+      <p class="title-screen__subtitle">{{ config.tagline }}</p>
+    </template>
 
     <nav ref="menuEl" class="title-screen__menu" aria-label="Main menu" tabindex="0">
       <button
@@ -34,7 +41,9 @@
       </button>
     </nav>
 
-    <p v-if="loadFailed" class="title-screen__notice" role="status">{{ config.menu.loadFailed }}</p>
+    <p v-if="loadFailed" class="title-screen__notice" role="status">
+      {{ config.menu.loadFailed }}
+    </p>
   </div>
 </template>
 
@@ -42,122 +51,58 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '../../stores/game.js'
-import { useSave } from '../../composables/useSave.js'
+import { useBoot } from '../../composables/useBoot.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
 import { useKeyboardNav } from '../../composables/useKeyboardNav.js'
-import {
-  loadLocations,
-  loadCharacters,
-  loadItems,
-  loadSubstances,
-  loadConditions,
-  loadMediums,
-  loadVoices,
-  loadScavengeTables,
-  loadGames,
-  loadGameConfig,
-  loadVocabulary,
-} from '../../data/loader.js'
-import { createPlayer } from '../../models/player.js'
-import { createCharacter } from '../../models/character.js'
-import { createLocation } from '../../models/location.js'
-import { createItem } from '../../models/item.js'
 import { shortcutLabelParts } from '../../utils/menu.js'
 import { version } from '../../../package.json'
 
 const router = useRouter()
 const game = useGameStore()
-const save = useSave()
+const boot = useBoot()
 const menuEl = ref(null)
+
+// Everything the game is made of, registered once; if content is broken the
+// screen says which file, and there is no game to start.
+const booted = boot.gameBoot()
+const config = booted.ok ? game.config : null
 
 const hasSave = ref(false)
 const loadFailed = ref(false)
 
-// What a new game is — its words, its map, where and as whom you start — is content.
-const config = loadGameConfig()
-game.registerConfig({ config })
-const vocabulary = loadVocabulary()
-game.registerVocabulary({ vocabulary })
-
-// Load item, substance, and condition registries once at startup — they
-// are definitions, not run state, and persist across game resets.
-const allItems = loadItems()
-for (const item of Object.values(allItems)) {
-  game.registerItem(createItem(item))
-}
-for (const substance of Object.values(loadSubstances())) {
-  game.registerSubstance({ substance })
-}
-for (const condition of Object.values(loadConditions())) {
-  game.registerCondition({ condition })
-}
-for (const medium of Object.values(loadMediums())) {
-  game.registerMedium({ medium })
-}
-for (const voice of Object.values(loadVoices())) {
-  game.registerVoice({ voice })
-}
-for (const table of Object.values(loadScavengeTables())) {
-  game.registerScavengeTable({ table })
-}
-for (const minigame of Object.values(loadGames())) {
-  game.registerGame({ game: minigame })
-}
-
 onMounted(() => {
-  hasSave.value = save.savesList().data.length > 0
+  hasSave.value = boot.gameResumable().data.resumable
   // Auto-focus so keyboard works immediately, no click required
   menuEl.value?.focus()
 })
 
-const bootLines = config.bootLines.map((line) => line.replace('{version}', version))
+const bootLines = (config?.bootLines ?? []).map((line) => line.replace('{version}', version))
 
 function startNewGame() {
-  const player = createPlayer(config.start.playerName, {
-    ...config.start,
-    statIds: vocabulary.stats.map((stat) => stat.id),
-  })
-  game.startNewGame(player, config.start.locationId)
-
-  // Register the map's locations from content/
-  const locations = loadLocations(config.mapId)
-  for (const location of Object.values(locations)) {
-    game.registerLocation(createLocation(location))
-  }
-
-  // Register all characters from content/
-  const characters = loadCharacters()
-  for (const charData of Object.values(characters)) {
-    game.registerCharacter(createCharacter(charData))
-  }
-
-  router.push('/game')
+  const started = boot.gameNew()
+  if (started.ok) router.push('/game')
 }
 
 function loadGame() {
-  const saves = save.savesList().data
-  if (saves.length === 0) return
-  // Load most recent save
-  const latest = [...saves].sort((a, b) => b.timestamp - a.timestamp)[0]
-  const read = save.saveRead({ id: latest.id })
-  loadFailed.value = !read.ok
-  if (!read.ok) return
-  game.loadSave(read.data)
-  // What a place is comes from content; the save only knows what happened there.
-  game.locationsRestore({ definitions: loadLocations(config.mapId) })
-  router.push('/game')
+  const resumed = boot.gameResume()
+  loadFailed.value = !resumed.ok
+  if (resumed.ok) router.push('/game')
 }
 
-const menuItems = computed(() => [
-  { id: 'new', label: config.menu.new, shortcut: 'n', disabled: false, action: startNewGame },
-  {
-    id: 'load',
-    label: config.menu.load,
-    shortcut: 'l',
-    disabled: !hasSave.value,
-    action: loadGame,
-  },
-])
+const menuItems = computed(() =>
+  config
+    ? [
+        { id: 'new', label: config.menu.new, shortcut: 'n', disabled: false, action: startNewGame },
+        {
+          id: 'load',
+          label: config.menu.load,
+          shortcut: 'l',
+          disabled: !hasSave.value,
+          action: loadGame,
+        },
+      ]
+    : []
+)
 
 const { selectedIndex, onKeydown: navKeydown } = useKeyboardNav(menuItems, {
   onSelect: (item) => {

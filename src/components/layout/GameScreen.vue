@@ -159,7 +159,6 @@ import { useNarrative, narrativeSkipBindings } from '../../composables/useNarrat
 import { useGameLoop } from '../../composables/useGameLoop.js'
 import { useSave } from '../../composables/useSave.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
-import { loadActions, loadEvents } from '../../data/loader.js'
 import { formatTime } from '../../engine/clock.js'
 import GameHeader from './GameHeader.vue'
 import GameFooter from './GameFooter.vue'
@@ -175,9 +174,9 @@ if (!game.isRunning) {
   router.replace('/')
 }
 
-// Load action and event registries from content/
-const actionRegistry = Object.values(loadActions(game.config.mapId))
-const eventRegistry = Object.values(loadEvents(game.config.mapId))
+// What can be done and what can happen here: registered at boot.
+const actionRegistry = Object.values(game.actions)
+const eventRegistry = Object.values(game.events)
 
 const narrative = useNarrative()
 provide('narrative', narrative)
