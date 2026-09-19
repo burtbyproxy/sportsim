@@ -100,12 +100,12 @@ export function useGameLoop({
     if (!game.player) return
 
     // 1. Advance clock
-    game.advanceTime(ticks)
+    game.timeAdvance({ ticks })
 
     // 2. Apply stat decay
     const decayChanges = statusDecayChanges({ status: game.player.status, ticksElapsed: ticks })
     if (Object.keys(decayChanges).length > 0) {
-      game.applyStatusChanges(decayChanges)
+      game.playerStatusApply({ changes: decayChanges })
     }
 
     // 3. Expire modifiers — modifiersTick mutates player in place
@@ -122,7 +122,7 @@ export function useGameLoop({
           characters: charactersArray,
         })
         for (const update of simResult.characters) {
-          game.setCharacterLocation(update.id, update.locationId)
+          game.characterLocationSet({ characterId: update.id, locationId: update.locationId })
         }
         game.charactersStatusApply({ updates: simResult.characters })
       }
@@ -133,21 +133,21 @@ export function useGameLoop({
 
     // 4b. Substances wear off — player and characters alike — and the blend
     // snapshot every roll reads is recomputed.
-    game.applyBlendDecay({ ticksElapsed: ticks })
+    game.blendDecayApply({ ticksElapsed: ticks })
 
     // 4c. The inspiration clock runs down. An idea that ran out says so.
-    const clock = game.applyInspirationTick({ ticksElapsed: ticks })
+    const clock = game.inspirationTickApply({ ticksElapsed: ticks })
     if (!clock.ok) _failureShow(clock)
     else if (clock.data.expired) _voiceEnqueue({ code: 'inspiration.expired' })
 
     // 4d. Whoever is in charge may get the urge to do something about it.
-    const urge = game.applyInspirationUrge({ ticksElapsed: ticks, rng })
+    const urge = game.inspirationUrgeApply({ ticksElapsed: ticks, rng })
     if (!urge.ok) _failureShow(urge)
     else if (urge.data.struck) _voiceEnqueue({ code: 'inspiration.urge' })
 
     // 5. Move if requested — the new scene's prose goes into a fresh log
     if (locationId) {
-      game.moveTo(locationId)
+      game.playerMove({ locationId })
       _locationEnter()
     }
 
@@ -218,17 +218,17 @@ export function useGameLoop({
   }
 
   function _eventStart(event) {
-    if (event.oneTime) game.markEventFired(event.id)
+    if (event.oneTime) game.eventFiredMark({ eventId: event.id })
     _narrativeEnqueue(narrativeEvent({ event, player: game.player }))
     // The world barging in kills whatever was moving the player — unless
     // the world is what's moving them, in which case the strike replaces it.
     if (!event.outcome?.inspiration) {
-      const cut = game.applyInspirationInterrupt({ reason: { kind: 'event', id: event.id } })
+      const cut = game.inspirationInterruptApply({ reason: { kind: 'event', id: event.id } })
       if (!cut.ok) _failureShow(cut)
       else if (cut.data.interrupted) _voiceEnqueue({ code: 'inspiration.interrupted' })
     }
     if (event.choices?.length > 0) {
-      game.setActiveEvent(event)
+      game.eventActiveSet({ event })
       return
     }
     const resolved = eventResolve({ event, player: game.player, rng })
@@ -248,7 +248,7 @@ export function useGameLoop({
     if (!resolved.ok) return _failureShow(resolved)
     const { outcome, diceResult } = resolved.data
     _checkTrain(diceResult)
-    game.clearActiveEvent()
+    game.eventActiveClear()
     _eventOutcomeApply({ outcome, source: { kind: 'event', id: event.id } })
     _makingReconcile()
     _refreshActions()
@@ -278,7 +278,7 @@ export function useGameLoop({
    */
   function _checkTrain(diceResult) {
     if (!diceResult?.stat) return
-    game.applyStatXp({
+    game.playerStatXpApply({
       statName: diceResult.stat,
       amount: diceResult.success ? STAT_XP_CHECK_SUCCESS : STAT_XP_CHECK_FAILURE,
     })
@@ -291,7 +291,7 @@ export function useGameLoop({
    */
   async function useItem({ itemId }) {
     if (!game.player || game.activeEvent) return
-    const result = game.applyItemUse({ itemId, rng })
+    const result = game.playerItemUse({ itemId, rng })
     if (!result.ok) return _failureShow(result)
     _voiceEnqueue({ code: 'item.used', params: { item: result.data.item.name } })
     await tick({ ticks: 1 })
@@ -328,7 +328,7 @@ export function useGameLoop({
    * object can be the inspiration.
    */
   function _scavenge() {
-    const result = game.applyScavenge({ rng })
+    const result = game.scavengeApply({ rng })
     if (!result.ok) return _failureShow(result)
     _checkTrain(result.data.check)
     const { itemId, entry, pickedClean } = result.data
@@ -336,10 +336,10 @@ export function useGameLoop({
       _voiceEnqueue({ code: pickedClean ? 'scavenge.picked_clean' : 'scavenge.nothing' })
       return
     }
-    const found = game.getItem(itemId)
+    const found = game.itemGet({ itemId })
     _voiceEnqueue({ code: 'scavenge.found', params: { item: found.foundAs ?? found.name } })
     if (entry.inspiration) {
-      const struck = game.applyInspirationStrike({
+      const struck = game.inspirationStrikeApply({
         ...entry.inspiration,
         source: { kind: 'item', id: itemId },
       })
@@ -360,14 +360,15 @@ export function useGameLoop({
     if (!making || game.inspirationActive?.id === making.inspirationId) return
     const idea = (game.player.inspirations ?? []).find((r) => r.id === making.inspirationId)
     const reason = idea?.endedBy ?? { kind: 'inspiration', id: making.inspirationId }
-    const result = game.applyMakingAbandon({ reason })
+    const result = game.makingAbandonApply({ reason })
     if (!result.ok) _failureShow(result)
     else if (result.data.abandoned) _voiceEnqueue({ code: 'making.abandoned.lost' })
   }
 
   /** What a thing is called on the menu. */
   function _surfaceName(plan) {
-    if (plan.surfaceKind === MAKING_SURFACE_KINDS.ITEM) return game.getItem(plan.surfaceId).name
+    if (plan.surfaceKind === MAKING_SURFACE_KINDS.ITEM)
+      return game.itemGet({ itemId: plan.surfaceId }).name
     if (plan.surfaceKind === MAKING_SURFACE_KINDS.PLACE) {
       return game.voiceLine({ code: 'menu.making.place' })
     }
@@ -464,7 +465,7 @@ export function useGameLoop({
             ingredientItemId: itemId,
             label: game.voiceLine({
               code: 'menu.making.ingredient',
-              params: { ingredient: game.getItem(itemId).name },
+              params: { ingredient: game.itemGet({ itemId }).name },
             }),
           })
         ),
@@ -479,7 +480,7 @@ export function useGameLoop({
           code: plan.toolItemId ? 'menu.making.plan' : 'menu.making.plan.bare',
           params: {
             medium: medium.display,
-            tool: plan.toolItemId ? game.getItem(plan.toolItemId).name : '',
+            tool: plan.toolItemId ? game.itemGet({ itemId: plan.toolItemId }).name : '',
             surface: _surfaceName(plan),
           },
         })
@@ -517,7 +518,7 @@ export function useGameLoop({
   /** Start the work. The medium's game deals its first round onto the menu. */
   function _makingBegin({ plan }) {
     game.makingPickerSet({ picker: null })
-    const started = game.applyMakingStart({ plan, rng })
+    const started = game.makingStartApply({ plan, rng })
     if (!started.ok) return _failureShow(started)
     _voiceEnqueue({ code: 'making.started' })
     if (started.data.promptCode) _voiceEnqueue({ code: started.data.promptCode })
@@ -531,11 +532,11 @@ export function useGameLoop({
    */
   async function _makingSitting({ choiceId }) {
     const before = game.makingActive
-    const played = game.applyMakingRound({ choiceId, rng })
+    const played = game.makingRoundApply({ choiceId, rng })
     if (!played.ok) return _failureShow(played)
     _voiceEnqueue({ code: played.data.lineCode, params: played.data.lineParams })
     const cost = game.mediums[before.mediumId].making.statusChanges
-    if (cost) game.applyStatusChanges(cost)
+    if (cost) game.playerStatusApply({ changes: cost })
     await tick({ ticks: played.data.ticksWorked })
 
     const after = game.makingActive
@@ -544,7 +545,7 @@ export function useGameLoop({
       if (played.data.promptCode) _voiceEnqueue({ code: played.data.promptCode })
       return
     }
-    const finished = game.applyMakingFinish({ rng })
+    const finished = game.makingFinishApply({ rng })
     if (!finished.ok) return _failureShow(finished)
     _checkTrain(finished.data.check)
     _voiceLiteralEnqueue(finished.data.experience.artistText)
@@ -582,7 +583,7 @@ export function useGameLoop({
     } else if (entry.kind === 'making_choice') {
       await _makingSitting({ choiceId: entry.choiceId })
     } else if (entry.kind === 'making_abandon') {
-      const result = game.applyMakingAbandon({ reason: { kind: 'player', id: 'walked_away' } })
+      const result = game.makingAbandonApply({ reason: { kind: 'player', id: 'walked_away' } })
       if (!result.ok) _failureShow(result)
       else if (result.data.abandoned) _voiceEnqueue({ code: 'making.abandoned.walked_away' })
     }
@@ -670,7 +671,7 @@ export function useGameLoop({
 
     // Some actions are the interruption: sleep, mostly.
     if (action.interruptsInspiration) {
-      const cut = game.applyInspirationInterrupt({ reason: { kind: 'action', id: action.id } })
+      const cut = game.inspirationInterruptApply({ reason: { kind: 'action', id: action.id } })
       if (!cut.ok) _failureShow(cut)
       else if (cut.data.interrupted) _voiceEnqueue({ code: 'inspiration.interrupted' })
     }
@@ -688,28 +689,28 @@ export function useGameLoop({
   function _outcomeApply({ outcome, source }) {
     // Apply status changes
     if (outcome.statusChanges) {
-      game.applyStatusChanges(outcome.statusChanges)
+      game.playerStatusApply({ changes: outcome.statusChanges })
     }
 
     // Apply stat changes
     if (outcome.statChanges) {
-      game.applyStatChanges(outcome.statChanges)
+      game.playerStatsApply({ changes: outcome.statChanges })
     }
 
     // Apply money change via store (keeps Pinia reactivity)
     if (outcome.moneyChange != null) {
-      game.adjustMoney(outcome.moneyChange)
+      game.playerMoneyAdjust({ delta: outcome.moneyChange })
     }
 
     // Doses — what went into the player. Hidden doses roll here.
     if (outcome.doses?.length > 0) {
-      game.applyDoses({ doses: outcome.doses, rng })
+      game.playerDosesApply({ doses: outcome.doses, rng })
     }
 
     // Inspiration — the world strikes. Snapshots the blend as it is now,
     // after the doses, because whoever you are right now owns the idea.
     if (outcome.inspiration) {
-      const struck = game.applyInspirationStrike({ ...outcome.inspiration, source })
+      const struck = game.inspirationStrikeApply({ ...outcome.inspiration, source })
       if (!struck.ok) {
         _failureShow(struck)
       } else {
@@ -722,7 +723,7 @@ export function useGameLoop({
     // Look up each ID in the item registry before passing to inventoryAdd
     if (outcome.itemsGained?.length > 0) {
       for (const itemId of outcome.itemsGained) {
-        const itemDef = game.getItem(itemId)
+        const itemDef = game.itemGet({ itemId })
         if (itemDef) {
           inventoryAdd({ player: game.player, item: itemDef })
         } else {
@@ -759,7 +760,7 @@ export function useGameLoop({
 
     // Mark one-time events
     if (outcome.eventTriggered) {
-      game.markEventFired(outcome.eventTriggered)
+      game.eventFiredMark({ eventId: outcome.eventTriggered })
     }
 
     // Location discovery
@@ -776,13 +777,13 @@ export function useGameLoop({
   function _refreshActions() {
     _exitsRefresh()
     if (!game.player || !game.currentLocation) {
-      game.setAvailableActions([])
+      game.menuActionsSet({ actions: [] })
       return
     }
 
     const makingMenu = _makingMenu()
     if (makingMenu) {
-      game.setAvailableActions(makingMenu)
+      game.menuActionsSet({ actions: makingMenu })
       return
     }
 
@@ -823,7 +824,7 @@ export function useGameLoop({
         }
       })
 
-    game.setAvailableActions([...annotated, ...disabledActions])
+    game.menuActionsSet({ actions: [...annotated, ...disabledActions] })
   }
 
   /**
@@ -859,7 +860,7 @@ export function useGameLoop({
   /** The ways out of here, each saying whether it is open to the player now. */
   function _exitsRefresh() {
     const exits = game.currentLocation?.exits ?? []
-    game.setAvailableExits({ exits: exits.map((exit) => _exitEntry({ exit })) })
+    game.menuExitsSet({ exits: exits.map((exit) => _exitEntry({ exit })) })
   }
 
   /**

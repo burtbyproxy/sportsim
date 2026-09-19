@@ -326,12 +326,11 @@ export const useGameStore = defineStore('game', {
   actions: {
     /**
      * Start a new game with the given player.
-     * @param {Object} player
-     * @param {string} startLocationId
+     * @param {{ player: Object, locationId: string }} input
      */
-    startNewGame(player, startLocationId) {
+    runStart({ player, locationId }) {
       this.player = player
-      this.currentLocationId = startLocationId
+      this.currentLocationId = locationId
       this.time = clockCreate()
       this.firedEventIds = []
       this.activeEvent = null
@@ -347,21 +346,17 @@ export const useGameStore = defineStore('game', {
 
     /**
      * Advance game time by N ticks (1 tick = 15 min).
-     * @param {number} ticks
+     * @param {{ ticks?: number }} input
      */
-    advanceTime(ticks = 1) {
+    timeAdvance({ ticks = 1 }) {
       this.time = clockAdvance({ gameTime: this.time, ticks })
     },
 
     /**
      * Move player to a new location.
-     * @param {string} locationId
-     * @param {number} travelTicks
+     * @param {{ locationId: string }} input
      */
-    moveTo(locationId, travelTicks = 0) {
-      if (travelTicks > 0) {
-        this.advanceTime(travelTicks)
-      }
+    playerMove({ locationId }) {
       this.characterSelectedId = null
       this.currentLocationId = locationId
       if (this.player) {
@@ -374,12 +369,12 @@ export const useGameStore = defineStore('game', {
 
     /**
      * Apply status changes to the player.
-     * Money is excluded — use adjustMoney for that. Sobriety is excluded — it
-     * is derived from intoxications; use applyDoses. All other status values
+     * Money is excluded — use playerMoneyAdjust for that. Sobriety is excluded — it
+     * is derived from intoxications; use playerDosesApply. All other status values
      * clamp 0-100. Conditions depend on status, so the blend is refreshed.
-     * @param {Object<string, number>} changes
+     * @param {{ changes: Object<string, number> }} input
      */
-    applyStatusChanges(changes) {
+    playerStatusApply({ changes }) {
       if (!this.player) return
       this.player.status = statusChangesApply({ status: this.player.status, changes })
       this.blendRefresh()
@@ -432,7 +427,7 @@ export const useGameStore = defineStore('game', {
      * @param {{ doses: { substanceId: string, value: number, chance?: number }[], rng?: () => number }} input
      * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the blend engine's result
      */
-    applyDoses({ doses, rng = Math.random }) {
+    playerDosesApply({ doses, rng = Math.random }) {
       if (!this.player)
         return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
       this.player.intoxications ??= {}
@@ -452,7 +447,7 @@ export const useGameStore = defineStore('game', {
      * player and every character with a status, over elapsed ticks.
      * @param {{ ticksElapsed: number }} input
      */
-    applyBlendDecay({ ticksElapsed }) {
+    blendDecayApply({ ticksElapsed }) {
       const subjects = [this.player, ...Object.values(this.characters)].filter(
         (subject) => subject && subject.status
       )
@@ -474,18 +469,18 @@ export const useGameStore = defineStore('game', {
 
     /**
      * Adjust player money by delta. Can go negative. No clamping.
-     * @param {number} delta
+     * @param {{ delta: number }} input
      */
-    adjustMoney(delta) {
+    playerMoneyAdjust({ delta }) {
       if (!this.player) return
       this.player.status.money += delta
     },
 
     /**
      * Apply stat changes to the player.
-     * @param {Object<string, number>} changes
+     * @param {{ changes: Object<string, number> }} input
      */
-    applyStatChanges(changes) {
+    playerStatsApply({ changes }) {
       if (!this.player) return
       for (const [stat, delta] of Object.entries(changes)) {
         if (this.player.stats[stat]) {
@@ -503,7 +498,7 @@ export const useGameStore = defineStore('game', {
      * @param {{ statName: string, amount: number }} input
      * @returns {{ ok: boolean, data: { leveledUp: boolean }|null, error: Object|null }}
      */
-    applyStatXp({ statName, amount }) {
+    playerStatXpApply({ statName, amount }) {
       const stat = this.player?.stats?.[statName]
       if (!stat) {
         return resultFail({
@@ -522,7 +517,7 @@ export const useGameStore = defineStore('game', {
      * @param {{ itemId: string, rng?: () => number }} input
      * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the items engine's result
      */
-    applyItemUse({ itemId, rng = Math.random }) {
+    playerItemUse({ itemId, rng = Math.random }) {
       const statusIds = this.statusIdsWritable
       const result = itemUseResolve({
         player: this.player,
@@ -536,17 +531,17 @@ export const useGameStore = defineStore('game', {
       for (const { statName, modifier } of statModifiers) {
         modifierAdd({ player: this.player, statName, modifier })
       }
-      if (doses.length > 0) this.applyDoses({ doses, rng })
+      if (doses.length > 0) this.playerDosesApply({ doses, rng })
       inventoryRemove({ player: this.player, itemId })
-      this.applyStatusChanges(statusChanges)
+      this.playerStatusApply({ changes: statusChanges })
       return result
     },
 
     /**
      * Mark a one-time event as fired.
-     * @param {string} eventId
+     * @param {{ eventId: string }} input
      */
-    markEventFired(eventId) {
+    eventFiredMark({ eventId }) {
       if (!this.firedEventIds.includes(eventId)) {
         this.firedEventIds.push(eventId)
       }
@@ -554,21 +549,21 @@ export const useGameStore = defineStore('game', {
 
     /**
      * Put an event in front of the player until they choose.
-     * @param {Object} event
+     * @param {{ event: Object }} input
      */
-    setActiveEvent(event) {
+    eventActiveSet({ event }) {
       this.activeEvent = event
     },
 
-    clearActiveEvent() {
+    eventActiveClear() {
       this.activeEvent = null
     },
 
     /**
      * Set available actions for the current location.
-     * @param {Array} actions
+     * @param {{ actions: Array }} input
      */
-    setAvailableActions(actions) {
+    menuActionsSet({ actions }) {
       this.availableActions = actions
     },
 
@@ -576,7 +571,7 @@ export const useGameStore = defineStore('game', {
      * The exits as the menu shows them. Filled by the loop.
      * @param {{ exits: Object[] }} input
      */
-    setAvailableExits({ exits }) {
+    menuExitsSet({ exits }) {
       this.availableExits = exits
     },
 
@@ -590,35 +585,35 @@ export const useGameStore = defineStore('game', {
 
     /**
      * Register a location in state (used when loading save or discovering).
-     * @param {Object} location
+     * @param {{ location: Object }} input
      */
-    registerLocation(location) {
+    locationRegister({ location }) {
       this.locations[location.id] = location
     },
 
     /**
      * Register a character in state.
-     * @param {Object} character
+     * @param {{ character: Object }} input
      */
-    registerCharacter(character) {
+    characterRegister({ character }) {
       this.characters[character.id] = character
     },
 
     /**
      * Register an item definition in the item registry.
      * Called at boot.
-     * @param {Object} item
+     * @param {{ item: Object }} input
      */
-    registerItem(item) {
+    itemRegister({ item }) {
       this.items[item.id] = item
     },
 
     /**
      * Look up an item definition by ID.
-     * @param {string} itemId
+     * @param {{ itemId: string }} input
      * @returns {Object|null}
      */
-    getItem(itemId) {
+    itemGet({ itemId }) {
       return this.items[itemId] ?? null
     },
 
@@ -626,7 +621,7 @@ export const useGameStore = defineStore('game', {
      * Register an action definition. Called at boot.
      * @param {{ action: Object }} input
      */
-    registerAction({ action }) {
+    actionRegister({ action }) {
       this.actions[action.id] = action
     },
 
@@ -634,7 +629,7 @@ export const useGameStore = defineStore('game', {
      * Register an event definition. Called at boot.
      * @param {{ event: Object }} input
      */
-    registerEvent({ event }) {
+    eventRegister({ event }) {
       this.events[event.id] = event
     },
 
@@ -642,7 +637,7 @@ export const useGameStore = defineStore('game', {
      * Register a substance definition. Called at boot.
      * @param {{ substance: Object }} input
      */
-    registerSubstance({ substance }) {
+    substanceRegister({ substance }) {
       this.substances[substance.id] = substance
     },
 
@@ -650,7 +645,7 @@ export const useGameStore = defineStore('game', {
      * Register a condition definition. Called at boot.
      * @param {{ condition: Object }} input
      */
-    registerCondition({ condition }) {
+    conditionRegister({ condition }) {
       this.conditions[condition.id] = condition
     },
 
@@ -658,7 +653,7 @@ export const useGameStore = defineStore('game', {
      * Register a medium definition. Called at boot.
      * @param {{ medium: Object }} input
      */
-    registerMedium({ medium }) {
+    mediumRegister({ medium }) {
       this.mediums[medium.id] = medium
     },
 
@@ -666,7 +661,7 @@ export const useGameStore = defineStore('game', {
      * Register a voice catalog. Called at boot.
      * @param {{ voice: Object }} input
      */
-    registerVoice({ voice }) {
+    voiceRegister({ voice }) {
       this.voices[voice.id] = voice
     },
 
@@ -674,7 +669,7 @@ export const useGameStore = defineStore('game', {
      * Register a scavenge loot table. Called at boot.
      * @param {{ table: Object }} input
      */
-    registerScavengeTable({ table }) {
+    scavengeTableRegister({ table }) {
       this.scavengeTables[table.id] = table
     },
 
@@ -682,7 +677,7 @@ export const useGameStore = defineStore('game', {
      * Register the game's vocabulary. Called at boot.
      * @param {{ vocabulary: Object }} input
      */
-    registerVocabulary({ vocabulary }) {
+    vocabularyRegister({ vocabulary }) {
       this.vocabulary = vocabulary
     },
 
@@ -690,7 +685,7 @@ export const useGameStore = defineStore('game', {
      * Register what a new game is. Called at boot.
      * @param {{ config: Object }} input
      */
-    registerConfig({ config }) {
+    configRegister({ config }) {
       this.config = config
     },
 
@@ -710,8 +705,8 @@ export const useGameStore = defineStore('game', {
      * Register a minigame definition. Called at boot.
      * @param {{ game: Object }} input
      */
-    registerGame({ game }) {
-      this.games[game.id] = game
+    minigameRegister({ minigame }) {
+      this.games[minigame.id] = minigame
     },
 
     /**
@@ -720,7 +715,7 @@ export const useGameStore = defineStore('game', {
      * @param {{ rng?: () => number }} input
      * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the scavenge engine's result
      */
-    applyScavenge({ rng = Math.random } = {}) {
+    scavengeApply({ rng = Math.random } = {}) {
       if (!this.player) {
         return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
       }
@@ -789,7 +784,7 @@ export const useGameStore = defineStore('game', {
      * @param {{ source: { kind: string, id: string }, mediumId?: string|null, strength: number, ticksTotal: number }} input
      * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the inspiration engine's result
      */
-    applyInspirationStrike({ source, mediumId = null, strength, ticksTotal }) {
+    inspirationStrikeApply({ source, mediumId = null, strength, ticksTotal }) {
       if (!this.player) {
         return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
       }
@@ -815,7 +810,7 @@ export const useGameStore = defineStore('game', {
      * @param {{ ticksElapsed: number, rng?: () => number }} input
      * @returns {{ ok: boolean, data: { struck: Object|null }|null, error: Object|null }}
      */
-    applyInspirationUrge({ ticksElapsed, rng = Math.random }) {
+    inspirationUrgeApply({ ticksElapsed, rng = Math.random }) {
       if (!this.player) {
         return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
       }
@@ -830,7 +825,7 @@ export const useGameStore = defineStore('game', {
       }
       if (!rolled.data.urge) return resultOk({ struck: null })
       const { mediumId, strength, ticksTotal } = rolled.data.urge
-      const struck = this.applyInspirationStrike({
+      const struck = this.inspirationStrikeApply({
         source: { kind: 'persona', id: rolled.data.personaId },
         mediumId,
         strength,
@@ -845,7 +840,7 @@ export const useGameStore = defineStore('game', {
      * @param {{ ticksElapsed: number }} input
      * @returns {{ ok: boolean, data: Object|null, error: Object|null }}
      */
-    applyInspirationTick({ ticksElapsed }) {
+    inspirationTickApply({ ticksElapsed }) {
       if (!this.player) {
         return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
       }
@@ -862,7 +857,7 @@ export const useGameStore = defineStore('game', {
      * @param {{ reason: { kind: string, id: string } }} input
      * @returns {{ ok: boolean, data: Object|null, error: Object|null }}
      */
-    applyInspirationInterrupt({ reason }) {
+    inspirationInterruptApply({ reason }) {
       if (!this.player) {
         return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
       }
@@ -879,7 +874,7 @@ export const useGameStore = defineStore('game', {
      * @param {{ spentOn: { kind: string, id: string } }} input
      * @returns {{ ok: boolean, data: Object|null, error: Object|null }}
      */
-    applyInspirationSpend({ spentOn }) {
+    inspirationSpendApply({ spentOn }) {
       if (!this.player) {
         return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
       }
@@ -897,7 +892,7 @@ export const useGameStore = defineStore('game', {
      * @param {{ mediumId: string, amount: number }} input
      * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the skills engine's result
      */
-    applySkillGain({ mediumId, amount }) {
+    skillGainApply({ mediumId, amount }) {
       if (!this.player) {
         return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
       }
@@ -925,7 +920,7 @@ export const useGameStore = defineStore('game', {
      * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the making engine's
      *   result, with the game's opening promptCode
      */
-    applyMakingStart({ plan, rng = Math.random }) {
+    makingStartApply({ plan, rng = Math.random }) {
       const dealt = gameStart({
         game: this.games[this.mediums[plan?.mediumId]?.making?.gameId],
         personaId: this.personaInCharge,
@@ -949,7 +944,7 @@ export const useGameStore = defineStore('game', {
       this.player.makings = result.data.makings
       for (const itemId of result.data.itemIdsConsumed)
         inventoryRemove({ player: this.player, itemId })
-      if (result.data.moneyCost > 0) this.adjustMoney(-result.data.moneyCost)
+      if (result.data.moneyCost > 0) this.playerMoneyAdjust({ delta: -result.data.moneyCost })
       return { ...result, data: { ...result.data, promptCode: dealt.data.promptCode } }
     },
 
@@ -960,7 +955,7 @@ export const useGameStore = defineStore('game', {
      * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the making engine's
      *   result, with the round's lineCode, lineParams, promptCode and ticksWorked
      */
-    applyMakingRound({ choiceId, rng = Math.random }) {
+    makingRoundApply({ choiceId, rng = Math.random }) {
       const making = this.makingActive
       if (!making) {
         return resultFail({
@@ -1010,7 +1005,7 @@ export const useGameStore = defineStore('game', {
      * @param {{ rng?: () => number }} input
      * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the making engine's result, with the words filled in
      */
-    applyMakingFinish({ rng = Math.random } = {}) {
+    makingFinishApply({ rng = Math.random } = {}) {
       const location = this.currentLocation
       const active = this.makingActive
       const played = gameScore({ game: this.games[active?.game?.id], state: active?.game?.state })
@@ -1072,14 +1067,14 @@ export const useGameStore = defineStore('game', {
           artifact,
         ]
       }
-      this.applyInspirationSpend({ spentOn: { kind: 'experience', id: experience.id } })
+      this.inspirationSpendApply({ spentOn: { kind: 'experience', id: experience.id } })
       if (result.data.encore) {
-        this.applyInspirationStrike({
+        this.inspirationStrikeApply({
           ...result.data.encore,
           source: { kind: 'experience', id: experience.id },
         })
       }
-      this.applySkillGain({
+      this.skillGainApply({
         mediumId: making.mediumId,
         amount: this.mediums[making.mediumId].making.xp,
       })
@@ -1091,7 +1086,7 @@ export const useGameStore = defineStore('game', {
      * @param {{ reason: { kind: string, id: string } }} input
      * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the making engine's result
      */
-    applyMakingAbandon({ reason }) {
+    makingAbandonApply({ reason }) {
       const result = makingAbandon({ player: this.player, reason, gameTime: this.time })
       if (!result.ok) {
         return result
@@ -1118,10 +1113,9 @@ export const useGameStore = defineStore('game', {
 
     /**
      * Update character location (from simulation worker output).
-     * @param {string} characterId
-     * @param {string} locationId
+     * @param {{ characterId: string, locationId: string }} input
      */
-    setCharacterLocation(characterId, locationId) {
+    characterLocationSet({ characterId, locationId }) {
       if (this.characters[characterId]) {
         this.characters[characterId].currentLocationId = locationId
       }
@@ -1129,9 +1123,9 @@ export const useGameStore = defineStore('game', {
 
     /**
      * Load a full save game into state.
-     * @param {Object} save
+     * @param {{ save: Object }} input
      */
-    loadSave(save) {
+    runLoad({ save }) {
       this.player = save.player
       this.time = save.time
       this.currentLocationId = save.player.currentLocationId
@@ -1146,7 +1140,7 @@ export const useGameStore = defineStore('game', {
       // registered them and they persist across resets.
     },
 
-    resetGame() {
+    runReset() {
       this.player = null
       this.currentLocationId = null
       this.locations = {}

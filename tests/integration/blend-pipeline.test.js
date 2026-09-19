@@ -40,11 +40,11 @@ const maurice = JSON.parse(readFileSync(resolve('content/characters/maurice.json
 function startGame({ at = 'moms_house' } = {}) {
   setActivePinia(createPinia())
   const game = useGameStore()
-  for (const substance of substances) game.registerSubstance({ substance })
-  for (const condition of conditions) game.registerCondition({ condition })
-  game.registerLocation(locationCreate(momsHouse))
-  game.registerLocation(locationCreate(blueParrot))
-  game.startNewGame(playerCreate({ name: 'Tester' }), at)
+  for (const substance of substances) game.substanceRegister({ substance })
+  for (const condition of conditions) game.conditionRegister({ condition })
+  game.locationRegister({ location: locationCreate(momsHouse) })
+  game.locationRegister({ location: locationCreate(blueParrot) })
+  game.runStart({ player: playerCreate({ name: 'Tester' }), locationId: at })
   return game
 }
 
@@ -66,7 +66,7 @@ describe('blend pipeline', () => {
     const game = startGame()
     const charmBefore = statEffective({ player: game.player, statName: 'charm' })
 
-    const result = game.applyDoses({ doses: [{ substanceId: 'beer', value: 40 }] })
+    const result = game.playerDosesApply({ doses: [{ substanceId: 'beer', value: 40 }] })
 
     expect(result.ok).toBe(true)
     expect(game.player.intoxications).toEqual({ beer: 40 })
@@ -102,7 +102,7 @@ describe('blend pipeline', () => {
   it('each substance wears off on its own clock as ticks pass', async () => {
     const game = startGame()
     const loop = useGameLoop()
-    game.applyDoses({
+    game.playerDosesApply({
       doses: [
         { substanceId: 'whiskey', value: 30 },
         { substanceId: 'weed', value: 30 },
@@ -119,7 +119,7 @@ describe('blend pipeline', () => {
   it('a substance fully worn off leaves no trace and sobriety returns to 100', async () => {
     const game = startGame()
     const loop = useGameLoop()
-    game.applyDoses({ doses: [{ substanceId: 'weed', value: 20 }] })
+    game.playerDosesApply({ doses: [{ substanceId: 'weed', value: 20 }] })
 
     await loop.tick({ ticks: 10 })
 
@@ -130,7 +130,7 @@ describe('blend pipeline', () => {
 
   it('forty whiskey, forty weed, twenty you', () => {
     const game = startGame()
-    game.applyDoses({
+    game.playerDosesApply({
       doses: [
         { substanceId: 'whiskey', value: 40 },
         { substanceId: 'weed', value: 40 },
@@ -143,11 +143,11 @@ describe('blend pipeline', () => {
 
   it('a condition joins the blend when its status crosses the line', () => {
     const game = startGame()
-    game.applyStatusChanges({ hunger: -45 }) // 50 → 5, starving below 15
+    game.playerStatusApply({ changes: { hunger: -45 } }) // 50 → 5, starving below 15
     expect(personaIds(game)).toEqual(['hollow'])
     expect(game.player.blend.modifiers.creativity).toBe(3)
 
-    game.applyStatusChanges({ hunger: 40 }) // fed
+    game.playerStatusApply({ changes: { hunger: 40 } }) // fed
     expect(personaIds(game)).toEqual([])
   })
 
@@ -155,7 +155,7 @@ describe('blend pipeline', () => {
     const game = startGame()
     const loop = useGameLoop()
     for (let n = 0; n < 3; n++) {
-      game.applyDoses({ doses: [{ substanceId: 'nicotine', value: 25 }] })
+      game.playerDosesApply({ doses: [{ substanceId: 'nicotine', value: 25 }] })
     }
     expect(game.player.habituations.nicotine).toBe(37.5)
     expect(personaIds(game)).toEqual(['mr_cool'])
@@ -177,23 +177,23 @@ describe('blend pipeline', () => {
       { substanceId: 'whiskey', value: 30, chance: 0.1 },
     ]
     const clean = startGame()
-    clean.applyDoses({ doses: laced, rng: () => 0.95 })
+    clean.playerDosesApply({ doses: laced, rng: () => 0.95 })
     expect(Object.keys(clean.player.intoxications)).toEqual(['weed'])
 
     const unlucky = startGame()
-    unlucky.applyDoses({ doses: laced, rng: () => 0.0 })
+    unlucky.playerDosesApply({ doses: laced, rng: () => 0.0 })
     expect(Object.keys(unlucky.player.intoxications).sort()).toEqual(['weed', 'whiskey'])
   })
 
   it('an outcome cannot write sobriety directly', () => {
     const game = startGame()
-    game.applyStatusChanges({ sobriety: -50 })
+    game.playerStatusApply({ changes: { sobriety: -50 } })
     expect(game.player.status.sobriety).toBe(100)
   })
 
   it('a dose of nothing the city sells is refused with a code, and the player is untouched', () => {
     const game = startGame()
-    const result = game.applyDoses({ doses: [{ substanceId: 'absinthe', value: 30 }] })
+    const result = game.playerDosesApply({ doses: [{ substanceId: 'absinthe', value: 30 }] })
     expect(result.ok).toBe(false)
     expect(result.error.code).toBe('SUBSTANCE_UNKNOWN')
     expect(game.player.intoxications).toEqual({})
@@ -201,7 +201,7 @@ describe('blend pipeline', () => {
 
   it('characters carry the same blend: Maurice arrives forty points into a beer and sobers up', async () => {
     const game = startGame()
-    game.registerCharacter(characterCreate(maurice))
+    game.characterRegister({ character: characterCreate(maurice) })
     game.blendRefresh()
     expect(game.characters.maurice.status.sobriety).toBe(60)
     expect(game.characters.maurice.blend.weights[0].personaId).toBe('one_of_the_guys')

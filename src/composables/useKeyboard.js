@@ -16,7 +16,7 @@ import { onMounted, onUnmounted } from 'vue'
  *
  * @example
  * useKeyboard({
- *   'n': () => startNewGame(),
+ *   'n': () => runStart(),
  *   'ArrowUp': (e) => { e.preventDefault(); moveUp() },
  *   'Enter': (e) => { e.preventDefault(); select() },
  * })

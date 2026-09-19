@@ -44,12 +44,12 @@ const voice = (personaId, code) => voices.find((v) => v.id === personaId).lines[
 function startGame() {
   setActivePinia(createPinia())
   const game = useGameStore()
-  for (const substance of substances) game.registerSubstance({ substance })
-  for (const condition of conditions) game.registerCondition({ condition })
-  for (const medium of mediums) game.registerMedium({ medium })
-  for (const v of voices) game.registerVoice({ voice: v })
-  game.registerLocation(locationCreate(momsHouse))
-  game.startNewGame(playerCreate({ name: 'Tester' }), 'moms_house')
+  for (const substance of substances) game.substanceRegister({ substance })
+  for (const condition of conditions) game.conditionRegister({ condition })
+  for (const medium of mediums) game.mediumRegister({ medium })
+  for (const v of voices) game.voiceRegister({ voice: v })
+  game.locationRegister({ location: locationCreate(momsHouse) })
+  game.runStart({ player: playerCreate({ name: 'Tester' }), locationId: 'moms_house' })
   return game
 }
 
@@ -100,7 +100,7 @@ describe('inspiration pipeline', () => {
     const game = startGame()
     const narrative = useNarrative()
     const loop = useGameLoop({ eventRegistry: [forced('rock_bottom_echo')], narrative })
-    game.applyDoses({ doses: [{ substanceId: 'whiskey', value: 90 }] })
+    game.playerDosesApply({ doses: [{ substanceId: 'whiskey', value: 90 }] })
 
     await loop.tick({ ticks: 1 })
     const entries = await settle(narrative)
@@ -115,7 +115,7 @@ describe('inspiration pipeline', () => {
     const game = startGame()
     const narrative = useNarrative()
     const loop = useGameLoop({ narrative })
-    game.applyInspirationStrike({
+    game.inspirationStrikeApply({
       source: { kind: 'event', id: 'test' },
       mediumId: 'drawing',
       strength: 40,
@@ -139,7 +139,7 @@ describe('inspiration pipeline', () => {
     const game = startGame()
     const narrative = useNarrative()
     const loop = useGameLoop({ eventRegistry: [forced('found_change')], narrative })
-    game.applyInspirationStrike({
+    game.inspirationStrikeApply({
       source: { kind: 'event', id: 'test' },
       mediumId: 'painting',
       strength: 50,
@@ -161,7 +161,7 @@ describe('inspiration pipeline', () => {
     const game = startGame()
     const narrative = useNarrative()
     const loop = useGameLoop({ eventRegistry: [forced('rain')], narrative })
-    game.applyInspirationStrike({
+    game.inspirationStrikeApply({
       source: { kind: 'event', id: 'rock_bottom_echo' },
       mediumId: 'painting',
       strength: 60,
@@ -186,7 +186,7 @@ describe('inspiration pipeline', () => {
     const narrative = useNarrative()
     const loop = useGameLoop({ actionRegistry: momsHouseActions, narrative })
     await loop.tick({ ticks: 52 }) // 8:00 → 21:00, when sleep becomes possible
-    game.applyInspirationStrike({
+    game.inspirationStrikeApply({
       source: { kind: 'event', id: 'test' },
       mediumId: 'painting',
       strength: 50,
@@ -207,14 +207,14 @@ describe('inspiration pipeline', () => {
   it('an ordinary action does not interrupt, and the idea survives the walk to the park', async () => {
     const game = startGame()
     const loop = useGameLoop({ actionRegistry: momsHouseActions })
-    game.applyInspirationStrike({
+    game.inspirationStrikeApply({
       source: { kind: 'event', id: 'test' },
       mediumId: 'painting',
       strength: 50,
       ticksTotal: 20,
     })
 
-    game.registerLocation(locationCreate(columbiaPark))
+    game.locationRegister({ location: locationCreate(columbiaPark) })
     await loop.resolvePlayerAction(actionById('raid_fridge'))
     await loop.travel({ locationId: 'columbia_park' })
 
@@ -231,7 +231,7 @@ describe('inspiration pipeline', () => {
     expect(requirementsMeet({ player: game.player, action: make, gameTime: game.time }).meets).toBe(
       false
     )
-    game.applyInspirationStrike({
+    game.inspirationStrikeApply({
       source: { kind: 'event', id: 'test' },
       mediumId: 'painting',
       strength: 50,
@@ -249,16 +249,16 @@ describe('inspiration pipeline', () => {
 
   it('spending it closes the record against what it made, and spending nothing is refused', () => {
     const game = startGame()
-    const cold = game.applyInspirationSpend({ spentOn: { kind: 'piece', id: 'p1' } })
+    const cold = game.inspirationSpendApply({ spentOn: { kind: 'piece', id: 'p1' } })
     expect(cold.ok).toBe(false)
     expect(cold.error.code).toBe('NONE_ACTIVE')
 
-    game.applyInspirationStrike({
+    game.inspirationStrikeApply({
       source: { kind: 'event', id: 'test' },
       strength: 50,
       ticksTotal: 5,
     })
-    const spent = game.applyInspirationSpend({ spentOn: { kind: 'piece', id: 'p1' } })
+    const spent = game.inspirationSpendApply({ spentOn: { kind: 'piece', id: 'p1' } })
     expect(spent.ok).toBe(true)
     expect(game.player.inspirations[0]).toMatchObject({
       status: INSPIRATION_STATUSES.SPENT,
@@ -268,7 +268,7 @@ describe('inspiration pipeline', () => {
 
   it('a bad strike is refused with a code and the log is untouched', () => {
     const game = startGame()
-    const result = game.applyInspirationStrike({
+    const result = game.inspirationStrikeApply({
       source: { kind: 'event', id: 'test' },
       strength: 500,
       ticksTotal: 5,

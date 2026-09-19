@@ -33,11 +33,11 @@ const sober = (code) => voices.find((v) => v.id === 'sober').lines[code]
 function startGame({ at = 'moms_house' } = {}) {
   setActivePinia(createPinia())
   const game = useGameStore()
-  for (const location of locations) game.registerLocation(locationCreate(location))
-  for (const voice of voices) game.registerVoice({ voice })
-  for (const item of items) game.registerItem(itemCreate(item))
-  game.registerVocabulary({ vocabulary })
-  game.startNewGame(playerCreate({ name: 'Tester' }), at)
+  for (const location of locations) game.locationRegister({ location: locationCreate(location) })
+  for (const voice of voices) game.voiceRegister({ voice })
+  for (const item of items) game.itemRegister({ item: itemCreate(item) })
+  game.vocabularyRegister({ vocabulary })
+  game.runStart({ player: playerCreate({ name: 'Tester' }), locationId: at })
   return game
 }
 
@@ -117,8 +117,8 @@ describe('the menu', () => {
 
   it('picking someone out shows their actions; leaving lets them go', async () => {
     const game = startGame({ at: 'mocks_crest' })
-    game.registerCharacter(characterCreate(dale))
-    game.setCharacterLocation('dale', 'mocks_crest')
+    game.characterRegister({ character: characterCreate(dale) })
+    game.characterLocationSet({ characterId: 'dale', locationId: 'mocks_crest' })
     const talk = {
       id: 'talk_to_dale',
       label: 'Talk to Dale',
@@ -151,8 +151,8 @@ describe('the menu', () => {
   it('the inventory says which things can be used, by the same rule using them follows', () => {
     const game = startGame()
     game.player.inventory.push(
-      { ...game.getItem('tallboy_oly') },
-      { ...game.getItem('single_sock') }
+      { ...game.itemGet({ itemId: 'tallboy_oly' }) },
+      { ...game.itemGet({ itemId: 'single_sock' }) }
     )
     const usable = Object.fromEntries(game.playerInventory.map((i) => [i.id, i.usable]))
     expect(usable).toEqual({ tallboy_oly: true, single_sock: false })
@@ -160,14 +160,14 @@ describe('the menu', () => {
 
   it("the menu is headed by the question, the person picked out, or the event, in content's words", () => {
     const game = startGame({ at: 'mocks_crest' })
-    game.registerCharacter(characterCreate(dale))
-    game.setCharacterLocation('dale', 'mocks_crest')
+    game.characterRegister({ character: characterCreate(dale) })
+    game.characterLocationSet({ characterId: 'dale', locationId: 'mocks_crest' })
     useGameLoop().onLocationEntered()
     expect(game.menuTitle).toBe(vocabulary.ui.menu.title)
     game.characterSelect({ characterId: 'dale' })
     expect(game.menuTitle).toBe(dale.name)
     expect(game.menuEmptyText).toBe(vocabulary.ui.menu.emptyWith.replace('{name}', dale.name))
-    game.setActiveEvent({ id: 'x', title: 'A knock', choices: [{ label: 'Answer' }] })
+    game.eventActiveSet({ event: { id: 'x', title: 'A knock', choices: [{ label: 'Answer' }] } })
     expect(game.menuTitle).toBe('A knock')
   })
 

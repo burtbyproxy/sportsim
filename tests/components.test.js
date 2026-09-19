@@ -46,7 +46,7 @@ describe('GameFooter', () => {
   const vocabulary = JSON.parse(readFileSync(resolve('content/vocabulary.json'), 'utf-8'))
   beforeEach(() => {
     setActivePinia(createPinia())
-    useGameStore().registerVocabulary({ vocabulary })
+    useGameStore().vocabularyRegister({ vocabulary })
   })
 
   it("says there is no game when there is no game, in content's words", () => {
@@ -55,7 +55,7 @@ describe('GameFooter', () => {
 
   it('shows the keys once a game is running', () => {
     const game = useGameStore()
-    game.startNewGame(playerCreate({ name: 'Tester' }), 'moms_house')
+    game.runStart({ player: playerCreate({ name: 'Tester' }), locationId: 'moms_house' })
     expect(mount(GameFooter).text()).toBe(vocabulary.ui.footer.keys)
   })
 })
@@ -197,7 +197,7 @@ describe('TitleScreen — picking up a save', () => {
     const first = await mountTitle()
     await first.wrapper.findAll('.title-menu-item')[0].trigger('click')
     await flushPromises()
-    first.game.moveTo('columbia_park')
+    first.game.playerMove({ locationId: 'columbia_park' })
     const { useSave } = await import('../src/composables/useSave.js')
     useSave().saveWrite({ name: 'mine' })
     const stored = { ...globalThis.localStorage }

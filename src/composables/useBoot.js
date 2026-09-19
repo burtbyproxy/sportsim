@@ -65,34 +65,34 @@ export function useBoot({ load = contentLoad } = {}) {
     })
     if (!loaded.ok) return loaded
     const content = loaded.data
-    game.registerConfig({ config: config.data })
-    game.registerVocabulary({ vocabulary: content[CONTENT_KINDS.VOCABULARY] })
+    game.configRegister({ config: config.data })
+    game.vocabularyRegister({ vocabulary: content[CONTENT_KINDS.VOCABULARY] })
     for (const item of Object.values(content[CONTENT_KINDS.ITEMS])) {
-      game.registerItem(itemCreate(item))
+      game.itemRegister({ item: itemCreate(item) })
     }
     for (const substance of Object.values(content[CONTENT_KINDS.SUBSTANCES])) {
-      game.registerSubstance({ substance })
+      game.substanceRegister({ substance })
     }
     for (const condition of Object.values(content[CONTENT_KINDS.CONDITIONS])) {
-      game.registerCondition({ condition })
+      game.conditionRegister({ condition })
     }
     for (const medium of Object.values(content[CONTENT_KINDS.MEDIUMS])) {
-      game.registerMedium({ medium })
+      game.mediumRegister({ medium })
     }
     for (const voice of Object.values(content[CONTENT_KINDS.VOICES])) {
-      game.registerVoice({ voice })
+      game.voiceRegister({ voice })
     }
     for (const table of Object.values(content[CONTENT_KINDS.SCAVENGE_TABLES])) {
-      game.registerScavengeTable({ table })
+      game.scavengeTableRegister({ table })
     }
     for (const minigame of Object.values(content[CONTENT_KINDS.GAMES])) {
-      game.registerGame({ game: minigame })
+      game.minigameRegister({ minigame })
     }
     for (const action of Object.values(content[CONTENT_KINDS.ACTIONS])) {
-      game.registerAction({ action })
+      game.actionRegister({ action })
     }
     for (const event of Object.values(content[CONTENT_KINDS.EVENTS])) {
-      game.registerEvent({ event })
+      game.eventRegister({ event })
     }
     return resultOk({ mapId: config.data.mapId })
   }
@@ -117,12 +117,12 @@ export function useBoot({ load = contentLoad } = {}) {
         statIds: vocabulary.stats.map((stat) => stat.id),
       },
     })
-    game.startNewGame(player, config.start.locationId)
+    game.runStart({ player, locationId: config.start.locationId })
     for (const location of Object.values(world.data[CONTENT_KINDS.LOCATIONS])) {
-      game.registerLocation(locationCreate(location))
+      game.locationRegister({ location: locationCreate(location) })
     }
     for (const character of Object.values(world.data[CONTENT_KINDS.CHARACTERS])) {
-      game.registerCharacter(characterCreate(character))
+      game.characterRegister({ character: characterCreate(character) })
     }
     return resultOk({ locationId: config.start.locationId })
   }
@@ -141,7 +141,7 @@ export function useBoot({ load = contentLoad } = {}) {
     if (!read.ok) return read
     const locations = load({ kind: CONTENT_KINDS.LOCATIONS, mapId: game.config.mapId })
     if (!locations.ok) return locations
-    game.loadSave(read.data)
+    game.runLoad({ save: read.data })
     game.locationsRestore({ definitions: locations.data })
     return resultOk({ id: latest.id })
   }

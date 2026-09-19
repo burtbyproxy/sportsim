@@ -81,7 +81,7 @@ const bootLines = (config?.bootLines ?? []).map((line) =>
   textFill({ text: line, params: { version } })
 )
 
-function startNewGame() {
+function runStart() {
   const started = boot.gameNew()
   if (started.ok) router.push('/game')
 }
@@ -95,7 +95,7 @@ function loadGame() {
 const menuItems = computed(() =>
   config
     ? [
-        { id: 'new', label: config.menu.new, shortcut: 'n', disabled: false, action: startNewGame },
+        { id: 'new', label: config.menu.new, shortcut: 'n', disabled: false, action: runStart },
         {
           id: 'load',
           label: config.menu.load,

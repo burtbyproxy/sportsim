@@ -40,17 +40,17 @@ const itemById = (id) => items.find((i) => i.id === id)
 function startGame({ at = 'moms_house' } = {}) {
   setActivePinia(createPinia())
   const game = useGameStore()
-  for (const item of items) game.registerItem(item)
-  for (const table of tables) game.registerScavengeTable({ table })
-  for (const v of voices) game.registerVoice({ voice: v })
-  for (const medium of mediums) game.registerMedium({ medium })
-  for (const substance of substances) game.registerSubstance({ substance })
+  for (const item of items) game.itemRegister({ item })
+  for (const table of tables) game.scavengeTableRegister({ table })
+  for (const v of voices) game.voiceRegister({ voice: v })
+  for (const medium of mediums) game.mediumRegister({ medium })
+  for (const substance of substances) game.substanceRegister({ substance })
   // Registered the way the title screen does it: the raw content object.
-  for (const location of locations) game.registerLocation({ ...location })
+  for (const location of locations) game.locationRegister({ location: { ...location } })
   const player = playerCreate({ name: 'Tester' })
   player.stats.luck.base = 15
   player.stats.wits.base = 15
-  game.startNewGame(player, at)
+  game.runStart({ player, locationId: at })
   return game
 }
 
@@ -172,7 +172,7 @@ describe('scavenge pipeline', () => {
       narrative,
       rng: sequence(HIGH_DIE, 0.0),
     })
-    game.applyDoses({ doses: [{ substanceId: 'weed', value: 90 }] })
+    game.playerDosesApply({ doses: [{ substanceId: 'weed', value: 90 }] })
 
     await loop.resolvePlayerAction(scavengeAction)
     const entries = await settle(narrative)
@@ -243,7 +243,7 @@ describe('scavenge pipeline', () => {
   it('a location nobody taught about tables is refused with a code', () => {
     const game = startGame()
     game.currentLocation.scavengeTableId = 'moon'
-    const result = game.applyScavenge()
+    const result = game.scavengeApply()
     expect(result.ok).toBe(false)
     expect(result.error.code).toBe('TABLE_UNKNOWN')
     expect(game.playerInventory).toEqual([])

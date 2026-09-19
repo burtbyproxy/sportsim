@@ -58,18 +58,18 @@ function startGame({
 } = {}) {
   setActivePinia(createPinia())
   const game = useGameStore()
-  for (const item of items) game.registerItem(itemCreate(item))
-  for (const v of voices) game.registerVoice({ voice: v })
-  for (const m of mediumsUsed) game.registerMedium({ medium: m })
-  for (const g of games) game.registerGame({ game: g })
-  game.registerVocabulary({ vocabulary })
-  for (const substance of substances) game.registerSubstance({ substance })
-  for (const condition of conditions) game.registerCondition({ condition })
-  for (const location of locations) game.registerLocation(locationCreate(location))
+  for (const item of items) game.itemRegister({ item: itemCreate(item) })
+  for (const v of voices) game.voiceRegister({ voice: v })
+  for (const m of mediumsUsed) game.mediumRegister({ medium: m })
+  for (const g of games) game.minigameRegister({ minigame: g })
+  game.vocabularyRegister({ vocabulary })
+  for (const substance of substances) game.substanceRegister({ substance })
+  for (const condition of conditions) game.conditionRegister({ condition })
+  for (const location of locations) game.locationRegister({ location: locationCreate(location) })
   const player = playerCreate({ name: 'Tester' })
   for (const stat of Object.values(player.stats)) stat.base = 10
-  game.startNewGame(player, at)
-  for (const itemId of carrying) game.player.inventory.push({ ...game.getItem(itemId) })
+  game.runStart({ player, locationId: at })
+  for (const itemId of carrying) game.player.inventory.push({ ...game.itemGet({ itemId }) })
   const narrative = useNarrative()
   const loop = useGameLoop({ actionRegistry: actions, eventRegistry: events, narrative, rng })
   loop.onLocationEntered()
@@ -77,7 +77,7 @@ function startGame({
 }
 
 function strike(game, { mediumId = 'painting', strength = 60, ticksTotal = 12 } = {}) {
-  return game.applyInspirationStrike({
+  return game.inspirationStrikeApply({
     source: { kind: 'event', id: 'test_strike' },
     mediumId,
     strength,
@@ -277,7 +277,7 @@ describe('making pipeline', () => {
   it('whoever is holding the brush signs the piece: stoned, a rough one is genius', async () => {
     const ctx = startGame({ carrying: ['golf_pencil', 'coaster'], rng: sequence(die(3)) })
     const { game } = ctx
-    game.applyDoses({ doses: [{ substanceId: 'weed', value: 80 }] })
+    game.playerDosesApply({ doses: [{ substanceId: 'weed', value: 80 }] })
     expect(game.personaInCharge).toBe('telepath')
     strike(game, { mediumId: 'drawing' })
     ctx.loop.onLocationEntered()
@@ -462,11 +462,11 @@ describe('making pipeline', () => {
 
     setActivePinia(createPinia())
     const restored = useGameStore()
-    for (const item of items) restored.registerItem(itemCreate(item))
-    for (const v of voices) restored.registerVoice({ voice: v })
-    for (const m of mediums) restored.registerMedium({ medium: m })
-    for (const g of games) restored.registerGame({ game: g })
-    restored.loadSave(useSave().saveRead({ id }).data)
+    for (const item of items) restored.itemRegister({ item: itemCreate(item) })
+    for (const v of voices) restored.voiceRegister({ voice: v })
+    for (const m of mediums) restored.mediumRegister({ medium: m })
+    for (const g of games) restored.minigameRegister({ minigame: g })
+    restored.runLoad({ save: useSave().saveRead({ id }).data })
     restored.locationsRestore({ definitions: Object.fromEntries(locations.map((l) => [l.id, l])) })
 
     expect(restored.locations.lombard_dental.marks).toHaveLength(1)
@@ -513,7 +513,7 @@ describe('making pipeline', () => {
 
     setActivePinia(createPinia())
     const game = useGameStore()
-    game.loadSave(migrated)
+    game.runLoad({ save: migrated })
     game.locationsRestore({ definitions: Object.fromEntries(locations.map((l) => [l.id, l])) })
     const dental = game.locations.lombard_dental
     // What happened there is remembered; what the place is comes from today's content.
@@ -596,7 +596,7 @@ describe('making pipeline', () => {
   it('on malt liquor you cannot stop early: the menu greys it out and says why', async () => {
     const ctx = startGame({ at: 'lombard_dental', carrying: ['sharpie'] })
     const { game } = ctx
-    game.applyDoses({ doses: [{ substanceId: 'malt_liquor', value: 80 }] })
+    game.playerDosesApply({ doses: [{ substanceId: 'malt_liquor', value: 80 }] })
     expect(game.personaInCharge).toBe('suburban_gangster')
     strike(game, { mediumId: 'tagging' })
     ctx.loop.onLocationEntered()
@@ -641,9 +641,9 @@ describe('making pipeline', () => {
   /** At the Blue Parrot at nine on karaoke night, moved to sing, with this in you and this in your pocket. */
   function karaokeNight({ doses = [], money = 0, rng = sequence(die(15)) } = {}) {
     const ctx = startGame({ at: 'blue_parrot', rng })
-    ctx.game.advanceTime(13 * 4)
+    ctx.game.timeAdvance({ ticks: 13 * 4 })
     ctx.game.player.status.money = money
-    if (doses.length > 0) ctx.game.applyDoses({ doses })
+    if (doses.length > 0) ctx.game.playerDosesApply({ doses })
     strike(ctx.game, { mediumId: 'karaoke', ticksTotal: 8 })
     ctx.loop.onLocationEntered()
     return ctx
@@ -747,7 +747,7 @@ describe('making pipeline', () => {
 
     const ctx = startGame({ at: 'denver_711' })
     const { game } = ctx
-    game.applyDoses({ doses: malt })
+    game.playerDosesApply({ doses: malt })
     strike(game, { mediumId: 'freestyle' })
     ctx.loop.onLocationEntered()
     await pick(ctx, 'Make something')
@@ -782,8 +782,8 @@ describe('making pipeline', () => {
     const ctx = startGame({ at: 'columbia_park' })
     const { game } = ctx
     // None of this ships. It is registered the way a content pack would be.
-    game.registerGame({
-      game: {
+    game.minigameRegister({
+      minigame: {
         ...games.find((g) => g.id === 'room'),
         id: 'invisible_box',
         choices: {
@@ -793,7 +793,7 @@ describe('making pipeline', () => {
         },
       },
     })
-    game.registerMedium({
+    game.mediumRegister({
       medium: {
         id: 'mime',
         display: 'Mime',
@@ -812,22 +812,22 @@ describe('making pipeline', () => {
         },
       },
     })
-    game.registerItem(
-      itemCreate({
+    game.itemRegister({
+      item: itemCreate({
         id: 'white_gloves',
         name: 'White Gloves',
         type: 'tool',
         mediumIds: ['mime'],
         pieceAs: 'white gloves',
-      })
-    )
+      }),
+    })
     strike(game, { mediumId: 'mime' })
     ctx.loop.onLocationEntered()
     await pick(ctx, 'Make something')
     // Anywhere, yes. Bare-handed, no.
     expect(labels(game)).not.toContain('Mime')
     await pick(ctx, 'Never mind')
-    game.player.inventory.push({ ...game.getItem('white_gloves') })
+    game.player.inventory.push({ ...game.itemGet({ itemId: 'white_gloves' }) })
     await pick(ctx, 'Make something')
     await pick(ctx, 'Mime: White Gloves, right here')
     await pick(ctx, 'Feel along the wall')
@@ -869,7 +869,7 @@ describe('making pipeline', () => {
     const urge = substances.find((s) => s.id === 'malt_liquor').persona.urges[0]
     // A roll just under the odds of one tick: it lands the first time it is asked.
     const ctx = startGame({ rng: () => urge.chancePerTick / 2 })
-    ctx.game.applyDoses({ doses: [{ substanceId: 'malt_liquor', value: 80 }] })
+    ctx.game.playerDosesApply({ doses: [{ substanceId: 'malt_liquor', value: 80 }] })
     expect(ctx.game.inspirationActive).toBeNull()
     await ctx.loop.tick({ ticks: 1 })
     expect(ctx.game.inspirationActive).toMatchObject({
@@ -888,7 +888,7 @@ describe('making pipeline', () => {
 
   it('an urge does not barge in on an idea you already have', async () => {
     const ctx = startGame({ rng: () => 0.001 })
-    ctx.game.applyDoses({ doses: [{ substanceId: 'malt_liquor', value: 80 }] })
+    ctx.game.playerDosesApply({ doses: [{ substanceId: 'malt_liquor', value: 80 }] })
     const mine = strike(ctx.game, { mediumId: 'painting' }).data.struck
     await ctx.loop.tick({ ticks: 1 })
     expect(ctx.game.inspirationActive.id).toBe(mine.id)
@@ -936,7 +936,7 @@ describe('making pipeline', () => {
     // Drunk, after dark: exactly who the cruiser is looking for.
     const canFire = (locationId) => {
       const ctx = startGame({ at: locationId })
-      ctx.game.applyDoses({ doses: [{ substanceId: 'beer', value: 80 }] })
+      ctx.game.playerDosesApply({ doses: [{ substanceId: 'beer', value: 80 }] })
       return eventsRandomCheck({
         player: ctx.game.player,
         location: ctx.game.currentLocation,
@@ -972,7 +972,7 @@ describe('making pipeline', () => {
     const pull = events.find((e) => e.id === 'karaoke_night_pull')
     const at = async (ticksIn) => {
       const ctx = startGame({ at: 'blue_parrot', events: [pull], rng: () => 0 })
-      ctx.game.advanceTime(ticksIn)
+      ctx.game.timeAdvance({ ticks: ticksIn })
       await ctx.loop.tick({ ticks: 1 })
       return ctx.game.inspirationActive
     }
@@ -1001,7 +1001,7 @@ describe('making pipeline', () => {
       voice('sober', 'requirement.money').replace('{cost}', '$5.00').replace('{money}', '$2.00')
     )
     const gangster = startGame({ at: 'lombard_dental' })
-    gangster.game.applyDoses({ doses: [{ substanceId: 'malt_liquor', value: 80 }] })
+    gangster.game.playerDosesApply({ doses: [{ substanceId: 'malt_liquor', value: 80 }] })
     expect(
       gangster.game.requirementReason({
         code: 'requirement.money',
@@ -1054,7 +1054,7 @@ describe('making pipeline', () => {
     )
     const bar = (id) => game.statusBars.find((b) => b.key === id)
     // Half drunk is already news; half tired is not.
-    game.applyDoses({ doses: [{ substanceId: 'beer', value: 55 }] })
+    game.playerDosesApply({ doses: [{ substanceId: 'beer', value: 55 }] })
     game.player.status.energy = 45
     expect(bar('sobriety').value).toBe(45)
     expect(bar('sobriety').fillClass).toBe('status-stat__fill--warning')
