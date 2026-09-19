@@ -7,6 +7,7 @@
 import { expect } from 'vitest'
 import { readdirSync, readFileSync, existsSync } from 'fs'
 import { join, resolve } from 'path'
+import { FIT_TRIGGER_KINDS, MARK_KINDS, MARK_TARGET_KINDS } from '../../src/engine/psyche.js'
 
 export const CONTENT_ROOT = resolve('content')
 // The game's words are content. This file reads them; it does not keep its own copy.
@@ -18,6 +19,10 @@ export const VALID_SUBSTANCE_FAMILIES = VOCABULARY.substanceFamilies
 export const VALID_SIMULATION_TIERS = VOCABULARY.simulationTiers
 export const VALID_ITEM_TYPES = VOCABULARY.itemTypes
 export const VALID_ACTION_KINDS = VOCABULARY.actionKinds
+// What a mark can be about, and what sets a fit off: the engine's own lists.
+export const VALID_MARK_TARGET_KINDS = Object.values(MARK_TARGET_KINDS)
+export const VALID_MARK_KINDS = Object.values(MARK_KINDS)
+export const VALID_FIT_TRIGGER_KINDS = Object.values(FIT_TRIGGER_KINDS)
 
 /**
  * Load all JSON files from a directory path (non-recursive).
@@ -364,11 +369,27 @@ export function validateOutcome({ outcome, label }) {
     expect(outcome.dazed, `${label}: dazed must be 1-100`).toBeGreaterThanOrEqual(1)
     expect(outcome.dazed, `${label}: dazed must be 1-100`).toBeLessThanOrEqual(100)
   }
-  // Nothing in the game can grant a trauma yet; a non-null value would be silently ignored.
-  expect(
-    outcome.traumaGained ?? null,
-    `${label}: traumaGained is not supported — there are no trauma definitions to grant`
-  ).toBeNull()
+  // Fields that meant nothing do not come back: marks come from a trauma's save.
+  for (const dead of ['traumaGained', 'obsessionFed']) {
+    expect(
+      outcome,
+      `${label}: '${dead}' is gone — use trauma: { save, tableId }`
+    ).not.toHaveProperty(dead)
+  }
+  if (outcome.trauma !== undefined && outcome.trauma !== null) {
+    const { save, tableId, target } = outcome.trauma
+    expect(VALID_STATS, `${label}: trauma.save.stat '${save?.stat}' is not a stat`).toContain(
+      save?.stat
+    )
+    expect(save.dc, `${label}: trauma.save.dc must be > 0`).toBeGreaterThan(0)
+    expect(typeof tableId, `${label}: trauma.tableId must be string`).toBe('string')
+    if (target !== undefined && target !== null) {
+      expect(VALID_MARK_TARGET_KINDS, `${label}: trauma.target.kind '${target.kind}'`).toContain(
+        target.kind
+      )
+      expect(typeof target.id, `${label}: trauma.target.id must be string`).toBe('string')
+    }
+  }
   if (outcome.inspiration !== undefined && outcome.inspiration !== null) {
     const ins = outcome.inspiration
     expect(ins.strength, `${label}: inspiration.strength must be 1-100`).toBeGreaterThanOrEqual(1)
@@ -414,6 +435,12 @@ export function validateAction({ data, file }) {
       field
     )
   }
+  // What a mark pulls toward is read off the action itself; a list of obsession ids meant nothing.
+  expect(data, `${file} '${data.id}': obsessionIds is gone`).not.toHaveProperty('obsessionIds')
+  expect(
+    data.requirements ?? {},
+    `${file} '${data.id}': requiredTraumas is now requiredMarkIds`
+  ).not.toHaveProperty('requiredTraumas')
 
   if (data.kind === 'make') {
     // Taking stock is free; the work is what costs, and the medium says how much.
@@ -791,6 +818,108 @@ export function validateCondition({ data, file }) {
 }
 
 // ---------------------------------------------------------------------------
+// Mark validation (content/marks)
+// ---------------------------------------------------------------------------
+
+export const MARK_REQUIRED_FIELDS = [
+  'id',
+  'kind',
+  'display',
+  'targetKinds',
+  'polarity',
+  'confusion',
+  'avoids',
+  'draws',
+  'fit',
+  'lineCode',
+]
+
+/**
+ * A mark: what it is, what it can be about, and what it does. Every mark
+ * does something; stats it bends have a pro and a con, like everything else.
+ * @param {{ data: Object, file: string, conditionIds: string[] }} input
+ */
+export function validateMark({ data, file, conditionIds }) {
+  for (const field of MARK_REQUIRED_FIELDS) {
+    expect(data, `${file}: missing field '${field}'`).toHaveProperty(field)
+  }
+  expect(VALID_MARK_KINDS, `${file}: kind '${data.kind}'`).toContain(data.kind)
+  expect(Array.isArray(data.targetKinds), `${file}: targetKinds must be an array`).toBe(true)
+  for (const kind of data.targetKinds) {
+    expect(VALID_MARK_TARGET_KINDS, `${file}: target kind '${kind}'`).toContain(kind)
+  }
+  if (data.kind === 'obsession') {
+    expect(['love', 'hate'], `${file}: an obsession is love or hate`).toContain(data.polarity)
+  } else {
+    expect(data.polarity, `${file}: only an obsession has a polarity`).toBeNull()
+  }
+  if (data.modifiers !== undefined) validateModifiers({ modifiers: data.modifiers, label: file })
+  expect(data.confusion, `${file}: confusion must be 0-100`).toBeGreaterThanOrEqual(0)
+  expect(data.confusion, `${file}: confusion must be 0-100`).toBeLessThanOrEqual(100)
+  expect(typeof data.avoids, `${file}: avoids must be boolean`).toBe('boolean')
+  if (data.avoids) {
+    // Staying away is something a place or a person can be refused; nothing else is.
+    expect(data.targetKinds.length, `${file}: avoiding needs something to avoid`).toBeGreaterThan(0)
+    for (const kind of data.targetKinds) {
+      expect(['location', 'character'], `${file}: avoids a '${kind}'`).toContain(kind)
+    }
+  }
+  expect(data.draws, `${file}: draws must be 0-1`).toBeGreaterThanOrEqual(0)
+  expect(data.draws, `${file}: draws must be 0-1`).toBeLessThanOrEqual(1)
+  if (data.draws > 0) {
+    expect(
+      data.targetKinds.length,
+      `${file}: a pull needs something to pull toward`
+    ).toBeGreaterThan(0)
+  }
+  expect(typeof data.lineCode, `${file}: lineCode must be string`).toBe('string')
+
+  const fit = data.fit
+  if (fit !== null) {
+    expect(VALID_FIT_TRIGGER_KINDS, `${file}: fit.trigger.kind '${fit.trigger?.kind}'`).toContain(
+      fit.trigger?.kind
+    )
+    if (fit.trigger.kind === 'target') {
+      expect(
+        data.targetKinds.length,
+        `${file}: a fit set off by its target needs one`
+      ).toBeGreaterThan(0)
+    }
+    if (fit.trigger.kind === 'status') {
+      expect(
+        VALID_STATUS_KEYS.concat(['sobriety', 'confusion']),
+        `${file}: fit.trigger.status`
+      ).toContain(fit.trigger.status)
+      const below = typeof fit.trigger.below === 'number'
+      const above = typeof fit.trigger.above === 'number'
+      expect(below !== above, `${file}: fit.trigger needs exactly one of below / above`).toBe(true)
+    }
+    if (fit.trigger.kind === 'condition') {
+      expect(conditionIds, `${file}: fit.trigger.conditionId`).toContain(fit.trigger.conditionId)
+    }
+    expect(fit.chancePerTick, `${file}: fit.chancePerTick must be in (0, 1]`).toBeGreaterThan(0)
+    expect(fit.chancePerTick, `${file}: fit.chancePerTick must be in (0, 1]`).toBeLessThanOrEqual(1)
+    expect(Number.isInteger(fit.ticks), `${file}: fit.ticks must be a whole number`).toBe(true)
+    expect(fit.ticks, `${file}: fit.ticks must be >= 1`).toBeGreaterThanOrEqual(1)
+    expect(fit.weight, `${file}: fit.weight must be in (0, 1]`).toBeGreaterThan(0)
+    expect(fit.weight, `${file}: fit.weight must be in (0, 1]`).toBeLessThanOrEqual(1)
+    validatePersona({ persona: fit.persona, label: `${file} fit` })
+    validateModifiers({ modifiers: fit.modifiers, label: `${file} fit` })
+    expect(fit.confusion, `${file}: fit.confusion must be 0-100`).toBeGreaterThanOrEqual(0)
+    expect(fit.confusion, `${file}: fit.confusion must be 0-100`).toBeLessThanOrEqual(100)
+    expect(typeof fit.lineCode, `${file}: fit.lineCode must be string`).toBe('string')
+  }
+
+  const does =
+    (data.modifiers?.length ?? 0) > 0 ||
+    data.confusion > 0 ||
+    data.avoids ||
+    data.draws > 0 ||
+    fit !== null
+  expect(does, `${file}: a mark has to do something`).toBe(true)
+}
+
+// ---------------------------------------------------------------------------
 // Tests — Characters
 // ---------------------------------------------------------------------------
 
@@ -813,6 +942,10 @@ export function validateEvent({ data, file }) {
       field
     )
   }
+  expect(
+    data.conditions ?? {},
+    `${file} '${data.id}': requiredTraumas is now requiredMarkIds`
+  ).not.toHaveProperty('requiredTraumas')
   expect(
     ['random', 'triggered'],
     `${file} '${data.id}': type must be random or triggered`

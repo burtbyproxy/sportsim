@@ -6,39 +6,79 @@
   "voice": "Talks like a guy at a bar because he is a guy at a bar. Starts sentences with 'I'll tell you what.' Uses 'back in the day' to refer to any point in the past. Gets louder when he's excited. Gets quiet when someone mentions the Blue Parrot.",
   "simulation": "routine",
   "stats": {
-    "stamina": { "base": 40, "modifiers": [], "xp": 0 },
-    "toughness": { "base": 30, "modifiers": [], "xp": 0 },
-    "wits": { "base": 35, "modifiers": [], "xp": 0 },
-    "creativity": { "base": 20, "modifiers": [], "xp": 0 },
-    "charm": { "base": 40, "modifiers": [], "xp": 0 },
-    "reputation": { "base": 25, "modifiers": [], "xp": 0 },
-    "luck": { "base": 30, "modifiers": [], "xp": 0 },
-    "karma": { "base": 40, "modifiers": [], "xp": 0 }
+    "stamina": {
+      "base": 40,
+      "modifiers": [],
+      "xp": 0
+    },
+    "toughness": {
+      "base": 30,
+      "modifiers": [],
+      "xp": 0
+    },
+    "wits": {
+      "base": 35,
+      "modifiers": [],
+      "xp": 0
+    },
+    "creativity": {
+      "base": 20,
+      "modifiers": [],
+      "xp": 0
+    },
+    "charm": {
+      "base": 40,
+      "modifiers": [],
+      "xp": 0
+    },
+    "reputation": {
+      "base": 25,
+      "modifiers": [],
+      "xp": 0
+    },
+    "luck": {
+      "base": 30,
+      "modifiers": [],
+      "xp": 0
+    },
+    "karma": {
+      "base": 40,
+      "modifiers": [],
+      "xp": 0
+    }
   },
   "status": null,
   "psyche": {
-    "traumas": [
+    "marks": [
       {
-        "id": "trauma_kiss_incident",
-        "name": "The Incident",
-        "description": "Dennis was beaten up on the Blue Parrot smoke porch by a young man who turned out to be a literal minor with a fake ID. The fight was about Kiss. Dennis lost. Everyone watched. He has not been back to the Blue Parrot since. He does not discuss this. It did not happen.",
-        "source": "kiss_fight_event",
-        "effects": {
-          "locationAvoidance": "blue_parrot",
-          "topicSensitivity": "kiss"
+        "markId": "scar",
+        "target": {
+          "kind": "location",
+          "id": "blue_parrot"
+        }
+      },
+      {
+        "markId": "phobia",
+        "target": {
+          "kind": "location",
+          "id": "blue_parrot"
+        }
+      },
+      {
+        "markId": "obsession_hate",
+        "target": {
+          "kind": "topic",
+          "id": "kiss"
+        }
+      },
+      {
+        "markId": "obsession_love",
+        "target": {
+          "kind": "topic",
+          "id": "classic_rock"
         }
       }
     ],
-    "obsessions": [
-      {
-        "id": "obs_classic_rock",
-        "name": "Classic Rock Opinions",
-        "strength": 70,
-        "relatedActions": ["talk_to_dennis"],
-        "effects": { "actionWeightModifier": { "music_conversations": 1.3 } }
-      }
-    ],
-    "insanities": [],
     "abilities": []
   },
   "schedule": {

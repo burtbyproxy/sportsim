@@ -13,8 +13,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": 2.99,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -52,15 +52,12 @@
       "archetypeChanges": null,
       "counterChanges": {
         "curly_fries_eaten": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 80,
-    "obsessionIds": []
+    "weight": 80
   },
   {
     "id": "bathroom_arbys",
@@ -76,8 +73,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "toughness",
@@ -117,9 +114,7 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "failure": {
       "narrative": {
@@ -153,14 +148,11 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 30,
-    "obsessionIds": []
+    "weight": 30
   },
   {
     "id": "buy_cigarettes_toads",
@@ -176,8 +168,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": 3.75,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -211,15 +203,12 @@
       "archetypeChanges": null,
       "counterChanges": {
         "cigarettes_bought": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 75,
-    "obsessionIds": []
+    "weight": 75
   },
   {
     "id": "bum_smoke_toads",
@@ -235,8 +224,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "charm",
@@ -279,9 +268,7 @@
       "archetypeChanges": null,
       "counterChanges": {
         "cigarettes_bummed": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": {
       "narrative": {
@@ -316,13 +303,10 @@
       "archetypeChanges": null,
       "counterChanges": {
         "cigarettes_denied": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 40,
-    "obsessionIds": []
+    "weight": 40
   }
 ]

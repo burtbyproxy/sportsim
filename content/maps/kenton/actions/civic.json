@@ -13,8 +13,8 @@
       "maxHour": 17,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "charm",
@@ -56,9 +56,7 @@
       "archetypeChanges": null,
       "counterChanges": {
         "toothbrushes_acquired": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": {
       "narrative": {
@@ -91,14 +89,11 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 40,
-    "obsessionIds": []
+    "weight": 40
   },
   {
     "id": "read_magazines_dental",
@@ -114,8 +109,8 @@
       "maxHour": 17,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -152,15 +147,12 @@
       "archetypeChanges": null,
       "counterChanges": {
         "waiting_room_hours": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 45,
-    "obsessionIds": []
+    "weight": 45
   },
   {
     "id": "shoot_hoops_chief_joseph",
@@ -176,8 +168,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "stamina",
@@ -222,9 +214,7 @@
       "archetypeChanges": null,
       "counterChanges": {
         "hoops_sessions": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": {
       "narrative": {
@@ -260,14 +250,11 @@
       "archetypeChanges": null,
       "counterChanges": {
         "hoops_sessions": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 40,
-    "obsessionIds": []
+    "weight": 40
   },
   {
     "id": "swings_chief_joseph",
@@ -283,8 +270,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -321,15 +308,12 @@
       "archetypeChanges": null,
       "counterChanges": {
         "swing_sits": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 45,
-    "obsessionIds": []
+    "weight": 45
   },
   {
     "id": "food_pantry_abundant_life",
@@ -345,8 +329,8 @@
       "maxHour": 17,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -382,15 +366,12 @@
       "archetypeChanges": null,
       "counterChanges": {
         "pantry_visits": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 65,
-    "obsessionIds": []
+    "weight": 65
   },
   {
     "id": "sit_in_back_abundant_life",
@@ -406,8 +387,8 @@
       "maxHour": 20,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "karma",
@@ -451,9 +432,7 @@
       "archetypeChanges": null,
       "counterChanges": {
         "services_attended": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": {
       "narrative": {
@@ -489,13 +468,10 @@
       "archetypeChanges": null,
       "counterChanges": {
         "services_attended": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 40,
-    "obsessionIds": []
+    "weight": 40
   }
 ]

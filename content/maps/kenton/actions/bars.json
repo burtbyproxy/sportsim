@@ -13,8 +13,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": 3,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -41,7 +41,12 @@
       "statusChanges": {
         "mood": 10
       },
-      "doses": [{ "substanceId": "beer", "value": 15 }],
+      "doses": [
+        {
+          "substanceId": "beer",
+          "value": 15
+        }
+      ],
       "statChanges": null,
       "moneyChange": -3,
       "itemsGained": null,
@@ -53,15 +58,12 @@
       },
       "counterChanges": {
         "beers_consumed": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 90,
-    "obsessionIds": []
+    "weight": 90
   },
   {
     "id": "order_beer_mocks",
@@ -77,8 +79,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": 4,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -113,7 +115,12 @@
       "statusChanges": {
         "mood": 12
       },
-      "doses": [{ "substanceId": "whiskey", "value": 20 }],
+      "doses": [
+        {
+          "substanceId": "whiskey",
+          "value": 20
+        }
+      ],
       "statChanges": null,
       "moneyChange": -4,
       "itemsGained": null,
@@ -125,15 +132,12 @@
       },
       "counterChanges": {
         "beers_consumed": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 90,
-    "obsessionIds": []
+    "weight": 90
   },
   {
     "id": "play_pool_mocks",
@@ -149,8 +153,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "wits",
@@ -190,9 +194,7 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "failure": {
       "narrative": {
@@ -226,13 +228,10 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 50,
-    "obsessionIds": []
+    "weight": 50
   }
 ]

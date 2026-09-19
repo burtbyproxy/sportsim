@@ -143,7 +143,7 @@ describe('exitRequirementsMeet', () => {
     stats: { charisma: { base: 3 } },
     status: { sobriety: 80 },
     inventory: [{ id: 'bus_pass', quantity: 1 }],
-    psyche: { traumas: [], abilities: [] },
+    psyche: { marks: [], abilities: [], grooves: {} },
   }
 
   it('an exit with no requirements is always open', () => {

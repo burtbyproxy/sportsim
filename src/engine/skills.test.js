@@ -29,7 +29,7 @@ function makePlayer({ skills = {}, blend = blendSober(), stats = {} } = {}) {
       toughness: { base: 20, modifiers: [], xp: 0 },
       ...stats,
     },
-    psyche: { traumas: [], obsessions: [], insanities: [], abilities: [] },
+    psyche: { marks: [], abilities: [], grooves: {} },
     intoxications: {},
     habituations: {},
     blend,

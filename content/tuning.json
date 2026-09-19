@@ -67,8 +67,16 @@
     "strengthPerModifier": 20,
     "wrongMediumPenalty": -2
   },
-  "obsession": {
-    "feedAmount": 5
+  "psyche": {
+    "groove": {
+      "ticksInCharge": 48,
+      "save": {
+        "stat": "toughness",
+        "dc": 12
+      },
+      "tableId": "insanity"
+    },
+    "tableDepthMax": 4
   },
   "perception": {
     "dazedDecayPerTick": 2,

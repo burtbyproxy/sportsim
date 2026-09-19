@@ -69,6 +69,7 @@ describe('scavenge pipeline', () => {
     for (const location of locations) {
       expect(game.scavengeTables[location.scavengeTableId], location.id).toBeTruthy()
       const menu = actionsAvailable({
+        marks: {},
         known: true,
         player: game.player,
         location,
@@ -88,6 +89,7 @@ describe('scavenge pipeline', () => {
     const sealed = { ...locations[0], scavengeTableId: null }
     expect(
       actionsAvailable({
+        marks: {},
         known: true,
         player: game.player,
         location: sealed,

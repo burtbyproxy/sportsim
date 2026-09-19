@@ -1,0 +1,36 @@
+{
+  "id": "being_watched",
+  "kind": "neurosis",
+  "display": "Everyone's looking",
+  "targetKinds": [],
+  "polarity": null,
+  "confusion": 0,
+  "avoids": false,
+  "draws": 0,
+  "fit": {
+    "trigger": {
+      "kind": "company"
+    },
+    "chancePerTick": 0.15,
+    "ticks": 3,
+    "weight": 0.4,
+    "persona": {
+      "id": "watched",
+      "display": "The watched",
+      "compulsion": "They're all looking. Don't let them see you know."
+    },
+    "modifiers": [
+      {
+        "stat": "wits",
+        "value": 2
+      },
+      {
+        "stat": "charm",
+        "value": -4
+      }
+    ],
+    "confusion": 10,
+    "lineCode": "psyche.fit.watched"
+  },
+  "lineCode": "psyche.mark.being_watched"
+}

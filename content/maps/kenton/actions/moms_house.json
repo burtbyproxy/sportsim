@@ -13,8 +13,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -58,15 +58,12 @@
       "archetypeChanges": null,
       "counterChanges": {
         "times_raided_fridge": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 80,
-    "obsessionIds": []
+    "weight": 80
   },
   {
     "id": "stare_at_ceiling",
@@ -82,8 +79,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -126,15 +123,12 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 40,
-    "obsessionIds": []
+    "weight": 40
   },
   {
     "id": "sleep",
@@ -151,8 +145,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -187,14 +181,11 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 60,
-    "obsessionIds": []
+    "weight": 60
   }
 ]

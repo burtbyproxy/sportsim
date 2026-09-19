@@ -163,6 +163,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const location = locationCreate(kentonLocations.mouse_trap)
     const player = playerCreate({ name: 'Test' })
     const result = actionsAvailable({
+      marks: {},
       known: true,
       player,
       location,
@@ -184,6 +185,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     player.status.money = 10
     // Blue Parrot is open at 14:00 (minHour: 11)
     const result = actionsAvailable({
+      marks: {},
       known: true,
       player,
       location,
@@ -198,6 +200,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const location = locationCreate(kentonLocations.blue_parrot)
     const available = (characters) =>
       actionsAvailable({
+        marks: {},
         known: true,
         player: playerCreate({ name: 'Test' }),
         location,
@@ -218,6 +221,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const player = playerCreate({ name: 'Test' })
     // Bar actions require minHour: 11 — time-restricted actions should be absent at 9am
     const result = actionsAvailable({
+      marks: {},
       known: true,
       player,
       location,
@@ -234,6 +238,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const player = playerCreate({ name: 'Test' })
     // At 14:00, sleep requires minHour: 21 so raid_fridge and stare_at_ceiling available
     const result = actionsAvailable({
+      marks: {},
       known: true,
       player,
       location,
@@ -251,6 +256,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const location = locationCreate(kentonLocations.moms_house)
     const player = playerCreate({ name: 'Test' })
     const result = actionsAvailable({
+      marks: {},
       known: true,
       player,
       location,
@@ -267,6 +273,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     player.status.money = 10
     player.status.sobriety = 30 // below minSobriety: 50
     const result = actionsAvailable({
+      marks: {},
       known: true,
       player,
       location,
@@ -283,6 +290,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const location = locationCreate(kentonLocations.columbia_park)
     const player = playerCreate({ name: 'Test' })
     const result = actionsAvailable({
+      marks: {},
       known: true,
       player,
       location,
@@ -297,6 +305,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const location = locationCreate(kentonLocations.moms_house)
     const player = playerCreate({ name: 'Test' })
     const result = actionsAvailable({
+      marks: {},
       known: true,
       player,
       location,
@@ -317,6 +326,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const anyAction = { ...DRINK_ACTION, id: 'look_around', locationId: 'any', weight: 1 }
 
     const result = actionsAvailable({
+      marks: {},
       known: true,
       player,
       location,
@@ -334,6 +344,7 @@ describe('actionsAvailable — real Kenton location data', () => {
 
     // It's 14:00, action requires hour >= 20 — should be filtered out
     const result = actionsAvailable({
+      marks: {},
       known: true,
       player,
       location,
@@ -355,6 +366,7 @@ describe('actionsAvailable — real Kenton location data', () => {
       requirements: { minStats: { charm: 50 } },
     }
     const result = actionsAvailable({
+      marks: {},
       known: true,
       player,
       location,
@@ -370,6 +382,7 @@ describe('actionsAvailable — real Kenton location data', () => {
     const player = playerCreate({ name: 'Test' })
 
     const result = actionsAvailable({
+      marks: {},
       known: true,
       player,
       location,

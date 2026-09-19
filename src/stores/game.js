@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia'
 import { clockCreate, clockAdvance } from '../engine/clock.js'
-import { blendCompute, blendDecay, dosesApply, sobrietyDerive } from '../engine/blend.js'
+import {
+  PERSONA_SOURCES,
+  blendCompute,
+  blendDecay,
+  dosesApply,
+  sobrietyDerive,
+} from '../engine/blend.js'
 import { skillGain } from '../engine/skills.js'
 import {
   inspirationActive,
@@ -15,10 +21,18 @@ import {
   confusionBand,
   confusionDerive,
   dazedDecay,
+  locationKnown,
   locationLearn,
   perceptionRoll,
   perceptionView,
 } from '../engine/perception.js'
+import {
+  psycheAvoids,
+  psycheBlendSources,
+  psycheFitsTick,
+  psycheGrooveTick,
+  psycheTrauma,
+} from '../engine/psyche.js'
 import { scavengeSearch, scavengedCounterName } from '../engine/scavenge.js'
 import {
   MAKING_SURFACE_KINDS,
@@ -127,6 +141,15 @@ export const useGameStore = defineStore('game', {
 
     /** Minigame definitions, keyed by id. Loaded once at init from content/games. */
     games: {},
+
+    /** Mark definitions, keyed by id. Loaded once at init from content/marks. */
+    marks: {},
+
+    /** The nested tables a trauma is rolled down, keyed by id. From content/psyche. */
+    psycheTables: {},
+
+    /** What a mark can be about besides places, people and things. From content/topics. */
+    topics: {},
 
     /** What a new game is: title words, map, starting point. Loaded once from content/game.json. */
     config: null,
@@ -282,7 +305,7 @@ export const useGameStore = defineStore('game', {
 
     /**
      * Every persona anything can put in charge, keyed by id: a substance's,
-     * its withdrawal's, a condition's.
+     * its withdrawal's, a condition's, a mark's fit.
      */
     personas: (state) => {
       const personas = {}
@@ -294,6 +317,9 @@ export const useGameStore = defineStore('game', {
       }
       for (const condition of Object.values(state.conditions)) {
         personas[condition.persona.id] = condition.persona
+      }
+      for (const mark of Object.values(state.marks)) {
+        if (mark.fit) personas[mark.fit.persona.id] = mark.fit.persona
       }
       return personas
     },
@@ -463,6 +489,7 @@ export const useGameStore = defineStore('game', {
           player: subject,
           substances: this.substances,
           conditions: this.conditions,
+          psyche: psycheBlendSources({ subject, marks: this.marks }),
         })
         if (!result.ok) {
           this.faultRecord({
@@ -861,6 +888,161 @@ export const useGameStore = defineStore('game', {
       }
       this.player.knownLocationIds = result.data.knownLocationIds
       return result
+    },
+
+    /**
+     * Register a mark definition. Called at boot.
+     * @param {{ mark: Object }} input
+     */
+    markRegister({ mark }) {
+      this.marks[mark.id] = mark
+    },
+
+    /**
+     * Register a psyche table. Called at boot.
+     * @param {{ table: Object }} input
+     */
+    psycheTableRegister({ table }) {
+      this.psycheTables[table.id] = table
+    },
+
+    /**
+     * Register a topic. Called at boot.
+     * @param {{ topic: Object }} input
+     */
+    topicRegister({ topic }) {
+      this.topics[topic.id] = topic
+    },
+
+    /**
+     * What a mark is about, in words: a place as the player knows it (or its
+     * looks), a person's name, a thing's, a substance's, a condition's, a topic's.
+     * @param {{ target: { kind: string, id: string }|null }} input
+     * @returns {string}
+     */
+    targetName({ target }) {
+      if (!target) return ''
+      const named = {
+        location: () =>
+          this.locationDisplay({
+            locationId: target.id,
+            known: locationKnown({ player: this.player, locationId: target.id }),
+          }).displayInline,
+        character: () => this.characters[target.id]?.name,
+        item: () => this.items[target.id]?.name,
+        substance: () => this.substances[target.id]?.display,
+        condition: () => this.conditions[target.id]?.display,
+        topic: () => this.topics[target.id]?.display,
+      }
+      return named[target.kind]?.() ?? `[${target.kind}:${target.id}]`
+    },
+
+    /**
+     * Something happened to the player. They save; fail, and it leaves a
+     * mark (engine/psyche.js psycheTrauma).
+     * @param {{ trauma: { save: { stat: string, dc: number }, tableId: string }, target: { kind: string, id: string }|null, source: { kind: string, id: string }, rng?: () => number }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the psyche engine's result
+     */
+    psycheTraumaApply({ trauma, target, source, rng = Math.random }) {
+      if (!this.player) {
+        return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
+      }
+      const result = psycheTrauma({
+        tuning: this.tuning,
+        subject: this.player,
+        marks: this.marks,
+        tables: this.psycheTables,
+        trauma,
+        target,
+        source,
+        gameTime: this.time,
+        rng,
+      })
+      if (!result.ok) {
+        return result
+      }
+      this.player.psyche.marks = result.data.marks
+      this.blendRefresh()
+      return result
+    },
+
+    /**
+     * The psyche's time passes, for the player and for everyone with a
+     * status: fits run their course and start, and time in charge wears
+     * grooves; a groove come due is a save, by the game's own numbers
+     * (tuning.psyche.groove), about whatever put that persona in charge.
+     * @param {{ ticksElapsed: number, topicIds: string[], rng?: () => number }} input
+     *   topicIds — what the talk around the player is about (the menu's topics)
+     * @returns {{ ok: boolean, data: { fitsStarted: Object[], grooves: Object[] }|null, error: Object|null }}
+     *   fitsStarted — the player's marks that went off; grooves — the player's saves that came due
+     */
+    psycheTickApply({ ticksElapsed, topicIds, rng = Math.random }) {
+      if (!this.player) {
+        return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
+      }
+      const subjects = [this.player, ...Object.values(this.characters)].filter(
+        (subject) => subject && subject.status
+      )
+      const report = { fitsStarted: [], grooves: [] }
+      for (const subject of subjects) {
+        const isPlayer = subject === this.player
+        const locationId = isPlayer ? this.currentLocationId : subject.currentLocationId
+        const fits = psycheFitsTick({
+          subject,
+          marks: this.marks,
+          scene: {
+            locationId,
+            characterIds: Object.values(this.characters)
+              .filter((c) => c !== subject && locationId && c.currentLocationId === locationId)
+              .map((c) => c.id),
+            inventory: subject.inventory ?? [],
+            intoxications: subject.intoxications ?? {},
+            conditionIds: (subject.blend?.weights ?? [])
+              .filter((w) => w.source === PERSONA_SOURCES.condition)
+              .map((w) => w.sourceId),
+            topicIds: isPlayer ? topicIds : [],
+            status: subject.status,
+          },
+          ticksElapsed,
+          gameTime: this.time,
+          rng,
+        })
+        if (!fits.ok) return fits
+        subject.psyche.marks = fits.data.marks
+        if (isPlayer) {
+          report.fitsStarted = fits.data.marks.filter((m) => fits.data.startedIds.includes(m.id))
+        }
+
+        const groove = psycheGrooveTick({ tuning: this.tuning, subject, ticksElapsed })
+        if (!groove.ok) return groove
+        subject.psyche.grooves = groove.data.grooves
+        if (!groove.data.due) continue
+        const worn = psycheTrauma({
+          tuning: this.tuning,
+          subject,
+          marks: this.marks,
+          tables: this.psycheTables,
+          trauma: this.tuning.psyche.groove,
+          target: groove.data.due.target,
+          source: { kind: 'persona', id: groove.data.due.personaId },
+          gameTime: this.time,
+          rng,
+        })
+        if (!worn.ok) return worn
+        subject.psyche.marks = worn.data.marks
+        if (isPlayer) report.grooves.push(worn.data)
+      }
+      this.blendRefresh()
+      return resultOk(report)
+    },
+
+    /**
+     * The mark that will not let the player near a target, or null.
+     * @param {{ target: { kind: string, id: string } }} input
+     * @returns {Object|null}
+     */
+    playerAvoids({ target }) {
+      return psycheAvoids({ subject: this.player, marks: this.marks, target })
     },
 
     /**

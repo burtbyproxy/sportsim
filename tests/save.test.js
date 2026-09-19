@@ -731,7 +731,12 @@ describe('saveMigrate', () => {
     expect(migrated.player).not.toHaveProperty('level')
     expect(migrated.player).not.toHaveProperty('xp')
     expect(migrated.player.counters).toEqual(Object.fromEntries([['hoops_sessions', 3]]))
-    expect(migrated.characters.tina).toEqual({ id: 'tina', want: 'To be liked.', dazed: 0 })
+    expect(migrated.characters.tina).toEqual({
+      id: 'tina',
+      want: 'To be liked.',
+      dazed: 0,
+      psyche: { marks: [], abilities: [], grooves: {} },
+    })
     expect(migrated.locations.blue_parrot).toEqual({ id: 'blue_parrot', visitCount: 4 })
   })
 
@@ -750,6 +755,23 @@ describe('saveMigrate', () => {
     for (const location of Object.values(migrated.locations)) {
       expect(location).not.toHaveProperty('discovered')
     }
+  })
+
+  it('a v7 psyche becomes marks: clean, with abilities kept, for the player and everyone else', () => {
+    const v7 = makeValidSave({ version: 7 })
+    const old = {
+      traumas: [{ id: 'mugged', effects: {} }],
+      obsessions: [{ id: 'booze', strength: 40 }],
+      insanities: [],
+      abilities: [{ id: 'abil_dish_hustle', active: true }],
+    }
+    v7.player.psyche = old
+    v7.characters = { maurice: { id: 'maurice', psyche: old } }
+    const migrated = saveMigrate({ save: v7 })
+    const clean = { marks: [], abilities: old.abilities, grooves: {} }
+    expect(migrated.player.psyche).toEqual(clean)
+    expect(migrated.characters.maurice.psyche).toEqual(clean)
+    expect(migrated.player.dazed).toBe(0)
   })
 
   it('does not mutate the input', () => {

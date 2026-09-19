@@ -1,0 +1,36 @@
+{
+  "id": "needs_company",
+  "kind": "neurosis",
+  "display": "Can't be alone",
+  "targetKinds": [],
+  "polarity": null,
+  "confusion": 0,
+  "avoids": false,
+  "draws": 0,
+  "fit": {
+    "trigger": {
+      "kind": "alone"
+    },
+    "chancePerTick": 0.15,
+    "ticks": 4,
+    "weight": 0.4,
+    "persona": {
+      "id": "empty_room",
+      "display": "The empty room",
+      "compulsion": "Find somebody. Anybody. Talk until they can't leave."
+    },
+    "modifiers": [
+      {
+        "stat": "creativity",
+        "value": 3
+      },
+      {
+        "stat": "stamina",
+        "value": -3
+      }
+    ],
+    "confusion": 10,
+    "lineCode": "psyche.fit.empty_room"
+  },
+  "lineCode": "psyche.mark.needs_company"
+}

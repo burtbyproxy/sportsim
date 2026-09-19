@@ -13,8 +13,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -50,15 +50,12 @@
       "archetypeChanges": null,
       "counterChanges": {
         "items_pawned": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 50,
-    "obsessionIds": []
+    "weight": 50
   },
   {
     "id": "browse_glitters",
@@ -74,8 +71,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -113,14 +110,11 @@
       "archetypeChanges": null,
       "counterChanges": {
         "pawn_visits": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 45,
-    "obsessionIds": []
+    "weight": 45
   }
 ]

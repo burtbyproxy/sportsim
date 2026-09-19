@@ -7,7 +7,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { blendSober, sobrietyDerive } from '../engine/blend.js'
 import { STAT_IDS_DEFAULT } from './defaults.js'
-import { numberClamp } from '../utils/number.js'
 import { randomInt } from '../utils/random.js'
 import { statCreate } from '../engine/stats.js'
 
@@ -79,11 +78,15 @@ export function playerCreate({ name, start = PLAYER_START_DEFAULTS, rng = Math.r
     experiences: [],
     /** The pieces the player can carry. Pieces left on walls live on the location. */
     portfolio: [],
+    /**
+     * What stays: marks (engine/psyche.js) never wear off; abilities are
+     * what the player can do that others can't; grooves count the ticks each
+     * persona has been in charge, toward the next save.
+     */
     psyche: {
-      traumas: [],
-      obsessions: [],
-      insanities: [],
+      marks: [],
       abilities: [],
+      grooves: {},
     },
     inventory: [],
     currentLocationId: begin.locationId,
@@ -173,20 +176,6 @@ export function inventoryRemove({ player, itemId }) {
  */
 export function moneyAdjust({ player, delta }) {
   player.status.money += delta
-}
-
-/**
- * Feed an obsession — increase its strength, clamp to 0-100.
- * If the obsession doesn't exist in psyche, this is a no-op.
- * Mutates player in place.
- *
- * @param {{ player: import('./types').Player, obsessionId: string, amount: number }} input
- * @returns {void}
- */
-export function obsessionFeed({ player, obsessionId, amount }) {
-  const obs = player.psyche.obsessions.find((o) => o.id === obsessionId)
-  if (!obs) return
-  obs.strength = numberClamp({ value: obs.strength + amount, min: 0, max: 100 })
 }
 
 /**

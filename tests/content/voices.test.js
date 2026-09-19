@@ -24,6 +24,9 @@ describe('content/voices/*.json — Voice catalog contract', () => {
   for (const { data } of loadJsonFiles(join(CONTENT_ROOT, 'conditions'))) {
     personaIds.add(data.persona?.id)
   }
+  for (const { data } of loadJsonFiles(join(CONTENT_ROOT, 'marks'))) {
+    if (data.fit) personaIds.add(data.fit.persona?.id)
+  }
 
   for (const { file, data } of files) {
     it(`${file} — valid voice catalog`, () => {

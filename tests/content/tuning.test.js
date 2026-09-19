@@ -19,7 +19,7 @@ describe('content/tuning.json — the game numbers', () => {
       'skills',
       'scavenge',
       'making',
-      'obsession',
+      'psyche',
       'perception',
       'simulation',
       'narrative',
@@ -47,7 +47,6 @@ describe('content/tuning.json — the game numbers', () => {
       skills: tuning.skills,
       scavenge: tuning.scavenge,
       making: tuning.making,
-      obsession: tuning.obsession,
     })) {
       for (const [key, value] of Object.entries(values)) {
         expect(isNumber(value), `${section}.${key}`).toBe(true)

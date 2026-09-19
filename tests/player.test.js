@@ -7,7 +7,6 @@ import {
   inventoryAdd,
   inventoryRemove,
   moneyAdjust,
-  obsessionFeed,
   archetypeScoreAdd,
   counterAdd,
 } from '../src/models/player.js'
@@ -76,12 +75,9 @@ describe('playerCreate', () => {
     expect(p.inventory).toEqual([])
   })
 
-  it('starts with empty psyche arrays', () => {
+  it('starts with a clean psyche', () => {
     const p = playerCreate({ name: 'X' })
-    expect(p.psyche.traumas).toEqual([])
-    expect(p.psyche.obsessions).toEqual([])
-    expect(p.psyche.insanities).toEqual([])
-    expect(p.psyche.abilities).toEqual([])
+    expect(p.psyche).toEqual({ marks: [], abilities: [], grooves: {} })
   })
 
   it('serializes cleanly to JSON', () => {
@@ -275,41 +271,6 @@ describe('moneyAdjust', () => {
     moneyAdjust({ player, delta: 25 })
     moneyAdjust({ player, delta: -10 })
     expect(player.status.money).toBe(15)
-  })
-})
-
-// ---------------------------------------------------------------------------
-// obsessionFeed
-// ---------------------------------------------------------------------------
-
-describe('obsessionFeed', () => {
-  let player
-
-  beforeEach(() => {
-    player = playerCreate({ name: 'Test' })
-    player.psyche.obsessions = [
-      { id: 'booze', name: 'Booze', strength: 50, relatedActions: [], effects: {} },
-    ]
-  })
-
-  it('increases obsession strength', () => {
-    obsessionFeed({ player, obsessionId: 'booze', amount: 10 })
-    expect(player.psyche.obsessions[0].strength).toBe(60)
-  })
-
-  it('clamps to 100 on overflow', () => {
-    obsessionFeed({ player, obsessionId: 'booze', amount: 200 })
-    expect(player.psyche.obsessions[0].strength).toBe(100)
-  })
-
-  it('clamps to 0 on underflow (negative feed)', () => {
-    obsessionFeed({ player, obsessionId: 'booze', amount: -200 })
-    expect(player.psyche.obsessions[0].strength).toBe(0)
-  })
-
-  it('is a no-op for unknown obsession id', () => {
-    expect(() => obsessionFeed({ player, obsessionId: 'nonexistent', amount: 10 })).not.toThrow()
-    expect(player.psyche.obsessions[0].strength).toBe(50)
   })
 })
 

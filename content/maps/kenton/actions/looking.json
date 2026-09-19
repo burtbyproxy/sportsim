@@ -14,8 +14,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -39,15 +39,12 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 5,
-    "obsessionIds": []
+    "weight": 5
   },
   {
     "id": "investigate",
@@ -64,8 +61,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -89,14 +86,11 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 45,
-    "obsessionIds": []
+    "weight": 45
   }
 ]

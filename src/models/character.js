@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { blendSober, sobrietyDerive } from '../engine/blend.js'
 import { STAT_IDS_DEFAULT, SIMULATION_TIERS_DEFAULT } from './defaults.js'
 import { statCreate } from '../engine/stats.js'
+import { MARK_STATUSES } from '../engine/psyche.js'
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -89,11 +90,21 @@ export function characterCreate(data) {
     blend: data.blend ?? blendSober(),
     skills: data.skills ? JSON.parse(JSON.stringify(data.skills)) : {},
     inspirations: data.inspirations ? JSON.parse(JSON.stringify(data.inspirations)) : [],
-    psyche: data.psyche ?? {
-      traumas: [],
-      obsessions: [],
-      insanities: [],
-      abilities: [],
+    // The same psyche as the player's. Content writes a mark as { markId,
+    // target }: something that happened to them before the game began.
+    psyche: {
+      marks: (data.psyche?.marks ?? []).map((mark) => ({
+        id: mark.id ?? `${data.id}:${mark.markId}:${mark.target?.id ?? 'none'}`,
+        markId: mark.markId,
+        target: mark.target ? { ...mark.target } : null,
+        source: mark.source ? { ...mark.source } : { kind: 'character', id: data.id },
+        status: mark.status ?? MARK_STATUSES.active,
+        fitTicksRemaining: mark.fitTicksRemaining ?? 0,
+        acquiredAtTick: mark.acquiredAtTick ?? 0,
+        updatedAtTick: mark.updatedAtTick ?? 0,
+      })),
+      abilities: (data.psyche?.abilities ?? []).map((ability) => ({ ...ability })),
+      grooves: { ...(data.psyche?.grooves ?? {}) },
     },
     schedule: {
       entries: Array.isArray(data.schedule?.entries)

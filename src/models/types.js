@@ -36,12 +36,26 @@
  * @property {Object[]} makings - see engine/making.js
  * @property {Object[]} experiences
  * @property {Object[]} portfolio
- * @property {{ traumas: Object[], obsessions: Object[], insanities: Object[], abilities: Object[] }} psyche
+ * @property {{ marks: Mark[], abilities: Object[], grooves: Object<string, number> }} psyche
  * @property {Item[]} inventory
  * @property {string} currentLocationId
  * @property {string[]} knownLocationIds - the places the player knows for what they are
  * @property {Object<string, number>} archetypeScores - by archetype id
  * @property {Object<string, number>} counters - by counter name
+ */
+
+/**
+ * Something that never wears off (engine/psyche.js): which mark
+ * (content/marks), what it is about, what left it, and whether it is in a fit.
+ * @typedef {Object} Mark
+ * @property {string} id
+ * @property {string} markId - a mark definition in content/marks
+ * @property {{ kind: string, id: string }|null} target - what it is about
+ * @property {{ kind: string, id: string }} source - what left it
+ * @property {string} status - 'active'
+ * @property {number} fitTicksRemaining - 0 when not in a fit
+ * @property {number} acquiredAtTick
+ * @property {number} updatedAtTick
  */
 
 /**

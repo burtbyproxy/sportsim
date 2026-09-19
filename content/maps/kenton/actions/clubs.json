@@ -13,8 +13,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "wits",
@@ -47,7 +47,12 @@
         "mood": 10,
         "energy": -4
       },
-      "doses": [{ "substanceId": "beer", "value": 8 }],
+      "doses": [
+        {
+          "substanceId": "beer",
+          "value": 8
+        }
+      ],
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
@@ -59,9 +64,7 @@
       },
       "counterChanges": {
         "pool_games": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": {
       "narrative": {
@@ -97,14 +100,11 @@
       "archetypeChanges": null,
       "counterChanges": {
         "pool_games": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 55,
-    "obsessionIds": []
+    "weight": 55
   },
   {
     "id": "smoke_out_front_mouse_trap",
@@ -120,8 +120,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -158,15 +158,12 @@
       "archetypeChanges": null,
       "counterChanges": {
         "sidewalk_sits": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 50,
-    "obsessionIds": []
+    "weight": 50
   },
   {
     "id": "steak_bites_bare",
@@ -182,8 +179,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": 2,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -222,15 +219,12 @@
       },
       "counterChanges": {
         "steak_bites_eaten": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 70,
-    "obsessionIds": []
+    "weight": 70
   },
   {
     "id": "amateur_night_bare",
@@ -246,8 +240,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "charm",
@@ -280,7 +274,12 @@
         "mood": 15,
         "energy": -10
       },
-      "doses": [{ "substanceId": "beer", "value": 5 }],
+      "doses": [
+        {
+          "substanceId": "beer",
+          "value": 5
+        }
+      ],
       "statChanges": null,
       "moneyChange": 11,
       "itemsGained": null,
@@ -292,9 +291,7 @@
       },
       "counterChanges": {
         "amateur_nights": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": {
       "narrative": {
@@ -330,13 +327,10 @@
       "archetypeChanges": null,
       "counterChanges": {
         "amateur_nights": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 25,
-    "obsessionIds": []
+    "weight": 25
   }
 ]

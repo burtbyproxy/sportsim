@@ -1,0 +1,48 @@
+{
+  "id": "the_committee",
+  "kind": "psychosis",
+  "display": "The committee",
+  "targetKinds": [],
+  "polarity": null,
+  "modifiers": [
+    {
+      "stat": "creativity",
+      "value": 3
+    },
+    {
+      "stat": "wits",
+      "value": -3
+    }
+  ],
+  "confusion": 10,
+  "avoids": false,
+  "draws": 0,
+  "fit": {
+    "trigger": {
+      "kind": "status",
+      "status": "energy",
+      "below": 25
+    },
+    "chancePerTick": 0.25,
+    "ticks": 4,
+    "weight": 0.55,
+    "persona": {
+      "id": "committee",
+      "display": "The committee",
+      "compulsion": "Every idea goes to a vote. Every vote is a tie. Somebody is taking minutes."
+    },
+    "modifiers": [
+      {
+        "stat": "creativity",
+        "value": 5
+      },
+      {
+        "stat": "wits",
+        "value": -6
+      }
+    ],
+    "confusion": 25,
+    "lineCode": "psyche.fit.committee"
+  },
+  "lineCode": "psyche.mark.the_committee"
+}

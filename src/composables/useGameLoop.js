@@ -10,6 +10,7 @@
  *       are recomputed
  *   4c. the inspiration clock runs down
  *   4d. whoever is in charge may get an urge
+ *   4e. marks go off, and time in charge wears grooves
  *   5. the player moves, if they are travelling, and the new scene starts
  *   5b. a change in how confused the player is changes what they get wrong
  *   6. at most one event happens
@@ -38,13 +39,13 @@ import {
   modifiersTick,
   inventoryAdd,
   inventoryRemove,
-  obsessionFeed,
   archetypeScoreAdd,
   counterAdd,
 } from '../models/player.js'
 import { MAKING_SURFACE_KINDS, ARTIFACT_STATUSES, makingOptions } from '../engine/making.js'
 import { eventsRandomCheck, eventsTriggeredCheck, eventResolve } from '../engine/events.js'
 import { actionMisperceived, locationKnown } from '../engine/perception.js'
+import { MARK_TARGET_KINDS, psycheAvoids } from '../engine/psyche.js'
 import { narrativeAction, narrativeEvent, narrativeLocation } from './useNarrative.js'
 import { narrativeTextCreate, textFill } from '../utils/text.js'
 import { sim } from '../workers/simulation-api.js'
@@ -130,7 +131,18 @@ export function useGameLoop({
           characters: charactersArray,
         })
         for (const update of simResult.characters) {
-          game.characterLocationSet({ characterId: update.id, locationId: update.locationId })
+          // Somebody who can't go back to a place doesn't turn up there.
+          const kept = update.locationId
+            ? psycheAvoids({
+                subject: game.characters[update.id],
+                marks: game.marks,
+                target: { kind: MARK_TARGET_KINDS.location, id: update.locationId },
+              })
+            : null
+          game.characterLocationSet({
+            characterId: update.id,
+            locationId: kept ? null : update.locationId,
+          })
         }
         game.charactersStatusApply({ updates: simResult.characters })
       }
@@ -154,6 +166,24 @@ export function useGameLoop({
     const urge = game.inspirationUrgeApply({ ticksElapsed: ticks, rng })
     if (!urge.ok) failureShow(urge)
     else if (urge.data.struck) voiceEnqueue({ code: 'inspiration.urge' })
+
+    // 4e. What stays with the player goes off when it's set off; what has
+    // been in charge too long wears a groove.
+    const psyche = game.psycheTickApply({
+      ticksElapsed: ticks,
+      topicIds: game.availableActions.flatMap((a) => a.topicIds ?? []),
+      rng,
+    })
+    if (!psyche.ok) failureShow(psyche)
+    else {
+      for (const mark of psyche.data.fitsStarted) {
+        voiceEnqueue({
+          code: game.marks[mark.markId].fit.lineCode,
+          params: { target: game.targetName({ target: mark.target }) },
+        })
+      }
+      for (const worn of psyche.data.grooves) traumaSpeak({ result: worn, quietOnSave: true })
+    }
 
     // 5. Move if requested — the new scene's prose goes into a fresh log
     if (locationId) {
@@ -323,6 +353,26 @@ export function useGameLoop({
   function narrativeEnqueue(narrativeText) {
     if (narrative && narrativeText?.tokens?.length > 0) {
       narrative.enqueue(narrativeText)
+    }
+  }
+
+  /**
+   * What came of a save: a new mark says what it is about, in its own line;
+   * the same mark again, or a save that held, say so. A save nobody saw
+   * coming (a groove) that held stays quiet.
+   * @param {{ result: { saved: boolean, check: Object, mark: Object|null, duplicate: boolean }, quietOnSave: boolean }} input
+   */
+  function traumaSpeak({ result, quietOnSave }) {
+    checkTrain(result.check)
+    if (result.mark) {
+      voiceEnqueue({
+        code: game.marks[result.mark.markId].lineCode,
+        params: { target: game.targetName({ target: result.mark.target }) },
+      })
+    } else if (result.duplicate) {
+      voiceEnqueue({ code: 'psyche.mark.again' })
+    } else if (!quietOnSave) {
+      voiceEnqueue({ code: 'psyche.save.passed' })
     }
   }
 
@@ -843,13 +893,18 @@ export function useGameLoop({
       }
     }
 
-    // Obsession feeding
-    if (outcome.obsessionFed) {
-      obsessionFeed({
-        player: game.player,
-        obsessionId: outcome.obsessionFed,
-        amount: game.tuning.obsession.feedAmount,
-      })
+    // Something that happened is the kind of thing that stays with you. What
+    // it leaves is about what content says, or else whoever the player was
+    // dealing with, or else the place it happened.
+    if (outcome.trauma) {
+      const target =
+        outcome.trauma.target ??
+        (actionOf({ source })?.characterId
+          ? { kind: MARK_TARGET_KINDS.character, id: actionOf({ source }).characterId }
+          : { kind: MARK_TARGET_KINDS.location, id: game.currentLocationId })
+      const marked = game.psycheTraumaApply({ trauma: outcome.trauma, target, source, rng })
+      if (!marked.ok) failureShow(marked)
+      else traumaSpeak({ result: marked.data, quietOnSave: false })
     }
 
     // Mark one-time events
@@ -862,6 +917,16 @@ export function useGameLoop({
       const learned = game.locationLearnApply({ locationId: outcome.locationDiscovered })
       if (!learned.ok) failureShow(learned)
     }
+  }
+
+  /**
+   * The content action an outcome came from, or null when it came from something else.
+   * @param {{ source: { kind: string, id: string } }} input
+   * @returns {Object|null}
+   */
+  function actionOf({ source }) {
+    if (source.kind !== 'action') return null
+    return actionRegistry.find((a) => a.id === source.id) ?? null
   }
 
   /**
@@ -894,11 +959,19 @@ export function useGameLoop({
       characters,
       gameTime: game.time,
       actionRegistry,
+      marks: game.marks,
     })
 
-    // What can be done, in the engine's order (weight, obsessions and all),
-    // then what cannot yet, heaviest first, each saying why not.
-    const annotated = actions.map((a) => ({ ...a, available: true, unavailableReason: null }))
+    // What can be done, in the engine's order (weight, and whatever the
+    // player's marks pull toward), then what cannot yet, heaviest first, each
+    // saying why not. Somebody the player can't face is there, and greyed out.
+    const annotated = actions.map((a) => {
+      const avoided = a.characterId
+        ? game.playerAvoids({ target: { kind: MARK_TARGET_KINDS.character, id: a.characterId } })
+        : null
+      if (!avoided) return { ...a, available: true, unavailableReason: null }
+      return { ...a, available: false, unavailableReason: avoidReason({ mark: avoided }) }
+    })
     const disabledActions = listSortBy({
       items: actionRegistry.filter(
         (a) =>
@@ -960,6 +1033,11 @@ export function useGameLoop({
           game.requirementReason({ code: REQUIREMENT_CODES.closed })
       )
     }
+    // A place the player can't go back to: they can see the way, and can't take it.
+    const avoided = game.playerAvoids({
+      target: { kind: MARK_TARGET_KINDS.location, id: seen.perceivedLocationId },
+    })
+    if (avoided) return blocked(avoidReason({ mark: avoided }))
     const why = exitRequirementsMeet({
       exit: way,
       player: game.player,
@@ -970,6 +1048,18 @@ export function useGameLoop({
       return blocked(game.requirementReason({ code: why.reasonCode, params: why.reasonParams }))
     }
     return { ...exit, available: true, unavailableReason: null }
+  }
+
+  /**
+   * Why the player won't, when a mark won't let them: about what it is about.
+   * @param {{ mark: Object }} input
+   * @returns {string}
+   */
+  function avoidReason({ mark }) {
+    return game.requirementReason({
+      code: REQUIREMENT_CODES.avoid,
+      params: { target: game.targetName({ target: mark.target }) },
+    })
   }
 
   /** The ways out of here, each saying whether it is open to the player now. */

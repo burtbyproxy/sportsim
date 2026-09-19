@@ -1,0 +1,14 @@
+{
+  "id": "trauma",
+  "display": "What something bad leaves",
+  "entries": [
+    {
+      "weight": 55,
+      "markId": "scar"
+    },
+    {
+      "weight": 45,
+      "tableId": "insanity"
+    }
+  ]
+}

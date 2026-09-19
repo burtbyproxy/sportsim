@@ -1,0 +1,14 @@
+{
+  "id": "neurosis",
+  "display": "Neurosis",
+  "entries": [
+    {
+      "weight": 50,
+      "markId": "needs_company"
+    },
+    {
+      "weight": 50,
+      "markId": "being_watched"
+    }
+  ]
+}

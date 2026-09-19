@@ -15,8 +15,8 @@
       "minStatus": null,
       "maxStatus": null,
       "requiredItems": null,
-      "requiredTraumas": null,
-      "minVisits": 2
+      "minVisits": 2,
+      "requiredMarkIds": null
     },
     "narrative": {
       "tokens": [
@@ -63,9 +63,7 @@
       "archetypeChanges": null,
       "counterChanges": {
         "gifts_from_mom": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "nextEventId": null
   },
@@ -85,8 +83,8 @@
       "minStatus": null,
       "maxStatus": null,
       "requiredItems": null,
-      "requiredTraumas": null,
-      "minVisits": null
+      "minVisits": null,
+      "requiredMarkIds": null
     },
     "narrative": {
       "tokens": [
@@ -116,9 +114,7 @@
       "archetypeChanges": null,
       "counterChanges": {
         "dave_attacks": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "nextEventId": null
   },
@@ -138,8 +134,8 @@
       "minStatus": null,
       "maxStatus": null,
       "requiredItems": null,
-      "requiredTraumas": null,
-      "minVisits": null
+      "minVisits": null,
+      "requiredMarkIds": null
     },
     "narrative": {
       "tokens": [
@@ -188,9 +184,7 @@
           "eventTriggered": null,
           "locationDiscovered": null,
           "archetypeChanges": null,
-          "counterChanges": null,
-          "traumaGained": null,
-          "obsessionFed": null
+          "counterChanges": null
         },
         "failureOutcome": null
       },
@@ -224,9 +218,7 @@
           "archetypeChanges": null,
           "counterChanges": {
             "talks_with_mom": 1
-          },
-          "traumaGained": null,
-          "obsessionFed": null
+          }
         },
         "failureOutcome": null
       },
@@ -256,9 +248,7 @@
           "eventTriggered": null,
           "locationDiscovered": null,
           "archetypeChanges": null,
-          "counterChanges": null,
-          "traumaGained": null,
-          "obsessionFed": null
+          "counterChanges": null
         },
         "failureOutcome": null
       }

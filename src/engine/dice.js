@@ -27,13 +27,13 @@ export const STAT_ITEM_SOURCES = Object.freeze({
   base: 'base',
   modifier: 'modifier',
   ability: 'ability',
-  trauma: 'trauma',
 })
 
 /**
  * Everything that makes up a stat's effective value, itemized: the base,
- * each temporary modifier, each persona in the blend that touches the stat,
- * each active ability, each trauma. There is no cap on the count. The sum
+ * each temporary modifier, each persona in the blend that touches the stat
+ * (a mark's standing effect comes through the blend too), each active
+ * ability. There is no cap on the count. The sum
  * is the effective stat; the list is for the story.
  *
  * @param {{ player: Object, statName: string }} input
@@ -56,7 +56,11 @@ export function statModifierItems({ player, statName }) {
 
   for (const entry of player.blend?.modifierSources ?? []) {
     if (entry.stat !== statName) continue
-    items.push({ source: entry.source, sourceId: entry.personaId, value: entry.value })
+    items.push({
+      source: entry.source,
+      sourceId: entry.personaId ?? entry.sourceId,
+      value: entry.value,
+    })
   }
 
   for (const ability of player.psyche?.abilities ?? []) {
@@ -64,13 +68,6 @@ export function statModifierItems({ player, statName }) {
     const effect = ability.effects?.diceModifiers?.[statName]
     if (effect !== undefined) {
       items.push({ source: STAT_ITEM_SOURCES.ability, sourceId: ability.id, value: effect })
-    }
-  }
-
-  for (const trauma of player.psyche?.traumas ?? []) {
-    const effect = trauma.effects?.statModifiers?.[statName]
-    if (effect !== undefined) {
-      items.push({ source: STAT_ITEM_SOURCES.trauma, sourceId: trauma.id, value: effect })
     }
   }
 

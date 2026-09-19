@@ -44,19 +44,28 @@ describe('the menu', () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
 
-  it("keeps the engine's order, so an obsession moves its action up the menu", () => {
+  it("keeps the engine's order, so what a mark pulls toward moves up the menu", () => {
     const game = startGame()
+    for (const mark of contentDir({ dir: 'content/marks' })) game.markRegister({ mark })
     const actions = [
-      { id: 'sensible', label: 'Sensible', locationId: 'moms_house', weight: 50, obsessionIds: [] },
+      { id: 'sensible', label: 'Sensible', locationId: 'moms_house', weight: 50 },
       {
         id: 'compulsion',
         label: 'Compulsion',
         locationId: 'moms_house',
         weight: 40,
-        obsessionIds: ['booze'],
+        success: { doses: [{ substanceId: 'whiskey', value: 10 }] },
       },
     ]
-    game.player.psyche.obsessions = [{ id: 'booze', strength: 100 }]
+    game.player.psyche.marks = [
+      {
+        id: 'm1',
+        markId: 'obsession_love',
+        target: { kind: 'substance', id: 'whiskey' },
+        status: 'active',
+        fitTicksRemaining: 0,
+      },
+    ]
     useGameLoop({ actionRegistry: actions }).onLocationEntered()
     expect(game.menuEntries.filter((e) => e.kind === 'action').map((e) => e.action.id)).toEqual([
       'compulsion',

@@ -6,14 +6,46 @@
   "voice": "Talks like he's letting you in on something. Every sentence sounds like the middle of a longer story. Uses 'my man' and 'see what I'm saying' as punctuation. Never finishes a thought the way you expect. Funny without trying. Wise without earning it.",
   "simulation": "full",
   "stats": {
-    "stamina": { "base": 40, "modifiers": [], "xp": 0 },
-    "toughness": { "base": 25, "modifiers": [], "xp": 0 },
-    "wits": { "base": 65, "modifiers": [], "xp": 0 },
-    "creativity": { "base": 70, "modifiers": [], "xp": 0 },
-    "charm": { "base": 85, "modifiers": [], "xp": 0 },
-    "reputation": { "base": 30, "modifiers": [], "xp": 0 },
-    "luck": { "base": 55, "modifiers": [], "xp": 0 },
-    "karma": { "base": 50, "modifiers": [], "xp": 0 }
+    "stamina": {
+      "base": 40,
+      "modifiers": [],
+      "xp": 0
+    },
+    "toughness": {
+      "base": 25,
+      "modifiers": [],
+      "xp": 0
+    },
+    "wits": {
+      "base": 65,
+      "modifiers": [],
+      "xp": 0
+    },
+    "creativity": {
+      "base": 70,
+      "modifiers": [],
+      "xp": 0
+    },
+    "charm": {
+      "base": 85,
+      "modifiers": [],
+      "xp": 0
+    },
+    "reputation": {
+      "base": 30,
+      "modifiers": [],
+      "xp": 0
+    },
+    "luck": {
+      "base": 55,
+      "modifiers": [],
+      "xp": 0
+    },
+    "karma": {
+      "base": 50,
+      "modifiers": [],
+      "xp": 0
+    }
   },
   "status": {
     "hunger": 35,
@@ -21,26 +53,25 @@
     "mood": 70,
     "health": 75
   },
-  "intoxications": { "beer": 40 },
+  "intoxications": {
+    "beer": 40
+  },
   "psyche": {
-    "traumas": [],
-    "obsessions": [
+    "marks": [
       {
-        "id": "obs_connection",
-        "name": "The Audience",
-        "strength": 60,
-        "relatedActions": ["talk_to_maurice", "follow_maurice"],
-        "effects": { "actionWeightModifier": { "social_actions": 1.5 } }
+        "markId": "needs_company",
+        "target": null
       }
     ],
-    "insanities": [],
     "abilities": [
       {
         "id": "abil_dish_hustle",
         "name": "The Hustle",
         "description": "Maurice can talk his way into a dishwashing job at any bar or restaurant he's run up a tab at. He cleans the place like a professional. They have to hire him. He never works a second shift.",
         "requiredStates": [],
-        "effects": { "debt_clearance": true },
+        "effects": {
+          "debt_clearance": true
+        },
         "active": true
       }
     ]
@@ -86,9 +117,21 @@
   "want": "An audience. Not fame — just someone listening. Maurice needs to be witnessed. The magic tricks, the life advice, the showing up wherever you are — it's all the same thing. He needs to matter to someone for an hour.",
   "fear": "Being alone at the end of the night. Not alone in a room — alone in the way where nobody noticed you left. The worst thing that can happen to Maurice is a room that doesn't change when he walks into it.",
   "decisionWeights": {
-    "low_sobriety": { "bias": "bar", "weight": 0.6 },
-    "low_hunger": { "bias": "food", "weight": 0.7 },
-    "low_mood": { "bias": "social", "weight": 0.8 },
-    "low_energy": { "bias": "park", "weight": 0.5 }
+    "low_sobriety": {
+      "bias": "bar",
+      "weight": 0.6
+    },
+    "low_hunger": {
+      "bias": "food",
+      "weight": 0.7
+    },
+    "low_mood": {
+      "bias": "social",
+      "weight": 0.8
+    },
+    "low_energy": {
+      "bias": "park",
+      "weight": 0.5
+    }
   }
 }

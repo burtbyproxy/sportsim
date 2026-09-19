@@ -1,0 +1,14 @@
+{
+  "id": "obsession",
+  "display": "Obsession",
+  "entries": [
+    {
+      "weight": 50,
+      "markId": "obsession_love"
+    },
+    {
+      "weight": 50,
+      "markId": "obsession_hate"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "id": "obsession_hate",
+  "kind": "obsession",
+  "display": "Can't let it go",
+  "targetKinds": ["location", "character", "item", "substance", "topic"],
+  "polarity": "hate",
+  "confusion": 0,
+  "avoids": false,
+  "draws": 0.5,
+  "fit": {
+    "trigger": {
+      "kind": "target"
+    },
+    "chancePerTick": 0.4,
+    "ticks": 2,
+    "weight": 0.6,
+    "persona": {
+      "id": "grudge",
+      "display": "The grudge",
+      "compulsion": "It did this. Make sure it knows."
+    },
+    "modifiers": [
+      {
+        "stat": "toughness",
+        "value": 4
+      },
+      {
+        "stat": "charm",
+        "value": -5
+      }
+    ],
+    "confusion": 5,
+    "lineCode": "psyche.fit.grudge"
+  },
+  "lineCode": "psyche.mark.obsession_hate"
+}

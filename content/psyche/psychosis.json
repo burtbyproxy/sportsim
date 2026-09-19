@@ -1,0 +1,10 @@
+{
+  "id": "psychosis",
+  "display": "Psychosis",
+  "entries": [
+    {
+      "weight": 100,
+      "markId": "the_committee"
+    }
+  ]
+}

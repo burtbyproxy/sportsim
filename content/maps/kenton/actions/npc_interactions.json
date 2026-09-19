@@ -14,8 +14,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "charm",
@@ -64,9 +64,7 @@
       "archetypeChanges": {
         "social": 1
       },
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "failure": {
       "narrative": {
@@ -91,14 +89,11 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 60,
-    "obsessionIds": []
+    "weight": 60
   },
   {
     "id": "talk_to_greg",
@@ -115,8 +110,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "charm",
@@ -157,9 +152,7 @@
       "archetypeChanges": {
         "social": 1
       },
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "failure": {
       "narrative": {
@@ -192,14 +185,11 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 50,
-    "obsessionIds": []
+    "weight": 50
   },
   {
     "id": "talk_to_dale",
@@ -216,8 +206,8 @@
       "maxHour": null,
       "minVisits": 2,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "charm",
@@ -258,9 +248,7 @@
       "archetypeChanges": {
         "social": 2
       },
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "failure": {
       "narrative": {
@@ -285,14 +273,11 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 60,
-    "obsessionIds": []
+    "weight": 60
   },
   {
     "id": "talk_to_dennis",
@@ -309,8 +294,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "charm",
@@ -351,9 +336,7 @@
       "archetypeChanges": {
         "social": 1
       },
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "failure": {
       "narrative": {
@@ -378,14 +361,12 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "criticalSuccess": null,
     "criticalFailure": null,
     "weight": 45,
-    "obsessionIds": []
+    "topicIds": ["classic_rock"]
   },
   {
     "id": "talk_to_maurice",
@@ -402,8 +383,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -449,15 +430,12 @@
       },
       "counterChanges": {
         "maurice_conversations": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 70,
-    "obsessionIds": []
+    "weight": 70
   },
   {
     "id": "follow_maurice",
@@ -474,8 +452,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "charm",
@@ -516,7 +494,12 @@
         "mood": 15,
         "energy": -10
       },
-      "doses": [{ "substanceId": "beer", "value": 10 }],
+      "doses": [
+        {
+          "substanceId": "beer",
+          "value": 10
+        }
+      ],
       "statChanges": null,
       "moneyChange": null,
       "itemsGained": null,
@@ -529,9 +512,7 @@
       },
       "counterChanges": {
         "maurice_adventures": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": {
       "narrative": {
@@ -565,14 +546,11 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 55,
-    "obsessionIds": []
+    "weight": 55
   },
   {
     "id": "talk_to_vernon",
@@ -589,8 +567,8 @@
       "maxHour": 19,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "karma",
@@ -641,9 +619,7 @@
       },
       "counterChanges": {
         "vernon_conversations": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": {
       "narrative": {
@@ -676,14 +652,11 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 50,
-    "obsessionIds": []
+    "weight": 50
   },
   {
     "id": "talk_to_ray",
@@ -700,8 +673,8 @@
       "maxHour": null,
       "minVisits": 2,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "creativity",
@@ -752,9 +725,7 @@
       "archetypeChanges": {
         "philosopher": 1
       },
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "failure": {
       "narrative": {
@@ -787,13 +758,10 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 40,
-    "obsessionIds": []
+    "weight": 40
   }
 ]

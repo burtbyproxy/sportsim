@@ -15,8 +15,8 @@
       "minStatus": null,
       "maxStatus": null,
       "requiredItems": null,
-      "requiredTraumas": null,
-      "minVisits": null
+      "minVisits": null,
+      "requiredMarkIds": null
     },
     "narrative": {
       "tokens": [
@@ -63,9 +63,7 @@
           "eventTriggered": null,
           "locationDiscovered": null,
           "archetypeChanges": null,
-          "counterChanges": null,
-          "traumaGained": null,
-          "obsessionFed": null
+          "counterChanges": null
         },
         "failureOutcome": {
           "narrative": {
@@ -91,8 +89,13 @@
           "locationDiscovered": null,
           "archetypeChanges": null,
           "counterChanges": null,
-          "traumaGained": null,
-          "obsessionFed": null
+          "trauma": {
+            "save": {
+              "stat": "wits",
+              "dc": 9
+            },
+            "tableId": "trauma"
+          }
         }
       },
       {
@@ -123,9 +126,7 @@
           "eventTriggered": null,
           "locationDiscovered": null,
           "archetypeChanges": null,
-          "counterChanges": null,
-          "traumaGained": null,
-          "obsessionFed": null
+          "counterChanges": null
         },
         "failureOutcome": null
       }

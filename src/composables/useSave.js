@@ -186,8 +186,17 @@ export function saveMigrate({ save }) {
     }
     for (const location of locations) delete location.discovered
     // Nobody had been hit on the head yet: confusion is derived on load.
+    // The psyche became marks: nothing had ever granted the player one, and
+    // the old free-text traumas and obsessions were never read, so everyone
+    // starts the new psyche clean, keeping their abilities.
     for (const subject of [migrated.player, ...Object.values(migrated.characters ?? {})]) {
-      if (subject) subject.dazed = 0
+      if (!subject) continue
+      subject.dazed = 0
+      subject.psyche = {
+        marks: [],
+        abilities: subject.psyche?.abilities ?? [],
+        grooves: {},
+      }
     }
     migrated.version = 8
   }

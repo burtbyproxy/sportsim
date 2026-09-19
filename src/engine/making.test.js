@@ -93,7 +93,7 @@ function playerWith({
       luck: { base: 10, modifiers: [], xp: 0 },
       charm: { base: 10, modifiers: [], xp: 0 },
     },
-    psyche: { traumas: [], abilities: [] },
+    psyche: { marks: [], abilities: [], grooves: {} },
     blend: blendSober(),
     skills: {},
     inventory: carrying.map((id) => ({ ...items[id], quantity: 1 })),

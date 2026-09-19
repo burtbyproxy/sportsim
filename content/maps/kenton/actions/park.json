@@ -13,8 +13,8 @@
       "maxHour": null,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": null,
     "success": {
@@ -49,15 +49,12 @@
       "eventTriggered": null,
       "locationDiscovered": null,
       "archetypeChanges": null,
-      "counterChanges": null,
-      "traumaGained": null,
-      "obsessionFed": null
+      "counterChanges": null
     },
     "failure": null,
     "criticalSuccess": null,
     "criticalFailure": null,
-    "weight": 50,
-    "obsessionIds": []
+    "weight": 50
   },
   {
     "id": "look_for_change",
@@ -73,8 +70,8 @@
       "maxHour": 22,
       "minVisits": null,
       "minMoney": null,
-      "requiredTraumas": null,
-      "requiredAbilities": null
+      "requiredAbilities": null,
+      "requiredMarkIds": null
     },
     "check": {
       "stat": "luck",
@@ -117,9 +114,7 @@
       },
       "counterChanges": {
         "times_fished_fountain": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "failure": {
       "narrative": {
@@ -146,9 +141,7 @@
       "archetypeChanges": null,
       "counterChanges": {
         "times_fished_fountain": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "criticalSuccess": {
       "narrative": {
@@ -183,9 +176,7 @@
       },
       "counterChanges": {
         "times_fished_fountain": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
     "criticalFailure": {
       "narrative": {
@@ -220,11 +211,8 @@
       "archetypeChanges": null,
       "counterChanges": {
         "times_fished_fountain": 1
-      },
-      "traumaGained": null,
-      "obsessionFed": null
+      }
     },
-    "weight": 40,
-    "obsessionIds": []
+    "weight": 40
   }
 ]

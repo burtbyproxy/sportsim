@@ -6,6 +6,7 @@
 import { checkRoll, checkContestedRoll, CONTEST_WINNERS } from './dice.js'
 import { inspirationActive } from './inspiration.js'
 import { inventoryHas } from './items.js'
+import { MARK_STATUSES, psycheDraw } from './psyche.js'
 import { moneyFormat } from '../utils/money.js'
 import { listSortBy } from '../utils/list.js'
 
@@ -22,7 +23,8 @@ export const REQUIREMENT_CODES = Object.freeze({
   hourEarly: 'requirement.hour.early',
   hourLate: 'requirement.hour.late',
   visits: 'requirement.visits',
-  trauma: 'requirement.trauma',
+  mark: 'requirement.mark',
+  avoid: 'requirement.avoid',
   ability: 'requirement.ability',
   inspiration: 'requirement.inspiration',
   time: 'requirement.time',
@@ -106,12 +108,14 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
     }
   }
 
-  // Trauma requirements
-  if (req.requiredTraumas) {
-    const playerTraumaIds = player.psyche?.traumas?.map((t) => t.id) ?? []
-    for (const traumaId of req.requiredTraumas) {
-      if (!playerTraumaIds.includes(traumaId)) {
-        return refuse({ reasonCode: REQUIREMENT_CODES.trauma, reasonParams: { traumaId } })
+  // Some things only somebody marked by something can do
+  if (req.requiredMarkIds) {
+    const carried = (player.psyche?.marks ?? [])
+      .filter((mark) => mark.status === MARK_STATUSES.active)
+      .map((mark) => mark.markId)
+    for (const markId of req.requiredMarkIds) {
+      if (!carried.includes(markId)) {
+        return refuse({ reasonCode: REQUIREMENT_CODES.mark, reasonParams: { markId } })
       }
     }
   }
@@ -165,12 +169,13 @@ export function actionApplies({ action, location, known, characters }) {
 
 /**
  * Returns the list of available actions at the current location,
- * filtered by requirements and sorted by effective weight.
- * Obsessions boost weight of related actions.
+ * filtered by requirements and sorted by effective weight. A mark that
+ * draws the player toward something moves what is about it up the menu.
  *
- * @param {{ player: Object, location: Object, known: boolean, characters: Object[], gameTime: Object, actionRegistry: Object[] }} input
+ * @param {{ player: Object, location: Object, known: boolean, characters: Object[], gameTime: Object, actionRegistry: Object[], marks: Object<string, Object> }} input
  *   known — whether the player knows the place; characters — those present at
- *   the location; actionRegistry — all action definitions
+ *   the location; actionRegistry — all action definitions; marks — the mark
+ *   definitions (content/marks)
  * @returns {Object[]} - sorted array of available actions
  */
 export function actionsAvailable({
@@ -180,6 +185,7 @@ export function actionsAvailable({
   characters,
   gameTime,
   actionRegistry,
+  marks,
 }) {
   // Actions that live here or anywhere, that the place and the company support
   const eligible = actionRegistry.filter((action) =>
@@ -192,38 +198,15 @@ export function actionsAvailable({
     return meets
   })
 
-  // Build obsession lookup: obsessionId -> strength
-  const obsessionStrengths = {}
-  if (player.psyche?.obsessions) {
-    for (const obs of player.psyche.obsessions) {
-      obsessionStrengths[obs.id] = obs.strength
-    }
-  }
-
-  // Sort by effective weight (descending)
+  // Heaviest first; what the player's marks pull toward weighs more.
   return listSortBy({
     items: available,
-    keyOf: (action) => weightEffective({ action, obsessionStrengths }),
+    keyOf: (action) => {
+      const weight = action.weight ?? 0
+      return weight + weight * psycheDraw({ subject: player, marks, action })
+    },
     descending: true,
   })
-}
-
-/**
- * Calculates the effective display weight of an action, boosted by obsessions.
- * @param {Object} action
- * @param {Object<string, number>} obsessionStrengths
- * @returns {number}
- */
-function weightEffective({ action, obsessionStrengths }) {
-  let weight = action.weight || 0
-  if (action.obsessionIds) {
-    for (const obsId of action.obsessionIds) {
-      const strength = obsessionStrengths[obsId] ?? 0
-      // Obsession strength (0-100) can add up to 50% of original weight
-      weight += (strength / 100) * (action.weight || 0) * 0.5
-    }
-  }
-  return weight
 }
 
 /**
