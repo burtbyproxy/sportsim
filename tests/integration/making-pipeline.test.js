@@ -554,7 +554,7 @@ describe('making pipeline', () => {
     const dental = game.locations.lombard_dental
     // What happened there is remembered; what the place is comes from today's content.
     expect(dental.visitCount).toBe(7)
-    expect(dental.discovered).toBe(true)
+    expect(game.player.knownLocationIds).toContain('lombard_dental')
     expect(dental.surfaces.map((s) => s.id)).toContain('back_wall')
     expect(dental.scavengeTableId).toBe('lot')
     expect(Object.keys(game.locations)).toHaveLength(locations.length)

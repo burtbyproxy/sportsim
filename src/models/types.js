@@ -38,6 +38,7 @@
  * @property {{ traumas: Object[], obsessions: Object[], insanities: Object[], abilities: Object[] }} psyche
  * @property {Item[]} inventory
  * @property {string} currentLocationId
+ * @property {string[]} knownLocationIds - the places the player knows for what they are
  * @property {Object<string, number>} archetypeScores - by archetype id
  * @property {Object<string, number>} counters - by counter name
  */
@@ -48,11 +49,13 @@
  * @property {string} id
  * @property {string} type
  * @property {string} display
+ * @property {string} displayInline - the name inside a sentence
+ * @property {{ display: string, displayInline: string, descriptions: Object<string, string> }|null} appearance
+ *   - the place as it looks to someone who does not know what it is
  * @property {string|null} pieceAs
  * @property {boolean} outdoors
  * @property {Object<string, string>} descriptions - by variant key; "default" always
  * @property {Object[]} exits
- * @property {boolean} discovered
  * @property {{ openHour: number, closeHour: number, closedMessage: string|null }} availability
  * @property {number} visitCount
  * @property {string|null} scavengeTableId

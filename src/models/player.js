@@ -26,6 +26,7 @@ import { statCreate } from '../engine/stats.js'
 export const PLAYER_START_DEFAULTS = Object.freeze({
   statIds: STAT_IDS_DEFAULT,
   locationId: 'moms_house',
+  knownLocationIds: Object.freeze(['moms_house']),
   money: 2,
   statRoll: Object.freeze({ min: 10, max: 20 }),
   status: Object.freeze({ hunger: 50, energy: 70, mood: 40, health: 100 }),
@@ -38,7 +39,7 @@ export const START_MONEY = PLAYER_START_DEFAULTS.money
  * Create a new Player with default starting values.
  * Stats are randomized slightly around starting ranges.
  *
- * @param {{ name: string, start?: { statIds?: string[], locationId?: string, money?: number, statRoll?: { min: number, max: number }, status?: Object<string, number> }, rng?: (() => number) }} input
+ * @param {{ name: string, start?: { statIds?: string[], locationId?: string, knownLocationIds?: string[], money?: number, statRoll?: { min: number, max: number }, status?: Object<string, number> }, rng?: (() => number) }} input
  *   where, and with what, the player begins (content/game.json `start`)
  * @returns {import('./types').Player}
  */
@@ -82,6 +83,8 @@ export function playerCreate({ name, start = PLAYER_START_DEFAULTS, rng = Math.r
     },
     inventory: [],
     currentLocationId: begin.locationId,
+    /** The places the player knows for what they are. Everywhere else is just how it looks. */
+    knownLocationIds: [...begin.knownLocationIds],
     archetypeScores: {},
     counters: {},
   }

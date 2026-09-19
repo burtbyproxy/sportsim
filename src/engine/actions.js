@@ -134,19 +134,31 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
   return MET
 }
 
+/** Action kinds the engine gives a meaning to. Content picks one with `kind`. */
+export const ACTION_KINDS = Object.freeze({
+  scavenge: 'scavenge',
+  make: 'make',
+  look: 'look',
+  investigate: 'investigate',
+})
+
 /**
  * Whether an action belongs on a location's menu at all, before any
  * requirement is checked. The action says where it lives: one place, or
- * anywhere. An action of a kind the place cannot support is left off, and
- * an action with someone is left off when they are not here.
+ * anywhere. A place the player does not know keeps its own business to
+ * itself: only what can be done anywhere is offered, and finding out what
+ * the place is. An action of a kind the place cannot support is left off,
+ * and an action with someone is left off when they are not here.
  *
- * @param {{ action: Object, location: Object, characters: Object[] }} input
- *   characters — those present at the location.
+ * @param {{ action: Object, location: Object, known: boolean, characters: Object[] }} input
+ *   known — whether the player knows the place; characters — those present at the location.
  * @returns {boolean}
  */
-export function actionApplies({ action, location, characters }) {
+export function actionApplies({ action, location, known, characters }) {
   if (action.locationId !== 'any' && action.locationId !== location.id) return false
-  if (action.kind === 'scavenge' && !location.scavengeTableId) return false
+  if (!known && action.locationId !== 'any') return false
+  if (action.kind === ACTION_KINDS.investigate && known) return false
+  if (action.kind === ACTION_KINDS.scavenge && !location.scavengeTableId) return false
   if (action.characterId && !characters.some((c) => c.id === action.characterId)) return false
   return true
 }
@@ -156,14 +168,22 @@ export function actionApplies({ action, location, characters }) {
  * filtered by requirements and sorted by effective weight.
  * Obsessions boost weight of related actions.
  *
- * @param {{ player: Object, location: Object, characters: Object[], gameTime: Object, actionRegistry: Object[] }} input
- *   characters — those present at the location; actionRegistry — all action definitions
+ * @param {{ player: Object, location: Object, known: boolean, characters: Object[], gameTime: Object, actionRegistry: Object[] }} input
+ *   known — whether the player knows the place; characters — those present at
+ *   the location; actionRegistry — all action definitions
  * @returns {Object[]} - sorted array of available actions
  */
-export function actionsAvailable({ player, location, characters, gameTime, actionRegistry }) {
+export function actionsAvailable({
+  player,
+  location,
+  known,
+  characters,
+  gameTime,
+  actionRegistry,
+}) {
   // Actions that live here or anywhere, that the place and the company support
   const eligible = actionRegistry.filter((action) =>
-    actionApplies({ action, location, characters })
+    actionApplies({ action, location, known, characters })
   )
 
   // Filter by requirements

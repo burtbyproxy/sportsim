@@ -2,6 +2,15 @@
   "id": "lombard_dental",
   "type": "clinic",
   "display": "Lombard Dental",
+  "displayInline": "Lombard Dental",
+  "appearance": {
+    "display": "A brick building with a fish tank",
+    "displayInline": "a low brick building with a fish tank in the window",
+    "descriptions": {
+      "default": "A low brick building with a fish tank in the window. One fish swims in circles. The others do not move at all. There's a sign about financing, and somebody has written something under it in pen. Whatever this place does, it makes people angry enough to write on its signs.",
+      "night": "Dark, except the fish tank, which the parking lot light has found. The circling fish is still circling. It's weirdly beautiful, for whatever this is."
+    }
+  },
   "pieceAs": "in the waiting room at Lombard Dental",
   "outdoors": false,
   "descriptions": {
@@ -15,19 +24,19 @@
   "exits": [
     {
       "locationId": "liquor",
-      "label": "Walk to Kenton Liquor",
+      "label": "Walk to {place}",
       "travelTime": 2,
       "requirements": null
     },
     {
       "locationId": "chief_joseph",
-      "label": "Walk past Chief Joseph",
+      "label": "Walk past {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "abundant_life",
-      "label": "Head to Abundant Life Church",
+      "label": "Head to {place}",
       "travelTime": 2,
       "requirements": null
     }
@@ -47,7 +56,6 @@
       "mediumIds": ["drawing", "writing"]
     }
   ],
-  "discovered": false,
   "availability": {
     "openHour": 8,
     "closeHour": 17,

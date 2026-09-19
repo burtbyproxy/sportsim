@@ -2,6 +2,15 @@
   "id": "denver_711",
   "type": "market",
   "display": "7-11",
+  "displayInline": "the Denver 7-11",
+  "appearance": {
+    "display": "A convenience store with a bright lot",
+    "displayInline": "a convenience store with a bright lot",
+    "descriptions": {
+      "default": "A convenience store with a parking lot lit up like a stage. The sign out front is mostly numbers. There's a dumpster around the side with the lid up and no lock on it, which you notice the way other people notice sunsets.",
+      "night": "The lot is bright enough to read by and full of people who shouldn't be reading. Somebody is sitting on the hood of a car that may not be theirs. Nachos are being carried out with great ceremony."
+    }
+  },
   "pieceAs": "outside the Denver Ave 7-11",
   "outdoors": true,
   "descriptions": {
@@ -15,19 +24,19 @@
   "exits": [
     {
       "locationId": "columbia_park",
-      "label": "Walk to Columbia Park",
+      "label": "Walk to {place}",
       "travelTime": 2,
       "requirements": null
     },
     {
       "locationId": "ainsworth_plaid",
-      "label": "Head to Plaid Pantry",
+      "label": "Head to {place}",
       "travelTime": 2,
       "requirements": null
     },
     {
       "locationId": "greeley_711",
-      "label": "Walk south to the Greeley 7-11",
+      "label": "Walk south to {place}",
       "travelTime": 3,
       "requirements": null
     }
@@ -47,7 +56,6 @@
       "mediumIds": ["performance"]
     }
   ],
-  "discovered": false,
   "availability": {
     "openHour": 0,
     "closeHour": 23,

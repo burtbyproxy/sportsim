@@ -11,6 +11,7 @@ import {
   inspirationUrge,
 } from '../engine/inspiration.js'
 import { voiceLine } from '../engine/voice.js'
+import { locationLearn, perceptionView } from '../engine/perception.js'
 import { scavengeSearch, scavengedCounterName } from '../engine/scavenge.js'
 import {
   MAKING_SURFACE_KINDS,
@@ -160,6 +161,38 @@ export const useGameStore = defineStore('game', {
       return Object.values(state.characters).filter(
         (c) => c.currentLocationId === state.currentLocationId
       )
+    },
+
+    /**
+     * The scene as the player perceives it (engine/perception.js): the place
+     * they take themselves to be in, the menu's place, the people, the ways
+     * out, each by id and each saying whether the player knows it. Null
+     * before a run.
+     */
+    scene() {
+      if (!this.player || !this.currentLocation) return null
+      const view = perceptionView({
+        player: this.player,
+        location: this.currentLocation,
+        locations: this.locations,
+        characters: this.charactersAtCurrentLocation,
+      })
+      return view.ok ? view.data : null
+    },
+
+    /** What the place the player takes themselves to be in is called, as they see it. */
+    scenePlace() {
+      if (!this.scene) return null
+      return this.locationDisplay({
+        locationId: this.scene.place.locationId,
+        known: this.scene.place.known,
+      })
+    },
+
+    /** Who the player takes the people here to be: the ones the scene lists. */
+    scenePeople() {
+      if (!this.scene) return []
+      return this.scene.people.map(({ characterId }) => this.characters[characterId])
     },
 
     playerMoney: (state) => state.player?.status?.money ?? 0,
@@ -710,6 +743,33 @@ export const useGameStore = defineStore('game', {
       const named = { ...params }
       if (params.itemId) named.item = this.items[params.itemId]?.name ?? params.itemId
       return this.voiceLine({ code, params: named })
+    },
+
+    /**
+     * What a place is called, in the header and inside a sentence: its name
+     * when the player knows it, its looks when they do not.
+     * @param {{ locationId: string, known: boolean }} input
+     * @returns {{ display: string, displayInline: string }}
+     */
+    locationDisplay({ locationId, known }) {
+      const location = this.locations[locationId]
+      const seen = known ? location : location.appearance
+      return { display: seen.display, displayInline: seen.displayInline }
+    },
+
+    /**
+     * The player finds out what a place is.
+     * @param {{ locationId: string }} input
+     * @returns {{ ok: boolean, data: { knownLocationIds: string[], learned: boolean }|null, error: Object|null }}
+     *   the perception engine's result
+     */
+    locationLearnApply({ locationId }) {
+      const result = locationLearn({ player: this.player, locations: this.locations, locationId })
+      if (!result.ok) {
+        return result
+      }
+      this.player.knownLocationIds = result.data.knownLocationIds
+      return result
     },
 
     /**

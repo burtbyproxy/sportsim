@@ -83,6 +83,7 @@
     "menu.making.ingredient": "Work in the {ingredient}",
     "menu.making.place": "right here",
     "menu.making.plan": "{medium}: {tool}, {surface}",
-    "menu.making.plan.bare": "{medium}: {surface}"
+    "menu.making.plan.bare": "{medium}: {surface}",
+    "location.return": "Back at {place}. It's still here. So are you."
   }
 }

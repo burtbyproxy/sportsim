@@ -2,6 +2,15 @@
   "id": "moms_house",
   "type": "home",
   "display": "Mom's House",
+  "displayInline": "Mom's",
+  "appearance": {
+    "display": "A small house on Denver",
+    "displayInline": "a small house on Denver",
+    "descriptions": {
+      "default": "A small house with a cracked front walk and a basement window at ankle height. A cat is watching you through the basement window. The cat does not want you here.",
+      "night": "A dark house with one light on upstairs. Something moves behind the basement window. It's either a cat or a very small, very angry man."
+    }
+  },
   "pieceAs": "in your mother's basement",
   "outdoors": false,
   "descriptions": {
@@ -15,25 +24,25 @@
   "exits": [
     {
       "locationId": "blue_parrot",
-      "label": "Walk up Denver Ave to the Blue Parrot",
+      "label": "Walk up Denver Ave to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "mocks_crest",
-      "label": "Cut across to Mock's Crest",
+      "label": "Cut across to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "columbia_park",
-      "label": "Head over to Columbia Park",
+      "label": "Head over to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "toads_express",
-      "label": "Walk to Toad's Express",
+      "label": "Walk to {place}",
       "travelTime": 2,
       "requirements": null
     }
@@ -53,7 +62,6 @@
       "mediumIds": ["performance"]
     }
   ],
-  "discovered": true,
   "availability": {
     "openHour": 0,
     "closeHour": 23,

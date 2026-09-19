@@ -10,6 +10,7 @@
     "item.used": "You finish the {item} and crush it against your head, or try. It was a bottle. Everyone saw.",
     "making.started": "You crack your knuckles, roll your neck, and knock over the thing you were about to work on. You pick it back up. You start.",
     "piece.artist.solid": "Done: {work}. Nailed it. You go for a high five and there's nobody there, so you get the wall.",
-    "piece.artist.rough": "Done: {work}. You did it the way you do everything, which is hard and slightly to the left."
+    "piece.artist.rough": "Done: {work}. You did it the way you do everything, which is hard and slightly to the left.",
+    "location.return": "Back at {place}, bud. Hit the door frame on the way in, same as last time. The door frame remembers."
   }
 }

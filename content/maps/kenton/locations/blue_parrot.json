@@ -2,6 +2,15 @@
   "id": "blue_parrot",
   "type": "bar",
   "display": "The Blue Parrot",
+  "displayInline": "the Blue Parrot",
+  "appearance": {
+    "display": "A bar with a neon bird",
+    "displayInline": "a bar with a neon bird in the window",
+    "descriptions": {
+      "default": "A low bar with a neon bird in the window. One of the bird's eyes is dead. The other one flickers, like it's winking at somebody it knows, and it isn't you. The door is propped open and the smell coming out of it has been in the wood for decades.",
+      "night": "Somebody inside is singing, badly, into a microphone that deserves better. Smoke comes over the back fence from a porch you can't see. The neon bird winks at the street like it's in on something."
+    }
+  },
   "pieceAs": "at the Blue Parrot",
   "outdoors": false,
   "descriptions": {
@@ -15,19 +24,19 @@
   "exits": [
     {
       "locationId": "moms_house",
-      "label": "Head back down Denver to Mom's",
+      "label": "Head back down Denver to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "mocks_crest",
-      "label": "Cross the street to Mock's Crest",
+      "label": "Cross the street to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "columbia_park",
-      "label": "Walk over to Columbia Park",
+      "label": "Walk over to {place}",
       "travelTime": 1,
       "requirements": null
     }
@@ -76,7 +85,6 @@
       }
     }
   ],
-  "discovered": false,
   "availability": {
     "openHour": 11,
     "closeHour": 2,

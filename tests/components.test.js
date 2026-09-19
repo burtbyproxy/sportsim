@@ -239,7 +239,7 @@ describe('GameScreen', () => {
     expect(wrapper.text()).toContain(game.actions.raid_fridge.label)
 
     // An exit on the menu goes where it says, through the loop.
-    const toPark = game.currentLocation.exits.find((e) => e.locationId === 'columbia_park')
+    const toPark = game.availableExits.find((e) => e.locationId === 'columbia_park')
     const button = wrapper
       .findAll('.action-item--exit')
       .find((b) => b.text().includes(toPark.label))

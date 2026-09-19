@@ -2,6 +2,15 @@
   "id": "mocks_crest",
   "type": "bar",
   "display": "Mock's Crest Tavern",
+  "displayInline": "Mock's Crest",
+  "appearance": {
+    "display": "A tavern you can hear from the sidewalk",
+    "displayInline": "a tavern you can hear from the sidewalk",
+    "descriptions": {
+      "default": "A tavern with a lot full of trucks. It's loud from the sidewalk. Through the window there's an elk head over the bar wearing a Santa hat that has been up there so long it's part of the elk now. Little machines line the wall, blinking at nobody.",
+      "night": "The noise from inside has passed the point where it's people and become weather. The window glows. The elk in the Santa hat looks out over all of them like he's seen it before, because he has."
+    }
+  },
   "pieceAs": "at Mock's Crest",
   "outdoors": false,
   "descriptions": {
@@ -15,25 +24,25 @@
   "exits": [
     {
       "locationId": "blue_parrot",
-      "label": "Cross back to the Blue Parrot",
+      "label": "Cross back to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "moms_house",
-      "label": "Walk down to Mom's",
+      "label": "Walk down to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "columbia_park",
-      "label": "Head to Columbia Park",
+      "label": "Head to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "arbys",
-      "label": "Walk south to Arby's",
+      "label": "Walk south to {place}",
       "travelTime": 2,
       "requirements": null
     }
@@ -59,7 +68,6 @@
       "mediumIds": ["performance"]
     }
   ],
-  "discovered": false,
   "availability": {
     "openHour": 11,
     "closeHour": 2,

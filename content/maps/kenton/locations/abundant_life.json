@@ -2,6 +2,15 @@
   "id": "abundant_life",
   "type": "church",
   "display": "Abundant Life Church",
+  "displayInline": "Abundant Life",
+  "appearance": {
+    "display": "A storefront with a letter-board sign",
+    "displayInline": "a storefront with a letter-board sign",
+    "descriptions": {
+      "default": "A storefront that stopped being a store. The windows are covered from the inside with something white. Out front, a letter-board sign says something that sounds like it's from the Bible and probably isn't. On Sundays there's singing coming out of it, which means it's either a church or a problem.",
+      "night": "A dark storefront with one light on somewhere in the back. The letter-board sign out front is lit by a single bulb, and it has something to say about last night. It sounds like it knows."
+    }
+  },
   "pieceAs": "on the sidewalk outside Abundant Life",
   "outdoors": true,
   "descriptions": {
@@ -15,19 +24,19 @@
   "exits": [
     {
       "locationId": "chief_joseph",
-      "label": "Walk past the school",
+      "label": "Walk past {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "lombard_dental",
-      "label": "Walk to Lombard Dental",
+      "label": "Walk to {place}",
       "travelTime": 2,
       "requirements": null
     },
     {
       "locationId": "moms_house",
-      "label": "Walk back toward Mom's",
+      "label": "Walk back toward {place}",
       "travelTime": 3,
       "requirements": null
     }
@@ -47,7 +56,6 @@
       "mediumIds": ["performance", "drawing"]
     }
   ],
-  "discovered": false,
   "availability": {
     "openHour": 8,
     "closeHour": 20,

@@ -2,6 +2,15 @@
   "id": "arbys",
   "type": "restaurant",
   "display": "Arby's",
+  "displayInline": "Arby's",
+  "appearance": {
+    "display": "A restaurant under a giant hat",
+    "displayInline": "a restaurant under a giant cowboy-hat sign",
+    "descriptions": {
+      "default": "A fast food place under a giant sign shaped like a cowboy hat. Through the window: booths, and a smell coming out the door that is mostly salt and a little bit curly. The tables look wiped. The tables do not look clean.",
+      "night": "Lit up like an operating room, and about as cheerful. Under the giant hat, a man is asleep in a booth. Nobody is waking him. Nobody is going to."
+    }
+  },
   "pieceAs": "in the Arby's on Lombard",
   "outdoors": false,
   "descriptions": {
@@ -15,25 +24,25 @@
   "exits": [
     {
       "locationId": "mocks_crest",
-      "label": "Walk north to Mock's Crest",
+      "label": "Walk north to {place}",
       "travelTime": 2,
       "requirements": null
     },
     {
       "locationId": "mouse_trap",
-      "label": "Head to the Mouse Trap",
+      "label": "Head to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "toads_express",
-      "label": "Walk to Toad's Express",
+      "label": "Walk to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "ainsworth_plaid",
-      "label": "Head to Plaid Pantry",
+      "label": "Head to {place}",
       "travelTime": 2,
       "requirements": null
     }
@@ -53,7 +62,6 @@
       "mediumIds": ["tagging", "writing", "drawing"]
     }
   ],
-  "discovered": false,
   "availability": {
     "openHour": 9,
     "closeHour": 23,

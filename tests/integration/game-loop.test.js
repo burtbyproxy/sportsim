@@ -367,6 +367,7 @@ describe('useGameLoop → scene order on arrival', () => {
   it('the new place is described first and an arrival event lands beneath it', async () => {
     const game = startGame()
     game.locationRegister({ location: locationCreate(columbiaPark) })
+    game.locationLearnApply({ locationId: 'columbia_park' })
     const narrative = useNarrative({ tuning })
     const loop = useGameLoop({
       actionRegistry: momsHouseActions,
@@ -412,6 +413,7 @@ describe('useGameLoop → visits and company', () => {
     for (const substance of substances) game.substanceRegister({ substance })
     for (const voice of voices) game.voiceRegister({ voice })
     game.runStart({ player: playerCreate({ name: 'Tester' }), locationId: 'moms_house' })
+    game.locationLearnApply({ locationId: 'mocks_crest' })
     game.characterRegister({ character: characterCreate(dale) })
     for (let n = 0; n < visits; n++) {
       game.playerMove({ locationId: 'mocks_crest' })

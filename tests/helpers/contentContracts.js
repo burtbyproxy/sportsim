@@ -181,6 +181,8 @@ export const LOCATION_REQUIRED_FIELDS = [
   'id',
   'type',
   'display',
+  'displayInline',
+  'appearance',
   'descriptions',
   'exits',
   'availability',
@@ -194,10 +196,31 @@ export function validateLocation({ data, file }) {
     expect(data, `${file}: missing field '${field}'`).toHaveProperty(field)
   }
 
-  // Fields nothing reads do not come back: who is here comes from schedules.
-  for (const dead of ['npcSlots', 'variant']) {
+  // Fields nothing reads do not come back: who is here comes from schedules,
+  // and what the player knows is the player's.
+  for (const dead of ['npcSlots', 'variant', 'discovered']) {
     expect(data, `${file}: '${dead}' is not part of a location`).not.toHaveProperty(dead)
   }
+
+  // The name, and the looks: what the place is called, and what it is to
+  // someone who does not know. The looks never lack a sentence to say.
+  for (const [label, named] of [
+    ['', data],
+    ['appearance.', data.appearance],
+  ]) {
+    for (const field of ['display', 'displayInline']) {
+      expect(typeof named?.[field], `${file}: ${label}${field} must be string`).toBe('string')
+      expect(named[field].length, `${file}: ${label}${field} must not be empty`).toBeGreaterThan(0)
+    }
+  }
+  expect(
+    typeof data.appearance.descriptions?.default,
+    `${file}: appearance.descriptions.default must be a string`
+  ).toBe('string')
+  expect(
+    data.appearance.descriptions.default.length,
+    `${file}: appearance.descriptions.default must not be empty`
+  ).toBeGreaterThan(0)
 
   // An action says where it lives. A second list here is how actions got lost.
   expect(
@@ -223,6 +246,11 @@ export function validateLocation({ data, file }) {
     expect(exit, `${file}: exit missing label`).toHaveProperty('label')
     expect(exit, `${file}: exit missing travelTime`).toHaveProperty('travelTime')
     expect(exit.travelTime, `${file}: travelTime must be >= 1`).toBeGreaterThanOrEqual(1)
+    // A way out names where it goes the way the player sees it: never by a name they do not know.
+    expect(
+      exit.label,
+      `${file}: exit to '${exit.locationId}' must name it as {place}, not in words`
+    ).toContain('{place}')
   }
 
   expect(
@@ -384,7 +412,12 @@ export function validateAction({ data, file }) {
     ).toBe(true)
     return
   }
-  expect(data.timeCost, `${file} '${data.id}': timeCost must be >= 1`).toBeGreaterThanOrEqual(1)
+  if (data.kind === 'look') {
+    // A closer look is free; finding out what the place is costs the time.
+    expect(data.timeCost, `${file} '${data.id}': a 'look' action costs no time`).toBe(0)
+  } else {
+    expect(data.timeCost, `${file} '${data.id}': timeCost must be >= 1`).toBeGreaterThanOrEqual(1)
+  }
   expect(data.weight, `${file} '${data.id}': weight must be >= 0`).toBeGreaterThanOrEqual(0)
 
   // success outcome is required

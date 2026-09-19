@@ -20,13 +20,19 @@ export function locationCreate(data) {
     id: data.id,
     type: data.type,
     display: data.display,
+    // The name as it sits in a sentence: "the Blue Parrot", "Mom's".
+    displayInline: data.displayInline ?? data.display,
+    // What the place looks like to someone who does not know what it is:
+    // { display, displayInline, descriptions }, the same shapes as the place's own.
+    appearance: data.appearance
+      ? { ...data.appearance, descriptions: { ...data.appearance.descriptions } }
+      : null,
     // How the place reads inside a piece made on nothing but the spot: "outside the Denver Ave 7-11".
     pieceAs: data.pieceAs ?? null,
     // Whether being here is being out on the street, where the street's events can find you.
     outdoors: data.outdoors ?? false,
     descriptions: data.descriptions ?? { default: '' },
     exits: Array.isArray(data.exits) ? data.exits.map((e) => ({ ...e })) : [],
-    discovered: data.discovered ?? false,
     availability: data.availability
       ? { ...data.availability }
       : { openHour: 0, closeHour: 23, closedMessage: null },
@@ -56,7 +62,6 @@ export function locationRestore({ definition, saved }) {
   if (!saved) return locationCreate(definition)
   return locationCreate({
     ...definition,
-    discovered: saved.discovered ?? definition.discovered,
     visitCount: saved.visitCount,
     scavenge: saved.scavenge,
     marks: saved.marks,

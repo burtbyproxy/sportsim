@@ -408,18 +408,20 @@ function narrativeContextBuild({ player, gameTime, location, tuning }) {
 /**
  * Generates the narrative description for a location.
  * Picks the best variant, applies perception filters, templates in variables.
+ * A place the player does not know is described by its looks alone.
  *
- * @param {{ location: Object, player: Object, gameTime: Object, tuning: Object }} input
- *   location — Location per data contract
+ * @param {{ location: Object, known: boolean, player: Object, gameTime: Object, tuning: Object }} input
+ *   location — Location per data contract; known — whether the player knows what it is
  * @returns {NarrativeText}
  */
-export function narrativeLocation({ location, player, gameTime, tuning }) {
+export function narrativeLocation({ location, known, player, gameTime, tuning }) {
   const context = narrativeContextBuild({ player, gameTime, location, tuning })
-  let text = textVariantPick({ variants: location.descriptions || {}, context })
+  const seen = known ? location : location.appearance
+  let text = textVariantPick({ variants: seen.descriptions, context })
   text = textFill({
     text,
     params: {
-      location: location.display || '',
+      location: seen.display,
       playerName: player.name || 'you',
       day: gameTime?.day ?? 1,
       hour: gameTime?.hour ?? 0,

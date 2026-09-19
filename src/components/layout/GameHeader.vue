@@ -14,10 +14,8 @@ import { useGameStore } from '../../stores/game.js'
 
 const game = useGameStore()
 
-const currentLocation = computed(() => {
-  if (!game.currentLocation) return null
-  return game.currentLocation.display ?? game.currentLocationId
-})
+// Where the player takes themselves to be.
+const currentLocation = computed(() => game.scenePlace?.display ?? null)
 </script>
 
 <style lang="scss" scoped>

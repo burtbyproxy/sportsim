@@ -72,16 +72,26 @@ describe('the menu', () => {
     expect(sleep.reason).toBe(sober('requirement.hour.early'))
   })
 
-  it("an exit to a place that is shut is greyed out with the place's own words", () => {
+  it("an exit to a shut place the player knows is greyed out with the place's own words", () => {
     const game = startGame()
+    game.locationLearnApply({ locationId: 'blue_parrot' })
     useGameLoop().onLocationEntered()
     const parrot = game.menuEntries.find((e) => e.exit?.locationId === 'blue_parrot')
     expect(parrot.available).toBe(false)
     expect(parrot.reason).toBe(game.locations.blue_parrot.availability.closedMessage)
   })
 
+  it('an exit to a shut place the player does not know is just shut: its words would name it', () => {
+    const game = startGame()
+    useGameLoop().onLocationEntered()
+    const parrot = game.menuEntries.find((e) => e.exit?.locationId === 'blue_parrot')
+    expect(parrot.available).toBe(false)
+    expect(parrot.reason).toBe(sober('requirement.closed'))
+  })
+
   it('walking into a shut place is refused, out loud, and nobody moves', async () => {
     const game = startGame()
+    game.locationLearnApply({ locationId: 'blue_parrot' })
     const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ narrative })
     await loop.travel({ locationId: 'blue_parrot' })
@@ -113,6 +123,7 @@ describe('the menu', () => {
 
   it('picking someone out shows their actions; leaving lets them go', async () => {
     const game = startGame({ at: 'mocks_crest' })
+    game.locationLearnApply({ locationId: 'mocks_crest' })
     game.characterRegister({ character: characterCreate(dale) })
     game.characterLocationSet({ characterId: 'dale', locationId: 'mocks_crest' })
     const talk = {

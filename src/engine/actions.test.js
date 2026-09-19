@@ -176,7 +176,14 @@ describe('requirementsMeet — minVisits', () => {
     const location = { id: 'test_location', visitCount: 2 }
     const player = makePlayer()
     expect(
-      actionsAvailable({ player, location, characters: [], gameTime, actionRegistry: [action] })
+      actionsAvailable({
+        known: true,
+        player,
+        location,
+        characters: [],
+        gameTime,
+        actionRegistry: [action],
+      })
     ).toHaveLength(1)
     expect(
       actionResolve({ tuning, player, action, gameTime, location }).requirementFailure
@@ -193,6 +200,7 @@ describe('actionsAvailable', () => {
       makeAction({ id: 'fight', locationId: 'alley', weight: 8 }),
     ]
     const result = actionsAvailable({
+      known: true,
       player: makePlayer(),
       location,
       characters: [],
@@ -208,6 +216,7 @@ describe('actionsAvailable', () => {
     const location = { id: 'bar' }
     const registry = [makeAction({ id: 'think', locationId: 'any', weight: 1 })]
     const result = actionsAvailable({
+      known: true,
       player: makePlayer(),
       location,
       characters: [],
@@ -227,6 +236,7 @@ describe('actionsAvailable', () => {
       }),
     ]
     const result = actionsAvailable({
+      known: true,
       player: makePlayer(),
       location,
       characters: [],
@@ -244,6 +254,7 @@ describe('actionsAvailable', () => {
       makeAction({ id: 'c', locationId: 'bar', weight: 5 }),
     ]
     const result = actionsAvailable({
+      known: true,
       player: makePlayer(),
       location,
       characters: [],
@@ -270,6 +281,7 @@ describe('actionsAvailable', () => {
       makeAction({ id: 'talk', locationId: 'bar', weight: 8 }),
     ]
     const result = actionsAvailable({
+      known: true,
       player,
       location,
       characters: [],
@@ -506,8 +518,8 @@ describe('requirementsMeet — requiresInspiration', () => {
 
 describe('actionApplies', () => {
   const place = { id: 'bar', scavengeTableId: 'bar_back' }
-  const applies = ({ action, location = place, characters = [] }) =>
-    actionApplies({ action, location, characters })
+  const applies = ({ action, location = place, known = true, characters = [] }) =>
+    actionApplies({ known, action, location, characters })
 
   it('an action that lives here applies', () => {
     expect(applies({ action: { id: 'order_beer', locationId: 'bar' } })).toBe(true)
@@ -534,6 +546,22 @@ describe('actionApplies', () => {
     expect(applies({ action: talk })).toBe(false)
   })
 
+  it('a place the player does not know keeps its own business to itself', () => {
+    expect(applies({ action: { id: 'order_beer', locationId: 'bar' }, known: false })).toBe(false)
+    expect(applies({ action: { id: 'loiter', locationId: 'any' }, known: false })).toBe(true)
+  })
+
+  it('finding out what a place is only applies where the player does not know it', () => {
+    const investigate = { id: 'investigate', locationId: 'any', kind: 'investigate' }
+    expect(applies({ action: investigate, known: false })).toBe(true)
+    expect(applies({ action: investigate, known: true })).toBe(false)
+  })
+
+  it('someone at a place the player does not know is dealt with only by what goes anywhere', () => {
+    const talk = { id: 'talk_to_dale', locationId: 'bar', characterId: 'dale' }
+    expect(applies({ action: talk, known: false, characters: [{ id: 'dale' }] })).toBe(false)
+  })
+
   it('an "any" action with someone follows them, and only them', () => {
     const talk = { id: 'talk_to_maurice', locationId: 'any', characterId: 'maurice' }
     expect(applies({ action: talk, characters: [{ id: 'maurice' }] })).toBe(true)
@@ -552,6 +580,7 @@ describe('actionsAvailable — obsessions', () => {
   const time = { hour: 14 }
   const order = (player) =>
     actionsAvailable({
+      known: true,
       player,
       location,
       characters: [],

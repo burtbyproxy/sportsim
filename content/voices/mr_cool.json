@@ -8,6 +8,7 @@
     "item.used": "You finish the {item} and flick what's left of it somewhere without checking where. It lands in a puddle. Perfect. Nobody saw.",
     "making.started": "You start like it's no big deal. It's a very big deal. Your hands know; your face doesn't.",
     "piece.artist.solid": "Done: {work}. You glance at it once, the way you'd glance at a car you own.",
-    "piece.artist.rough": "Done: {work}. It's off. You decide it's off on purpose, and stand next to it like that's true."
+    "piece.artist.rough": "Done: {work}. It's off. You decide it's off on purpose, and stand next to it like that's true.",
+    "location.return": "{place}. You lean on something like coming back was the plan."
   }
 }

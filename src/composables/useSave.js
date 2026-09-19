@@ -10,7 +10,7 @@ const SAVE_INDEX_KEY = 'sportsim_saves'
  * Current save format version.
  * Bump this whenever the save shape changes in a breaking way.
  */
-export const SAVE_VERSION = 7
+export const SAVE_VERSION = 8
 
 /**
  * Maximum number of save slots.
@@ -168,6 +168,24 @@ export function saveMigrate({ save }) {
       delete location.actionIds
     }
     migrated.version = 7
+  }
+  if (migrated.version < 8) {
+    // What the player knows moved off the places and onto the player: a
+    // place they had found, or had been to, is a place they know.
+    const locations = Object.values(migrated.locations ?? {}).filter(Boolean)
+    if (migrated.player) {
+      migrated.player.knownLocationIds = locations
+        .filter((location) => location.discovered || location.visitCount > 0)
+        .map((location) => location.id)
+      if (
+        migrated.player.currentLocationId &&
+        !migrated.player.knownLocationIds.includes(migrated.player.currentLocationId)
+      ) {
+        migrated.player.knownLocationIds.push(migrated.player.currentLocationId)
+      }
+    }
+    for (const location of locations) delete location.discovered
+    migrated.version = 8
   }
   return migrated
 }

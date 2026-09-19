@@ -2,6 +2,15 @@
   "id": "mouse_trap",
   "type": "bar",
   "display": "The Mouse Trap",
+  "displayInline": "the Mouse Trap",
+  "appearance": {
+    "display": "A bar with a table on the sidewalk",
+    "displayInline": "a bar with a table on the sidewalk",
+    "descriptions": {
+      "default": "A bar with a table out on the sidewalk where people smoke. It isn't a patio. It's a table. Through the door: pool tables, more pool tables than people, and carpet the color of a mistake.",
+      "night": "Three guys at the sidewalk table look like they've been there since the table was. One of them nods at you like he knows you. He doesn't. Probably."
+    }
+  },
   "pieceAs": "at the Mouse Trap",
   "outdoors": false,
   "descriptions": {
@@ -15,19 +24,19 @@
   "exits": [
     {
       "locationId": "arbys",
-      "label": "Walk south to Arby's",
+      "label": "Walk south to {place}",
       "travelTime": 1,
       "requirements": null
     },
     {
       "locationId": "toads_express",
-      "label": "Head to Toad's Express",
+      "label": "Head to {place}",
       "travelTime": 2,
       "requirements": null
     },
     {
       "locationId": "mocks_crest",
-      "label": "Walk north to Mock's Crest",
+      "label": "Walk north to {place}",
       "travelTime": 2,
       "requirements": null
     }
@@ -47,7 +56,6 @@
       "mediumIds": ["tagging", "writing", "drawing"]
     }
   ],
-  "discovered": false,
   "availability": {
     "openHour": 11,
     "closeHour": 2,

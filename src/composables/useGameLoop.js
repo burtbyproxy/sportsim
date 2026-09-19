@@ -23,6 +23,7 @@
 
 import { useGameStore } from '../stores/game.js'
 import {
+  ACTION_KINDS,
   REQUIREMENT_CODES,
   actionApplies,
   actionResolve,
@@ -42,7 +43,7 @@ import {
 import { MAKING_SURFACE_KINDS, ARTIFACT_STATUSES, makingOptions } from '../engine/making.js'
 import { eventsRandomCheck, eventsTriggeredCheck, eventResolve } from '../engine/events.js'
 import { narrativeAction, narrativeEvent, narrativeLocation } from './useNarrative.js'
-import { narrativeTextCreate } from '../utils/text.js'
+import { narrativeTextCreate, textFill } from '../utils/text.js'
 import { sim } from '../workers/simulation-api.js'
 import { moneyFormat } from '../utils/money.js'
 import { listSortBy } from '../utils/list.js'
@@ -178,14 +179,7 @@ export function useGameLoop({
   function locationEnter() {
     if (narrative && game.currentLocation && game.player) {
       narrative.clearLog()
-      narrative.enqueue(
-        narrativeLocation({
-          tuning: game.tuning,
-          location: game.currentLocation,
-          player: game.player,
-          gameTime: game.time,
-        })
-      )
+      sceneDescribe({ closer: false })
       for (const mark of game.currentLocation.marks ?? []) {
         if (mark.status === ARTIFACT_STATUSES.fresh) {
           voiceEnqueue({ code: 'mark.still_here', params: { work: mark.workText } })
@@ -196,6 +190,30 @@ export function useGameLoop({
       }
     }
     refreshActions()
+  }
+
+  /**
+   * Say where the player takes themselves to be. The first time, the whole
+   * place (or, somewhere they do not know, its looks); coming back, a line
+   * that they are back. Looking closer is the whole place again.
+   * @param {{ closer: boolean }} input
+   */
+  function sceneDescribe({ closer }) {
+    const scene = game.scene
+    if (!narrative || !scene) return
+    if (!closer && game.currentLocation.visitCount > 1) {
+      voiceEnqueue({ code: 'location.return', params: { place: game.scenePlace.displayInline } })
+      return
+    }
+    narrative.enqueue(
+      narrativeLocation({
+        tuning: game.tuning,
+        location: game.locations[scene.place.locationId],
+        known: scene.place.known,
+        player: game.player,
+        gameTime: game.time,
+      })
+    )
   }
 
   /**
@@ -674,14 +692,28 @@ export function useGameLoop({
     outcomeApply({ outcome, source: { kind: 'action', id: action.id } })
 
     // Taking stock costs no time: the menu becomes the making menu.
-    if (action.kind === 'make') {
+    if (action.kind === ACTION_KINDS.make) {
       makingPickerOpen()
       refreshActions()
       return
     }
 
+    // A closer look costs no time: the whole place, as the player sees it.
+    if (action.kind === ACTION_KINDS.look) {
+      sceneDescribe({ closer: true })
+      refreshActions()
+      return
+    }
+
+    // Reading the sign: the player finds out what this place really is.
+    if (action.kind === ACTION_KINDS.investigate) {
+      const learned = game.locationLearnApply({ locationId: game.currentLocationId })
+      if (!learned.ok) failureShow(learned)
+      else sceneDescribe({ closer: true })
+    }
+
     // Looking around: what turns up is the engine's call, not the content's.
-    if (action.kind === 'scavenge') scavengeRun()
+    if (action.kind === ACTION_KINDS.scavenge) scavengeRun()
 
     // Some actions are the interruption: sleep, mostly.
     if (action.interruptsInspiration) {
@@ -781,10 +813,10 @@ export function useGameLoop({
       game.eventFiredMark({ eventId: outcome.eventTriggered })
     }
 
-    // Location discovery
+    // Somebody tells the player what a place is.
     if (outcome.locationDiscovered) {
-      const loc = game.locations[outcome.locationDiscovered]
-      if (loc) loc.discovered = true
+      const learned = game.locationLearnApply({ locationId: outcome.locationDiscovered })
+      if (!learned.ok) failureShow(learned)
     }
   }
 
@@ -805,11 +837,16 @@ export function useGameLoop({
       return
     }
 
-    const location = game.currentLocation
-    const characters = game.charactersAtCurrentLocation
+    // The menu offers the business of the place the player takes this to be,
+    // with the people they take to be here.
+    const { menu } = game.scene
+    const location = game.locations[menu.locationId]
+    const known = menu.known
+    const characters = game.scenePeople
     const actions = actionsAvailable({
       player: game.player,
       location,
+      known,
       characters,
       gameTime: game.time,
       actionRegistry,
@@ -821,7 +858,7 @@ export function useGameLoop({
     const disabledActions = listSortBy({
       items: actionRegistry.filter(
         (a) =>
-          actionApplies({ action: a, location, characters }) &&
+          actionApplies({ action: a, location, known, characters }) &&
           !annotated.find((x) => x.id === a.id)
       ),
       keyOf: (a) => a.weight ?? 0,
@@ -847,25 +884,40 @@ export function useGameLoop({
   }
 
   /**
-   * An exit as the menu shows it: whether the player can go, and if not, why.
+   * An exit as the menu shows it: named for where the player takes it to
+   * lead, whether they can go, and if not, why.
    * @param {{ exit: Object }} input
-   * @returns {Object} the exit with available and unavailableReason
+   * @returns {Object} the exit with its label filled, available and unavailableReason
    */
-  function exitEntry({ exit }) {
+  function exitEntry({ exit: way }) {
+    const destination = game.locations[way.locationId]
+    if (!destination) {
+      return { ...way, available: false, unavailableReason: `[${LOOP_ERROR_CODES.exitUnknown}]` }
+    }
+    const seen = game.scene.exits.find((e) => e.locationId === way.locationId)
+    const place = game.locationDisplay({
+      locationId: seen.perceivedLocationId,
+      known: seen.known,
+    })
+    const exit = {
+      ...way,
+      label: textFill({ text: way.label, params: { place: place.displayInline } }),
+    }
     const blocked = (unavailableReason) => ({ ...exit, available: false, unavailableReason })
     if (game.makingActive) {
       return blocked(game.requirementReason({ code: REQUIREMENT_CODES.busy }))
     }
-    const destination = game.locations[exit.locationId]
-    if (!destination) return blocked(`[${LOOP_ERROR_CODES.exitUnknown}]`)
     if (!locationOpen({ location: destination, hour: game.time.hour })) {
+      // A place's own words about being shut name it: they are for a place
+      // the player knows, and knows this is the way to. Anywhere else is just shut.
+      const named = seen.known && seen.perceivedLocationId === way.locationId
       return blocked(
-        destination.availability?.closedMessage ||
+        (named && destination.availability?.closedMessage) ||
           game.requirementReason({ code: REQUIREMENT_CODES.closed })
       )
     }
     const why = exitRequirementsMeet({
-      exit,
+      exit: way,
       player: game.player,
       gameTime: game.time,
       location: game.currentLocation,
@@ -878,7 +930,7 @@ export function useGameLoop({
 
   /** The ways out of here, each saying whether it is open to the player now. */
   function exitsRefresh() {
-    const exits = game.currentLocation?.exits ?? []
+    const exits = game.scene ? game.currentLocation.exits : []
     game.menuExitsSet({ exits: exits.map((exit) => exitEntry({ exit })) })
   }
 

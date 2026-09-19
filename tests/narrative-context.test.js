@@ -26,10 +26,10 @@ const substances = Object.fromEntries(
   contentDir({ dir: 'content/substances' }).map((sub) => [sub.id, sub])
 )
 /** What the player reads here, with their blend worked out from their status as the store would. */
-const read = ({ location, player, time = morning }) => {
+const read = ({ location, player, time = morning, known = true }) => {
   const blend = blendCompute({ player, substances, conditions })
   const reading = { ...player, blend: blend.ok ? blend.data : player.blend }
-  return narrativeLocation({ tuning, location, player: reading, gameTime: time })
+  return narrativeLocation({ tuning, location, known, player: reading, gameTime: time })
     .tokens.map((t) => t.text)
     .join('')
 }
@@ -39,6 +39,24 @@ function fresh() {
   player.status = { ...player.status, hunger: 50, energy: 70, mood: 40 }
   return player
 }
+
+describe('location narrative — a place the player does not know', () => {
+  it('is its looks, and never its name or its insides', () => {
+    const text = read({ location: locationCreate(momsHouse), player: fresh(), known: false })
+    expect(text).toBe(momsHouse.appearance.descriptions.default)
+  })
+
+  it('has its looks at night too', () => {
+    const night = { period: 'night', hour: 23 }
+    const text = read({
+      location: locationCreate(momsHouse),
+      player: fresh(),
+      time: night,
+      known: false,
+    })
+    expect(text).toBe(momsHouse.appearance.descriptions.night)
+  })
+})
 
 describe('location narrative — which variant the player reads', () => {
   it('a sober first arrival reads the default', () => {
