@@ -16,7 +16,9 @@ import { locationCreate } from '../../src/models/location.js'
 import { actionsAvailable, actionResolve } from '../../src/engine/actions.js'
 import { statusDecayChanges } from '../../src/engine/stats.js'
 import { randomSeeded } from '../../src/utils/random.js'
-import { contentDir } from '../helpers/content.js'
+import { contentDir, tuningContent } from '../helpers/content.js'
+
+const tuning = tuningContent()
 
 // Load all Kenton locations keyed by ID
 const kentonLocationFiles = contentDir({ dir: 'content/maps/kenton/locations' })
@@ -376,6 +378,7 @@ describe('actionResolve — real Kenton action data', () => {
   it('raid_fridge auto-succeeds and returns hunger gain', () => {
     const player = playerCreate({ name: 'Test' })
     const result = actionResolve({
+      tuning,
       player,
       action: kentonActions.raid_fridge,
       gameTime: makeGameTime(),
@@ -392,6 +395,7 @@ describe('actionResolve — real Kenton action data', () => {
     const player = playerCreate({ name: 'Test' })
     player.status.money = 10
     const result = actionResolve({
+      tuning,
       player,
       action: kentonActions.order_beer_parrot,
       gameTime: makeGameTime(14),
@@ -409,6 +413,7 @@ describe('actionResolve — real Kenton action data', () => {
     const player = playerCreate({ name: 'Test' })
     const alwaysMax = () => 0.9999 // natural 20
     const result = actionResolve({
+      tuning,
       player,
       action: kentonActions.look_for_change,
       gameTime: makeGameTime(14),
@@ -424,6 +429,7 @@ describe('actionResolve — real Kenton action data', () => {
     const player = playerCreate({ name: 'Test' })
     const alwaysMin = () => 0 // natural 1 = criticalFailure
     const result = actionResolve({
+      tuning,
       player,
       action: kentonActions.look_for_change,
       gameTime: makeGameTime(14),
@@ -442,6 +448,7 @@ describe('actionResolve — real Kenton action data', () => {
     const player = playerCreate({ name: 'Test' })
     player.status.sobriety = 30
     const result = actionResolve({
+      tuning,
       player,
       action: kentonActions.shoplift_plaid,
       gameTime: makeGameTime(),
@@ -457,6 +464,7 @@ describe('actionResolve — full pipeline', () => {
   it('auto-success action returns correct outcome without a dice roll', () => {
     const player = playerCreate({ name: 'Test' })
     const result = actionResolve({
+      tuning,
       player,
       action: DRINK_ACTION,
       gameTime: makeGameTime(),
@@ -478,6 +486,7 @@ describe('actionResolve — full pipeline', () => {
     player.stats.charm.base = 15
 
     const result = actionResolve({
+      tuning,
       player,
       action: CHARM_CHECK_ACTION,
       gameTime: makeGameTime(),
@@ -499,6 +508,7 @@ describe('actionResolve — full pipeline', () => {
 
     const alwaysMax = () => 0.9999 // natural 20 = always success
     const result = actionResolve({
+      tuning,
       player,
       action: CHARM_CHECK_ACTION,
       gameTime: makeGameTime(),
@@ -516,6 +526,7 @@ describe('actionResolve — full pipeline', () => {
 
     const alwaysMin = () => 0 // natural 1 = always failure
     const result = actionResolve({
+      tuning,
       player,
       action: CHARM_CHECK_ACTION,
       gameTime: makeGameTime(),
@@ -533,6 +544,7 @@ describe('actionResolve — full pipeline', () => {
 
     const gatedAction = { ...CHARM_CHECK_ACTION, requirements: { minStats: { charm: 50 } } }
     const result = actionResolve({
+      tuning,
       player,
       action: gatedAction,
       gameTime: makeGameTime(),
@@ -550,6 +562,7 @@ describe('actionResolve — full pipeline', () => {
     player.stats.charm.base = 15
 
     const result1 = actionResolve({
+      tuning,
       player,
       action: CHARM_CHECK_ACTION,
       gameTime: makeGameTime(),
@@ -557,6 +570,7 @@ describe('actionResolve — full pipeline', () => {
       rng: randomSeeded({ seed: 100 }),
     })
     const result2 = actionResolve({
+      tuning,
       player,
       action: CHARM_CHECK_ACTION,
       gameTime: makeGameTime(),
@@ -580,7 +594,7 @@ describe('statusDecayChanges — realistic tick counts', () => {
     player.status.hunger = 60
     player.status.energy = 80
 
-    const changes = statusDecayChanges({ status: player.status, ticksElapsed: 4 })
+    const changes = statusDecayChanges({ tuning, status: player.status, ticksElapsed: 4 })
 
     // 4 ticks = 1 hour
     expect(changes.hunger).toBe(-4) // -1 per tick
@@ -593,7 +607,7 @@ describe('statusDecayChanges — realistic tick counts', () => {
     player.status.hunger = 80
     player.status.energy = 100
 
-    const changes = statusDecayChanges({ status: player.status, ticksElapsed: 32 })
+    const changes = statusDecayChanges({ tuning, status: player.status, ticksElapsed: 32 })
 
     expect(changes.hunger).toBe(-32)
     expect(changes.energy).toBe(-16)
@@ -603,7 +617,7 @@ describe('statusDecayChanges — realistic tick counts', () => {
     const player = playerCreate({ name: 'Test' })
     player.status.hunger = 3
 
-    const changes = statusDecayChanges({ status: player.status, ticksElapsed: 100 })
+    const changes = statusDecayChanges({ tuning, status: player.status, ticksElapsed: 100 })
     expect(player.status.hunger + changes.hunger).toBe(0)
   })
 
@@ -611,13 +625,13 @@ describe('statusDecayChanges — realistic tick counts', () => {
     const player = playerCreate({ name: 'Test' })
     player.status.energy = 2
 
-    const changes = statusDecayChanges({ status: player.status, ticksElapsed: 100 })
+    const changes = statusDecayChanges({ tuning, status: player.status, ticksElapsed: 100 })
     expect(player.status.energy + changes.energy).toBeGreaterThanOrEqual(0)
   })
 
   it('0 ticks returns empty object', () => {
     const player = playerCreate({ name: 'Test' })
-    expect(statusDecayChanges({ status: player.status, ticksElapsed: 0 })).toEqual({})
+    expect(statusDecayChanges({ tuning, status: player.status, ticksElapsed: 0 })).toEqual({})
   })
 })
 

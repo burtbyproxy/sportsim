@@ -22,9 +22,11 @@ import { useGameLoop } from '../../src/composables/useGameLoop.js'
 import { useSave, saveMigrate, SAVE_VERSION } from '../../src/composables/useSave.js'
 import { eventsRandomCheck } from '../../src/engine/events.js'
 import { itemUseResolve } from '../../src/engine/items.js'
-import { contentDir, voiceLineOf } from '../helpers/content.js'
+import { contentDir, tuningContent, voiceLineOf } from '../helpers/content.js'
 import { narrativeSettle } from '../helpers/narrative.js'
 import { rngForNatural, rngSequence } from '../helpers/rng.js'
+
+const tuning = tuningContent()
 
 const items = contentDir({ dir: 'content/items' }).flat()
 const voices = contentDir({ dir: 'content/voices' })
@@ -51,6 +53,7 @@ function startGame({
 } = {}) {
   setActivePinia(createPinia())
   const game = useGameStore()
+  game.tuningRegister({ tuning })
   for (const item of items) game.itemRegister({ item: itemCreate(item) })
   for (const v of voices) game.voiceRegister({ voice: v })
   for (const m of mediumsUsed) game.mediumRegister({ medium: m })
@@ -63,7 +66,7 @@ function startGame({
   for (const stat of Object.values(player.stats)) stat.base = 10
   game.runStart({ player, locationId: at })
   for (const itemId of carrying) game.player.inventory.push({ ...game.itemGet({ itemId }) })
-  const narrative = useNarrative()
+  const narrative = useNarrative({ tuning })
   const loop = useGameLoop({ actionRegistry: actions, eventRegistry: events, narrative, rng })
   loop.onLocationEntered()
   return { game, loop, narrative }
@@ -486,6 +489,7 @@ describe('making pipeline', () => {
 
     setActivePinia(createPinia())
     const restored = useGameStore()
+    restored.tuningRegister({ tuning })
     for (const item of items) restored.itemRegister({ item: itemCreate(item) })
     for (const v of voices) restored.voiceRegister({ voice: v })
     for (const m of mediums) restored.mediumRegister({ medium: m })
@@ -544,6 +548,7 @@ describe('making pipeline', () => {
 
     setActivePinia(createPinia())
     const game = useGameStore()
+    game.tuningRegister({ tuning })
     game.runLoad({ save: migrated })
     game.locationsRestore({ definitions: Object.fromEntries(locations.map((l) => [l.id, l])) })
     const dental = game.locations.lombard_dental
@@ -1177,7 +1182,7 @@ describe('making pipeline', () => {
   })
 
   it('a pause leaves no timers behind, whether time or a skip ends it', async () => {
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const pausing = (text) => ({
       tokens: [{ text, style: 'normal', speed: 'instant', pauseAfter: 400, effect: 'none' }],
     })

@@ -142,7 +142,7 @@ export function eventsTriggeredCheck({ player, location, gameTime, events, fired
  * @returns {{ ok: boolean, data: { outcome: Object|null, diceResult: Object|null }|null, error: Object|null }}
  *   fails with CHOICE_INVALID when the choice asked for is not one the event offers.
  */
-export function eventResolve({ event, player, choiceIndex = null, rng = Math.random }) {
+export function eventResolve({ event, player, choiceIndex = null, rng = Math.random, tuning }) {
   // Choice-based event
   if (event.choices && event.choices.length > 0 && choiceIndex !== null) {
     const choice = event.choices[choiceIndex]
@@ -155,6 +155,7 @@ export function eventResolve({ event, player, choiceIndex = null, rng = Math.ran
     }
     if (choice.check) {
       const diceResult = checkRoll({
+        tuning,
         player,
         statName: choice.check.stat,
         modifiers: [],

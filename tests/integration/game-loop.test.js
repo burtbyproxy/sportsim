@@ -32,6 +32,7 @@ const substances = contentDir({ dir: 'content/substances' })
 function startGame() {
   setActivePinia(createPinia())
   const game = useGameStore()
+  game.tuningRegister({ tuning })
   game.locationRegister({ location: locationCreate(momsHouse) })
   for (const substance of substances) game.substanceRegister({ substance })
   game.runStart({ player: playerCreate({ name: 'Tester' }), locationId: 'moms_house' })
@@ -44,7 +45,7 @@ describe('useGameLoop → narrative', () => {
 
   it('raiding the fridge writes its prose to the log and raises hunger', async () => {
     const game = startGame()
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ actionRegistry: momsHouseActions, narrative })
     const hungerBefore = game.player.status.hunger
     const tickBefore = game.time.tick
@@ -60,7 +61,7 @@ describe('useGameLoop → narrative', () => {
 
   it('staring at the ceiling writes its prose too', async () => {
     startGame()
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ actionRegistry: momsHouseActions, narrative })
 
     await loop.resolvePlayerAction(byId('stare_at_ceiling'))
@@ -74,7 +75,7 @@ describe('useGameLoop → narrative', () => {
 
   it('two actions in a row produce two log entries in order', async () => {
     startGame()
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ actionRegistry: momsHouseActions, narrative })
 
     await loop.resolvePlayerAction(byId('raid_fridge'))
@@ -101,7 +102,9 @@ describe('useGameLoop → narrative', () => {
 import { useSave, AUTO_SAVE_NAME } from '../../src/composables/useSave.js'
 import { storageInstall } from '../helpers/storage.js'
 import { narrativeSettle } from '../helpers/narrative.js'
-import { contentDir, contentFile } from '../helpers/content.js'
+import { contentDir, contentFile, tuningContent } from '../helpers/content.js'
+
+const tuning = tuningContent()
 
 const columbiaPark = contentFile({ path: 'content/maps/kenton/locations/columbia_park.json' })
 
@@ -161,6 +164,7 @@ describe('useGameLoop → auto-save', () => {
 
     setActivePinia(createPinia())
     const restored = useGameStore()
+    restored.tuningRegister({ tuning })
     expect(restored.isRunning).toBe(false)
     const [entry] = useSave().savesList().data
     restored.runLoad({ save: useSave().saveRead({ id: entry.id }).data })
@@ -178,7 +182,7 @@ describe('useGameLoop → auto-save', () => {
     globalThis.localStorage.setItem = () => {
       throw new Error('QuotaExceededError')
     }
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ actionRegistry: momsHouseActions, narrative, save: useSave() })
 
     await loop.travel({ locationId: 'columbia_park' })
@@ -213,7 +217,7 @@ describe('useGameLoop → events', () => {
 
   it('a random event fires on the tick, says its piece, and applies its outcome', async () => {
     const game = startGame()
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({
       actionRegistry: momsHouseActions,
       eventRegistry: [eventById('found_change')],
@@ -233,7 +237,7 @@ describe('useGameLoop → events', () => {
 
   it('nothing fires when the roll misses', async () => {
     const game = startGame()
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({
       actionRegistry: momsHouseActions,
       eventRegistry: [eventById('found_change')],
@@ -248,7 +252,7 @@ describe('useGameLoop → events', () => {
   it('a one-time triggered event fires once and never again', async () => {
     const game = startGame()
     game.player.status.hunger = 10
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({
       actionRegistry: momsHouseActions,
       eventRegistry: [eventById('first_starving')],
@@ -267,7 +271,7 @@ describe('useGameLoop → events', () => {
 
   it('an event with choices waits on the player, then the choice resolves it', async () => {
     const game = startGame()
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({
       actionRegistry: momsHouseActions,
       eventRegistry: [eventById('mom_upstairs')],
@@ -307,7 +311,7 @@ describe('useGameLoop → events', () => {
     // The cruiser works the street, so be on it.
     game.locationRegister({ location: locationCreate(columbiaPark) })
     game.playerMove({ locationId: 'columbia_park' })
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     // A low roll botches every check. Force the event by type so the roll only governs the check.
     const botch = () => 0.001
     const cop = { ...eventById('cop_hassle'), type: 'triggered' }
@@ -348,6 +352,7 @@ describe('useGameLoop → events', () => {
 
     setActivePinia(createPinia())
     const restored = useGameStore()
+    restored.tuningRegister({ tuning })
     const [entry] = useSave().savesList().data
     restored.runLoad({ save: useSave().saveRead({ id: entry.id }).data })
     expect(restored.activeEvent?.id).toBe('park_acquaintance')
@@ -362,7 +367,7 @@ describe('useGameLoop → scene order on arrival', () => {
   it('the new place is described first and an arrival event lands beneath it', async () => {
     const game = startGame()
     game.locationRegister({ location: locationCreate(columbiaPark) })
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({
       actionRegistry: momsHouseActions,
       eventRegistry: [eventById('found_change')],
@@ -380,7 +385,7 @@ describe('useGameLoop → scene order on arrival', () => {
 
   it('mounting the screen with a pending event puts the event back in front', async () => {
     const game = startGame()
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     game.eventActiveSet({ event: eventById('mom_upstairs') })
     const loop = useGameLoop({ actionRegistry: momsHouseActions, narrative })
 
@@ -401,6 +406,7 @@ describe('useGameLoop → visits and company', () => {
   function startAtTheBar({ visits, daleIn }) {
     setActivePinia(createPinia())
     const game = useGameStore()
+    game.tuningRegister({ tuning })
     game.locationRegister({ location: locationCreate(momsHouse) })
     game.locationRegister({ location: locationCreate(mocksCrest) })
     for (const substance of substances) game.substanceRegister({ substance })
@@ -429,7 +435,7 @@ describe('useGameLoop → visits and company', () => {
 
   it('a first-time visitor sees Dale greyed out, and asking anyway is refused', async () => {
     const game = startAtTheBar({ visits: 1, daleIn: true })
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ actionRegistry: [talkToDale], narrative, rng: () => 0.9 })
     loop.onLocationEntered()
 
@@ -442,7 +448,7 @@ describe('useGameLoop → visits and company', () => {
 
   it('a regular gets Dale on the menu, and talking to him goes through', async () => {
     const game = startAtTheBar({ visits: 2, daleIn: true })
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ actionRegistry: [talkToDale], narrative, rng: () => 0.9 })
     loop.onLocationEntered()
 

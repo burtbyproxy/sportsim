@@ -17,7 +17,9 @@ import { playerCreate } from '../../src/models/player.js'
 import { locationCreate } from '../../src/models/location.js'
 import { skillEffective, skillCheckRoll } from '../../src/engine/skills.js'
 import { saveMigrate, SAVE_VERSION } from '../../src/composables/useSave.js'
-import { contentDir, contentIds } from '../helpers/content.js'
+import { contentDir, contentIds, tuningContent } from '../helpers/content.js'
+
+const tuning = tuningContent()
 
 const substances = contentDir({ dir: 'content/substances' })
 const conditions = contentDir({ dir: 'content/conditions' })
@@ -29,6 +31,7 @@ const momsHouse = JSON.parse(
 function startGame() {
   setActivePinia(createPinia())
   const game = useGameStore()
+  game.tuningRegister({ tuning })
   for (const substance of substances) game.substanceRegister({ substance })
   for (const condition of conditions) game.conditionRegister({ condition })
   for (const medium of mediums) game.mediumRegister({ medium })
@@ -102,6 +105,7 @@ describe('skills pipeline', () => {
     game.playerStatusApply({ changes: { hunger: -45 } }) // starving joins the blend
 
     const { data } = skillCheckRoll({
+      tuning,
       player: game.player,
       mediumId: 'painting',
       mediums: game.mediums,

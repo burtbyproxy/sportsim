@@ -1,5 +1,5 @@
 import { ref, readonly } from 'vue'
-import { blendSober } from '../engine/blend.js'
+import { blendSober, PERSONA_SOURCES } from '../engine/blend.js'
 import { inspirationActive } from '../engine/inspiration.js'
 import { textFill, textVariantPick, narrativeTextCreate } from '../utils/text.js'
 import { randomInt } from '../utils/random.js'
@@ -17,85 +17,72 @@ import { randomInt } from '../utils/random.js'
  */
 
 /**
- * Per-character delay ranges (ms) for each speed setting.
- * Each character gets a random value within [min, max].
- * instant is always 0 — no range needed.
+ * A speed tier's per-character delay range in ms (content/tuning.json
+ * `narrative.speedsMs`); an unknown tier reads as normal.
+ * @param {{ speed: string, tuning: Object }} input
+ * @returns {{ min: number, max: number }}
  */
-export const SPEED_MS = {
-  instant: 0,
-  fast: { min: 1, max: 5 },
-  normal: { min: 2, max: 10 },
-  slow: { min: 15, max: 40 },
-  crawl: { min: 50, max: 120 },
+function speedRange({ speed, tuning }) {
+  const speeds = tuning.narrative.speedsMs
+  return speeds[speed] ?? speeds.normal
 }
 
 /**
- * Minimum mean throughput the normal tier must sustain on ordinary prose,
- * in characters per second. Guards against the pauses stacking up until
- * a paragraph takes fifteen seconds to read.
+ * The extra pause after a punctuation character, or null for any other.
+ * @param {{ char: string, tuning: Object }} input
+ * @returns {{ min: number, max: number }|null}
  */
-export const NORMAL_TIER_MIN_CHARS_PER_SECOND = 100
-
-/**
- * Extra delay added after punctuation characters — makes the text breathe.
- * These stack on top of the base character delay.
- */
-export const PUNCTUATION_PAUSE = {
-  '.': { min: 60, max: 110 },
-  '!': { min: 60, max: 110 },
-  '?': { min: 60, max: 110 },
-  ',': { min: 25, max: 50 },
-  ';': { min: 25, max: 50 },
-  ':': { min: 20, max: 40 },
-  '—': { min: 60, max: 110 }, // em-dash — dramatic
-  '–': { min: 25, max: 50 }, // en-dash
+function punctuationPause({ char, tuning }) {
+  return tuning.narrative.punctuationPauseMs.find((pause) => pause.char === char) ?? null
 }
 
 /**
  * Mean milliseconds the renderer spends on one character of `text` at `speed`,
  * base delay plus punctuation pauses. Pure — used to prove the throughput contract.
- * @param {{ text: string, speed: string }} input
+ * @param {{ text: string, speed: string, tuning: Object }} input
  * @returns {number}
  */
-export function meanCharDelayMs({ text, speed }) {
-  const setting = SPEED_MS[speed] ?? SPEED_MS.normal
-  if (setting === 0 || text.length === 0) return 0
+export function meanCharDelayMs({ text, speed, tuning }) {
+  const setting = speedRange({ speed, tuning })
+  if (setting.max === 0 || text.length === 0) return 0
   const baseMean = (setting.min + setting.max) / 2
   let total = 0
   for (const char of text) {
-    const extra = PUNCTUATION_PAUSE[char]
+    const extra = punctuationPause({ char, tuning })
     total += baseMean + (extra ? (extra.min + extra.max) / 2 : 0)
   }
   return total / text.length
 }
 
 /**
- * Resolve a speed setting to a base character delay in ms.
- * For range-based speeds, picks a random value within the range.
- * @param {string} speed
+ * A base character delay in ms for a speed tier, picked within its range.
+ * @param {{ speed: string, tuning: Object }} input
  * @returns {number}
  */
-function resolveSpeedMs(speed) {
-  const setting = SPEED_MS[speed] ?? SPEED_MS.normal
-  if (setting === 0) return 0
+function resolveSpeedMs({ speed, tuning }) {
+  const setting = speedRange({ speed, tuning })
   return randomInt({ min: setting.min, max: setting.max })
 }
 
 /**
- * Calculate the total delay for rendering a character at a given speed.
- * Adds punctuation / word-boundary pauses on top of the base delay.
- * @param {string} char - the character just typed
- * @param {string} speed - speed tier name
+ * The total delay for rendering a character at a given speed: the base
+ * delay plus any punctuation pause after it.
+ * @param {{ char: string, speed: string, tuning: Object }} input
+ *   char — the character just typed; speed — the tier name
  * @returns {number} ms to wait before rendering the next character
  */
-function charDelay({ char, speed }) {
-  const base = resolveSpeedMs(speed)
-  const extra = PUNCTUATION_PAUSE[char]
+function charDelay({ char, speed, tuning }) {
+  const base = resolveSpeedMs({ speed, tuning })
+  const extra = punctuationPause({ char, tuning })
   if (!extra) return base
   return base + randomInt({ min: extra.min, max: extra.max })
 }
 
-export function useNarrative() {
+/**
+ * The typewriter: a queue of narrative text rendered a character at a time.
+ * @param {{ tuning: Object }} input - the game's numbers; speeds and pauses come from it
+ */
+export function useNarrative({ tuning }) {
   /** Rendered log entries — each is a rendered NarrativeText */
   const log = ref([])
 
@@ -257,7 +244,7 @@ export function useNarrative() {
       const text = token.text
 
       // instant speed or skip — resolve immediately
-      if (SPEED_MS[speed] === 0 || skipRequested) {
+      if (speedRange({ speed, tuning }).max === 0 || skipRequested) {
         resolve(text)
         return
       }
@@ -281,12 +268,12 @@ export function useNarrative() {
 
         // Delay for the NEXT character is based on the character we just typed
         // — punctuation after a full-stop breathes longer than a mid-word letter
-        const delay = charDelay({ char: text[i - 1], speed })
+        const delay = charDelay({ char: text[i - 1], speed, tuning })
         setTimeout(tick, delay)
       }
 
       // Kick off with the delay for the very first character
-      setTimeout(tick, resolveSpeedMs(speed))
+      setTimeout(tick, resolveSpeedMs({ speed, tuning }))
     })
   }
 
@@ -394,20 +381,24 @@ function perceptionFiltersApply({ text, insanities }) {
  * @param {Object} location
  * @returns {Object}
  */
-function narrativeContextBuild({ player, gameTime, location }) {
+function narrativeContextBuild({ player, gameTime, location, tuning }) {
   const sobriety = player.status?.sobriety ?? 100
-  const energy = player.status?.energy ?? 80
-  const hunger = player.status?.hunger ?? 50
   const blend = player.blend ?? blendSober()
   // Every persona acting on the player is a flag, so content can key a
-  // variant on "telepath" or "priest" the way it keys one on "drunk".
+  // variant on "telepath" or "priest" the way it keys one on "drunk"; every
+  // condition in the blend is one too, by its id ("exhausted", "starving"),
+  // so a description agrees with the condition about when it applies.
   const personaFlags = Object.fromEntries(blend.weights.map((w) => [w.personaId, true]))
+  const conditionFlags = Object.fromEntries(
+    blend.weights
+      .filter((w) => w.source === PERSONA_SOURCES.condition)
+      .map((w) => [w.sourceId, true])
+  )
   return {
     period: gameTime?.period ?? 'morning',
     visitCount: location?.visitCount ?? 0,
-    drunk: sobriety < 30,
-    exhausted: energy < 20,
-    starving: hunger < 15,
+    drunk: sobriety < tuning.narrative.drunkBelowSobriety,
+    ...conditionFlags,
     ...personaFlags,
     personaId: blend.dominantPersonaId,
     inspired: Boolean(inspirationActive({ player })),
@@ -418,12 +409,12 @@ function narrativeContextBuild({ player, gameTime, location }) {
  * Generates the narrative description for a location.
  * Picks the best variant, applies perception filters, templates in variables.
  *
- * @param {{ location: Object, player: Object, gameTime: Object }} input
+ * @param {{ location: Object, player: Object, gameTime: Object, tuning: Object }} input
  *   location — Location per data contract
  * @returns {NarrativeText}
  */
-export function narrativeLocation({ location, player, gameTime }) {
-  const context = narrativeContextBuild({ player, gameTime, location })
+export function narrativeLocation({ location, player, gameTime, tuning }) {
+  const context = narrativeContextBuild({ player, gameTime, location, tuning })
   let text = textVariantPick({ variants: location.descriptions || {}, context })
   text = textFill({
     text,

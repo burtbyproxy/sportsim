@@ -18,8 +18,10 @@ import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
 import { requirementsMeet } from '../../src/engine/actions.js'
 import { INSPIRATION_STATUSES } from '../../src/engine/inspiration.js'
-import { contentDir, contentFile, voiceLineOf } from '../helpers/content.js'
+import { contentDir, contentFile, tuningContent, voiceLineOf } from '../helpers/content.js'
 import { narrativeSettle } from '../helpers/narrative.js'
+
+const tuning = tuningContent()
 
 const substances = contentDir({ dir: 'content/substances' })
 const conditions = contentDir({ dir: 'content/conditions' })
@@ -38,6 +40,7 @@ const forced = (id) => ({ ...eventById(id), type: 'triggered', conditions: {}, o
 function startGame() {
   setActivePinia(createPinia())
   const game = useGameStore()
+  game.tuningRegister({ tuning })
   for (const substance of substances) game.substanceRegister({ substance })
   for (const condition of conditions) game.conditionRegister({ condition })
   for (const medium of mediums) game.mediumRegister({ medium })
@@ -64,7 +67,7 @@ describe('inspiration pipeline', () => {
 
   it('an event from content strikes: the record, the snapshot, the label, and the line', async () => {
     const game = startGame()
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ eventRegistry: [forced('rock_bottom_echo')], narrative })
 
     await loop.tick({ ticks: 1 })
@@ -91,7 +94,7 @@ describe('inspiration pipeline', () => {
 
   it('whoever you are when it strikes owns the idea, and speaks the line', async () => {
     const game = startGame()
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ eventRegistry: [forced('rock_bottom_echo')], narrative })
     game.playerDosesApply({ doses: [{ substanceId: 'whiskey', value: 90 }] })
 
@@ -108,7 +111,7 @@ describe('inspiration pipeline', () => {
 
   it('the clock runs down through the loop, fades, and expires with a line', async () => {
     const game = startGame()
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ narrative })
     game.inspirationStrikeApply({
       source: { kind: 'event', id: 'test' },
@@ -136,7 +139,7 @@ describe('inspiration pipeline', () => {
 
   it('the world barging in kills it: an event with no inspiration of its own interrupts', async () => {
     const game = startGame()
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ eventRegistry: [forced('found_change')], narrative })
     game.inspirationStrikeApply({
       source: { kind: 'event', id: 'test' },
@@ -158,7 +161,7 @@ describe('inspiration pipeline', () => {
 
   it('distraction is inspiration with worse timing: a new strike replaces the old', async () => {
     const game = startGame()
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ eventRegistry: [forced('rain')], narrative })
     game.inspirationStrikeApply({
       source: { kind: 'event', id: 'rock_bottom_echo' },
@@ -184,7 +187,7 @@ describe('inspiration pipeline', () => {
 
   it('sleeping on it loses it', async () => {
     const game = startGame()
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ actionRegistry: momsHouseActions, narrative })
     await loop.tick({ ticks: 52 }) // 8:00 → 21:00, when sleep becomes possible
     game.inspirationStrikeApply({

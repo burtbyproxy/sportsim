@@ -45,3 +45,11 @@ export function contentIds({ dir }) {
 export function voiceLineOf({ personaId, code }) {
   return contentFile({ path: `content/voices/${personaId}.json` }).lines[code]
 }
+
+/**
+ * The game's numbers, as content sets them: what every engine is handed.
+ * @returns {Object}
+ */
+export function tuningContent() {
+  return contentFile({ path: 'content/tuning.json' })
+}

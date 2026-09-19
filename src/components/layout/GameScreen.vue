@@ -179,7 +179,7 @@ if (!game.isRunning) {
 const actionRegistry = Object.values(game.actions)
 const eventRegistry = Object.values(game.events)
 
-const narrative = useNarrative()
+const narrative = useNarrative({ tuning: game.tuning })
 provide('narrative', narrative)
 
 // Space skips the running narrative from anywhere on the screen

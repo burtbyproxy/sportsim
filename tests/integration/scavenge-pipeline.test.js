@@ -16,10 +16,12 @@ import { playerCreate } from '../../src/models/player.js'
 import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
 import { actionsAvailable } from '../../src/engine/actions.js'
-import { SCAVENGE_TICKS_PER_RESTOCK, scavengeDepletion } from '../../src/engine/scavenge.js'
-import { contentDir, contentFile, voiceLineOf } from '../helpers/content.js'
+import { scavengeDepletion } from '../../src/engine/scavenge.js'
+import { contentDir, contentFile, tuningContent, voiceLineOf } from '../helpers/content.js'
 import { narrativeSettle } from '../helpers/narrative.js'
 import { rngForNatural, rngSequence } from '../helpers/rng.js'
+
+const tuning = tuningContent()
 
 const items = contentDir({ dir: 'content/items' }).flat()
 const tables = contentDir({ dir: 'content/scavenge' })
@@ -35,6 +37,7 @@ const itemById = (id) => items.find((i) => i.id === id)
 function startGame({ at = 'moms_house' } = {}) {
   setActivePinia(createPinia())
   const game = useGameStore()
+  game.tuningRegister({ tuning })
   for (const item of items) game.itemRegister({ item })
   for (const table of tables) game.scavengeTableRegister({ table })
   for (const v of voices) game.voiceRegister({ voice: v })
@@ -95,7 +98,7 @@ describe('scavenge pipeline', () => {
 
   it('the first thing in the basement is the wood, and the wood is an idea', async () => {
     const game = startGame()
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({
       actionRegistry: [scavengeAction],
       narrative,
@@ -141,7 +144,7 @@ describe('scavenge pipeline', () => {
 
   it('coming up empty says so, and costs the time anyway', async () => {
     const game = startGame({ at: 'toads_express' })
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({
       actionRegistry: [scavengeAction],
       narrative,
@@ -158,7 +161,7 @@ describe('scavenge pipeline', () => {
 
   it('the persona in charge says what was found', async () => {
     const game = startGame({ at: 'toads_express' })
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({
       actionRegistry: [scavengeAction],
       narrative,
@@ -210,7 +213,7 @@ describe('scavenge pipeline', () => {
   it('a spot gets picked over, the check pays for it, and the city restocks it', async () => {
     const game = startGame({ at: 'toads_express' })
     game.player.stats.luck.base = 100
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const find = useGameLoop({
       actionRegistry: [scavengeAction],
       rng: rngSequence({ values: [HIGH_DIE, 0.0] }),
@@ -230,8 +233,8 @@ describe('scavenge pipeline', () => {
     const entries = await narrativeSettle({ narrative })
     expect(entries.at(-1)).toBe(voiceLineOf({ personaId: 'sober', code: 'scavenge.picked_clean' }))
 
-    const later = { tick: game.time.tick + SCAVENGE_TICKS_PER_RESTOCK * 4 }
-    expect(scavengeDepletion({ location, gameTime: later })).toBe(0)
+    const later = { tick: game.time.tick + tuning.scavenge.ticksPerRestock * 4 }
+    expect(scavengeDepletion({ tuning, location, gameTime: later })).toBe(0)
   })
 
   it("Mom's note puts Grandma's paints in your hands", async () => {

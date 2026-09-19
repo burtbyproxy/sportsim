@@ -18,9 +18,10 @@ import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
 import { simulationLocal } from '../../src/workers/simulation-local.js'
 import { statEffective } from '../../src/engine/dice.js'
-import { STAT_XP_CHECK_SUCCESS, STAT_XP_CHECK_FAILURE } from '../../src/engine/stats.js'
-import { contentDir, contentFile, voiceLineOf } from '../helpers/content.js'
+import { contentDir, contentFile, tuningContent, voiceLineOf } from '../helpers/content.js'
 import { narrativeSettle } from '../helpers/narrative.js'
+
+const tuning = tuningContent()
 
 const items = contentDir({ dir: 'content/items' }).flat()
 const substances = contentDir({ dir: 'content/substances' })
@@ -38,6 +39,7 @@ const hungerPersonaId = conditions.find((c) => c.source?.status === 'hunger').pe
 function startGame({ at = 'moms_house' } = {}) {
   setActivePinia(createPinia())
   const game = useGameStore()
+  game.tuningRegister({ tuning })
   for (const item of items) game.itemRegister({ item: itemCreate(item) })
   for (const substance of substances) game.substanceRegister({ substance })
   for (const condition of conditions) game.conditionRegister({ condition })
@@ -66,7 +68,7 @@ describe('item pipeline', () => {
   it('a tallboy can finally be drunk: beer in, mood up, one fewer, a tick gone, and a line', async () => {
     const game = startGame()
     give({ game, itemId: 'tallboy_oly', n: 2 })
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ narrative })
     const moodBefore = game.player.status.mood
 
@@ -115,7 +117,7 @@ describe('item pipeline', () => {
     expect(result.error.code).toBe('ITEM_NOT_CONSUMABLE')
     expect(game.playerInventory).toHaveLength(1)
 
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ narrative })
     await loop.useItem({ itemId: 'single_sock' })
     expect(game.time.tick).toBe(0)
@@ -169,13 +171,13 @@ describe('learning by doing', () => {
     const lucky = startGame({ at: 'columbia_park' })
     const pass = useGameLoop({ actionRegistry: parkActions, rng: () => 0.9 })
     await pass.resolvePlayerAction(look)
-    expect(lucky.player.stats[stat].xp).toBe(STAT_XP_CHECK_SUCCESS)
+    expect(lucky.player.stats[stat].xp).toBe(tuning.stats.xpCheckSuccess)
 
     const unlucky = startGame({ at: 'columbia_park' })
     unlucky.player.stats[stat].base = 1
     const miss = useGameLoop({ actionRegistry: parkActions, rng: () => 0.05 })
     await miss.resolvePlayerAction(look)
-    expect(unlucky.player.stats[stat].xp).toBe(STAT_XP_CHECK_FAILURE)
+    expect(unlucky.player.stats[stat].xp).toBe(tuning.stats.xpCheckFailure)
   })
 
   it('an action with no check trains nothing', async () => {
@@ -192,7 +194,7 @@ describe('learning by doing', () => {
     const game = startGame() // the basement rolls wits
     const loop = useGameLoop({ actionRegistry: [scavengeAction], rng: () => 0.7 })
     await loop.resolvePlayerAction(scavengeAction)
-    expect(game.player.stats.wits.xp).toBe(STAT_XP_CHECK_SUCCESS)
+    expect(game.player.stats.wits.xp).toBe(tuning.stats.xpCheckSuccess)
   })
 
   it('enough practice raises the stat itself', () => {
@@ -219,7 +221,7 @@ describe('failures are shown in play, never swallowed', () => {
   it('a simulation that falls over says so, and the world waits a tick', async () => {
     const game = startGame()
     game.characterRegister({ character: characterCreate(maurice) })
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const broken = {
       tick: () => {
         throw new Error('worker gone')
@@ -241,7 +243,7 @@ describe('failures are shown in play, never swallowed', () => {
         intoxications: Object.fromEntries([['moonshine_x', 40]]),
       }),
     })
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ narrative, simulation: simulationLocal })
 
     await loop.tick({ ticks: 1 })
@@ -292,7 +294,7 @@ describe('failures are shown in play, never swallowed', () => {
 
   it('an outcome that gives an item nobody defined names the item', async () => {
     startGame()
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ narrative })
     const gift = {
       id: 'gift',
@@ -307,6 +309,26 @@ describe('failures are shown in play, never swallowed', () => {
     await loop.resolvePlayerAction(gift)
 
     expect(await narrativeSettle({ narrative })).toContain('[ITEM_UNKNOWN]')
+  })
+})
+
+describe('obsessions', () => {
+  it('an outcome that feeds an obsession strengthens it by what tuning says', async () => {
+    const game = startGame()
+    // An amount nothing else uses, so only reading tuning can produce it.
+    game.tuningRegister({ tuning: { ...tuning, obsession: { feedAmount: 17 } } })
+    game.player.psyche.obsessions = [{ id: 'booze', strength: 50 }]
+    const feed = {
+      id: 'feed',
+      locationId: 'any',
+      timeCost: 0,
+      requirements: {},
+      check: null,
+      success: { narrative: 'Another.', obsessionFed: 'booze' },
+      failure: null,
+    }
+    await useGameLoop().resolvePlayerAction(feed)
+    expect(game.player.psyche.obsessions[0].strength).toBe(67)
   })
 })
 

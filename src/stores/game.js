@@ -66,8 +66,8 @@ function levelsApply({ levels, changes }) {
  */
 export const useGameStore = defineStore('game', {
   state: () => ({
-    /** @type {import('../engine/clock.js').GameTime} */
-    time: clockCreate(),
+    /** @type {import('../engine/clock.js').GameTime|null} null until a run starts */
+    time: null,
 
     /** @type {Object|null} */
     player: null,
@@ -125,6 +125,9 @@ export const useGameStore = defineStore('game', {
 
     /** The game's words: stats, vitals, types. Loaded once from content/vocabulary.json. */
     vocabulary: null,
+
+    /** The game's numbers: rates, thresholds, curves. Loaded once from content/tuning.json. */
+    tuning: null,
 
     /**
      * The making menu while the player is choosing what to make, or null.
@@ -331,7 +334,7 @@ export const useGameStore = defineStore('game', {
     runStart({ player, locationId }) {
       this.player = player
       this.currentLocationId = locationId
-      this.time = clockCreate()
+      this.time = clockCreate({ tuning: this.tuning })
       this.firedEventIds = []
       this.activeEvent = null
       this.characters = {}
@@ -349,7 +352,7 @@ export const useGameStore = defineStore('game', {
      * @param {{ ticks?: number }} input
      */
     timeAdvance({ ticks = 1 }) {
-      this.time = clockAdvance({ gameTime: this.time, ticks })
+      this.time = clockAdvance({ gameTime: this.time, ticks, tuning: this.tuning })
     },
 
     /**
@@ -506,7 +509,7 @@ export const useGameStore = defineStore('game', {
           message: `No stat '${statName}' to train`,
         })
       }
-      const { stat: next, leveledUp } = statXpApply({ stat, amount })
+      const { stat: next, leveledUp } = statXpApply({ tuning: this.tuning, stat, amount })
       this.player.stats[statName] = next
       return resultOk({ leveledUp })
     },
@@ -682,6 +685,14 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
+     * Register the game's numbers. Called at boot.
+     * @param {{ tuning: Object }} input
+     */
+    tuningRegister({ tuning }) {
+      this.tuning = tuning
+    },
+
+    /**
      * Register what a new game is. Called at boot.
      * @param {{ config: Object }} input
      */
@@ -720,6 +731,7 @@ export const useGameStore = defineStore('game', {
         return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
       }
       const result = scavengeSearch({
+        tuning: this.tuning,
         player: this.player,
         location: this.currentLocation,
         tables: this.scavengeTables,
@@ -896,7 +908,13 @@ export const useGameStore = defineStore('game', {
       if (!this.player) {
         return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
       }
-      const result = skillGain({ player: this.player, mediumId, mediums: this.mediums, amount })
+      const result = skillGain({
+        tuning: this.tuning,
+        player: this.player,
+        mediumId,
+        mediums: this.mediums,
+        amount,
+      })
       if (!result.ok) {
         return result
       }
@@ -1013,6 +1031,7 @@ export const useGameStore = defineStore('game', {
         return played
       }
       const result = makingFinish({
+        tuning: this.tuning,
         player: this.player,
         location,
         mediums: this.mediums,
@@ -1152,7 +1171,7 @@ export const useGameStore = defineStore('game', {
       this.characterSelectedId = null
       this.makingPicker = null
       this.isRunning = false
-      this.time = clockCreate()
+      this.time = null
     },
   },
 })

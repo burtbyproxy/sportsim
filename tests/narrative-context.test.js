@@ -10,16 +10,29 @@ import { resolve } from 'path'
 import { narrativeLocation } from '../src/composables/useNarrative.js'
 import { locationCreate } from '../src/models/location.js'
 import { playerCreate } from '../src/models/player.js'
-import { blendSober } from '../src/engine/blend.js'
+import { blendCompute } from '../src/engine/blend.js'
+import { contentDir, tuningContent } from './helpers/content.js'
+
+const tuning = tuningContent()
 
 const momsHouse = JSON.parse(
   readFileSync(resolve('content/maps/kenton/locations/moms_house.json'), 'utf-8')
 )
 const morning = { period: 'morning', hour: 9 }
-const read = ({ location, player, time = morning }) =>
-  narrativeLocation({ location, player, gameTime: time })
+const conditions = Object.fromEntries(
+  contentDir({ dir: 'content/conditions' }).map((c) => [c.id, c])
+)
+const substances = Object.fromEntries(
+  contentDir({ dir: 'content/substances' }).map((sub) => [sub.id, sub])
+)
+/** What the player reads here, with their blend worked out from their status as the store would. */
+const read = ({ location, player, time = morning }) => {
+  const blend = blendCompute({ player, substances, conditions })
+  const reading = { ...player, blend: blend.ok ? blend.data : player.blend }
+  return narrativeLocation({ tuning, location, player: reading, gameTime: time })
     .tokens.map((t) => t.text)
     .join('')
+}
 
 function fresh() {
   const player = playerCreate({ name: 'Tester' })
@@ -80,12 +93,7 @@ describe('location narrative — which variant the player reads', () => {
 
   it('a persona in the blend is a variant key content can write to', () => {
     const player = fresh()
-    player.blend = {
-      ...blendSober(),
-      weights: [{ personaId: 'telepath', weight: 0.6, source: 'substance', sourceId: 'weed' }],
-      soberWeight: 0.4,
-      dominantPersonaId: 'telepath',
-    }
+    player.intoxications = { weed: 60 }
     const stonedBasement = locationCreate({
       ...momsHouse,
       descriptions: { ...momsHouse.descriptions, telepath: 'Dave is thinking about you.' },

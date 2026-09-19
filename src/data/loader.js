@@ -33,6 +33,7 @@ export const CONTENT_KINDS = Object.freeze({
   games: 'games',
   config: 'config',
   vocabulary: 'vocabulary',
+  tuning: 'tuning',
 })
 
 // Vite resolves these at build time; each value is a module with the JSON as its default.
@@ -50,11 +51,12 @@ const SOURCES = {
   [CONTENT_KINDS.games]: import.meta.glob('/content/games/*.json', { eager: true }),
   [CONTENT_KINDS.config]: import.meta.glob('/content/game.json', { eager: true }),
   [CONTENT_KINDS.vocabulary]: import.meta.glob('/content/vocabulary.json', { eager: true }),
+  [CONTENT_KINDS.tuning]: import.meta.glob('/content/tuning.json', { eager: true }),
 }
 
 /** Kinds that live under a map, and kinds that are one file, not a collection. */
 const KINDS_BY_MAP = [CONTENT_KINDS.locations, CONTENT_KINDS.actions, CONTENT_KINDS.events]
-const KINDS_SINGLE = [CONTENT_KINDS.config, CONTENT_KINDS.vocabulary]
+const KINDS_SINGLE = [CONTENT_KINDS.config, CONTENT_KINDS.vocabulary, CONTENT_KINDS.tuning]
 
 /**
  * Entries from several files, keyed by id. A file holds one entry or a list

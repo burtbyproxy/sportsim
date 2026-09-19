@@ -37,19 +37,13 @@ export function statCreate({ base }) {
   return { base, modifiers: [], xp: 0 }
 }
 
-/** A rolled check trains the stat it rolled on. You learn more when it works. */
-export const STAT_XP_CHECK_SUCCESS = 2
-export const STAT_XP_CHECK_FAILURE = 1
-
 /**
- * XP required to gain a stat point.
- * Simple linear for now — can be tuned to a curve later.
- * @param {number} currentBase - current stat base value
+ * XP to the next point: more the higher the stat already is (content/tuning.json `stats`).
+ * @param {{ base: number, tuning: Object }} input
  * @returns {number}
  */
-function xpThreshold(currentBase) {
-  // Costs more XP the higher your stat — diminishing returns
-  return 10 + currentBase * 2
+function xpThreshold({ base, tuning }) {
+  return tuning.stats.xpToNextBase + base * tuning.stats.xpToNextPerPoint
 }
 
 /**
@@ -57,67 +51,39 @@ function xpThreshold(currentBase) {
  * for every threshold the XP clears, base capped at 100. Skills cells and
  * player stats share this shape and this curve. Returns a new object.
  *
- * @param {{ stat: { base: number, modifiers?: Object[], xp: number }, amount: number }} input
+ * @param {{ stat: { base: number, modifiers?: Object[], xp: number }, amount: number, tuning: Object }} input
  * @returns {{ stat: Object, leveledUp: boolean }}
  */
-export function statXpApply({ stat, amount }) {
+export function statXpApply({ stat, amount, tuning }) {
   const next = {
     ...stat,
     xp: stat.xp + amount,
     modifiers: [...(stat.modifiers || [])],
   }
   let leveledUp = false
-  while (next.xp >= xpThreshold(next.base)) {
-    next.xp -= xpThreshold(next.base)
+  while (next.xp >= xpThreshold({ base: next.base, tuning })) {
+    next.xp -= xpThreshold({ base: next.base, tuning })
     next.base = Math.min(next.base + 1, 100)
     leveledUp = true
     if (next.base === 100) break
   }
-  if (next.base === 100 && next.xp >= xpThreshold(100)) next.xp = 0
+  if (next.base === 100 && next.xp >= xpThreshold({ base: 100, tuning })) next.xp = 0
   return { stat: next, leveledUp }
 }
 
 /**
- * Decay configuration — tuned for a ~24-hour game day.
- * 1 tick = 15 minutes of game time.
- * Actions cost 1-4 ticks; walking costs 1-3 ticks.
- *
- * Targets:
- *   hunger:   -1/tick    → noticeably hungry after 2-3h (~8-12 ticks), starving after 6h (~24 ticks)
- *   energy:   -0.5/tick  → exhausted after a full active day (~96 ticks of activity)
- *   sobriety: derived from intoxications; each substance wears off on its own
- *             clock in the blend engine (engine/blend.js), not here
- *   mood:     -0.25/tick toward baseline 40 (slow drift; events/actions are main mood drivers)
- */
-export const DECAY_CONFIG = {
-  hunger: {
-    ratePerTick: -1,
-    min: 0,
-    max: 100,
-  },
-  energy: {
-    ratePerTick: -0.5,
-    min: 0,
-    max: 100,
-  },
-  mood: {
-    ratePerTick: -0.25, // drift per tick toward baseline
-    baseline: 40, // baseline melancholy — Portland 2001
-    min: 0,
-    max: 100,
-  },
-}
-
-/**
  * How a status wears down over time: hunger and energy fall, mood drifts
- * back toward its baseline. Returns the changes, not a new status; the
- * caller applies them by the one status rule.
+ * back toward its baseline, at the rates content sets (tuning.json `decay`).
+ * Sobriety is not here: it is derived from what is in you, which wears off
+ * in the blend engine. Returns the changes, not a new status; the caller
+ * applies them by the one status rule.
  *
- * @param {{ status: Object<string, number>, ticksElapsed: number, config?: Object }} input
+ * @param {{ status: Object<string, number>, ticksElapsed: number, tuning: Object }} input
  * @returns {Object<string, number>} changes by status key
  */
-export function statusDecayChanges({ status = {}, ticksElapsed, config = DECAY_CONFIG }) {
+export function statusDecayChanges({ status = {}, ticksElapsed, tuning }) {
   if (!ticksElapsed || ticksElapsed <= 0) return {}
+  const config = tuning.decay
 
   const changes = {}
 

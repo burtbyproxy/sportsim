@@ -128,7 +128,7 @@ export function skillEffective({ player, mediumId, mediums = {} }) {
  * @param {{ player: Object, mediumId: string, mediums: Object<string, Object>, amount: number }} input
  * @returns {{ ok: boolean, data: { cells: Object<string, Object>, allocations: { personaId: string, xp: number }[], personaIdsLeveled: string[] }|null, error: Object|null }}
  */
-export function skillGain({ player, mediumId, mediums = {}, amount }) {
+export function skillGain({ player, mediumId, mediums = {}, amount, tuning }) {
   if (!player || typeof player !== 'object') {
     return resultFail({
       code: SKILL_ERROR_CODES.playerMissing,
@@ -159,7 +159,7 @@ export function skillGain({ player, mediumId, mediums = {}, amount }) {
     const xp = numberRound({ value: amount * weight, places: 2 })
     if (xp <= 0) continue
     const before = cells[personaId] ?? skillCellGet({ player, mediumId, personaId })
-    const { stat, leveledUp } = statXpApply({ stat: before, amount: xp })
+    const { stat, leveledUp } = statXpApply({ tuning, stat: before, amount: xp })
     cells[personaId] = stat
     allocations.push({ personaId, xp })
     if (leveledUp) personaIdsLeveled.push(personaId)
@@ -190,6 +190,7 @@ export function skillCheckRoll({
   dc,
   modifiers = [],
   rng = Math.random,
+  tuning,
 }) {
   if (!player || typeof player !== 'object') {
     return resultFail({
@@ -212,8 +213,10 @@ export function skillCheckRoll({
   }
 
   const skill = skillEffective({ player, mediumId, mediums }).data
-  const skillModifier = Math.floor(numberClamp({ value: skill.value, min: 0, max: 100 }) / 10)
-  const statModifier = checkModifier({ player, statName: medium.stat })
+  const skillModifier = Math.floor(
+    numberClamp({ value: skill.value, min: 0, max: 100 }) / tuning.skills.pointsPerModifier
+  )
+  const statModifier = checkModifier({ player, statName: medium.stat, tuning })
   const situational = numberSum({ values: modifiers.map((m) => m.value) })
   const natural = diceD20({ rng })
   const modifier = skillModifier + statModifier + situational

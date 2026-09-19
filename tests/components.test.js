@@ -20,8 +20,10 @@ import { useBoot } from '../src/composables/useBoot.js'
 import { characterCreate } from '../src/models/character.js'
 import { useGameStore } from '../src/stores/game.js'
 import { playerCreate } from '../src/models/player.js'
-import { contentFile, contentIds } from './helpers/content.js'
+import { contentFile, contentIds, tuningContent } from './helpers/content.js'
 import { storageInstall } from './helpers/storage.js'
+
+const tuning = tuningContent()
 
 describe('GameFooter', () => {
   const vocabulary = JSON.parse(readFileSync(resolve('content/vocabulary.json'), 'utf-8'))
@@ -36,6 +38,7 @@ describe('GameFooter', () => {
 
   it('shows the keys once a game is running', () => {
     const game = useGameStore()
+    game.tuningRegister({ tuning })
     game.runStart({ player: playerCreate({ name: 'Tester' }), locationId: 'moms_house' })
     expect(mount(GameFooter).text()).toBe(vocabulary.ui.footer.keys)
   })
@@ -217,6 +220,7 @@ describe('GameScreen', () => {
     boot.gameBoot()
     boot.gameNew()
     const game = useGameStore()
+    game.tuningRegister({ tuning })
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [
@@ -258,6 +262,7 @@ describe('LocationView on the game screen', () => {
     boot.gameBoot()
     boot.gameNew()
     const game = useGameStore()
+    game.tuningRegister({ tuning })
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [

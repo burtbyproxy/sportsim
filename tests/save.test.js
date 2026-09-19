@@ -20,6 +20,9 @@ import {
 import { useGameStore } from '../src/stores/game.js'
 import { blendSober } from '../src/engine/blend.js'
 import { storageInstall } from './helpers/storage.js'
+import { tuningContent } from './helpers/content.js'
+
+const tuning = tuningContent()
 
 // ---------------------------------------------------------------------------
 // localStorage mock
@@ -168,6 +171,7 @@ function buildSaveSystem({ lsMock, gameState = {} }) {
   globalThis.localStorage = lsMock
   setActivePinia(createPinia())
   const game = useGameStore()
+  game.tuningRegister({ tuning })
   game.$patch(gameState)
   return useSave()
 }

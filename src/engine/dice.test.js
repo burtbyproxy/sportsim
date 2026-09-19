@@ -13,6 +13,9 @@ import {
 } from './dice.js'
 import { randomSeeded } from '../utils/random.js'
 import { blendSober } from './blend.js'
+import { tuningContent } from '../../tests/helpers/content.js'
+
+const tuning = tuningContent()
 
 // --- Helpers ---
 
@@ -230,6 +233,7 @@ describe('checkRoll', () => {
   it('returns every modifier itemized, situational ones included', () => {
     const player = withBlend({ player: makePlayer(), modifiers: { charm: 3 } })
     const result = checkRoll({
+      tuning,
       player,
       statName: 'charm',
       modifiers: [2, -1],
@@ -248,6 +252,7 @@ describe('checkRoll', () => {
   it('returns a DiceResult with all required fields', () => {
     const player = makePlayer()
     const result = checkRoll({
+      tuning,
       player,
       statName: 'charm',
       modifiers: [],
@@ -270,7 +275,14 @@ describe('checkRoll', () => {
     // Force a natural 20
     const alwaysMax = () => 0.999999
     const player = makePlayer()
-    const result = checkRoll({ player, statName: 'charm', modifiers: [], dc: 21, rng: alwaysMax })
+    const result = checkRoll({
+      tuning,
+      player,
+      statName: 'charm',
+      modifiers: [],
+      dc: 21,
+      rng: alwaysMax,
+    })
     // natural 20 + charm 10 → +1 = 21 >= dc 21
     expect(result.total).toBe(21)
     expect(result.success).toBe(true)
@@ -281,7 +293,14 @@ describe('checkRoll', () => {
     // Force a natural 1
     const alwaysMin = () => 0
     const player = makePlayer()
-    const result = checkRoll({ player, statName: 'charm', modifiers: [], dc: 30, rng: alwaysMin })
+    const result = checkRoll({
+      tuning,
+      player,
+      statName: 'charm',
+      modifiers: [],
+      dc: 30,
+      rng: alwaysMin,
+    })
     expect(result.success).toBe(false)
     expect(result.criticalFailure).toBe(true)
   })
@@ -290,6 +309,7 @@ describe('checkRoll', () => {
     const alwaysMin = () => 0 // natural = 1
     const player = makePlayer()
     const result = checkRoll({
+      tuning,
       player,
       statName: 'charm',
       modifiers: [5, 5],
@@ -308,6 +328,7 @@ describe('checkContestedRoll', () => {
   it('each side brings its own modifiers: the same roll, and the edge decides it', () => {
     const same = () => 0.5
     const result = checkContestedRoll({
+      tuning,
       first: { player: makePlayer(), statName: 'charm' },
       second: { player: makePlayer(), statName: 'charm', modifiers: [3] },
       rng: same,
@@ -320,6 +341,7 @@ describe('checkContestedRoll', () => {
     const player1 = makePlayer()
     const player2 = makePlayer()
     const result = checkContestedRoll({
+      tuning,
       first: { player: player1, statName: 'charm' },
       second: { player: player2, statName: 'charm' },
       rng: randomSeeded({ seed: 1 }),
@@ -339,6 +361,7 @@ describe('checkContestedRoll', () => {
     const player1 = makePlayer()
     const player2 = makePlayer()
     const result = checkContestedRoll({
+      tuning,
       first: { player: player1, statName: 'charm' },
       second: { player: player2, statName: 'charm' },
       rng: rng,
@@ -355,6 +378,7 @@ describe('checkContestedRoll', () => {
     const player1 = makePlayer()
     const player2 = makePlayer()
     const result = checkContestedRoll({
+      tuning,
       first: { player: player1, statName: 'charm' },
       second: { player: player2, statName: 'charm' },
       rng: rng,
@@ -367,6 +391,7 @@ describe('checkContestedRoll', () => {
     const player1 = makePlayer()
     const player2 = makePlayer()
     const result = checkContestedRoll({
+      tuning,
       first: { player: player1, statName: 'charm' },
       second: { player: player2, statName: 'charm' },
       rng: alwaysSame,
@@ -381,31 +406,31 @@ describe('checkModifier', () => {
   const withCharm = (base) => makePlayer({ stats: { charm: { base, modifiers: [], xp: 0 } } })
 
   it('gives one point per ten points of stat', () => {
-    expect(checkModifier({ player: withCharm(10), statName: 'charm' })).toBe(1)
-    expect(checkModifier({ player: withCharm(19), statName: 'charm' })).toBe(1)
-    expect(checkModifier({ player: withCharm(20), statName: 'charm' })).toBe(2)
-    expect(checkModifier({ player: withCharm(50), statName: 'charm' })).toBe(5)
-    expect(checkModifier({ player: withCharm(85), statName: 'charm' })).toBe(8)
-    expect(checkModifier({ player: withCharm(100), statName: 'charm' })).toBe(10)
+    expect(checkModifier({ tuning, player: withCharm(10), statName: 'charm' })).toBe(1)
+    expect(checkModifier({ tuning, player: withCharm(19), statName: 'charm' })).toBe(1)
+    expect(checkModifier({ tuning, player: withCharm(20), statName: 'charm' })).toBe(2)
+    expect(checkModifier({ tuning, player: withCharm(50), statName: 'charm' })).toBe(5)
+    expect(checkModifier({ tuning, player: withCharm(85), statName: 'charm' })).toBe(8)
+    expect(checkModifier({ tuning, player: withCharm(100), statName: 'charm' })).toBe(10)
   })
 
   it('never drops below zero when penalties drag the stat under ten', () => {
     const player = withCharm(5)
     player.stats.charm.modifiers = [{ source: 'test', value: -20, duration: null }]
-    expect(checkModifier({ player, statName: 'charm' })).toBe(0)
+    expect(checkModifier({ tuning, player, statName: 'charm' })).toBe(0)
   })
 
   it('caps at ten', () => {
     const player = withCharm(100)
     player.stats.charm.modifiers = [{ source: 'test', value: 50, duration: null }]
-    expect(checkModifier({ player, statName: 'charm' })).toBe(10)
+    expect(checkModifier({ tuning, player, statName: 'charm' })).toBe(10)
   })
 
   it('the blend shifts the stat before conversion', () => {
     const player = withCharm(38)
-    expect(checkModifier({ player, statName: 'charm' })).toBe(3)
+    expect(checkModifier({ tuning, player, statName: 'charm' })).toBe(3)
     withBlend({ player, modifiers: { charm: 3 } }) // 41 → +4
-    expect(checkModifier({ player, statName: 'charm' })).toBe(4)
+    expect(checkModifier({ tuning, player, statName: 'charm' })).toBe(4)
   })
 
   it('a starting player passes an easy check more often than not', () => {
@@ -413,8 +438,14 @@ describe('checkModifier', () => {
     let passes = 0
     for (let n = 1; n <= 20; n++) {
       if (
-        checkRoll({ player, statName: 'charm', modifiers: [], dc: 10, rng: () => (n - 1) / 20 })
-          .success
+        checkRoll({
+          tuning,
+          player,
+          statName: 'charm',
+          modifiers: [],
+          dc: 10,
+          rng: () => (n - 1) / 20,
+        }).success
       )
         passes++
     }

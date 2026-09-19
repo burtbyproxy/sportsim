@@ -41,7 +41,11 @@
             'action-item--selected': navIndex === i,
           }"
           :disabled="!entry.available || isResolving"
-          :title="entry.available ? durationFormat({ ticks: entry.ticks }) : entry.reason"
+          :title="
+            entry.available
+              ? durationFormat({ ticks: entry.ticks, tuning: game.tuning })
+              : entry.reason
+          "
           @click="dispatch(entry)"
           @mouseenter="navIndex = i"
         >
@@ -52,7 +56,7 @@
           >
           {{ entry.label }}
           <span v-if="entry.ticks > 0" class="action-time-cost">
-            {{ durationFormat({ ticks: entry.ticks }) }}
+            {{ durationFormat({ ticks: entry.ticks, tuning: game.tuning }) }}
           </span>
         </button>
       </template>

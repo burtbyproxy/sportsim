@@ -17,6 +17,9 @@ import {
 import { inspirationStrike } from './inspiration.js'
 import { blendSober } from './blend.js'
 import { rngForNatural, rngSequence } from '../../tests/helpers/rng.js'
+import { tuningContent } from '../../tests/helpers/content.js'
+
+const tuning = tuningContent()
 
 const mediums = {
   painting: {
@@ -510,6 +513,7 @@ describe('a form that can be done anywhere', () => {
     })
     const player = worked({ player: { ...base, makings: begun.data.makings }, ticksWorked: 2 })
     const result = makingFinish({
+      tuning,
       player,
       location: nowhere,
       mediums: leaves,
@@ -540,6 +544,7 @@ describe('encore', () => {
 
   it('a form that feeds itself can hand back the idea for the next one', () => {
     const result = makingFinish({
+      tuning,
       player: ready(),
       location: alley,
       mediums: feeds,
@@ -551,6 +556,7 @@ describe('encore', () => {
 
   it('or not; and a form that does not feed itself never does, and never rolls for it', () => {
     const missed = makingFinish({
+      tuning,
       player: ready(),
       location: alley,
       mediums: feeds,
@@ -564,6 +570,7 @@ describe('encore', () => {
       return 0.0
     }
     const plain = makingFinish({
+      tuning,
       player: ready(),
       location: alley,
       mediums,
@@ -612,6 +619,7 @@ describe('makingWork', () => {
     expect(result.data.workDone).toBe(true)
     expect(result.data.making).toMatchObject({ ticksDone: 1, ticksTotal: 1 })
     const finished = makingFinish({
+      tuning,
       player: { ...player, makings: result.data.makings },
       location: alley,
       mediums,
@@ -645,6 +653,7 @@ describe('makingFinish', () => {
   it('refuses work that is not done', () => {
     const player = started({ player: playerWith({ carrying: ['paints', 'door'] }), plan: doorPlan })
     const result = makingFinish({
+      tuning,
       player,
       location: alley,
       mediums,
@@ -665,6 +674,7 @@ describe('makingFinish', () => {
       gameTime: { tick: 4 },
     }).data.inspirations
     const result = makingFinish({
+      tuning,
       player,
       location: alley,
       mediums,
@@ -681,6 +691,7 @@ describe('makingFinish', () => {
     { face: 20, tier: MAKING_TIERS.inspired },
   ])('a $face on the die makes it $tier', ({ face, tier }) => {
     const result = makingFinish({
+      tuning,
       player: readyToFinish(),
       location: alley,
       mediums,
@@ -693,6 +704,7 @@ describe('makingFinish', () => {
 
   it('the strength of the idea helps the check, itemized', () => {
     const result = makingFinish({
+      tuning,
       player: readyToFinish({ strength: 60 }),
       location: alley,
       mediums,
@@ -708,6 +720,7 @@ describe('makingFinish', () => {
 
   it('how the game went bears on the check, itemized with the rest', () => {
     const result = makingFinish({
+      tuning,
       player: readyToFinish({ strength: 60 }),
       location: alley,
       mediums,
@@ -726,6 +739,7 @@ describe('makingFinish', () => {
 
   it('a medium the idea did not ask for costs the check', () => {
     const result = makingFinish({
+      tuning,
       player: readyToFinish({ plan: wallPlan, mediumId: 'painting' }),
       location: alley,
       mediums,
@@ -739,6 +753,7 @@ describe('makingFinish', () => {
 
   it('an idea that asked for nothing in particular is at home in any medium', () => {
     const result = makingFinish({
+      tuning,
       player: readyToFinish({ plan: wallPlan, mediumId: null }),
       location: alley,
       mediums,
@@ -752,6 +767,7 @@ describe('makingFinish', () => {
   it('work on something carried leaves a portable, unshown artifact and a finished record', () => {
     const player = readyToFinish()
     const result = makingFinish({
+      tuning,
       player,
       location: alley,
       mediums,
@@ -784,6 +800,7 @@ describe('makingFinish', () => {
       ],
     }
     const result = makingFinish({
+      tuning,
       player: readyToFinish({ plan: wallPlan, mediumId: 'tagging' }),
       location,
       mediums,
@@ -810,7 +827,14 @@ describe('makingFinish', () => {
       }),
       ticksWorked: 1,
     })
-    const result = makingFinish({ player, location, mediums, gameTime: { tick: 5 }, rng: die(20) })
+    const result = makingFinish({
+      tuning,
+      player,
+      location,
+      mediums,
+      gameTime: { tick: 5 },
+      rng: die(20),
+    })
     expect(result.data.artifact).toBeNull()
     expect(result.data.experience.tier).toBe(MAKING_TIERS.inspired)
   })
@@ -829,7 +853,14 @@ describe('makingFinish', () => {
       }),
       ticksWorked: 1,
     })
-    const result = makingFinish({ player, location, mediums, gameTime: { tick: 5 }, rng: die(15) })
+    const result = makingFinish({
+      tuning,
+      player,
+      location,
+      mediums,
+      gameTime: { tick: 5 },
+      rng: die(15),
+    })
     expect(result.data.artifact).toMatchObject({
       kind: ARTIFACT_KINDS.portable,
       status: ARTIFACT_STATUSES.unshown,
@@ -843,6 +874,7 @@ describe('makingFinish', () => {
       marks: [{ id: 'old', surfaceId: 'wall', status: ARTIFACT_STATUSES.fresh }],
     }
     const result = makingFinish({
+      tuning,
       player: readyToFinish({ plan: wallPlan, mediumId: 'tagging' }),
       location,
       mediums,
@@ -862,6 +894,7 @@ describe('makingFinish', () => {
       surfaceId: 'corner',
     }
     const result = makingFinish({
+      tuning,
       player: readyToFinish({ plan, carrying: [], mediumId: 'performance' }),
       location: alley,
       mediums,

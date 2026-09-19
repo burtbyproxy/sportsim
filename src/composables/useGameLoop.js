@@ -11,7 +11,7 @@
  * and feeding narrative results to the renderer.
  *
  * Everything that involves time passing flows through tick().
- * Everything that involves resolving player actions flows through actionResolve().
+ * Everything that involves resolving player actions flows through actionResolve({ tuning: game.tuning }).
  */
 
 import { useGameStore } from '../stores/game.js'
@@ -23,11 +23,7 @@ import {
   requirementsMeet,
 } from '../engine/actions.js'
 import { locationOpen, exitRequirementsMeet } from '../models/location.js'
-import {
-  statusDecayChanges,
-  STAT_XP_CHECK_SUCCESS,
-  STAT_XP_CHECK_FAILURE,
-} from '../engine/stats.js'
+import { statusDecayChanges } from '../engine/stats.js'
 import {
   modifiersTick,
   inventoryAdd,
@@ -36,12 +32,7 @@ import {
   archetypeScoreAdd,
   counterAdd,
 } from '../models/player.js'
-import {
-  MAKING_FOCUS_EVENT_FACTOR,
-  MAKING_SURFACE_KINDS,
-  ARTIFACT_STATUSES,
-  makingOptions,
-} from '../engine/making.js'
+import { MAKING_SURFACE_KINDS, ARTIFACT_STATUSES, makingOptions } from '../engine/making.js'
 import { eventsRandomCheck, eventsTriggeredCheck, eventResolve } from '../engine/events.js'
 import { narrativeAction, narrativeEvent, narrativeLocation } from './useNarrative.js'
 import { narrativeTextCreate } from '../utils/text.js'
@@ -104,7 +95,11 @@ export function useGameLoop({
     game.timeAdvance({ ticks })
 
     // 2. Apply stat decay
-    const decayChanges = statusDecayChanges({ status: game.player.status, ticksElapsed: ticks })
+    const decayChanges = statusDecayChanges({
+      tuning: game.tuning,
+      status: game.player.status,
+      ticksElapsed: ticks,
+    })
     if (Object.keys(decayChanges).length > 0) {
       game.playerStatusApply({ changes: decayChanges })
     }
@@ -119,6 +114,7 @@ export function useGameLoop({
       const charactersArray = Object.values(game.characters)
       if (charactersArray.length > 0) {
         const simResult = await simulation.tick({
+          tuning: game.tuning,
           gameTime: game.time,
           characters: charactersArray,
         })
@@ -177,6 +173,7 @@ export function useGameLoop({
       narrative.clearLog()
       narrative.enqueue(
         narrativeLocation({
+          tuning: game.tuning,
           location: game.currentLocation,
           player: game.player,
           gameTime: game.time,
@@ -202,7 +199,7 @@ export function useGameLoop({
     if (game.activeEvent || !game.player || !game.currentLocation) return
     const here = { player: game.player, location: game.currentLocation, gameTime: game.time }
     // Head down over the work, chance has a harder time finding you.
-    const focus = game.makingActive ? MAKING_FOCUS_EVENT_FACTOR : 1
+    const focus = game.makingActive ? game.tuning.making.focusEventFactor : 1
     const odds = eventRegistry.map((e) =>
       e.type === 'random' ? { ...e, probability: (e.probability ?? 0) * focus } : e
     )
@@ -232,7 +229,7 @@ export function useGameLoop({
       game.eventActiveSet({ event })
       return
     }
-    const resolved = eventResolve({ event, player: game.player, rng })
+    const resolved = eventResolve({ tuning: game.tuning, event, player: game.player, rng })
     if (!resolved.ok) return failureShow(resolved)
     eventOutcomeApply({ outcome: resolved.data.outcome, source: { kind: 'event', id: event.id } })
   }
@@ -244,7 +241,13 @@ export function useGameLoop({
   function resolveEventChoice({ choiceIndex }) {
     const event = game.activeEvent
     if (!event || !game.player) return
-    const resolved = eventResolve({ event, player: game.player, choiceIndex, rng })
+    const resolved = eventResolve({
+      tuning: game.tuning,
+      event,
+      player: game.player,
+      choiceIndex,
+      rng,
+    })
     // A choice the event never offered resolves nothing: the event keeps waiting, and says why.
     if (!resolved.ok) return failureShow(resolved)
     const { outcome, diceResult } = resolved.data
@@ -281,7 +284,9 @@ export function useGameLoop({
     if (!diceResult?.stat) return
     game.playerStatXpApply({
       statName: diceResult.stat,
-      amount: diceResult.success ? STAT_XP_CHECK_SUCCESS : STAT_XP_CHECK_FAILURE,
+      amount: diceResult.success
+        ? game.tuning.stats.xpCheckSuccess
+        : game.tuning.stats.xpCheckFailure,
     })
   }
 
@@ -636,6 +641,7 @@ export function useGameLoop({
 
     const characters = game.charactersAtCurrentLocation
     const result = actionResolve({
+      tuning: game.tuning,
       player: game.player,
       action,
       gameTime: game.time,
@@ -756,7 +762,11 @@ export function useGameLoop({
 
     // Obsession feeding
     if (outcome.obsessionFed) {
-      obsessionFeed({ player: game.player, obsessionId: outcome.obsessionFed, amount: 5 })
+      obsessionFeed({
+        player: game.player,
+        obsessionId: outcome.obsessionFed,
+        amount: game.tuning.obsession.feedAmount,
+      })
     }
 
     // Mark one-time events

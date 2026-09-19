@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { eventsRandomCheck, eventsTriggeredCheck, eventResolve } from './events.js'
 import { randomSeeded } from '../utils/random.js'
+import { tuningContent } from '../../tests/helpers/content.js'
+
+const tuning = tuningContent()
 
 function makePlayer(statusOverrides = {}) {
   return {
@@ -241,6 +244,7 @@ describe('eventResolve', () => {
   it('returns automatic outcome when no choices', () => {
     const event = makeEvent({ choices: null })
     const { outcome, diceResult } = eventResolve({
+      tuning,
       event,
       player: makePlayer(),
       choiceIndex: null,
@@ -262,6 +266,7 @@ describe('eventResolve', () => {
       ],
     })
     const { outcome, diceResult } = eventResolve({
+      tuning,
       event,
       player: makePlayer(),
       choiceIndex: 0,
@@ -283,6 +288,7 @@ describe('eventResolve', () => {
       ],
     })
     const { outcome, diceResult } = eventResolve({
+      tuning,
       event,
       player,
       choiceIndex: 0,
@@ -300,7 +306,7 @@ describe('eventResolve', () => {
       ],
     })
     // Index 99 is invalid: nobody picked the automatic outcome, so nobody gets it.
-    const { data, error } = eventResolve({ event, player: makePlayer(), choiceIndex: 99 })
+    const { data, error } = eventResolve({ tuning, event, player: makePlayer(), choiceIndex: 99 })
     expect(data).toBeNull()
     expect(error.code).toBe('CHOICE_INVALID')
   })
@@ -344,6 +350,7 @@ describe('eventResolve — checked choice with a failure outcome', () => {
 
   it('a passed check yields the choice outcome', () => {
     const { outcome, diceResult } = eventResolve({
+      tuning,
       event: eventWith(1),
       player: makePlayer(),
       choiceIndex: 0,
@@ -355,6 +362,7 @@ describe('eventResolve — checked choice with a failure outcome', () => {
 
   it('a failed check yields the failure outcome', () => {
     const { outcome, diceResult } = eventResolve({
+      tuning,
       event: eventWith(999),
       player: makePlayer(),
       choiceIndex: 0,
@@ -369,6 +377,7 @@ describe('eventResolve — checked choice with a failure outcome', () => {
       choices: [{ label: 'Try', check: { stat: 'charm', dc: 999 }, outcome: win }],
     })
     const { outcome } = eventResolve({
+      tuning,
       event,
       player: makePlayer(),
       choiceIndex: 0,
@@ -412,19 +421,31 @@ describe('eventResolve — a choice the event never offered', () => {
   }
 
   it('resolves nothing and says so, rather than applying the automatic outcome', () => {
-    const result = eventResolve({ event, player: { stats: {} }, choiceIndex: 7, rng: () => 0.5 })
+    const result = eventResolve({
+      tuning,
+      event,
+      player: { stats: {} },
+      choiceIndex: 7,
+      rng: () => 0.5,
+    })
     expect(result.data).toBeNull()
     expect(result.error).toMatchObject({ code: 'CHOICE_INVALID', params: { choiceIndex: 7 } })
   })
 
   it('a real choice still resolves, and an event with no choices still resolves itself', () => {
     expect(
-      eventResolve({ event, player: { stats: {} }, choiceIndex: 0, rng: () => 0.5 }).data.outcome
+      eventResolve({ tuning, event, player: { stats: {} }, choiceIndex: 0, rng: () => 0.5 }).data
+        .outcome
     ).toEqual({ moneyChange: 1 })
     const automatic = { id: 'rain', choices: [], outcome: { moneyChange: -1 } }
     expect(
-      eventResolve({ event: automatic, player: { stats: {} }, choiceIndex: null, rng: () => 0.5 })
-        .data.outcome
+      eventResolve({
+        tuning,
+        event: automatic,
+        player: { stats: {} },
+        choiceIndex: null,
+        rng: () => 0.5,
+      }).data.outcome
     ).toEqual({
       moneyChange: -1,
     })

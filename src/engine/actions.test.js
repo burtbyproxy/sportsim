@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { requirementsMeet, actionsAvailable, actionResolve, actionApplies } from './actions.js'
 import { randomSeeded } from '../utils/random.js'
+import { tuningContent } from '../../tests/helpers/content.js'
+
+const tuning = tuningContent()
 
 function makePlayer(overrides = {}) {
   return {
@@ -175,7 +178,9 @@ describe('requirementsMeet — minVisits', () => {
     expect(
       actionsAvailable({ player, location, characters: [], gameTime, actionRegistry: [action] })
     ).toHaveLength(1)
-    expect(actionResolve({ player, action, gameTime, location }).requirementFailure).toBeNull()
+    expect(
+      actionResolve({ tuning, player, action, gameTime, location }).requirementFailure
+    ).toBeNull()
   })
 })
 
@@ -284,6 +289,7 @@ describe('actionResolve', () => {
   it('returns requirementFailure when requirements not met', () => {
     const action = makeAction({ requirements: { minStats: { charm: 999 } } })
     const result = actionResolve({
+      tuning,
       player: makePlayer(),
       action,
       gameTime: makeGameTime(),
@@ -297,6 +303,7 @@ describe('actionResolve', () => {
   it('auto-succeeds when no check', () => {
     const action = makeAction({ check: null })
     const result = actionResolve({
+      tuning,
       player: makePlayer(),
       action,
       gameTime: makeGameTime(),
@@ -314,6 +321,7 @@ describe('actionResolve', () => {
       check: { stat: 'charm', dc: 1, opposedStat: null, opposedNpcId: null },
     })
     const result = actionResolve({
+      tuning,
       player: makePlayer(),
       action,
       gameTime: makeGameTime(),
@@ -333,6 +341,7 @@ describe('actionResolve', () => {
       check: { stat: 'charm', dc: 100, opposedStat: null, opposedNpcId: null },
     })
     const result = actionResolve({
+      tuning,
       player: makePlayer(),
       action,
       gameTime: makeGameTime(),
@@ -352,6 +361,7 @@ describe('actionResolve', () => {
     })
     const alwaysMax = () => 0.9999 // natural 20
     const result = actionResolve({
+      tuning,
       player: makePlayer(),
       action,
       gameTime: makeGameTime(),
@@ -369,6 +379,7 @@ describe('actionResolve', () => {
     })
     const alwaysMin = () => 0 // natural 1
     const result = actionResolve({
+      tuning,
       player: makePlayer(),
       action,
       gameTime: makeGameTime(),
@@ -389,6 +400,7 @@ describe('actionResolve', () => {
       check: { stat: 'charm', dc: 0, opposedStat: 'charm', opposedNpcId: 'bartender' },
     })
     const result = actionResolve({
+      tuning,
       player: makePlayer(),
       action,
       gameTime: makeGameTime(),
@@ -404,6 +416,7 @@ describe('actionResolve', () => {
       check: { stat: 'charm', dc: 0, opposedStat: 'charm', opposedNpcId: 'missing_npc' },
     })
     const result = actionResolve({
+      tuning,
       player: makePlayer(),
       action,
       gameTime: makeGameTime(),

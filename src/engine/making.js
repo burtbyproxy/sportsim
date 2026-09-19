@@ -99,19 +99,6 @@ export const ARTIFACT_STATUSES = Object.freeze({
 /** The one state an experience has until somebody starts telling it. */
 export const EXPERIENCE_STATUS_REMEMBERED = 'remembered'
 
-/**
- * Absorbed in the work, the world has a harder time getting in: while a
- * making is in progress, random events roll at this fraction of their odds.
- * Triggered events — hunger, exhaustion — are not impressed and barge in anyway.
- */
-export const MAKING_FOCUS_EVENT_FACTOR = 0.25
-
-/** Inspiration strength per point on the die. */
-export const MAKING_STRENGTH_PER_MODIFIER = 20
-
-/** What working in a medium the idea did not ask for costs. */
-export const MAKING_WRONG_MEDIUM_PENALTY = -2
-
 /** Source ids of the situational modifiers a making check itemizes. */
 export const MAKING_MODIFIER_SOURCE_IDS = Object.freeze({
   inspiration: 'inspiration',
@@ -535,6 +522,7 @@ export function makingFinish({
   modifiers: modifiersExtra = [],
   gameTime,
   rng = Math.random,
+  tuning,
 }) {
   if (!player || typeof player !== 'object') {
     return resultFail({
@@ -580,17 +568,20 @@ export function makingFinish({
   const modifiers = [
     {
       sourceId: MAKING_MODIFIER_SOURCE_IDS.inspiration,
-      value: Math.max(1, Math.floor(inspiration.strength / MAKING_STRENGTH_PER_MODIFIER)),
+      // Inspiration strength per point on the die.
+      value: Math.max(1, Math.floor(inspiration.strength / tuning.making.strengthPerModifier)),
     },
   ]
   if (inspiration.mediumId !== null && inspiration.mediumId !== medium.id) {
     modifiers.push({
       sourceId: MAKING_MODIFIER_SOURCE_IDS.wrongMedium,
-      value: MAKING_WRONG_MEDIUM_PENALTY,
+      // What working in a medium the idea did not ask for costs.
+      value: tuning.making.wrongMediumPenalty,
     })
   }
   modifiers.push(...modifiersExtra.map((m) => ({ sourceId: m.sourceId, value: m.value })))
   const rolled = skillCheckRoll({
+    tuning,
     player,
     mediumId: medium.id,
     mediums,

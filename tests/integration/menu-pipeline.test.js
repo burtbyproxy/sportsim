@@ -15,8 +15,10 @@ import { characterCreate } from '../../src/models/character.js'
 import { itemCreate } from '../../src/models/item.js'
 import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
-import { contentDir, contentFile } from '../helpers/content.js'
+import { contentDir, contentFile, tuningContent } from '../helpers/content.js'
 import { narrativeSettle } from '../helpers/narrative.js'
+
+const tuning = tuningContent()
 
 const locations = contentDir({ dir: 'content/maps/kenton/locations' })
 const momsHouseActions = contentFile({ path: 'content/maps/kenton/actions/moms_house.json' })
@@ -29,6 +31,7 @@ const sober = (code) => voices.find((v) => v.id === 'sober').lines[code]
 function startGame({ at = 'moms_house' } = {}) {
   setActivePinia(createPinia())
   const game = useGameStore()
+  game.tuningRegister({ tuning })
   for (const location of locations) game.locationRegister({ location: locationCreate(location) })
   for (const voice of voices) game.voiceRegister({ voice })
   for (const item of items) game.itemRegister({ item: itemCreate(item) })
@@ -79,7 +82,7 @@ describe('the menu', () => {
 
   it('walking into a shut place is refused, out loud, and nobody moves', async () => {
     const game = startGame()
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ narrative })
     await loop.travel({ locationId: 'blue_parrot' })
     expect(game.currentLocationId).toBe('moms_house')
@@ -90,7 +93,7 @@ describe('the menu', () => {
 
   it('there is no walking to a place this one has no way to', async () => {
     const game = startGame()
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     await useGameLoop({ narrative }).travel({ locationId: 'arbys' })
     expect(game.currentLocationId).toBe('moms_house')
     expect(await narrativeSettle({ narrative })).toContain('[EXIT_NONE]')
@@ -98,7 +101,7 @@ describe('the menu', () => {
 
   it('picking a greyed-out action says why instead of doing it', async () => {
     const game = startGame()
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const loop = useGameLoop({ actionRegistry: momsHouseActions, narrative })
     loop.onLocationEntered()
     const sleep = game.menuEntries.find((e) => e.action?.id === 'sleep').action

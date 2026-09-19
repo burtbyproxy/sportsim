@@ -5,6 +5,9 @@ import { join, resolve } from 'path'
 import { locationCreate, locationOpen } from '../src/models/location.js'
 import { playerCreate } from '../src/models/player.js'
 import { narrativeLocation } from '../src/composables/useNarrative.js'
+import { tuningContent } from './helpers/content.js'
+
+const tuning = tuningContent()
 
 // Load Kenton locations from content/ (keyed by ID)
 const locDir = resolve('content/maps/kenton/locations')
@@ -145,7 +148,7 @@ describe('kentonLocations data integrity', () => {
     const morning = { period: 'morning', hour: 9 }
     for (const id of EXPECTED_IDS) {
       const loc = locationCreate(kentonLocations[id])
-      const text = narrativeLocation({ location: loc, player, gameTime: morning })
+      const text = narrativeLocation({ tuning, location: loc, player, gameTime: morning })
         .tokens.map((t) => t.text)
         .join('')
       expect(text, `${id}: narrated description`).toContain(

@@ -237,6 +237,7 @@ export function actionResolve({
   location = null,
   characters = [],
   rng = Math.random,
+  tuning,
 }) {
   // Check requirements first
   const { meets, reasonCode, reasonParams } = requirementsMeet({
@@ -280,6 +281,7 @@ export function actionResolve({
     }
 
     const contest = checkContestedRoll({
+      tuning,
       first: { player, statName: check.stat },
       second: { player: npc, statName: check.opposedStat },
       rng,
@@ -298,7 +300,14 @@ export function actionResolve({
   }
 
   // Standard check
-  const diceResult = checkRoll({ player, statName: check.stat, modifiers: [], dc: check.dc, rng })
+  const diceResult = checkRoll({
+    tuning,
+    player,
+    statName: check.stat,
+    modifiers: [],
+    dc: check.dc,
+    rng,
+  })
   const outcome = outcomeSelect({ action, diceResult })
 
   return {

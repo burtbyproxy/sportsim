@@ -18,7 +18,9 @@ import { locationCreate } from '../../src/models/location.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
 import { statEffective } from '../../src/engine/dice.js'
 import { SOBER_PERSONA_ID, PERSONA_SOURCES } from '../../src/engine/blend.js'
-import { contentDir } from '../helpers/content.js'
+import { contentDir, tuningContent } from '../helpers/content.js'
+
+const tuning = tuningContent()
 
 const substances = contentDir({ dir: 'content/substances' })
 const conditions = contentDir({ dir: 'content/conditions' })
@@ -36,6 +38,7 @@ const maurice = JSON.parse(readFileSync(resolve('content/characters/maurice.json
 function startGame({ at = 'moms_house' } = {}) {
   setActivePinia(createPinia())
   const game = useGameStore()
+  game.tuningRegister({ tuning })
   for (const substance of substances) game.substanceRegister({ substance })
   for (const condition of conditions) game.conditionRegister({ condition })
   game.locationRegister({ location: locationCreate(momsHouse) })

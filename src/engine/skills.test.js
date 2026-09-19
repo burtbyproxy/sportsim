@@ -11,6 +11,9 @@ import {
 import { blendSober, SOBER_PERSONA_ID, PERSONA_SOURCES } from './blend.js'
 import { STAT_ITEM_SOURCES } from './dice.js'
 import { numberSum } from '../utils/number.js'
+import { tuningContent } from '../../tests/helpers/content.js'
+
+const tuning = tuningContent()
 
 // --- Fixtures ---
 
@@ -177,21 +180,29 @@ describe('skillEffective', () => {
 
 describe('skillGain', () => {
   it('rejects a missing player, an unknown medium, and a bad amount', () => {
-    expect(skillGain({ player: null, mediumId: 'painting', mediums, amount: 5 }).error.code).toBe(
-      SKILL_ERROR_CODES.playerMissing
-    )
     expect(
-      skillGain({ player: makePlayer(), mediumId: 'macrame', mediums, amount: 5 }).error.code
+      skillGain({ tuning, player: null, mediumId: 'painting', mediums, amount: 5 }).error.code
+    ).toBe(SKILL_ERROR_CODES.playerMissing)
+    expect(
+      skillGain({ tuning, player: makePlayer(), mediumId: 'macrame', mediums, amount: 5 }).error
+        .code
     ).toBe(SKILL_ERROR_CODES.mediumUnknown)
     for (const amount of [0, -1, NaN, undefined]) {
       expect(
-        skillGain({ player: makePlayer(), mediumId: 'painting', mediums, amount }).error.code
+        skillGain({ tuning, player: makePlayer(), mediumId: 'painting', mediums, amount }).error
+          .code
       ).toBe(SKILL_ERROR_CODES.amountInvalid)
     }
   })
 
   it('a sober player trains the sober cell alone', () => {
-    const { data } = skillGain({ player: makePlayer(), mediumId: 'painting', mediums, amount: 6 })
+    const { data } = skillGain({
+      tuning,
+      player: makePlayer(),
+      mediumId: 'painting',
+      mediums,
+      amount: 6,
+    })
     expect(data.cells).toEqual({ sober: cell({ base: 0, xp: 6 }) })
     expect(data.allocations).toEqual([{ personaId: 'sober', xp: 6 }])
     expect(data.personaIdsLeveled).toEqual([])
@@ -206,7 +217,7 @@ describe('skillGain', () => {
         ],
       }),
     })
-    const { data } = skillGain({ player, mediumId: 'painting', mediums, amount: 5 })
+    const { data } = skillGain({ tuning, player, mediumId: 'painting', mediums, amount: 5 })
     expect(data.allocations).toEqual([
       { personaId: 'telepath', xp: 2 },
       { personaId: 'priest', xp: 2 },
@@ -221,7 +232,13 @@ describe('skillGain', () => {
 
   it('a cell levels on its own threshold and carries the remainder', () => {
     // untrained threshold is 10 + 0*2 = 10
-    const { data } = skillGain({ player: makePlayer(), mediumId: 'painting', mediums, amount: 13 })
+    const { data } = skillGain({
+      tuning,
+      player: makePlayer(),
+      mediumId: 'painting',
+      mediums,
+      amount: 13,
+    })
     expect(data.cells.sober).toEqual(cell({ base: 1, xp: 3 }))
     expect(data.personaIdsLeveled).toEqual(['sober'])
   })
@@ -231,7 +248,7 @@ describe('skillGain', () => {
       skills: { painting: { priest: cell({ base: 25, xp: 7 }) } },
       blend: blendOf({ weights: [{ personaId: 'telepath', weight: 1 }] }),
     })
-    const { data } = skillGain({ player, mediumId: 'painting', mediums, amount: 4 })
+    const { data } = skillGain({ tuning, player, mediumId: 'painting', mediums, amount: 4 })
     expect(data.cells.priest).toEqual(cell({ base: 25, xp: 7 }))
     expect(data.cells.telepath).toEqual(cell({ base: 0, xp: 4 }))
     expect(data.cells.sober).toBeUndefined()
@@ -240,7 +257,7 @@ describe('skillGain', () => {
   it('does not touch other mediums or mutate the player', () => {
     const player = makePlayer({ skills: { carving: { sober: cell({ base: 9 }) } } })
     const snapshot = JSON.stringify(player)
-    const { data } = skillGain({ player, mediumId: 'painting', mediums, amount: 4 })
+    const { data } = skillGain({ tuning, player, mediumId: 'painting', mediums, amount: 4 })
     expect(data.cells.carving).toBeUndefined()
     expect(JSON.stringify(player)).toBe(snapshot)
   })
@@ -254,21 +271,30 @@ describe('skillCheckRoll', () => {
   const midDie = () => 0.5 // natural 11
 
   it('rejects a missing player, an unknown medium, and a bad dc', () => {
-    expect(skillCheckRoll({ player: null, mediumId: 'painting', mediums, dc: 10 }).error.code).toBe(
-      SKILL_ERROR_CODES.playerMissing
-    )
     expect(
-      skillCheckRoll({ player: makePlayer(), mediumId: 'macrame', mediums, dc: 10 }).error.code
+      skillCheckRoll({ tuning, player: null, mediumId: 'painting', mediums, dc: 10 }).error.code
+    ).toBe(SKILL_ERROR_CODES.playerMissing)
+    expect(
+      skillCheckRoll({ tuning, player: makePlayer(), mediumId: 'macrame', mediums, dc: 10 }).error
+        .code
     ).toBe(SKILL_ERROR_CODES.mediumUnknown)
     expect(
-      skillCheckRoll({ player: makePlayer(), mediumId: 'painting', mediums, dc: NaN }).error.code
+      skillCheckRoll({ tuning, player: makePlayer(), mediumId: 'painting', mediums, dc: NaN }).error
+        .code
     ).toBe(SKILL_ERROR_CODES.dcInvalid)
   })
 
   it('adds the skill modifier and the medium stat modifier to the die', () => {
     const player = makePlayer({ skills: { painting: { sober: cell({ base: 35 }) } } })
     // skill 35 → +3; creativity 10 → +1; die 11 → 15
-    const { data } = skillCheckRoll({ player, mediumId: 'painting', mediums, dc: 15, rng: midDie })
+    const { data } = skillCheckRoll({
+      tuning,
+      player,
+      mediumId: 'painting',
+      mediums,
+      dc: 15,
+      rng: midDie,
+    })
     expect(data).toMatchObject({
       natural: 11,
       skillModifier: 3,
@@ -292,6 +318,7 @@ describe('skillCheckRoll', () => {
       { sourceId: 'mom_upstairs', value: -2 },
     ]
     const { data } = skillCheckRoll({
+      tuning,
       player,
       mediumId: 'painting',
       mediums,
@@ -325,7 +352,14 @@ describe('skillCheckRoll', () => {
       }),
     })
     player.stats.creativity.modifiers = [{ source: 'grandmas_paints', value: 2, duration: null }]
-    const { data } = skillCheckRoll({ player, mediumId: 'painting', mediums, dc: 10, rng: midDie })
+    const { data } = skillCheckRoll({
+      tuning,
+      player,
+      mediumId: 'painting',
+      mediums,
+      dc: 10,
+      rng: midDie,
+    })
     expect(data.modifierItems).toEqual([
       { source: CHECK_ITEM_SOURCES.skill, sourceId: 'telepath', value: 25 },
       { source: CHECK_ITEM_SOURCES.skill, sourceId: 'sober', value: 10 },
@@ -341,16 +375,23 @@ describe('skillCheckRoll', () => {
   it('reports criticals off the natural die', () => {
     const player = makePlayer()
     expect(
-      skillCheckRoll({ player, mediumId: 'painting', mediums, dc: 30, rng: maxDie }).data
+      skillCheckRoll({ tuning, player, mediumId: 'painting', mediums, dc: 30, rng: maxDie }).data
     ).toMatchObject({ natural: 20, criticalSuccess: true, criticalFailure: false, success: false })
     expect(
-      skillCheckRoll({ player, mediumId: 'painting', mediums, dc: 1, rng: minDie }).data
+      skillCheckRoll({ tuning, player, mediumId: 'painting', mediums, dc: 1, rng: minDie }).data
     ).toMatchObject({ natural: 1, criticalSuccess: false, criticalFailure: true, success: true })
   })
 
   it('uses the medium stat, not creativity, for a medium that leans elsewhere', () => {
     const player = makePlayer() // toughness 20 → +2
-    const { data } = skillCheckRoll({ player, mediumId: 'carving', mediums, dc: 10, rng: midDie })
+    const { data } = skillCheckRoll({
+      tuning,
+      player,
+      mediumId: 'carving',
+      mediums,
+      dc: 10,
+      rng: midDie,
+    })
     expect(data.stat).toBe('toughness')
     expect(data.statModifier).toBe(2)
   })

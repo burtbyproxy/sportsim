@@ -12,6 +12,9 @@ import { contentLoad, CONTENT_KINDS, LOADER_ERROR_CODES } from '../src/data/load
 import { SAVE_ERROR_CODES } from '../src/composables/useSave.js'
 import { resultFail } from '../src/engine/result.js'
 import { storageInstall } from './helpers/storage.js'
+import { tuningContent } from './helpers/content.js'
+
+const tuning = tuningContent()
 
 /** Real content, except one kind that will not load. */
 const brokenAt = (brokenKind) => (input) =>
@@ -37,6 +40,7 @@ describe('useBoot', () => {
       params: { path: '/content/voices/bad.json' },
     })
     const game = useGameStore()
+    game.tuningRegister({ tuning })
     expect(game.items).toEqual({})
     expect(game.actions).toEqual({})
   })

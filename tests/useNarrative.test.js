@@ -13,12 +13,12 @@ import {
   useNarrative,
   narrativeSkipBindings,
   meanCharDelayMs,
-  NORMAL_TIER_MIN_CHARS_PER_SECOND,
-  SPEED_MS,
-  PUNCTUATION_PAUSE,
 } from '../src/composables/useNarrative.js'
 import { useKeyboard } from '../src/composables/useKeyboard.js'
 import { narrativeTextCreate } from '../src/utils/text.js'
+import { tuningContent } from './helpers/content.js'
+
+const tuning = tuningContent()
 
 const SAMPLE_PROSE =
   'The basement has a cot, a space heater that smells like burning dust, and a window ' +
@@ -31,7 +31,7 @@ describe('useNarrative clearLog', () => {
   afterEach(() => vi.useRealTimers())
 
   it('drops the in-flight render and everything queued, keeping only what comes after', async () => {
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     narrative.enqueue(narrativeTextCreate({ text: 'Old scene, first paragraph.' }))
     narrative.enqueue(narrativeTextCreate({ text: 'Old scene, second paragraph.' }))
 
@@ -51,7 +51,7 @@ describe('useNarrative clearLog', () => {
   })
 
   it('leaves no partial token text behind', async () => {
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     narrative.enqueue(narrativeTextCreate({ text: 'Some prose that gets cut off.' }))
     await vi.advanceTimersByTimeAsync(40)
     expect(narrative.currentTokenProgress.value.length).toBeGreaterThan(0)
@@ -63,7 +63,7 @@ describe('useNarrative clearLog', () => {
   })
 
   it('does not emit animation-complete for a render that was cleared', async () => {
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const completed = vi.fn()
     narrative.on({ event: 'animation-complete', handler: completed })
 
@@ -80,25 +80,25 @@ describe('useNarrative clearLog', () => {
 
 describe('narrative typing speed', () => {
   it('normal tier sustains the minimum characters per second on ordinary prose', () => {
-    const meanMs = meanCharDelayMs({ text: SAMPLE_PROSE, speed: 'normal' })
+    const meanMs = meanCharDelayMs({ tuning, text: SAMPLE_PROSE, speed: 'normal' })
     const charsPerSecond = 1000 / meanMs
-    expect(charsPerSecond).toBeGreaterThanOrEqual(NORMAL_TIER_MIN_CHARS_PER_SECOND)
+    expect(charsPerSecond).toBeGreaterThanOrEqual(tuning.narrative.normalMinCharsPerSecond)
   })
 
   it('fast is faster than normal, which is faster than slow, which is faster than crawl', () => {
-    const rate = (speed) => meanCharDelayMs({ text: SAMPLE_PROSE, speed })
+    const rate = (speed) => meanCharDelayMs({ tuning, text: SAMPLE_PROSE, speed })
     expect(rate('fast')).toBeLessThan(rate('normal'))
     expect(rate('normal')).toBeLessThan(rate('slow'))
     expect(rate('slow')).toBeLessThan(rate('crawl'))
   })
 
   it('instant tier costs nothing', () => {
-    expect(SPEED_MS.instant).toBe(0)
-    expect(meanCharDelayMs({ text: SAMPLE_PROSE, speed: 'instant' })).toBe(0)
+    expect(tuning.narrative.speedsMs.instant).toEqual({ min: 0, max: 0 })
+    expect(meanCharDelayMs({ tuning, text: SAMPLE_PROSE, speed: 'instant' })).toBe(0)
   })
 
   it('word boundaries carry no pause', () => {
-    expect(PUNCTUATION_PAUSE[' ']).toBeUndefined()
+    expect(tuning.narrative.punctuationPauseMs.find((pause) => pause.char === ' ')).toBeUndefined()
   })
 })
 
@@ -125,7 +125,7 @@ describe('narrativeSkipBindings', () => {
   afterEach(() => vi.useRealTimers())
 
   it('space on the document skips a running animation', async () => {
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const wrapper = mountWithBindings(narrativeSkipBindings({ narrative }))
 
     narrative.enqueue(narrativeTextCreate({ text: SAMPLE_PROSE }))
@@ -142,7 +142,7 @@ describe('narrativeSkipBindings', () => {
   })
 
   it('space is left alone when nothing is animating', () => {
-    const narrative = useNarrative()
+    const narrative = useNarrative({ tuning })
     const skip = vi.spyOn(narrative, 'skip')
     const wrapper = mountWithBindings(narrativeSkipBindings({ narrative }))
 

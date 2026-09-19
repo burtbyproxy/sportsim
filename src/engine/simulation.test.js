@@ -2,6 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { simulationTick } from './simulation.js'
 import { randomSeeded } from '../utils/random.js'
 import { clockAdvance, clockCreate } from './clock.js'
+import { tuningContent } from '../../tests/helpers/content.js'
+
+const tuning = tuningContent()
 
 // --- Helpers ---
 
@@ -84,14 +87,19 @@ describe('simulationTick — fixed tier', () => {
     const char = makeFixed({ id: 'bartender' })
     const gameTime = makeGameTime({ hour: 20 }) // 8pm — inside 16:00-02:00 shift
     const alwaysPresent = () => 0 // randomChance({ probability: 0.x, rng }) where rng < probability → true
-    const updates = simulationTick({ characters: [char], gameTime, rng: alwaysPresent })
+    const updates = simulationTick({ tuning, characters: [char], gameTime, rng: alwaysPresent })
     expect(updates[0].locationId).toBe('blue_parrot')
   })
 
   it('places character off-map outside scheduled hours', () => {
     const char = makeFixed({ id: 'bartender' })
     const gameTime = makeGameTime({ hour: 10 }) // 10am — outside shift
-    const updates = simulationTick({ characters: [char], gameTime, rng: randomSeeded({ seed: 1 }) })
+    const updates = simulationTick({
+      tuning,
+      characters: [char],
+      gameTime,
+      rng: randomSeeded({ seed: 1 }),
+    })
     expect(updates[0].locationId).toBeNull()
   })
 
@@ -99,13 +107,14 @@ describe('simulationTick — fixed tier', () => {
     const char = makeFixed({ id: 'flaky_clerk', locationId: 'shop', probability: 0.5 })
     const gameTime = makeGameTime({ hour: 20 })
     const alwaysAbsent = () => 0.9 // 0.9 >= 0.5 → chance returns false
-    const updates = simulationTick({ characters: [char], gameTime, rng: alwaysAbsent })
+    const updates = simulationTick({ tuning, characters: [char], gameTime, rng: alwaysAbsent })
     expect(updates[0].locationId).toBeNull()
   })
 
   it('never returns statusChanges for fixed tier', () => {
     const char = makeFixed({ id: 'bartender' })
     const updates = simulationTick({
+      tuning,
       characters: [char],
       gameTime: makeGameTime({ hour: 20 }),
       rng: randomSeeded({ seed: 1 }),
@@ -116,6 +125,7 @@ describe('simulationTick — fixed tier', () => {
   it('returns correct id', () => {
     const char = makeFixed({ id: 'my_bartender' })
     const updates = simulationTick({
+      tuning,
       characters: [char],
       gameTime: makeGameTime({ hour: 20 }),
       rng: randomSeeded({ seed: 1 }),
@@ -131,7 +141,7 @@ describe('simulationTick — routine tier', () => {
     const char = makeRoutine('carl')
     const gameTime = makeGameTime({ hour: 10 }) // inside work shift
     const alwaysPresent = () => 0
-    const updates = simulationTick({ characters: [char], gameTime, rng: alwaysPresent })
+    const updates = simulationTick({ tuning, characters: [char], gameTime, rng: alwaysPresent })
     expect(updates[0].locationId).toBe('work')
   })
 
@@ -139,7 +149,12 @@ describe('simulationTick — routine tier', () => {
     const char = makeRoutine('carl')
     // At 17:15, work shift ended (endHour=17) and carl is heading to bar
     const gameTime = makeGameTime({ hour: 17, minute: 15 })
-    const updates = simulationTick({ characters: [char], gameTime, rng: randomSeeded({ seed: 1 }) })
+    const updates = simulationTick({
+      tuning,
+      characters: [char],
+      gameTime,
+      rng: randomSeeded({ seed: 1 }),
+    })
     expect(updates[0].locationId).toBe('bar') // transit destination
   })
 
@@ -149,13 +164,14 @@ describe('simulationTick — routine tier', () => {
     // This resolves to the bar entry (startHour=17) — carl just arrived
     const gameTime = makeGameTime({ hour: 17, minute: 0 })
     const alwaysPresent = () => 0
-    const updates = simulationTick({ characters: [char], gameTime, rng: alwaysPresent })
+    const updates = simulationTick({ tuning, characters: [char], gameTime, rng: alwaysPresent })
     expect(updates[0].locationId).toBe('bar')
   })
 
   it('does not return statusChanges for routine tier', () => {
     const char = makeRoutine('carl')
     const updates = simulationTick({
+      tuning,
       characters: [char],
       gameTime: makeGameTime({ hour: 10 }),
       rng: randomSeeded({ seed: 1 }),
@@ -171,13 +187,14 @@ describe('simulationTick — full tier', () => {
     const char = makeFull({ id: 'protagonist' })
     const gameTime = makeGameTime({ hour: 3 }) // inside home window (0-11)
     const alwaysPresent = () => 0
-    const updates = simulationTick({ characters: [char], gameTime, rng: alwaysPresent })
+    const updates = simulationTick({ tuning, characters: [char], gameTime, rng: alwaysPresent })
     expect(updates[0].locationId).toBe('home')
   })
 
   it('returns statusChanges for full tier', () => {
     const char = makeFull({ id: 'protagonist' })
     const updates = simulationTick({
+      tuning,
       characters: [char],
       gameTime: makeGameTime({ hour: 3 }),
       rng: randomSeeded({ seed: 1 }),
@@ -195,10 +212,10 @@ describe('simulationTick — full tier', () => {
     const drunk = makeFull({ id: 'drunk_protagonist', statusOverrides: { sobriety: 10 } })
     const sober = makeFull({ id: 'sober_protagonist', statusOverrides: { sobriety: 80 } })
     expect(
-      simulationTick({ characters: [drunk], gameTime, rng: alwaysPresent })[0].locationId
+      simulationTick({ tuning, characters: [drunk], gameTime, rng: alwaysPresent })[0].locationId
     ).toBe('bar')
     expect(
-      simulationTick({ characters: [sober], gameTime, rng: alwaysPresent })[0].locationId
+      simulationTick({ tuning, characters: [sober], gameTime, rng: alwaysPresent })[0].locationId
     ).toBe('home')
   })
 
@@ -207,17 +224,18 @@ describe('simulationTick — full tier', () => {
     const alwaysPresent = () => 0
     const at = makeFull({ id: 'at_the_line', statusOverrides: { sobriety: 30 } })
     const under = makeFull({ id: 'under_the_line', statusOverrides: { sobriety: 29 } })
-    expect(simulationTick({ characters: [at], gameTime, rng: alwaysPresent })[0].locationId).toBe(
-      'home'
-    )
     expect(
-      simulationTick({ characters: [under], gameTime, rng: alwaysPresent })[0].locationId
+      simulationTick({ tuning, characters: [at], gameTime, rng: alwaysPresent })[0].locationId
+    ).toBe('home')
+    expect(
+      simulationTick({ tuning, characters: [under], gameTime, rng: alwaysPresent })[0].locationId
     ).toBe('bar')
   })
 
   it('full-sim character with no status tracks no decay', () => {
     const char = { ...makeFull('ghost'), status: null }
     const updates = simulationTick({
+      tuning,
       characters: [char],
       gameTime: makeGameTime({ hour: 3 }),
       rng: randomSeeded({ seed: 1 }),
@@ -236,7 +254,12 @@ describe('simulationTick — multiple characters', () => {
       makeFull({ id: 'protagonist' }),
     ]
     const gameTime = makeGameTime({ hour: 20 })
-    const updates = simulationTick({ characters: chars, gameTime, rng: randomSeeded({ seed: 42 }) })
+    const updates = simulationTick({
+      tuning,
+      characters: chars,
+      gameTime,
+      rng: randomSeeded({ seed: 42 }),
+    })
     expect(updates).toHaveLength(3)
     expect(updates.map((u) => u.id)).toEqual(['bartender', 'carl', 'protagonist'])
   })
@@ -244,8 +267,18 @@ describe('simulationTick — multiple characters', () => {
   it('is reproducible with seeded RNG', () => {
     const chars = [makeFixed({ id: 'a' }), makeFixed({ id: 'b' }), makeFixed({ id: 'c' })]
     const gameTime = makeGameTime({ hour: 20 })
-    const run1 = simulationTick({ characters: chars, gameTime, rng: randomSeeded({ seed: 99 }) })
-    const run2 = simulationTick({ characters: chars, gameTime, rng: randomSeeded({ seed: 99 }) })
+    const run1 = simulationTick({
+      tuning,
+      characters: chars,
+      gameTime,
+      rng: randomSeeded({ seed: 99 }),
+    })
+    const run2 = simulationTick({
+      tuning,
+      characters: chars,
+      gameTime,
+      rng: randomSeeded({ seed: 99 }),
+    })
     expect(run1.map((u) => u.locationId)).toEqual(run2.map((u) => u.locationId))
   })
 })
@@ -256,14 +289,14 @@ describe('simulationTick — 24-hour integration (96 ticks)', () => {
   it('carl moves through his schedule over a full day', () => {
     const carl = makeRoutine('carl')
     const rng = randomSeeded({ seed: 7 })
-    let clock = clockCreate() // Monday 8:00 AM, tick 0
+    let clock = clockCreate({ tuning }) // Monday 8:00 AM, tick 0
 
     const locationLog = []
 
     for (let i = 0; i < 96; i++) {
-      const updates = simulationTick({ characters: [carl], gameTime: clock, rng })
+      const updates = simulationTick({ tuning, characters: [carl], gameTime: clock, rng })
       locationLog.push(updates[0].locationId)
-      clock = clockAdvance({ gameTime: clock, ticks: 1 })
+      clock = clockAdvance({ tuning, gameTime: clock, ticks: 1 })
     }
 
     // Carl should have visited work (9-17), bar (17-23), and home (23-9) over the day
@@ -287,7 +320,7 @@ describe('simulationTick — performance', () => {
     const rng = randomSeeded({ seed: 1 })
 
     const start = performance.now()
-    simulationTick({ characters: chars, gameTime, rng })
+    simulationTick({ tuning, characters: chars, gameTime, rng })
     const elapsed = performance.now() - start
 
     expect(elapsed).toBeLessThan(5)
@@ -318,6 +351,7 @@ describe('full-tier bias respects the day of the week', () => {
     }
     const onDay = (dayOfWeek) =>
       simulationTick({
+        tuning,
         characters: [char],
         gameTime: { hour: 12, minute: 0, tick: 0, day: 1, dayOfWeek },
         rng: () => 0,

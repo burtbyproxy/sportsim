@@ -53,6 +53,7 @@ export function useBoot({ load = contentLoad } = {}) {
       mapId: config.data.mapId,
       kinds: [
         CONTENT_KINDS.vocabulary,
+        CONTENT_KINDS.tuning,
         CONTENT_KINDS.items,
         CONTENT_KINDS.substances,
         CONTENT_KINDS.conditions,
@@ -68,6 +69,7 @@ export function useBoot({ load = contentLoad } = {}) {
     const content = loaded.data
     game.configRegister({ config: config.data })
     game.vocabularyRegister({ vocabulary: content[CONTENT_KINDS.vocabulary] })
+    game.tuningRegister({ tuning: content[CONTENT_KINDS.tuning] })
     for (const item of Object.values(content[CONTENT_KINDS.items])) {
       game.itemRegister({ item: itemCreate(item) })
     }

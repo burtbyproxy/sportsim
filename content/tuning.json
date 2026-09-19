@@ -1,0 +1,68 @@
+{
+  "id": "tuning",
+  "clock": {
+    "ticksPerHour": 4,
+    "startHour": 8,
+    "periods": [
+      { "id": "late_night", "fromHour": 0 },
+      { "id": "morning", "fromHour": 5 },
+      { "id": "afternoon", "fromHour": 12 },
+      { "id": "evening", "fromHour": 17 },
+      { "id": "night", "fromHour": 21 }
+    ]
+  },
+  "decay": {
+    "hunger": { "ratePerTick": -1, "min": 0, "max": 100 },
+    "energy": { "ratePerTick": -0.5, "min": 0, "max": 100 },
+    "mood": { "ratePerTick": -0.25, "baseline": 40, "min": 0, "max": 100 }
+  },
+  "stats": {
+    "xpCheckSuccess": 2,
+    "xpCheckFailure": 1,
+    "xpToNextBase": 10,
+    "xpToNextPerPoint": 2
+  },
+  "dice": { "statPointsPerModifier": 10 },
+  "skills": { "pointsPerModifier": 10 },
+  "scavenge": {
+    "depletionMax": 5,
+    "ticksPerRestock": 48,
+    "depletionPenalty": 2,
+    "pickedCleanAt": 3
+  },
+  "making": {
+    "focusEventFactor": 0.25,
+    "strengthPerModifier": 20,
+    "wrongMediumPenalty": -2
+  },
+  "obsession": { "feedAmount": 5 },
+  "simulation": {
+    "needs": [
+      { "status": "sobriety", "below": 30, "weightKey": "low_sobriety" },
+      { "status": "hunger", "below": 20, "weightKey": "low_hunger" },
+      { "status": "mood", "below": 25, "weightKey": "low_mood" },
+      { "status": "energy", "below": 20, "weightKey": "low_energy" }
+    ]
+  },
+  "narrative": {
+    "drunkBelowSobriety": 30,
+    "speedsMs": {
+      "instant": { "min": 0, "max": 0 },
+      "fast": { "min": 1, "max": 5 },
+      "normal": { "min": 2, "max": 10 },
+      "slow": { "min": 15, "max": 40 },
+      "crawl": { "min": 50, "max": 120 }
+    },
+    "normalMinCharsPerSecond": 100,
+    "punctuationPauseMs": [
+      { "char": ".", "min": 60, "max": 110 },
+      { "char": "!", "min": 60, "max": 110 },
+      { "char": "?", "min": 60, "max": 110 },
+      { "char": ",", "min": 25, "max": 50 },
+      { "char": ";", "min": 25, "max": 50 },
+      { "char": ":", "min": 20, "max": 40 },
+      { "char": "—", "min": 60, "max": 110 },
+      { "char": "–", "min": 25, "max": 50 }
+    ]
+  }
+}

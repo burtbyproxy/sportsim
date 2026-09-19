@@ -88,50 +88,38 @@ function simulateRoutine({ character, gameTime, rng }) {
 // ---------------------------------------------------------------------------
 
 /**
- * Determines the location bias for a full-sim character based on their status.
- * Returns the bias string ("bar", "food", "alone", "home") or null.
+ * Where a full-sim character's needs pull them: the bias ("bar", "food",
+ * "alone", "home") of the heaviest need that is below its threshold, or null.
+ * Which needs count, and how low is low, is content (tuning.json `simulation`).
  *
- * @param {Object} character
+ * @param {{ character: Object, tuning: Object }} input
  * @returns {string|null}
  */
-function getStatusBias(character) {
+function statusBias({ character, tuning }) {
   const status = character.status
   if (!status) return null
   const weights = character.decisionWeights
   if (!weights) return null
 
   const candidates = []
-
-  if (weights.low_sobriety && status.sobriety < 30) {
-    candidates.push({ bias: weights.low_sobriety.bias, weight: weights.low_sobriety.weight })
-  }
-  if (weights.low_hunger && status.hunger < 20) {
-    candidates.push({ bias: weights.low_hunger.bias, weight: weights.low_hunger.weight })
-  }
-  if (weights.low_mood && status.mood < 25) {
-    candidates.push({ bias: weights.low_mood.bias, weight: weights.low_mood.weight })
-  }
-  if (weights.low_energy && status.energy < 20) {
-    candidates.push({ bias: weights.low_energy.bias, weight: weights.low_energy.weight })
+  for (const need of tuning.simulation.needs) {
+    const weight = weights[need.weightKey]
+    if (weight && status[need.status] < need.below) {
+      candidates.push({ bias: weight.bias, weight: weight.weight })
+    }
   }
 
   if (candidates.length === 0) return null
 
-  // Pick the highest-weight bias (deterministic — no RNG needed for bias selection)
   return listSortBy({ items: candidates, keyOf: (c) => c.weight, descending: true })[0].bias
 }
 
 /**
- * Finds a schedule entry that matches the given bias type.
- * Returns null if no match found (fall back to normal schedule).
+ * The first schedule entry for today whose type is the bias, or null (the
+ * character falls back to their normal schedule). Matched by the entry's
+ * declared type, never by reading its location's id.
  *
- * The bias match is loose — entry locationId contains the bias word, or
- * the entry has a `type` field matching the bias. This is intentionally
- * simple — full content data can refine this later.
- *
- * @param {Object} schedule
- * @param {string} bias
- * @param {string} dayOfWeek
+ * @param {{ schedule: Object, bias: string, dayOfWeek: string }} input
  * @returns {Object|null}
  */
 function biasedEntryFind({ schedule, bias, dayOfWeek }) {
@@ -140,10 +128,7 @@ function biasedEntryFind({ schedule, bias, dayOfWeek }) {
   for (const entry of schedule.entries) {
     // Not today: a Saturday-only stop is no answer to a Tuesday's hunger.
     if (entry.days && !entry.days.includes('all') && !entry.days.includes(dayOfWeek)) continue
-    // Check entry type field (preferred)
-    if (entry.type && entry.type === bias) return entry
-    // Fall back to loose locationId match
-    if (entry.locationId && entry.locationId.includes(bias)) return entry
+    if (entry.type === bias) return entry
   }
   return null
 }
@@ -152,21 +137,19 @@ function biasedEntryFind({ schedule, bias, dayOfWeek }) {
  * Simulates a full-tier character for one tick.
  * Status affects location decisions. Stat decay is applied.
  *
- * @param {Object} character
- * @param {Object} gameTime
- * @param {() => number} rng
+ * @param {{ character: Object, gameTime: Object, rng: () => number, tuning: Object }} input
  * @returns {Object} CharacterUpdate { id, locationId, statusChanges? }
  */
-function simulateFull({ character, gameTime, rng }) {
+function simulateFull({ character, gameTime, rng, tuning }) {
   const { hour, minute } = gameTime
 
   // Apply stat decay (same rates as player — they're playing the same game)
   const statusChanges = character.status
-    ? statusDecayChanges({ status: character.status, ticksElapsed: 1 }) // one tick
+    ? statusDecayChanges({ tuning, status: character.status, ticksElapsed: 1 }) // one tick
     : undefined
 
   // Check status bias first
-  const bias = getStatusBias(character)
+  const bias = statusBias({ character, tuning })
   if (bias) {
     const biasedEntry = biasedEntryFind({
       schedule: character.schedule,
@@ -218,12 +201,12 @@ function simulateFull({ character, gameTime, rng }) {
  *
  * CharacterUpdate: { id: string, locationId: string|null, statusChanges?: Object }
  *
- * @param {{ characters: Object[], gameTime: Object, rng?: () => number }} input
+ * @param {{ characters: Object[], gameTime: Object, rng?: () => number, tuning: Object }} input
  *   characters — array of Character objects
  *   gameTime — GameTime per data contract
  * @returns {Array<{ id: string, locationId: string|null, statusChanges?: Object }>}
  */
-export function simulationTick({ characters, gameTime, rng = Math.random }) {
+export function simulationTick({ characters, gameTime, rng = Math.random, tuning }) {
   const updates = []
 
   for (const character of characters) {
@@ -234,7 +217,7 @@ export function simulationTick({ characters, gameTime, rng = Math.random }) {
         update = simulateRoutine({ character, gameTime, rng })
         break
       case 'full':
-        update = simulateFull({ character, gameTime, rng })
+        update = simulateFull({ character, gameTime, rng, tuning })
         break
       case 'fixed':
       default:
