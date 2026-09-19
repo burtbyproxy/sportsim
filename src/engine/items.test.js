@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { itemUseResolve, ITEM_ERROR_CODES, ITEM_EFFECT_STATUSES } from './items.js'
+import { itemUseResolve, ITEM_ERROR_CODES, ITEM_EFFECT_STATUSES, inventoryHas } from './items.js'
 
 const tallboy = {
   id: 'tallboy_oly',
@@ -22,26 +22,26 @@ function makePlayer(inventory) {
 describe('itemUseResolve', () => {
   it('rejects a missing player', () => {
     expect(itemUseResolve({ player: null, itemId: 'x' }).error.code).toBe(
-      ITEM_ERROR_CODES.PLAYER_MISSING
+      ITEM_ERROR_CODES.playerMissing
     )
   })
 
   it('rejects an item the player is not carrying', () => {
     const result = itemUseResolve({ player: makePlayer([]), itemId: 'tallboy_oly' })
-    expect(result.error.code).toBe(ITEM_ERROR_CODES.ITEM_MISSING)
+    expect(result.error.code).toBe(ITEM_ERROR_CODES.itemMissing)
   })
 
   it('rejects an item with none left', () => {
     const player = makePlayer([{ ...tallboy, quantity: 0 }])
     expect(itemUseResolve({ player, itemId: 'tallboy_oly' }).error.code).toBe(
-      ITEM_ERROR_CODES.ITEM_MISSING
+      ITEM_ERROR_CODES.itemMissing
     )
   })
 
   it('rejects something that is not used up: you cannot drink a sock', () => {
     const player = makePlayer([{ id: 'single_sock', name: 'A Sock', type: 'junk', quantity: 1 }])
     expect(itemUseResolve({ player, itemId: 'single_sock' }).error.code).toBe(
-      ITEM_ERROR_CODES.ITEM_NOT_CONSUMABLE
+      ITEM_ERROR_CODES.itemNotConsumable
     )
   })
 
@@ -93,7 +93,7 @@ describe('itemUseResolve', () => {
       effects: [{ target: 'sobriety', value: -20, duration: null }],
     }
     expect(itemUseResolve({ player: makePlayer([cursed]), itemId: 'cursed' }).error.code).toBe(
-      ITEM_ERROR_CODES.EFFECT_TARGET_UNKNOWN
+      ITEM_ERROR_CODES.effectTargetUnknown
     )
   })
 
@@ -108,5 +108,23 @@ describe('itemUseResolve', () => {
     data.doses[0].value = 999
     data.item.quantity = 0
     expect(JSON.stringify(player)).toBe(before)
+  })
+})
+
+describe('inventoryHas', () => {
+  it('holds an item it carries', () => {
+    expect(inventoryHas({ inventory: [{ id: 'knife', quantity: 1 }], itemId: 'knife' })).toBe(true)
+  })
+
+  it('does not hold an item it lacks', () => {
+    expect(inventoryHas({ inventory: [{ id: 'fork', quantity: 1 }], itemId: 'knife' })).toBe(false)
+  })
+
+  it('an emptied stack is not holding anything', () => {
+    expect(inventoryHas({ inventory: [{ id: 'pabst', quantity: 0 }], itemId: 'pabst' })).toBe(false)
+  })
+
+  it('no inventory holds nothing', () => {
+    expect(inventoryHas({ inventory: undefined, itemId: 'knife' })).toBe(false)
   })
 })

@@ -1,7 +1,6 @@
 {
   "id": "mouse_trap",
   "type": "bar",
-  "variant": "tavern",
   "display": "The Mouse Trap",
   "pieceAs": "at the Mouse Trap",
   "outdoors": false,
@@ -33,8 +32,6 @@
       "requirements": null
     }
   ],
-  "npcSlots": ["larry", "tyler", "dennis", "maurice"],
-  "actionIds": ["play_pool_mouse_trap", "smoke_out_front_mouse_trap"],
   "scavengeTableId": "bar_back",
   "surfaces": [
     {

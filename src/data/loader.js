@@ -1,213 +1,141 @@
 /**
  * Content Loader — the ONLY code that imports from content/.
  *
- * Reads JSON files from content/ using Vite's import.meta.glob.
- * Validates basic structure on load (warns on malformed JSON, does not crash).
- * Returns plain JS objects keyed by ID.
+ * Reads the JSON under content/ through Vite's import.meta.glob and hands it
+ * back by kind, keyed by id, as a result. Content that is not what it says it
+ * is fails with the file it came from; nothing is skipped quietly.
  *
- * Consumers: TitleScreen.vue (game init), simulation worker (characters)
+ * Consumer: composables/useBoot.js.
  */
+import { resultOk, resultFail } from '../engine/result.js'
 
-// ---------------------------------------------------------------------------
-// Vite glob imports — all content/ JSON files, eagerly loaded
-// ---------------------------------------------------------------------------
+/** Why content could not be loaded. */
+export const LOADER_ERROR_CODES = Object.freeze({
+  kindUnknown: 'CONTENT_KIND_UNKNOWN',
+  fileMissing: 'CONTENT_FILE_MISSING',
+  entryNotObject: 'CONTENT_ENTRY_NOT_OBJECT',
+  entryIdMissing: 'CONTENT_ENTRY_ID_MISSING',
+  entryIdDuplicate: 'CONTENT_ENTRY_ID_DUPLICATE',
+})
 
-const _locationFiles = import.meta.glob('/content/maps/*/locations/*.json', { eager: true })
-const _actionFiles = import.meta.glob('/content/maps/*/actions/*.json', { eager: true })
-const _eventFiles = import.meta.glob('/content/maps/*/events/*.json', { eager: true })
-const _characterFiles = import.meta.glob('/content/characters/*.json', { eager: true })
-const _itemFiles = import.meta.glob('/content/items/*.json', { eager: true })
-const _substanceFiles = import.meta.glob('/content/substances/*.json', { eager: true })
-const _conditionFiles = import.meta.glob('/content/conditions/*.json', { eager: true })
-const _mediumFiles = import.meta.glob('/content/mediums/*.json', { eager: true })
-const _voiceFiles = import.meta.glob('/content/voices/*.json', { eager: true })
-const _scavengeFiles = import.meta.glob('/content/scavenge/*.json', { eager: true })
-const _gameFiles = import.meta.glob('/content/games/*.json', { eager: true })
-const _configFiles = import.meta.glob('/content/game.json', { eager: true })
-const _vocabularyFiles = import.meta.glob('/content/vocabulary.json', { eager: true })
+/** What there is to load. */
+export const CONTENT_KINDS = Object.freeze({
+  locations: 'locations',
+  actions: 'actions',
+  events: 'events',
+  characters: 'characters',
+  items: 'items',
+  substances: 'substances',
+  conditions: 'conditions',
+  mediums: 'mediums',
+  voices: 'voices',
+  scavengeTables: 'scavengeTables',
+  games: 'games',
+  config: 'config',
+  vocabulary: 'vocabulary',
+  tuning: 'tuning',
+})
 
-// ---------------------------------------------------------------------------
-// Internal helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Extract the map ID from a path like /content/maps/kenton/locations/foo.json
- * @param {string} path
- * @returns {string}
- */
-function _mapIdFromPath(path) {
-  const match = path.match(/\/content\/maps\/([^/]+)\//)
-  return match ? match[1] : 'unknown'
+// Vite resolves these at build time; each value is a module with the JSON as its default.
+const SOURCES = {
+  [CONTENT_KINDS.locations]: import.meta.glob('/content/maps/*/locations/*.json', { eager: true }),
+  [CONTENT_KINDS.actions]: import.meta.glob('/content/maps/*/actions/*.json', { eager: true }),
+  [CONTENT_KINDS.events]: import.meta.glob('/content/maps/*/events/*.json', { eager: true }),
+  [CONTENT_KINDS.characters]: import.meta.glob('/content/characters/*.json', { eager: true }),
+  [CONTENT_KINDS.items]: import.meta.glob('/content/items/*.json', { eager: true }),
+  [CONTENT_KINDS.substances]: import.meta.glob('/content/substances/*.json', { eager: true }),
+  [CONTENT_KINDS.conditions]: import.meta.glob('/content/conditions/*.json', { eager: true }),
+  [CONTENT_KINDS.mediums]: import.meta.glob('/content/mediums/*.json', { eager: true }),
+  [CONTENT_KINDS.voices]: import.meta.glob('/content/voices/*.json', { eager: true }),
+  [CONTENT_KINDS.scavengeTables]: import.meta.glob('/content/scavenge/*.json', { eager: true }),
+  [CONTENT_KINDS.games]: import.meta.glob('/content/games/*.json', { eager: true }),
+  [CONTENT_KINDS.config]: import.meta.glob('/content/game.json', { eager: true }),
+  [CONTENT_KINDS.vocabulary]: import.meta.glob('/content/vocabulary.json', { eager: true }),
+  [CONTENT_KINDS.tuning]: import.meta.glob('/content/tuning.json', { eager: true }),
 }
 
+/** Kinds that live under a map, and kinds that are one file, not a collection. */
+const KINDS_BY_MAP = [CONTENT_KINDS.locations, CONTENT_KINDS.actions, CONTENT_KINDS.events]
+const KINDS_SINGLE = [CONTENT_KINDS.config, CONTENT_KINDS.vocabulary, CONTENT_KINDS.tuning]
+
 /**
- * Merge an array of JSON module values into a single object keyed by item ID.
- * Warns on entries without an `id` field.
- * @param {Object[]} modules - array of parsed JSON values
- * @param {string} context - for warning messages
- * @returns {Object<string, Object>}
+ * Entries from several files, keyed by id. A file holds one entry or a list
+ * of them. Every entry must be an object with an id no other entry has.
+ *
+ * @param {{ files: Array<{ path: string, value: * }> }} input
+ * @returns {{ ok: boolean, data: Object<string, Object>|null, error: Object|null }}
  */
-function _mergeById(modules, context) {
-  const result = {}
-  for (const module of modules) {
-    const items = Array.isArray(module) ? module : [module]
-    for (const item of items) {
-      if (!item || typeof item !== 'object') {
-        console.warn(`[loader] ${context}: skipping non-object entry`)
-        continue
+export function contentMerge({ files }) {
+  const byId = {}
+  const pathById = {}
+  for (const { path, value } of files) {
+    for (const entry of Array.isArray(value) ? value : [value]) {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+        return resultFail({
+          code: LOADER_ERROR_CODES.entryNotObject,
+          message: `${path}: an entry is not an object`,
+          params: { path },
+        })
       }
-      if (!item.id) {
-        console.warn(`[loader] ${context}: entry missing id field`, item)
-        continue
+      if (!entry.id) {
+        return resultFail({
+          code: LOADER_ERROR_CODES.entryIdMissing,
+          message: `${path}: an entry has no id`,
+          params: { path },
+        })
       }
-      result[item.id] = item
+      if (entry.id in byId) {
+        return resultFail({
+          code: LOADER_ERROR_CODES.entryIdDuplicate,
+          message: `${path}: '${entry.id}' is already in ${pathById[entry.id]}`,
+          params: { path, id: entry.id, pathFirst: pathById[entry.id] },
+        })
+      }
+      byId[entry.id] = entry
+      pathById[entry.id] = path
     }
   }
-  return result
+  return resultOk(byId)
 }
 
 /**
- * Pull all default exports from a glob result object.
- * Each value is a Vite module with { default: ... }.
- * @param {Object} globResult
- * @returns {Array}
+ * Load one kind of content. Map-scoped kinds take the map; the game config
+ * and the vocabulary come back as themselves, everything else keyed by id.
+ *
+ * @param {{ kind: string, mapId?: string }} input
+ * @returns {{ ok: boolean, data: Object|null, error: Object|null }}
  */
-function _extractModules(globResult) {
-  return Object.values(globResult).map((m) => m.default ?? m)
-}
-
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
-
-/**
- * Load all locations for a given map.
- * @param {string} mapId - e.g. "kenton"
- * @returns {Object<string, Object>}
- */
-export function loadLocations(mapId) {
-  const relevant = Object.entries(_locationFiles)
-    .filter(([path]) => _mapIdFromPath(path) === mapId)
-    .map(([, m]) => m.default ?? m)
-
-  return _mergeById(relevant, `loadLocations(${mapId})`)
-}
-
-/**
- * Load all actions for a given map.
- * Action files can contain arrays or single objects.
- * @param {string} mapId - e.g. "kenton"
- * @returns {Object<string, Object>}
- */
-export function loadActions(mapId) {
-  const relevant = Object.entries(_actionFiles)
-    .filter(([path]) => _mapIdFromPath(path) === mapId)
-    .map(([, m]) => m.default ?? m)
-
-  return _mergeById(relevant, `loadActions(${mapId})`)
+export function contentLoad({ kind, mapId }) {
+  const source = SOURCES[kind]
+  if (!source) {
+    return resultFail({
+      code: LOADER_ERROR_CODES.kindUnknown,
+      message: `No content kind '${kind}'`,
+      params: { kind },
+    })
+  }
+  const files = Object.entries(source)
+    .filter(([path]) => !KINDS_BY_MAP.includes(kind) || mapIdFromPath({ path }) === mapId)
+    .map(([path, module]) => ({ path, value: module.default ?? module }))
+  if (KINDS_SINGLE.includes(kind)) {
+    if (files.length === 0) {
+      return resultFail({
+        code: LOADER_ERROR_CODES.fileMissing,
+        message: `No ${kind} file`,
+        params: { kind },
+      })
+    }
+    return resultOk(files[0].value)
+  }
+  return contentMerge({ files })
 }
 
 /**
- * Load all events for a given map.
- * @param {string} mapId - e.g. "kenton"
- * @returns {Object<string, Object>}
+ * The map a content path belongs to: /content/maps/kenton/locations/x.json → kenton.
+ * @param {{ path: string }} input
+ * @returns {string|null}
  */
-export function loadEvents(mapId) {
-  const relevant = Object.entries(_eventFiles)
-    .filter(([path]) => _mapIdFromPath(path) === mapId)
-    .map(([, m]) => m.default ?? m)
-
-  return _mergeById(relevant, `loadEvents(${mapId})`)
-}
-
-/**
- * Load all characters (global — not map-scoped).
- * @returns {Object<string, Object>}
- */
-export function loadCharacters() {
-  const modules = _extractModules(_characterFiles)
-  return _mergeById(modules, 'loadCharacters()')
-}
-
-/**
- * Load all items (global).
- * @returns {Object<string, Object>}
- */
-export function loadItems() {
-  const modules = _extractModules(_itemFiles)
-  return _mergeById(modules, 'loadItems()')
-}
-
-/**
- * Load all substances (global). One file per substance.
- * @returns {Object<string, Object>}
- */
-export function loadSubstances() {
-  const modules = _extractModules(_substanceFiles)
-  return _mergeById(modules, 'loadSubstances()')
-}
-
-/**
- * Load all status-driven conditions (global). One file per condition.
- * @returns {Object<string, Object>}
- */
-export function loadConditions() {
-  const modules = _extractModules(_conditionFiles)
-  return _mergeById(modules, 'loadConditions()')
-}
-
-/**
- * Load all mediums (global). One file per medium.
- * @returns {Object<string, Object>}
- */
-export function loadMediums() {
-  const modules = _extractModules(_mediumFiles)
-  return _mergeById(modules, 'loadMediums()')
-}
-
-/**
- * Load all voice catalogs (global). One file per persona, keyed by persona id.
- * @returns {Object<string, Object>}
- */
-export function loadVoices() {
-  const modules = _extractModules(_voiceFiles)
-  return _mergeById(modules, 'loadVoices()')
-}
-
-/**
- * Load all scavenge loot tables (global). One file per table.
- * @returns {Object<string, Object>}
- */
-export function loadScavengeTables() {
-  const modules = _extractModules(_scavengeFiles)
-  return _mergeById(modules, 'loadScavengeTables()')
-}
-
-/**
- * Load what a new game is (content/game.json): the title screen's words, the
- * map, and where, as whom, and with what the player starts.
- * @returns {Object}
- */
-export function loadGameConfig() {
-  const [config] = _extractModules(_configFiles)
-  return config
-}
-
-/**
- * Load the game's vocabulary (content/vocabulary.json): which stats and
- * vitals exist and how they read, item types, action kinds, and the rest.
- * @returns {Object}
- */
-export function loadVocabulary() {
-  const [vocabulary] = _extractModules(_vocabularyFiles)
-  return vocabulary
-}
-
-/**
- * Load all minigames (global). One file per game; mediums name theirs.
- * @returns {Object<string, Object>}
- */
-export function loadGames() {
-  const modules = _extractModules(_gameFiles)
-  return _mergeById(modules, 'loadGames()')
+function mapIdFromPath({ path }) {
+  const match = path.match(/\/content\/maps\/([^/]+)\//)
+  return match ? match[1] : null
 }

@@ -3,8 +3,8 @@
  *
  * Usage:
  *   import { sim } from './workers/simulation-api.js'
- *   const result = await sim.tick(gameTime, characters)
- *   // result: { characters: [{id, locationId, statusChanges?}], events: [] }
+ *   const result = await sim.tick({ gameTime, characters, tuning })
+ *   // result: { characters: [{id, locationId, statusChanges?}] }
  */
 import { wrap } from 'comlink'
 
@@ -19,41 +19,41 @@ export function toPlainSnapshot(value) {
   return JSON.parse(JSON.stringify(value))
 }
 
-let _worker = null
-let _sim = null
+let workerInstance = null
+let simulationRemote = null
 
 function getWorker() {
-  if (!_worker) {
-    _worker = new Worker(new URL('./simulation.worker.js', import.meta.url), {
+  if (!workerInstance) {
+    workerInstance = new Worker(new URL('./simulation.worker.js', import.meta.url), {
       type: 'module',
     })
-    _sim = wrap(_worker)
+    simulationRemote = wrap(workerInstance)
   }
-  return _sim
+  return simulationRemote
 }
 
 export const sim = {
   /**
-   * Run one simulation tick.
-   * @param {import('../engine/clock.js').GameTime} gameTime
-   * @param {Object[]} characters - Character objects from game store
-   * @returns {Promise<{
-   *   characters: Array<{id: string, locationId: string|null, statusChanges?: Object}>,
-   *   events: Array
-   * }>}
+   * Run one simulation tick in the worker. Same contract as simulation-local.js.
+   * @param {{ gameTime: import('../engine/clock.js').GameTime, characters: Object[], tuning: Object }} input
+   * @returns {Promise<{ characters: Array<{ id: string, locationId: string|null, statusChanges?: Object }> }>}
    */
-  tick(gameTime, characters = []) {
-    return getWorker().tick(toPlainSnapshot(gameTime), toPlainSnapshot(characters))
+  tick({ gameTime, characters, tuning }) {
+    return getWorker().tick({
+      tuning: toPlainSnapshot(tuning),
+      gameTime: toPlainSnapshot(gameTime),
+      characters: toPlainSnapshot(characters),
+    })
   },
 
   /**
    * Terminate the worker (call on app teardown if needed).
    */
   terminate() {
-    if (_worker) {
-      _worker.terminate()
-      _worker = null
-      _sim = null
+    if (workerInstance) {
+      workerInstance.terminate()
+      workerInstance = null
+      simulationRemote = null
     }
   },
 }

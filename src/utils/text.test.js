@@ -1,29 +1,37 @@
 import { describe, it, expect } from 'vitest'
-import { template, pickVariant, toNarrativeText } from './text.js'
+import { textFill, textVariantPick, narrativeTextCreate } from './text.js'
 
-describe('template', () => {
+describe('textFill', () => {
   it('replaces known variables', () => {
-    expect(template('Hello, {{name}}!', { name: 'Portland' })).toBe('Hello, Portland!')
+    expect(textFill({ text: 'Hello, {name}!', params: { name: 'Portland' } })).toBe(
+      'Hello, Portland!'
+    )
   })
 
   it('leaves unknown variables untouched', () => {
-    expect(template('{{unknown}} is here', {})).toBe('{{unknown}} is here')
+    expect(textFill({ text: '{unknown} is here', params: {} })).toBe('{unknown} is here')
   })
 
   it('handles multiple replacements', () => {
-    expect(template('{{a}} and {{b}}', { a: 'beer', b: 'rain' })).toBe('beer and rain')
+    expect(textFill({ text: '{a} and {b}', params: { a: 'beer', b: 'rain' } })).toBe(
+      'beer and rain'
+    )
+  })
+
+  it('keeps a placeholder whose value is null or missing, so the gap shows', () => {
+    expect(textFill({ text: 'a {x} b {y}', params: { x: null } })).toBe('a {x} b {y}')
   })
 
   it('handles empty string', () => {
-    expect(template('', { a: 'x' })).toBe('')
+    expect(textFill({ text: '', params: { a: 'x' } })).toBe('')
   })
 
   it('coerces values to strings', () => {
-    expect(template('Count: {{n}}', { n: 42 })).toBe('Count: 42')
+    expect(textFill({ text: 'Count: {n}', params: { n: 42 } })).toBe('Count: 42')
   })
 })
 
-describe('pickVariant', () => {
+describe('textVariantPick', () => {
   const variants = {
     default: 'default text',
     night: 'night text',
@@ -32,47 +40,49 @@ describe('pickVariant', () => {
   }
 
   it('returns default when no context matches', () => {
-    expect(pickVariant(variants, {})).toBe('default text')
+    expect(textVariantPick({ variants, context: {} })).toBe('default text')
   })
 
   it('matches period key', () => {
-    expect(pickVariant(variants, { period: 'night' })).toBe('night text')
+    expect(textVariantPick({ variants, context: { period: 'night' } })).toBe('night text')
   })
 
   it('matches direct truthy context key', () => {
-    expect(pickVariant(variants, { drunk: true })).toBe('drunk text')
+    expect(textVariantPick({ variants, context: { drunk: true } })).toBe('drunk text')
   })
 
   it('ignores falsy context keys', () => {
-    expect(pickVariant(variants, { drunk: false, period: 'night' })).toBe('night text')
+    expect(textVariantPick({ variants, context: { drunk: false, period: 'night' } })).toBe(
+      'night text'
+    )
   })
 
   it('returns repeat variant when visitCount > 1', () => {
-    expect(pickVariant(variants, { visitCount: 3 })).toBe('repeat text')
+    expect(textVariantPick({ variants, context: { visitCount: 3 } })).toBe('repeat text')
   })
 
   it('does NOT return repeat when visitCount is 1', () => {
-    expect(pickVariant(variants, { visitCount: 1 })).toBe('default text')
+    expect(textVariantPick({ variants, context: { visitCount: 1 } })).toBe('default text')
   })
 
   it('returns empty string when no variants', () => {
-    expect(pickVariant(null, {})).toBe('')
+    expect(textVariantPick({ variants: null, context: {} })).toBe('')
   })
 
   it('returns empty string when no default', () => {
-    expect(pickVariant({ night: 'night' }, {})).toBe('')
+    expect(textVariantPick({ variants: { night: 'night' }, context: {} })).toBe('')
   })
 })
 
-describe('toNarrativeText', () => {
+describe('narrativeTextCreate', () => {
   it('produces a NarrativeText with one token', () => {
-    const result = toNarrativeText('hello')
+    const result = narrativeTextCreate({ text: 'hello' })
     expect(result.tokens).toHaveLength(1)
     expect(result.tokens[0].text).toBe('hello')
   })
 
   it('applies default token values', () => {
-    const token = toNarrativeText('x').tokens[0]
+    const token = narrativeTextCreate({ text: 'x' }).tokens[0]
     expect(token.style).toBe('normal')
     expect(token.color).toBeNull()
     expect(token.speed).toBe('normal')
@@ -81,7 +91,10 @@ describe('toNarrativeText', () => {
   })
 
   it('applies style overrides', () => {
-    const token = toNarrativeText('x', { style: 'bold', speed: 'slow', pauseAfter: 500 }).tokens[0]
+    const token = narrativeTextCreate({
+      text: 'x',
+      style: { style: 'bold', speed: 'slow', pauseAfter: 500 },
+    }).tokens[0]
     expect(token.style).toBe('bold')
     expect(token.speed).toBe('slow')
     expect(token.pauseAfter).toBe(500)

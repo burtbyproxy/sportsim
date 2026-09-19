@@ -35,9 +35,7 @@
   },
   "relationshipScore": 0,
   "currentLocationId": "mouse_trap",
-  "dialogueTreeIds": [],
   "want": "Quiet. Larry has it. The Mouse Trap gives him exactly the amount of human contact he can tolerate, which is almost none. This is not loneliness. This is preference.",
   "fear": "A crowd. Not a dangerous crowd — just a crowd. More than six people in the Mouse Trap and Larry's whole system breaks down. He doesn't know how to be busy. He's never had to learn.",
-  "level": 1,
   "decisionWeights": null
 }

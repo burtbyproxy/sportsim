@@ -29,21 +29,21 @@
             :class="{ 'sidebar-tab--active': activeTab === 'status' }"
             @click="activeTab = 'status'"
           >
-            status
+            {{ game.ui.tabs.status }}
           </button>
           <button
             class="sidebar-tab"
             :class="{ 'sidebar-tab--active': activeTab === 'inventory' }"
             @click="activeTab = 'inventory'"
           >
-            inventory
+            {{ game.ui.tabs.inventory }}
           </button>
           <button
             class="sidebar-tab"
             :class="{ 'sidebar-tab--active': activeTab === 'work' }"
             @click="activeTab = 'work'"
           >
-            work
+            {{ game.ui.tabs.work }}
           </button>
         </div>
 
@@ -51,7 +51,7 @@
         <div v-if="activeTab === 'status'" class="sidebar-panel">
           <!-- Time -->
           <div class="status-section">
-            <div class="status-section__label">time</div>
+            <div class="status-section__label">{{ game.ui.sections.time }}</div>
             <div class="status-time">
               {{ formattedTime }}
             </div>
@@ -59,7 +59,7 @@
 
           <!-- Stat bars -->
           <div class="status-section">
-            <div class="status-section__label">vitals</div>
+            <div class="status-section__label">{{ game.ui.sections.vitals }}</div>
             <div class="status-stats">
               <div
                 v-for="stat in statusStats"
@@ -85,7 +85,7 @@
 
           <!-- Muse -->
           <div class="status-section">
-            <div class="status-section__label">muse</div>
+            <div class="status-section__label">{{ game.ui.sections.muse }}</div>
             <div class="status-muse" :class="{ 'status-muse--active': game.inspirationActive }">
               {{ game.inspirationLabel }}
             </div>
@@ -93,10 +93,9 @@
 
           <!-- Money -->
           <div class="status-section">
-            <div class="status-section__label">funds</div>
-            <div class="status-money" :class="{ 'status-money--negative': money < 0 }">
-              <span class="status-money__sign">$</span>
-              <span class="status-money__amount">{{ formattedMoney }}</span>
+            <div class="status-section__label">{{ game.ui.sections.funds }}</div>
+            <div class="status-money" :class="{ 'status-money--negative': game.playerMoney < 0 }">
+              <span class="status-money__amount">{{ game.playerMoneyText }}</span>
             </div>
           </div>
         </div>
@@ -104,16 +103,16 @@
         <!-- Inventory tab -->
         <div v-if="activeTab === 'inventory'" class="sidebar-panel sidebar-panel--inventory">
           <div class="status-section status-section--grow">
-            <div class="status-section__label">carrying</div>
+            <div class="status-section__label">{{ game.ui.sections.carrying }}</div>
             <div v-if="game.playerInventory.length === 0" class="status-inventory-empty">
-              nothing
+              {{ game.ui.nothing }}
             </div>
             <ul v-else class="status-inventory">
               <li
                 v-for="item in game.playerInventory"
                 :key="item.id"
                 class="status-inventory__item"
-                :class="{ 'status-inventory__item--usable': item.type === 'consumable' }"
+                :class="{ 'status-inventory__item--usable': item.usable }"
                 :title="item.description"
                 @click="useItem(item)"
               >
@@ -129,8 +128,10 @@
         <!-- Work tab — everything the player has made, as they see it -->
         <div v-if="activeTab === 'work'" class="sidebar-panel sidebar-panel--work">
           <div class="status-section status-section--grow">
-            <div class="status-section__label">made</div>
-            <div v-if="game.playerWorks.length === 0" class="status-inventory-empty">nothing</div>
+            <div class="status-section__label">{{ game.ui.sections.made }}</div>
+            <div v-if="game.playerWorks.length === 0" class="status-inventory-empty">
+              {{ game.ui.nothing }}
+            </div>
             <ul v-else class="status-works">
               <li
                 v-for="work in game.playerWorks"
@@ -159,8 +160,7 @@ import { useNarrative, narrativeSkipBindings } from '../../composables/useNarrat
 import { useGameLoop } from '../../composables/useGameLoop.js'
 import { useSave } from '../../composables/useSave.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
-import { loadActions, loadEvents } from '../../data/loader.js'
-import { formatTime } from '../../engine/clock.js'
+import { clockFormat } from '../../engine/clock.js'
 import GameHeader from './GameHeader.vue'
 import GameFooter from './GameFooter.vue'
 import LocationView from '../game/LocationView.vue'
@@ -175,25 +175,19 @@ if (!game.isRunning) {
   router.replace('/')
 }
 
-// Load action and event registries from content/
-const actionRegistry = Object.values(loadActions(game.config.mapId))
-const eventRegistry = Object.values(loadEvents(game.config.mapId))
+// What can be done and what can happen here: registered at boot.
+const actionRegistry = Object.values(game.actions)
+const eventRegistry = Object.values(game.events)
 
-const narrative = useNarrative()
+const narrative = useNarrative({ tuning: game.tuning })
 provide('narrative', narrative)
 
 // Space skips the running narrative from anywhere on the screen
-useKeyboard(narrativeSkipBindings({ narrative }))
+useKeyboard({ bindings: narrativeSkipBindings({ narrative }) })
 
 const save = useSave()
 const gameLoop = useGameLoop({ actionRegistry, eventRegistry, narrative, save })
 provide('gameLoop', gameLoop)
-
-// Selected character — set by LocationView when player clicks a character,
-// read by ActionMenu to filter to that character's interaction actions.
-// null = no character selected, show location actions only.
-const selectedCharacterId = ref(null)
-provide('selectedCharacterId', selectedCharacterId)
 
 /** Live entry state — driven by the narrative composable itself */
 const activeEntry = computed(() => narrative.activeEntryState.value)
@@ -204,21 +198,14 @@ const activeTab = ref('status')
 
 // === Status sidebar data ===
 
-const formattedTime = computed(() => formatTime(game.time))
-const money = computed(() => game.playerMoney)
-const formattedMoney = computed(() => {
-  const m = money.value
-  if (m < 0) return `-${Math.abs(m).toFixed(2)}`
-  return m.toFixed(2)
-})
+const formattedTime = computed(() => clockFormat({ gameTime: game.time }))
 
 const statusStats = computed(() => game.statusBars)
 
 // === Inventory ===
 
-/** Use one of a consumable. The loop owns what that means. */
+/** Use an item. The loop owns what that means, including when it can't be used. */
 function useItem(item) {
-  if (item.type !== 'consumable') return
   gameLoop.useItem({ itemId: item.id })
 }
 </script>
@@ -407,11 +394,6 @@ function useItem(item) {
       color: $color-danger;
     }
   }
-}
-
-.status-money__sign {
-  font-size: 11px;
-  color: $color-accent;
 }
 
 .status-money__amount {

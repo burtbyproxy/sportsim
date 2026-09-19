@@ -13,7 +13,8 @@
   ],
   "menu": {
     "new": "New Game",
-    "load": "Load Game"
+    "load": "Load Game",
+    "loadFailed": "That save won't open. Whatever happened in there stays in there."
   },
   "mapId": "kenton",
   "start": {

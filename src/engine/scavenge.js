@@ -13,28 +13,18 @@
  * written.
  */
 
-import { rollCheck } from './dice.js'
-import { weightedPick } from '../utils/random.js'
+import { checkRoll } from './dice.js'
+import { randomPickWeighted } from '../utils/random.js'
+import { resultOk, resultFail } from './result.js'
+import { numberClamp } from '../utils/number.js'
 
 /** Enumerated error codes for every scavenge result. The code is the contract. */
 export const SCAVENGE_ERROR_CODES = Object.freeze({
-  PLAYER_MISSING: 'PLAYER_MISSING',
-  LOCATION_MISSING: 'LOCATION_MISSING',
-  TABLE_UNKNOWN: 'TABLE_UNKNOWN',
-  ITEM_UNKNOWN: 'ITEM_UNKNOWN',
+  playerMissing: 'PLAYER_MISSING',
+  locationMissing: 'LOCATION_MISSING',
+  tableUnknown: 'TABLE_UNKNOWN',
+  itemUnknown: 'ITEM_UNKNOWN',
 })
-
-/** A spot can only be picked so clean. */
-export const SCAVENGE_DEPLETION_MAX = 5
-
-/** Ticks for one level of depletion to restock: half a game day. */
-export const SCAVENGE_TICKS_PER_RESTOCK = 48
-
-/** Each level of depletion costs this much on the check. */
-export const SCAVENGE_DEPLETION_PENALTY = 2
-
-/** At or past this depletion, a failed search reads as picked clean. */
-export const SCAVENGE_PICKED_CLEAN_AT = 3
 
 /** The counter that remembers a unique find. */
 export function scavengedCounterName({ itemId }) {
@@ -45,31 +35,28 @@ export function scavengedCounterName({ itemId }) {
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-function _ok(data) {
-  return { ok: true, data, error: null }
-}
-
-function _fail(code, message) {
-  return { ok: false, data: null, error: { code, message } }
-}
-
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
 /**
  * How picked-over a location is right now. Depletion restocks lazily: one
- * level per SCAVENGE_TICKS_PER_RESTOCK since it was last worked.
+ * level per tuning.scavenge.ticksPerRestock since it was last worked.
  *
  * @param {{ location: Object, gameTime: { tick: number } }} input
- * @returns {number} 0–SCAVENGE_DEPLETION_MAX
+ * @returns {number} 0–tuning.scavenge.depletionMax
  */
-export function scavengeDepletion({ location, gameTime }) {
+export function scavengeDepletion({ location, gameTime, tuning }) {
   const state = location?.scavenge
   if (!state || !state.depletion) return 0
   const elapsed = Math.max(0, (gameTime?.tick ?? 0) - (state.updatedAtTick ?? 0))
-  const restocked = Math.floor(elapsed / SCAVENGE_TICKS_PER_RESTOCK)
-  return Math.max(0, Math.min(SCAVENGE_DEPLETION_MAX, state.depletion - restocked))
+  // One level restocks every tuning.scavenge.ticksPerRestock; a spot only gets so picked over.
+  const restocked = Math.floor(elapsed / tuning.scavenge.ticksPerRestock)
+  return numberClamp({
+    value: state.depletion - restocked,
+    min: 0,
+    max: tuning.scavenge.depletionMax,
+  })
 }
 
 /**
@@ -100,29 +87,48 @@ export function scavengeSearch({
   items = {},
   gameTime,
   rng = Math.random,
+  tuning,
 }) {
   if (!player || typeof player !== 'object') {
-    return _fail(SCAVENGE_ERROR_CODES.PLAYER_MISSING, 'scavengeSearch needs a player')
+    return resultFail({
+      code: SCAVENGE_ERROR_CODES.playerMissing,
+      message: 'scavengeSearch needs a player',
+    })
   }
   if (!location || typeof location !== 'object') {
-    return _fail(SCAVENGE_ERROR_CODES.LOCATION_MISSING, 'scavengeSearch needs a location')
+    return resultFail({
+      code: SCAVENGE_ERROR_CODES.locationMissing,
+      message: 'scavengeSearch needs a location',
+    })
   }
   const table = tables[location.scavengeTableId]
   if (!table) {
-    return _fail(
-      SCAVENGE_ERROR_CODES.TABLE_UNKNOWN,
-      `Location '${location.id}' names no known scavenge table ('${location.scavengeTableId}')`
-    )
+    return resultFail({
+      code: SCAVENGE_ERROR_CODES.tableUnknown,
+      message: `Location '${location.id}' names no known scavenge table ('${location.scavengeTableId}')`,
+    })
   }
   const unknown = table.entries.find((entry) => !items[entry.itemId])
   if (unknown) {
-    return _fail(SCAVENGE_ERROR_CODES.ITEM_UNKNOWN, `Unknown item '${unknown.itemId}'`)
+    return resultFail({
+      code: SCAVENGE_ERROR_CODES.itemUnknown,
+      message: `Unknown item '${unknown.itemId}'`,
+    })
   }
 
   const tick = gameTime?.tick ?? 0
-  const depletionBefore = scavengeDepletion({ location, gameTime })
-  const situational = depletionBefore > 0 ? [-depletionBefore * SCAVENGE_DEPLETION_PENALTY] : []
-  const check = rollCheck(player, table.stat, situational, table.dc, rng)
+  const depletionBefore = scavengeDepletion({ tuning, location, gameTime })
+  // Each level of depletion costs this much on the check.
+  const situational =
+    depletionBefore > 0 ? [-depletionBefore * tuning.scavenge.depletionPenalty] : []
+  const check = checkRoll({
+    tuning,
+    player,
+    statName: table.stat,
+    modifiers: situational,
+    dc: table.dc,
+    rng,
+  })
 
   let entry = null
   if (check.success) {
@@ -131,24 +137,28 @@ export function scavengeSearch({
     )
     const rare = candidates.filter((e) => e.rare)
     const pool = check.criticalSuccess && rare.length > 0 ? rare : candidates
-    entry = weightedPick(pool, (e) => e.weight, rng)
+    entry = randomPickWeighted({ items: pool, weightOf: (e) => e.weight, rng })
   }
 
   // A find works the spot over and restarts its restock clock. Coming up
   // empty changes nothing: the stored state keeps restocking on its own.
   const scavenge = entry
-    ? { depletion: Math.min(SCAVENGE_DEPLETION_MAX, depletionBefore + 1), updatedAtTick: tick }
+    ? {
+        depletion: Math.min(tuning.scavenge.depletionMax, depletionBefore + 1),
+        updatedAtTick: tick,
+      }
     : {
         depletion: location.scavenge?.depletion ?? 0,
         updatedAtTick: location.scavenge?.updatedAtTick ?? tick,
       }
 
-  return _ok({
+  return resultOk({
     itemId: entry ? entry.itemId : null,
     entry: entry ? { ...entry } : null,
     check,
     depletionBefore,
-    pickedClean: !entry && depletionBefore >= SCAVENGE_PICKED_CLEAN_AT,
+    // At or past this depletion, a failed search reads as picked clean.
+    pickedClean: !entry && depletionBefore >= tuning.scavenge.pickedCleanAt,
     scavenge,
   })
 }

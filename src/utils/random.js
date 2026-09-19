@@ -1,15 +1,17 @@
 /**
  * Random utilities — seeded and unseeded RNG functions.
- * All functions accept an optional rng parameter for reproducible results in tests.
+ * Every function takes one struct; an optional rng makes it reproducible in tests.
  */
+
+import { numberSum } from './number.js'
 
 /**
  * Creates a seeded pseudo-random number generator using a simple mulberry32 algorithm.
  * Returns a function that produces values in [0, 1).
- * @param {number} seed
+ * @param {{ seed: number }} input
  * @returns {() => number}
  */
-export function seededRandom(seed) {
+export function randomSeeded({ seed }) {
   let s = seed >>> 0
   return function () {
     s += 0x6d2b79f5
@@ -20,29 +22,26 @@ export function seededRandom(seed) {
 }
 
 /**
- * Returns a random integer in [min, max] (inclusive).
- * @param {number} min
- * @param {number} max
- * @param {(() => number)} [rng=Math.random]
+ * A random integer in [min, max], both ends included.
+ * @param {{ min: number, max: number, rng?: (() => number) }} input
  * @returns {number}
  */
-export function roll(min, max, rng = Math.random) {
+export function randomInt({ min, max, rng = Math.random }) {
   return Math.floor(rng() * (max - min + 1)) + min
 }
 
 /**
  * Picks one item from an array using a weight function.
  * @template T
- * @param {T[]} items
- * @param {(item: T) => number} weightFn - returns a non-negative weight for each item
- * @param {(() => number)} [rng=Math.random]
+ * @param {{ items: T[], weightOf: (item: T) => number, rng?: (() => number) }} input
+ *   weightOf — returns a non-negative weight for each item
  * @returns {T|null} - null if items is empty or all weights are zero
  */
-export function weightedPick(items, weightFn, rng = Math.random) {
+export function randomPickWeighted({ items, weightOf, rng = Math.random }) {
   if (!items || items.length === 0) return null
 
-  const weights = items.map(weightFn)
-  const total = weights.reduce((sum, w) => sum + w, 0)
+  const weights = items.map(weightOf)
+  const total = numberSum({ values: weights })
   if (total <= 0) return null
 
   let target = rng() * total
@@ -56,25 +55,24 @@ export function weightedPick(items, weightFn, rng = Math.random) {
 
 /**
  * Returns true with the given probability (0–1).
- * @param {number} probability - 0 = never, 1 = always
- * @param {(() => number)} [rng=Math.random]
+ * @param {{ probability: number, rng?: (() => number) }} input
+ *   probability — 0 = never, 1 = always
  * @returns {boolean}
  */
-export function chance(probability, rng = Math.random) {
+export function randomChance({ probability, rng = Math.random }) {
   return rng() < probability
 }
 
 /**
  * Fisher-Yates shuffle. Returns a new array (does not mutate input).
  * @template T
- * @param {T[]} array
- * @param {(() => number)} [rng=Math.random]
+ * @param {{ items: T[], rng?: (() => number) }} input
  * @returns {T[]}
  */
-export function shuffle(array, rng = Math.random) {
-  const result = [...array]
+export function randomShuffle({ items, rng = Math.random }) {
+  const result = [...items]
   for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1))
+    const j = randomInt({ min: 0, max: i, rng })
     ;[result[i], result[j]] = [result[j], result[i]]
   }
   return result

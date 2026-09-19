@@ -41,9 +41,7 @@
       "statusChanges": null,
       "statChanges": null,
       "moneyChange": -2,
-      "itemsGained": [
-        "tallboy_oly"
-      ],
+      "itemsGained": ["tallboy_oly"],
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,

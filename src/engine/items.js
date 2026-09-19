@@ -9,23 +9,39 @@
  * change; the store applies it.
  */
 
-import { applyEffects } from '../models/item.js'
+import { itemEffectsCopy } from '../models/item.js'
 import { STATUS_IDS_WRITABLE_DEFAULT } from '../models/defaults.js'
+import { resultOk, resultFail } from './result.js'
 
 /** Enumerated error codes for every items result. The code is the contract. */
+/**
+ * Whether an inventory holds at least one of an item.
+ *
+ * @param {{ inventory: Object[], itemId: string }} input
+ * @returns {boolean}
+ */
+export function inventoryHas({ inventory, itemId }) {
+  return (inventory ?? []).some((i) => i.id === itemId && i.quantity > 0)
+}
+
+/**
+ * Whether an item is something the player uses up by using it.
+ * @param {{ item: Object }} input
+ * @returns {boolean}
+ */
+export function itemUsable({ item }) {
+  return item?.type === 'consumable'
+}
+
 export const ITEM_ERROR_CODES = Object.freeze({
-  PLAYER_MISSING: 'PLAYER_MISSING',
-  ITEM_MISSING: 'ITEM_MISSING',
-  ITEM_NOT_CONSUMABLE: 'ITEM_NOT_CONSUMABLE',
-  EFFECT_TARGET_UNKNOWN: 'EFFECT_TARGET_UNKNOWN',
+  playerMissing: 'PLAYER_MISSING',
+  itemMissing: 'ITEM_MISSING',
+  itemNotConsumable: 'ITEM_NOT_CONSUMABLE',
+  effectTargetUnknown: 'EFFECT_TARGET_UNKNOWN',
 })
 
 /** Statuses an effect may change directly. Sobriety is derived; money has its own door. */
 export const ITEM_EFFECT_STATUSES = STATUS_IDS_WRITABLE_DEFAULT
-
-function _fail(code, message) {
-  return { ok: false, data: null, error: { code, message } }
-}
 
 /**
  * Work out what using one of an item does.
@@ -41,19 +57,25 @@ function _fail(code, message) {
  */
 export function itemUseResolve({ player, itemId, statusIds = ITEM_EFFECT_STATUSES }) {
   if (!player || typeof player !== 'object') {
-    return _fail(ITEM_ERROR_CODES.PLAYER_MISSING, 'itemUseResolve needs a player')
+    return resultFail({
+      code: ITEM_ERROR_CODES.playerMissing,
+      message: 'itemUseResolve needs a player',
+    })
   }
-  const item = (player.inventory ?? []).find((i) => i.id === itemId && (i.quantity ?? 1) > 0)
-  if (!item) {
-    return _fail(ITEM_ERROR_CODES.ITEM_MISSING, `Not carrying '${itemId}'`)
+  const item = (player.inventory ?? []).find((i) => i.id === itemId)
+  if (!inventoryHas({ inventory: player.inventory, itemId })) {
+    return resultFail({ code: ITEM_ERROR_CODES.itemMissing, message: `Not carrying '${itemId}'` })
   }
-  if (item.type !== 'consumable') {
-    return _fail(ITEM_ERROR_CODES.ITEM_NOT_CONSUMABLE, `'${itemId}' is not something you use up`)
+  if (!itemUsable({ item })) {
+    return resultFail({
+      code: ITEM_ERROR_CODES.itemNotConsumable,
+      message: `'${itemId}' is not something you use up`,
+    })
   }
 
   const statusChanges = {}
   const statModifiers = []
-  for (const effect of applyEffects(item)) {
+  for (const effect of itemEffectsCopy({ item })) {
     if (statusIds.includes(effect.target)) {
       statusChanges[effect.target] = (statusChanges[effect.target] ?? 0) + effect.value
     } else if (player.stats?.[effect.target]) {
@@ -62,21 +84,17 @@ export function itemUseResolve({ player, itemId, statusIds = ITEM_EFFECT_STATUSE
         modifier: { source: item.id, value: effect.value, duration: effect.duration ?? null },
       })
     } else {
-      return _fail(
-        ITEM_ERROR_CODES.EFFECT_TARGET_UNKNOWN,
-        `'${itemId}' has an effect on '${effect.target}', which is neither a status nor a stat`
-      )
+      return resultFail({
+        code: ITEM_ERROR_CODES.effectTargetUnknown,
+        message: `'${itemId}' has an effect on '${effect.target}', which is neither a status nor a stat`,
+      })
     }
   }
 
-  return {
-    ok: true,
-    data: {
-      item: { ...item },
-      statusChanges,
-      statModifiers,
-      doses: (item.doses ?? []).map((d) => ({ ...d })),
-    },
-    error: null,
-  }
+  return resultOk({
+    item: { ...item },
+    statusChanges,
+    statModifiers,
+    doses: (item.doses ?? []).map((d) => ({ ...d })),
+  })
 }

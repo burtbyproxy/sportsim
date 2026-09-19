@@ -1,21 +1,49 @@
 /**
- * Stats Engine — stat progression, archetype tracking, and natural decay.
+ * Stats Engine — stat progression, the status rule, and natural decay.
  * Pure functions. No side effects. No Vue. No DOM.
  */
 
-/** A rolled check trains the stat it rolled on. You learn more when it works. */
-export const STAT_XP_CHECK_SUCCESS = 2
-export const STAT_XP_CHECK_FAILURE = 1
+import { numberClamp, numberRound } from '../utils/number.js'
 
 /**
- * XP required to gain a stat point.
- * Simple linear for now — can be tuned to a curve later.
- * @param {number} currentBase - current stat base value
+ * Status that changes only through its own door: money through moneyAdjust,
+ * sobriety derived from what is in you. Everything else holds 0-100.
+ */
+const STATUS_IDS_NOT_WRITABLE = Object.freeze(['money', 'sobriety'])
+
+/**
+ * A status after changes. The same rule for the player and every character:
+ * unknown keys and keys with their own door are ignored, the rest are held
+ * to 0-100. Returns a new status; the input is not mutated.
+ *
+ * @param {{ status: Object<string, number>, changes: Object<string, number> }} input
+ * @returns {Object<string, number>}
+ */
+export function statusChangesApply({ status, changes }) {
+  const next = { ...status }
+  for (const [key, delta] of Object.entries(changes)) {
+    if (STATUS_IDS_NOT_WRITABLE.includes(key) || !(key in next)) continue
+    next[key] = numberClamp({ value: next[key] + delta, min: 0, max: 100 })
+  }
+  return next
+}
+
+/**
+ * A stat nobody has worked on yet: the shape of every stat and every skill cell.
+ * @param {{ base: number }} input
+ * @returns {{ base: number, modifiers: Object[], xp: number }}
+ */
+export function statCreate({ base }) {
+  return { base, modifiers: [], xp: 0 }
+}
+
+/**
+ * XP to the next point: more the higher the stat already is (content/tuning.json `stats`).
+ * @param {{ base: number, tuning: Object }} input
  * @returns {number}
  */
-function _xpThreshold(currentBase) {
-  // Costs more XP the higher your stat — diminishing returns
-  return 10 + currentBase * 2
+function xpThreshold({ base, tuning }) {
+  return tuning.stats.xpToNextBase + base * tuning.stats.xpToNextPerPoint
 }
 
 /**
@@ -23,90 +51,62 @@ function _xpThreshold(currentBase) {
  * for every threshold the XP clears, base capped at 100. Skills cells and
  * player stats share this shape and this curve. Returns a new object.
  *
- * @param {{ stat: { base: number, modifiers?: Object[], xp: number }, amount: number }} input
+ * @param {{ stat: { base: number, modifiers?: Object[], xp: number }, amount: number, tuning: Object }} input
  * @returns {{ stat: Object, leveledUp: boolean }}
  */
-export function statXpApply({ stat, amount }) {
+export function statXpApply({ stat, amount, tuning }) {
   const next = {
     ...stat,
     xp: stat.xp + amount,
     modifiers: [...(stat.modifiers || [])],
   }
   let leveledUp = false
-  while (next.xp >= _xpThreshold(next.base)) {
-    next.xp -= _xpThreshold(next.base)
+  while (next.xp >= xpThreshold({ base: next.base, tuning })) {
+    next.xp -= xpThreshold({ base: next.base, tuning })
     next.base = Math.min(next.base + 1, 100)
     leveledUp = true
     if (next.base === 100) break
   }
-  if (next.base === 100 && next.xp >= _xpThreshold(100)) next.xp = 0
+  if (next.base === 100 && next.xp >= xpThreshold({ base: 100, tuning })) next.xp = 0
   return { stat: next, leveledUp }
 }
 
 /**
- * Decay configuration — tuned for a ~24-hour game day.
- * 1 tick = 15 minutes of game time.
- * Actions cost 1-4 ticks; walking costs 1-3 ticks.
+ * How a status wears down over time: hunger and energy fall, mood drifts
+ * back toward its baseline, at the rates content sets (tuning.json `decay`).
+ * Sobriety is not here: it is derived from what is in you, which wears off
+ * in the blend engine. Returns the changes, not a new status; the caller
+ * applies them by the one status rule.
  *
- * Targets:
- *   hunger:   -1/tick    → noticeably hungry after 2-3h (~8-12 ticks), starving after 6h (~24 ticks)
- *   energy:   -0.5/tick  → exhausted after a full active day (~96 ticks of activity)
- *   sobriety: derived from intoxications; each substance wears off on its own
- *             clock in the blend engine (engine/blend.js), not here
- *   mood:     -0.25/tick toward baseline 40 (slow drift; events/actions are main mood drivers)
+ * @param {{ status: Object<string, number>, ticksElapsed: number, tuning: Object }} input
+ * @returns {Object<string, number>} changes by status key
  */
-export const DECAY_CONFIG = {
-  hunger: {
-    ratePerTick: -1,
-    min: 0,
-    max: 100,
-  },
-  energy: {
-    ratePerTick: -0.5,
-    min: 0,
-    max: 100,
-  },
-  mood: {
-    ratePerTick: -0.25, // drift per tick toward baseline
-    baseline: 40, // baseline melancholy — Portland 2001
-    min: 0,
-    max: 100,
-  },
-}
-
-/**
- * Calculates natural stat decay over time.
- * Returns status changes to apply (does NOT mutate state).
- *
- * @param {Object} player
- * @param {number} ticksElapsed
- * @param {Object} [config=DECAY_CONFIG] - override decay config if needed
- * @returns {Object<string, number>} - status deltas to apply
- */
-export function getStatDecayEffects(player, ticksElapsed, config = DECAY_CONFIG) {
+export function statusDecayChanges({ status = {}, ticksElapsed, tuning }) {
   if (!ticksElapsed || ticksElapsed <= 0) return {}
+  const config = tuning.decay
 
-  const status = player.status || {}
   const changes = {}
 
   // Hunger — simple linear decay
   const hungerCfg = config.hunger
   const currentHunger = status.hunger ?? 50
-  const newHunger = Math.min(
-    hungerCfg.max,
-    Math.max(hungerCfg.min, currentHunger + hungerCfg.ratePerTick * ticksElapsed)
-  )
-  const hungerDelta = parseFloat((newHunger - currentHunger).toFixed(2))
+  const newHunger = numberClamp({
+    value: currentHunger + hungerCfg.ratePerTick * ticksElapsed,
+    min: hungerCfg.min,
+    max: hungerCfg.max,
+  })
+  const hungerDelta = numberRound({ value: newHunger - currentHunger, places: 2 })
   if (hungerDelta !== 0) changes.hunger = hungerDelta
 
   // Energy — simple linear decay
   const energyCfg = config.energy
   const currentEnergy = status.energy ?? 80
-  const newEnergy = Math.min(
-    energyCfg.max,
-    Math.max(energyCfg.min, currentEnergy + energyCfg.ratePerTick * ticksElapsed)
-  )
-  const energyDelta = parseFloat((newEnergy - currentEnergy).toFixed(2))
+  const newEnergy = numberClamp({
+    value: currentEnergy + energyCfg.ratePerTick * ticksElapsed,
+    min: energyCfg.min,
+    max: energyCfg.max,
+  })
+  const energyDelta = numberRound({ value: newEnergy - currentEnergy, places: 2 })
   if (energyDelta !== 0) changes.energy = energyDelta
 
   // Mood — drifts toward baseline (40)
@@ -119,7 +119,7 @@ export function getStatDecayEffects(player, ticksElapsed, config = DECAY_CONFIG)
       currentMood > moodCfg.baseline
         ? Math.max(moodCfg.baseline, currentMood - driftAmount)
         : Math.min(moodCfg.baseline, currentMood + driftAmount)
-    const moodDelta = parseFloat((newMood - currentMood).toFixed(2))
+    const moodDelta = numberRound({ value: newMood - currentMood, places: 2 })
     if (moodDelta !== 0) changes.mood = moodDelta
   }
 

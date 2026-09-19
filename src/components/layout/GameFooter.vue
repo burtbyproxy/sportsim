@@ -11,8 +11,8 @@ import { useGameStore } from '../../stores/game.js'
 const game = useGameStore()
 
 const hint = computed(() => {
-  if (!game.isRunning) return 'no active game'
-  return '1–9 actions · a–z go · space skip'
+  if (!game.ui) return ''
+  return game.isRunning ? game.ui.footer.keys : game.ui.footer.idle
 })
 </script>
 

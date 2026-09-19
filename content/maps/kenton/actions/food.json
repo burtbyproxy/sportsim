@@ -204,9 +204,7 @@
       "statusChanges": null,
       "statChanges": null,
       "moneyChange": -3.75,
-      "itemsGained": [
-        "pack_cigarettes"
-      ],
+      "itemsGained": ["pack_cigarettes"],
       "itemsLost": null,
       "eventTriggered": null,
       "locationDiscovered": null,

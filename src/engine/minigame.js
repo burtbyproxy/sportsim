@@ -24,23 +24,25 @@
  * result struct out.
  */
 
-import { weightedPick, shuffle } from '../utils/random.js'
+import { randomPickWeighted, randomShuffle, randomInt } from '../utils/random.js'
+import { resultOk, resultFail } from './result.js'
+import { numberClamp } from '../utils/number.js'
 
 /** Enumerated error codes for every minigame result. The code is the contract. */
-export const GAME_ERROR_CODES = Object.freeze({
-  GAME_INVALID: 'GAME_INVALID',
-  SHAPE_UNKNOWN: 'SHAPE_UNKNOWN',
-  GAME_OVER: 'GAME_OVER',
-  CHOICE_UNKNOWN: 'CHOICE_UNKNOWN',
-  CHOICE_FORBIDDEN: 'CHOICE_FORBIDDEN',
+export const MINIGAME_ERROR_CODES = Object.freeze({
+  gameInvalid: 'GAME_INVALID',
+  shapeUnknown: 'SHAPE_UNKNOWN',
+  gameOver: 'GAME_OVER',
+  choiceUnknown: 'CHOICE_UNKNOWN',
+  choiceForbidden: 'CHOICE_FORBIDDEN',
 })
 
 /** Every shape a game can take. */
 export const GAME_SHAPES = Object.freeze({
-  STEADY: 'steady',
-  PUSH_LUCK: 'push_luck',
-  WORD_PICK: 'word_pick',
-  READ_ROOM: 'read_room',
+  steady: 'steady',
+  pushLuck: 'push_luck',
+  wordPick: 'word_pick',
+  readRoom: 'read_room',
 })
 
 /** The source id of the modifier a game hands the finishing check. */
@@ -50,23 +52,11 @@ export const GAME_MODIFIER_SOURCE_ID = 'game'
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-function _ok(data) {
-  return { ok: true, data, error: null }
-}
-
-function _fail(code, message) {
-  return { ok: false, data: null, error: { code, message } }
-}
-
-function _clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value))
-}
-
 /**
  * The coming round's choices: the game's labels, minus what the persona in
  * charge will not allow this round.
  */
-function _offerBuild({ game, choiceIds, round, personaId }) {
+function offerBuild({ game, choiceIds, round, personaId }) {
   const choices = choiceIds.map((id) => {
     const compulsion = (game.compulsions ?? []).find(
       (c) =>
@@ -87,17 +77,17 @@ function _offerBuild({ game, choiceIds, round, personaId }) {
 
 // ── steady: you keep at it ──────────────────────────────────────────────────
 
-const _steady = {
+const shapeSteady = {
   start({ game, personaId }) {
     return {
-      state: { offer: _offerBuild({ game, choiceIds: ['work'], round: 1, personaId }) },
+      state: { offer: offerBuild({ game, choiceIds: ['work'], round: 1, personaId }) },
       promptCode: null,
     }
   },
   resolve({ game, state, personaId }) {
     const round = state.offer.round + 1
     return {
-      state: { offer: _offerBuild({ game, choiceIds: ['work'], round, personaId }) },
+      state: { offer: offerBuild({ game, choiceIds: ['work'], round, personaId }) },
       lineCode: game.lines.work,
       lineParams: {},
       workDone: false,
@@ -111,13 +101,13 @@ const _steady = {
 
 // ── push_luck: every beat makes it better and makes it likelier to end badly ─
 
-const _pushLuck = {
+const shapePushLuck = {
   start({ game, personaId }) {
     return {
       state: {
         banked: 0,
         busted: false,
-        offer: _offerBuild({ game, choiceIds: ['press', 'stop'], round: 1, personaId }),
+        offer: offerBuild({ game, choiceIds: ['press', 'stop'], round: 1, personaId }),
       },
       promptCode: null,
     }
@@ -133,7 +123,11 @@ const _pushLuck = {
         promptCode: null,
       }
     }
-    const risk = _clamp(riskBase + riskStep * state.banked - skillRelief * skillValue, 0.02, 0.95)
+    const risk = numberClamp({
+      value: riskBase + riskStep * state.banked - skillRelief * skillValue,
+      min: 0.02,
+      max: 0.95,
+    })
     if (rng() < risk) {
       return {
         state: { ...state, busted: true, offer: null },
@@ -148,7 +142,7 @@ const _pushLuck = {
       state: {
         ...state,
         banked: state.banked + 1,
-        offer: _offerBuild({ game, choiceIds: ['press', 'stop'], round, personaId }),
+        offer: offerBuild({ game, choiceIds: ['press', 'stop'], round, personaId }),
       },
       lineCode: game.lines.pressed,
       lineParams: {},
@@ -165,21 +159,14 @@ const _pushLuck = {
 
 // ── word_pick: the words you choose are the piece ───────────────────────────
 
-function _wordsOffer({ game, state, round, personaId, rng }) {
+function wordsOffer({ game, state, round, personaId, rng }) {
   const used = new Set(state.words.map((w) => w.word))
   const registers = Object.keys(game.params.registers)
   const lean = game.params.personaLean?.[personaId] ?? null
   // The persona in charge leans on the draw: two of the three come from its register.
   const slots = lean
-    ? [
-        lean,
-        lean,
-        ...shuffle(
-          registers.filter((r) => r !== lean),
-          rng
-        ),
-      ]
-    : shuffle(registers, rng)
+    ? [lean, lean, ...randomShuffle({ items: registers.filter((r) => r !== lean), rng })]
+    : randomShuffle({ items: registers, rng })
   const picks = []
   for (const register of slots) {
     if (picks.length === game.params.picksPerRound) break
@@ -187,7 +174,7 @@ function _wordsOffer({ game, state, round, personaId, rng }) {
       (word) => !used.has(word) && !picks.some((p) => p.word === word)
     )
     if (pool.length === 0) continue
-    picks.push({ word: pool[Math.floor(rng() * pool.length)], register })
+    picks.push({ word: pool[randomInt({ min: 0, max: pool.length - 1, rng })], register })
   }
   return {
     round,
@@ -201,11 +188,11 @@ function _wordsOffer({ game, state, round, personaId, rng }) {
   }
 }
 
-const _wordPick = {
+const shapeWordPick = {
   start({ game, personaId, rng }) {
     const state = { words: [] }
     return {
-      state: { ...state, offer: _wordsOffer({ game, state, round: 1, personaId, rng }) },
+      state: { ...state, offer: wordsOffer({ game, state, round: 1, personaId, rng }) },
       promptCode: null,
     }
   },
@@ -214,7 +201,7 @@ const _wordPick = {
     const next = { words: [...state.words, { word: chosen.id, register: chosen.register }] }
     const round = state.offer.round + 1
     return {
-      state: { ...next, offer: _wordsOffer({ game, state: next, round, personaId, rng }) },
+      state: { ...next, offer: wordsOffer({ game, state: next, round, personaId, rng }) },
       lineCode: game.lines.picked,
       lineParams: { word: chosen.id },
       workDone: false,
@@ -233,14 +220,14 @@ const _wordPick = {
 
 // ── read_room: push when they are with you, hold when they are not ──────────
 
-const _readRoom = {
+const shapeReadRoom = {
   start({ game, personaId }) {
     const crowd = game.params.crowdStart
     return {
       state: {
         crowd,
         total: 0,
-        offer: _offerBuild({ game, choiceIds: ['push', 'hold', 'bow'], round: 1, personaId }),
+        offer: offerBuild({ game, choiceIds: ['push', 'hold', 'bow'], round: 1, personaId }),
       },
       promptCode: game.lines.crowd[crowd],
     }
@@ -256,13 +243,13 @@ const _readRoom = {
       }
     }
     const move = game.params.transitions[state.crowd][choiceId]
-    const crowd = weightedPick(move.to, (t) => t.weight, rng).crowd
+    const crowd = randomPickWeighted({ items: move.to, weightOf: (t) => t.weight, rng }).crowd
     const round = state.offer.round + 1
     return {
       state: {
         crowd,
         total: state.total + move.score,
-        offer: _offerBuild({ game, choiceIds: ['push', 'hold', 'bow'], round, personaId }),
+        offer: offerBuild({ game, choiceIds: ['push', 'hold', 'bow'], round, personaId }),
       },
       lineCode: choiceId === 'push' ? game.lines.pushed : game.lines.held,
       lineParams: {},
@@ -271,27 +258,38 @@ const _readRoom = {
     }
   },
   score({ game, state }) {
-    return _clamp(state.total, -game.params.scoreCap, game.params.scoreCap)
+    return numberClamp({
+      value: state.total,
+      min: -game.params.scoreCap,
+      max: game.params.scoreCap,
+    })
   },
 }
 
-const _SHAPES = {
-  [GAME_SHAPES.STEADY]: _steady,
-  [GAME_SHAPES.PUSH_LUCK]: _pushLuck,
-  [GAME_SHAPES.WORD_PICK]: _wordPick,
-  [GAME_SHAPES.READ_ROOM]: _readRoom,
+const SHAPES = {
+  [GAME_SHAPES.steady]: shapeSteady,
+  [GAME_SHAPES.pushLuck]: shapePushLuck,
+  [GAME_SHAPES.wordPick]: shapeWordPick,
+  [GAME_SHAPES.readRoom]: shapeReadRoom,
 }
 
-function _shapeOf(game) {
+function shapeOf(game) {
   if (!game || typeof game !== 'object' || typeof game.shape !== 'string') {
-    return _fail(GAME_ERROR_CODES.GAME_INVALID, 'A game needs a shape')
+    return resultFail({ code: MINIGAME_ERROR_CODES.gameInvalid, message: 'A game needs a shape' })
   }
   if (!game.lines || typeof game.lines !== 'object') {
-    return _fail(GAME_ERROR_CODES.GAME_INVALID, `Game '${game.id}' has no lines`)
+    return resultFail({
+      code: MINIGAME_ERROR_CODES.gameInvalid,
+      message: `Game '${game.id}' has no lines`,
+    })
   }
-  const shape = _SHAPES[game.shape]
-  if (!shape) return _fail(GAME_ERROR_CODES.SHAPE_UNKNOWN, `Unknown game shape '${game.shape}'`)
-  return _ok(shape)
+  const shape = SHAPES[game.shape]
+  if (!shape)
+    return resultFail({
+      code: MINIGAME_ERROR_CODES.shapeUnknown,
+      message: `Unknown game shape '${game.shape}'`,
+    })
+  return resultOk(shape)
 }
 
 // ---------------------------------------------------------------------------
@@ -306,9 +304,9 @@ function _shapeOf(game) {
  *   promptCode — a voice code that sets the scene for the first round, when the game has one.
  */
 export function gameStart({ game, personaId, rng = Math.random }) {
-  const shape = _shapeOf(game)
+  const shape = shapeOf(game)
   if (!shape.ok) return shape
-  return _ok(shape.data.start({ game, personaId, rng }))
+  return resultOk(shape.data.start({ game, personaId, rng }))
 }
 
 /**
@@ -340,17 +338,27 @@ export function gameRoundResolve({
   skillValue = 0,
   rng = Math.random,
 }) {
-  const shape = _shapeOf(game)
+  const shape = shapeOf(game)
   if (!shape.ok) return shape
-  if (!state?.offer) return _fail(GAME_ERROR_CODES.GAME_OVER, 'This game has no round to play')
+  if (!state?.offer)
+    return resultFail({
+      code: MINIGAME_ERROR_CODES.gameOver,
+      message: 'This game has no round to play',
+    })
   const choice = state.offer.choices.find((c) => c.id === choiceId)
   if (!choice) {
-    return _fail(GAME_ERROR_CODES.CHOICE_UNKNOWN, `'${choiceId}' is not on offer this round`)
+    return resultFail({
+      code: MINIGAME_ERROR_CODES.choiceUnknown,
+      message: `'${choiceId}' is not on offer this round`,
+    })
   }
   if (!choice.available) {
-    return _fail(GAME_ERROR_CODES.CHOICE_FORBIDDEN, choice.reason ?? `'${choiceId}' is forbidden`)
+    return resultFail({
+      code: MINIGAME_ERROR_CODES.choiceForbidden,
+      message: choice.reason ?? `'${choiceId}' is forbidden`,
+    })
   }
-  return _ok(shape.data.resolve({ game, state, choiceId, personaId, skillValue, rng }))
+  return resultOk(shape.data.resolve({ game, state, choiceId, personaId, skillValue, rng }))
 }
 
 /**
@@ -360,9 +368,9 @@ export function gameRoundResolve({
  * @returns {{ ok: boolean, data: { modifier: { sourceId: string, value: number }, words: string[] }|null, error: Object|null }}
  */
 export function gameScore({ game, state }) {
-  const shape = _shapeOf(game)
+  const shape = shapeOf(game)
   if (!shape.ok) return shape
-  return _ok({
+  return resultOk({
     modifier: { sourceId: GAME_MODIFIER_SOURCE_ID, value: shape.data.score({ game, state }) },
     words: (state.words ?? []).map((w) => w.word),
   })

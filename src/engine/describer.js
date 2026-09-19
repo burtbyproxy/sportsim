@@ -17,17 +17,14 @@
 
 import { voiceLine } from './voice.js'
 import { MAKING_TIERS } from './making.js'
+import { resultOk, resultFail } from './result.js'
 
 /** Enumerated error codes for every describer result. The code is the contract. */
 export const DESCRIBER_ERROR_CODES = Object.freeze({
-  TIER_UNKNOWN: 'TIER_UNKNOWN',
-  PART_MISSING: 'PART_MISSING',
-  LINE_MISSING: 'LINE_MISSING',
+  tierUnknown: 'TIER_UNKNOWN',
+  partMissing: 'PART_MISSING',
+  lineMissing: 'LINE_MISSING',
 })
-
-function _fail(code, message) {
-  return { ok: false, data: null, error: { code, message } }
-}
 
 /**
  * Describe a piece as its maker sees it.
@@ -61,7 +58,10 @@ export function pieceDescribe({
   voices,
 }) {
   if (!Object.values(MAKING_TIERS).includes(tier)) {
-    return _fail(DESCRIBER_ERROR_CODES.TIER_UNKNOWN, `Unknown tier '${tier}'`)
+    return resultFail({
+      code: DESCRIBER_ERROR_CODES.tierUnknown,
+      message: `Unknown tier '${tier}'`,
+    })
   }
   const parts = {
     medium,
@@ -71,12 +71,18 @@ export function pieceDescribe({
   }
   for (const [name, part] of Object.entries(parts)) {
     if (typeof part?.pieceAs !== 'string' || part.pieceAs.length === 0) {
-      return _fail(DESCRIBER_ERROR_CODES.PART_MISSING, `The ${name} has no pieceAs phrase`)
+      return resultFail({
+        code: DESCRIBER_ERROR_CODES.partMissing,
+        message: `The ${name} has no pieceAs phrase`,
+      })
     }
   }
 
   if (ingredient && !tool) {
-    return _fail(DESCRIBER_ERROR_CODES.PART_MISSING, 'An ingredient needs a tool to work it in')
+    return resultFail({
+      code: DESCRIBER_ERROR_CODES.partMissing,
+      message: 'An ingredient needs a tool to work it in',
+    })
   }
 
   let workCode = 'piece.work.bare'
@@ -84,7 +90,8 @@ export function pieceDescribe({
   const params = Object.fromEntries(Object.entries(parts).map(([k, part]) => [k, part.pieceAs]))
 
   const work = voiceLine({ code: workCode, personaId, voices, params })
-  if (!work.ok) return _fail(DESCRIBER_ERROR_CODES.LINE_MISSING, work.error.message)
+  if (!work.ok)
+    return resultFail({ code: DESCRIBER_ERROR_CODES.lineMissing, message: work.error.message })
 
   const artist = voiceLine({
     code: `piece.artist.${tier}`,
@@ -92,7 +99,8 @@ export function pieceDescribe({
     voices,
     params: { ...params, work: work.data.text },
   })
-  if (!artist.ok) return _fail(DESCRIBER_ERROR_CODES.LINE_MISSING, artist.error.message)
+  if (!artist.ok)
+    return resultFail({ code: DESCRIBER_ERROR_CODES.lineMissing, message: artist.error.message })
 
   let artistText = artist.data.text
   if (words.length > 0) {
@@ -102,17 +110,14 @@ export function pieceDescribe({
       voices,
       params: { words: words.join(', ') },
     })
-    if (!said.ok) return _fail(DESCRIBER_ERROR_CODES.LINE_MISSING, said.error.message)
+    if (!said.ok)
+      return resultFail({ code: DESCRIBER_ERROR_CODES.lineMissing, message: said.error.message })
     artistText = `${artistText} ${said.data.text}`
   }
 
-  return {
-    ok: true,
-    data: {
-      workText: work.data.text,
-      artistText,
-      personaId: artist.data.personaId,
-    },
-    error: null,
-  }
+  return resultOk({
+    workText: work.data.text,
+    artistText,
+    personaId: artist.data.personaId,
+  })
 }

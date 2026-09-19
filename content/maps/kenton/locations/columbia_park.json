@@ -1,7 +1,6 @@
 {
   "id": "columbia_park",
   "type": "park",
-  "variant": "community",
   "display": "Columbia Park",
   "pieceAs": "in Columbia Park",
   "outdoors": true,
@@ -39,8 +38,6 @@
       "requirements": null
     }
   ],
-  "npcSlots": ["vernon", "maurice"],
-  "actionIds": ["sit_on_bench", "look_for_change"],
   "scavengeTableId": "park",
   "surfaces": [
     {

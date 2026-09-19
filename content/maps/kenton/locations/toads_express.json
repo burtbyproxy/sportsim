@@ -1,7 +1,6 @@
 {
   "id": "toads_express",
   "type": "fuel",
-  "variant": "convenience",
   "display": "Toad's Express",
   "pieceAs": "at the pumps at Toad's Express",
   "outdoors": true,
@@ -39,8 +38,6 @@
       "requirements": null
     }
   ],
-  "npcSlots": [],
-  "actionIds": ["buy_cigarettes_toads", "bum_smoke_toads"],
   "scavengeTableId": "lot",
   "surfaces": [
     {

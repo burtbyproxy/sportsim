@@ -1,1 +1,4 @@
+# The courtesy layer (BFD-33): the same gates CI runs, before the commit exists.
 npx lint-staged
+npm run -s test:run
+"$(go -C tools tool -n bfd)" conform

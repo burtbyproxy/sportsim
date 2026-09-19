@@ -4,7 +4,8 @@
  * Pure functions. No side effects. No Vue. No DOM.
  */
 
-import { roll } from '../utils/random.js'
+import { randomInt } from '../utils/random.js'
+import { numberClamp, numberSum } from '../utils/number.js'
 
 /**
  * Everything acting on a player — every substance, every condition — reaches
@@ -14,35 +15,19 @@ import { roll } from '../utils/random.js'
 
 /**
  * Rolls a d20. Returns a value from 1 to 20.
- * @param {(() => number)} [rng=Math.random]
+ * @param {{ rng?: (() => number) }} input
  * @returns {number}
  */
-export function rollD20(rng = Math.random) {
-  return roll(1, 20, rng)
+export function diceD20({ rng = Math.random } = {}) {
+  return randomInt({ min: 1, max: 20, rng })
 }
-
-/**
- * Stats live on a 1–100 scale: a starting player rolls 10–20, the locals
- * sit anywhere from 25 to 85, and 100 is mastery. A check adds one point
- * of modifier to a d20 for every ten points of effective stat, so the
- * difficulty scale reads like any d20 game:
- *
- *   DC  5  trivial      DC 10  easy for anyone
- *   DC 15  hard for a beginner, routine for a pro
- *   DC 20  a pro's good day     DC 25  legendary
- *
- * A fresh player (+1 or +2) passes DC 10 a little over half the time and
- * DC 15 about a third of the time. Maurice's charm (85, so +8) passes
- * DC 15 seven times in ten.
- */
-export const STAT_POINTS_PER_MODIFIER = 10
 
 /** Where a stat's modifier item came from. */
 export const STAT_ITEM_SOURCES = Object.freeze({
-  BASE: 'base',
-  MODIFIER: 'modifier',
-  ABILITY: 'ability',
-  TRAUMA: 'trauma',
+  base: 'base',
+  modifier: 'modifier',
+  ability: 'ability',
+  trauma: 'trauma',
 })
 
 /**
@@ -59,10 +44,10 @@ export function statModifierItems({ player, statName }) {
 
   const statObj = player.stats?.[statName]
   if (statObj) {
-    items.push({ source: STAT_ITEM_SOURCES.BASE, sourceId: statName, value: statObj.base })
+    items.push({ source: STAT_ITEM_SOURCES.base, sourceId: statName, value: statObj.base })
     for (const mod of statObj.modifiers ?? []) {
       items.push({
-        source: STAT_ITEM_SOURCES.MODIFIER,
+        source: STAT_ITEM_SOURCES.modifier,
         sourceId: mod.source ?? statName,
         value: mod.value,
       })
@@ -78,14 +63,14 @@ export function statModifierItems({ player, statName }) {
     if (!ability.active) continue
     const effect = ability.effects?.diceModifiers?.[statName]
     if (effect !== undefined) {
-      items.push({ source: STAT_ITEM_SOURCES.ABILITY, sourceId: ability.id, value: effect })
+      items.push({ source: STAT_ITEM_SOURCES.ability, sourceId: ability.id, value: effect })
     }
   }
 
   for (const trauma of player.psyche?.traumas ?? []) {
     const effect = trauma.effects?.statModifiers?.[statName]
     if (effect !== undefined) {
-      items.push({ source: STAT_ITEM_SOURCES.TRAUMA, sourceId: trauma.id, value: effect })
+      items.push({ source: STAT_ITEM_SOURCES.trauma, sourceId: trauma.id, value: effect })
     }
   }
 
@@ -100,51 +85,63 @@ export function statModifierItems({ player, statName }) {
  * @returns {number}
  */
 export function statEffective({ player, statName }) {
-  return statModifierItems({ player, statName }).reduce((sum, item) => sum + item.value, 0)
+  return numberSum({ values: statModifierItems({ player, statName }).map((item) => item.value) })
 }
 
 /**
- * The number added to a d20 for a check on this stat: one per ten points of
- * effective stat, on the 1–100 scale, never below 0 or above 10.
- * @param {{ player: Object, statName: string }} input
+ * The modifier a stat adds to a d20: one point for every
+ * tuning.dice.statPointsPerModifier points of effective stat (10 today).
+ *
+ * Stats live on a 1–100 scale: a starting player rolls 10–20, the locals
+ * sit anywhere from 25 to 85, and 100 is mastery. At ten points a modifier
+ * the difficulty scale reads like any d20 game:
+ *
+ *   DC  5  trivial      DC 10  easy for anyone
+ *   DC 15  hard for a beginner, routine for a pro
+ *   DC 20  a pro's good day     DC 25  legendary
+ *
+ * A fresh player (+1 or +2) passes DC 10 a little over half the time and
+ * DC 15 about a third of the time. Maurice's charm (85, so +8) passes
+ * DC 15 seven times in ten.
+ *
+ * @param {{ player: Object, statName: string, tuning: Object }} input
  * @returns {number}
  */
-export function checkModifier({ player, statName }) {
-  const effective = Math.max(0, Math.min(100, statEffective({ player, statName })))
-  return Math.floor(effective / STAT_POINTS_PER_MODIFIER)
+export function checkModifier({ player, statName, tuning }) {
+  const effective = numberClamp({ value: statEffective({ player, statName }), min: 0, max: 100 })
+  return Math.floor(effective / tuning.dice.statPointsPerModifier)
 }
 
 /**
  * Returns true if the natural roll is a critical success.
- * @param {number} natural
+ * @param {{ natural: number }} input
  * @returns {boolean}
  */
-export function isCriticalSuccess(natural) {
+export function diceCriticalSuccess({ natural }) {
   return natural === 20
 }
 
 /**
  * Returns true if the natural roll is a critical failure.
- * @param {number} natural
+ * @param {{ natural: number }} input
  * @returns {boolean}
  */
-export function isCriticalFailure(natural) {
+export function diceCriticalFailure({ natural }) {
   return natural === 1
 }
 
 /**
  * Rolls a stat check against a difficulty class.
- * @param {Object} player
- * @param {string} statName - which stat to check
- * @param {number[]} modifiers - additional flat modifiers (situational bonuses/penalties)
- * @param {number} dc - difficulty class
- * @param {(() => number)} [rng=Math.random]
+ * @param {{ player: Object, statName: string, modifiers: number[], dc: number, rng?: (() => number), tuning: Object }} input
+ *   statName — which stat to check
+ *   modifiers — additional flat modifiers (situational bonuses/penalties)
+ *   dc — difficulty class
  * @returns {DiceResult}
  */
-export function rollCheck(player, statName, modifiers, dc, rng = Math.random) {
-  const natural = rollD20(rng)
-  const statModifier = checkModifier({ player, statName })
-  const extraModifiers = modifiers.reduce((sum, m) => sum + m, 0)
+export function checkRoll({ player, statName, modifiers, dc, rng = Math.random, tuning }) {
+  const natural = diceD20({ rng })
+  const statModifier = checkModifier({ player, statName, tuning })
+  const extraModifiers = numberSum({ values: modifiers })
   const totalModifier = statModifier + extraModifiers
   const total = natural + totalModifier
 
@@ -154,8 +151,8 @@ export function rollCheck(player, statName, modifiers, dc, rng = Math.random) {
     total,
     dc,
     success: total >= dc,
-    criticalSuccess: isCriticalSuccess(natural),
-    criticalFailure: isCriticalFailure(natural),
+    criticalSuccess: diceCriticalSuccess({ natural }),
+    criticalFailure: diceCriticalFailure({ natural }),
     stat: statName,
     // Everything behind the stat, itemized, plus each situational modifier.
     modifierItems: [
@@ -165,39 +162,27 @@ export function rollCheck(player, statName, modifiers, dc, rng = Math.random) {
   }
 }
 
+/** Who took a contest. */
+export const CONTEST_WINNERS = Object.freeze({ first: 'first', second: 'second', tie: 'tie' })
+
 /**
- * Resolves a contested roll between two combatants.
- * @param {Object} player1 - Player or NPC
- * @param {number[]} modifiers1
- * @param {string} stat1
- * @param {Object} player2 - Player or NPC
- * @param {number[]} modifiers2
- * @param {string} stat2
- * @param {(() => number)} [rng=Math.random]
- * @returns {{ winner: 1|2|'tie', result1: DiceResult, result2: DiceResult }}
+ * Two sides roll against each other; the higher total takes it.
+ * @param {{
+ *   first: { player: Object, statName: string, modifiers?: number[] },
+ *   second: { player: Object, statName: string, modifiers?: number[] },
+ *   rng?: (() => number),
+ *   tuning: Object,
+ * }} input
+ * @returns {{ winner: string, first: Object, second: Object }} winner is a CONTEST_WINNERS value
  */
-export function rollContested(
-  player1,
-  modifiers1,
-  stat1,
-  player2,
-  modifiers2,
-  stat2,
-  rng = Math.random
-) {
-  // Use an arbitrarily high DC so we can compare totals directly
-  const DUMMY_DC = 0
-  const result1 = rollCheck(player1, stat1, modifiers1, DUMMY_DC, rng)
-  const result2 = rollCheck(player2, stat2, modifiers2, DUMMY_DC, rng)
-
-  let winner
-  if (result1.total > result2.total) {
-    winner = 1
-  } else if (result2.total > result1.total) {
-    winner = 2
-  } else {
-    winner = 'tie'
-  }
-
-  return { winner, result1, result2 }
+export function checkContestedRoll({ first, second, rng = Math.random, tuning }) {
+  // A contest has no target to beat, only the other side, so neither roll has a DC.
+  const side = ({ player, statName, modifiers = [] }) =>
+    checkRoll({ player, statName, modifiers, dc: 0, rng, tuning })
+  const rolledFirst = side(first)
+  const rolledSecond = side(second)
+  let winner = CONTEST_WINNERS.tie
+  if (rolledFirst.total > rolledSecond.total) winner = CONTEST_WINNERS.first
+  if (rolledSecond.total > rolledFirst.total) winner = CONTEST_WINNERS.second
+  return { winner, first: rolledFirst, second: rolledSecond }
 }

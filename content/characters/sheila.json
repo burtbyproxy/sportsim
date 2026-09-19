@@ -35,9 +35,7 @@
   },
   "relationshipScore": 0,
   "currentLocationId": "mocks_crest",
-  "dialogueTreeIds": [],
   "want": "Respect. Not deference — just the basic understanding that she's in charge of this bar and you're in it. Sheila doesn't need to be liked. She needs to be taken seriously. She always is.",
   "fear": "Losing control of a situation. Not a fight — she can handle a fight. The thing she fears is the moment where someone doesn't listen and she has to decide what comes next.",
-  "level": 1,
   "decisionWeights": null
 }

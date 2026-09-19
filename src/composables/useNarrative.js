@@ -1,7 +1,8 @@
 import { ref, readonly } from 'vue'
-import { blendSober } from '../engine/blend.js'
+import { blendSober, PERSONA_SOURCES } from '../engine/blend.js'
 import { inspirationActive } from '../engine/inspiration.js'
-import { template, pickVariant, toNarrativeText } from '../utils/text.js'
+import { textFill, textVariantPick, narrativeTextCreate } from '../utils/text.js'
+import { randomInt } from '../utils/random.js'
 
 /**
  * Narrative Renderer composable.
@@ -16,90 +17,72 @@ import { template, pickVariant, toNarrativeText } from '../utils/text.js'
  */
 
 /**
- * Per-character delay ranges (ms) for each speed setting.
- * Each character gets a random value within [min, max].
- * instant is always 0 — no range needed.
+ * A speed tier's per-character delay range in ms (content/tuning.json
+ * `narrative.speedsMs`); an unknown tier reads as normal.
+ * @param {{ speed: string, tuning: Object }} input
+ * @returns {{ min: number, max: number }}
  */
-export const SPEED_MS = {
-  instant: 0,
-  fast: { min: 1, max: 5 },
-  normal: { min: 2, max: 10 },
-  slow: { min: 15, max: 40 },
-  crawl: { min: 50, max: 120 },
+function speedRange({ speed, tuning }) {
+  const speeds = tuning.narrative.speedsMs
+  return speeds[speed] ?? speeds.normal
 }
 
 /**
- * Minimum mean throughput the normal tier must sustain on ordinary prose,
- * in characters per second. Guards against the pauses stacking up until
- * a paragraph takes fifteen seconds to read.
+ * The extra pause after a punctuation character, or null for any other.
+ * @param {{ char: string, tuning: Object }} input
+ * @returns {{ min: number, max: number }|null}
  */
-export const NORMAL_TIER_MIN_CHARS_PER_SECOND = 100
-
-/**
- * Extra delay added after punctuation characters — makes the text breathe.
- * These stack on top of the base character delay.
- */
-export const PUNCTUATION_PAUSE = {
-  '.': { min: 60, max: 110 },
-  '!': { min: 60, max: 110 },
-  '?': { min: 60, max: 110 },
-  ',': { min: 25, max: 50 },
-  ';': { min: 25, max: 50 },
-  ':': { min: 20, max: 40 },
-  '—': { min: 60, max: 110 }, // em-dash — dramatic
-  '–': { min: 25, max: 50 }, // en-dash
+function punctuationPause({ char, tuning }) {
+  return tuning.narrative.punctuationPauseMs.find((pause) => pause.char === char) ?? null
 }
 
 /**
  * Mean milliseconds the renderer spends on one character of `text` at `speed`,
  * base delay plus punctuation pauses. Pure — used to prove the throughput contract.
- * @param {{ text: string, speed: string }} input
+ * @param {{ text: string, speed: string, tuning: Object }} input
  * @returns {number}
  */
-export function meanCharDelayMs({ text, speed }) {
-  const setting = SPEED_MS[speed] ?? SPEED_MS.normal
-  if (setting === 0 || text.length === 0) return 0
+export function meanCharDelayMs({ text, speed, tuning }) {
+  const setting = speedRange({ speed, tuning })
+  if (setting.max === 0 || text.length === 0) return 0
   const baseMean = (setting.min + setting.max) / 2
   let total = 0
   for (const char of text) {
-    const extra = PUNCTUATION_PAUSE[char]
+    const extra = punctuationPause({ char, tuning })
     total += baseMean + (extra ? (extra.min + extra.max) / 2 : 0)
   }
   return total / text.length
 }
 
-/** Pick a random integer in [min, max] inclusive. */
-function _randInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min
-}
-
 /**
- * Resolve a speed setting to a base character delay in ms.
- * For range-based speeds, picks a random value within the range.
- * @param {string} speed
+ * A base character delay in ms for a speed tier, picked within its range.
+ * @param {{ speed: string, tuning: Object }} input
  * @returns {number}
  */
-function _resolveSpeedMs(speed) {
-  const setting = SPEED_MS[speed] ?? SPEED_MS.normal
-  if (setting === 0) return 0
-  return _randInt(setting.min, setting.max)
+function resolveSpeedMs({ speed, tuning }) {
+  const setting = speedRange({ speed, tuning })
+  return randomInt({ min: setting.min, max: setting.max })
 }
 
 /**
- * Calculate the total delay for rendering a character at a given speed.
- * Adds punctuation / word-boundary pauses on top of the base delay.
- * @param {string} char - the character just typed
- * @param {string} speed - speed tier name
+ * The total delay for rendering a character at a given speed: the base
+ * delay plus any punctuation pause after it.
+ * @param {{ char: string, speed: string, tuning: Object }} input
+ *   char — the character just typed; speed — the tier name
  * @returns {number} ms to wait before rendering the next character
  */
-function _charDelay(char, speed) {
-  const base = _resolveSpeedMs(speed)
-  const extra = PUNCTUATION_PAUSE[char]
+function charDelay({ char, speed, tuning }) {
+  const base = resolveSpeedMs({ speed, tuning })
+  const extra = punctuationPause({ char, tuning })
   if (!extra) return base
-  return base + _randInt(extra.min, extra.max)
+  return base + randomInt({ min: extra.min, max: extra.max })
 }
 
-export function useNarrative() {
+/**
+ * The typewriter: a queue of narrative text rendered a character at a time.
+ * @param {{ tuning: Object }} input - the game's numbers; speeds and pauses come from it
+ */
+export function useNarrative({ tuning }) {
   /** Rendered log entries — each is a rendered NarrativeText */
   const log = ref([])
 
@@ -121,27 +104,27 @@ export function useNarrative() {
   /** Event callbacks */
   const listeners = { 'animation-start': [], 'animation-complete': [], skip: [] }
 
-  function emit(event, data) {
+  function emit({ event, data }) {
     for (const cb of listeners[event] ?? []) cb(data)
   }
 
-  function on(event, cb) {
+  function on({ event, handler }) {
     listeners[event] = listeners[event] ?? []
-    listeners[event].push(cb)
+    listeners[event].push(handler)
   }
 
-  function off(event, cb) {
-    listeners[event] = (listeners[event] ?? []).filter((c) => c !== cb)
+  function off({ event, handler }) {
+    listeners[event] = (listeners[event] ?? []).filter((c) => c !== handler)
   }
 
   /**
    * Queue a NarrativeText for rendering.
-   * @param {import('../engine/narrative-types.js').NarrativeText} narrativeText
+   * @param {import('../utils/text.js').NarrativeText} narrativeText
    */
   function enqueue(narrativeText) {
     queue.value.push(narrativeText)
     if (!isAnimating.value) {
-      _processQueue()
+      processQueue()
     }
   }
 
@@ -150,7 +133,7 @@ export function useNarrative() {
    */
   function skip() {
     skipRequested = true
-    emit('skip')
+    emit({ event: 'skip' })
   }
 
   /**
@@ -164,13 +147,13 @@ export function useNarrative() {
     renderGeneration++
     skipRequested = true
     activeEntryState.value = null
-    _currentTokenProgress.value = ''
+    tokenProgress.value = ''
   }
 
   /**
    * Internal: process the queue, one entry at a time.
    */
-  async function _processQueue() {
+  async function processQueue() {
     if (queue.value.length === 0) {
       isAnimating.value = false
       return
@@ -181,22 +164,22 @@ export function useNarrative() {
     skipRequested = false
     const generation = renderGeneration
 
-    emit('animation-start', narrativeText)
+    emit({ event: 'animation-start', data: narrativeText })
 
-    const entry = await _renderNarrativeText(narrativeText)
+    const entry = await renderNarrativeText(narrativeText)
 
     // clearLog ran while this was rendering — the entry belongs to a dead scene
     if (generation !== renderGeneration) {
-      _processQueue()
+      processQueue()
       return
     }
 
     log.value.push(entry)
 
-    emit('animation-complete', entry)
+    emit({ event: 'animation-complete', data: entry })
 
     // Process next in queue
-    _processQueue()
+    processQueue()
   }
 
   /**
@@ -204,7 +187,7 @@ export function useNarrative() {
    * Returns a plain object safe to store in log.
    * Updates activeEntryState in real-time so components can show live progress.
    */
-  async function _renderNarrativeText(narrativeText) {
+  async function renderNarrativeText(narrativeText) {
     const renderedTokens = []
 
     // Initialize live entry state
@@ -227,7 +210,7 @@ export function useNarrative() {
         currentToken: token,
       }
 
-      const rendered = await _animateToken(token)
+      const rendered = await animateToken(token)
       renderedTokens.push({ ...token, rendered })
 
       // Token done — update completed list
@@ -237,7 +220,7 @@ export function useNarrative() {
       }
 
       if (!skipRequested && token.pauseAfter > 0) {
-        await _pause(token.pauseAfter)
+        await pauseWait(token.pauseAfter)
       }
     }
 
@@ -255,13 +238,13 @@ export function useNarrative() {
    * delay — base speed randomised within the tier's range, plus punctuation and
    * word-boundary pauses stacked on top.  Feels like a human typing at 2am.
    */
-  function _animateToken(token) {
+  function animateToken(token) {
     return new Promise((resolve) => {
       const speed = token.speed ?? 'normal'
       const text = token.text
 
       // instant speed or skip — resolve immediately
-      if (SPEED_MS[speed] === 0 || skipRequested) {
+      if (speedRange({ speed, tuning }).max === 0 || skipRequested) {
         resolve(text)
         return
       }
@@ -276,7 +259,7 @@ export function useNarrative() {
 
         i++
         // Emit partial render via a reactive ref the component can watch
-        _currentTokenProgress.value = text.slice(0, i)
+        tokenProgress.value = text.slice(0, i)
 
         if (i >= text.length) {
           resolve(text)
@@ -285,35 +268,33 @@ export function useNarrative() {
 
         // Delay for the NEXT character is based on the character we just typed
         // — punctuation after a full-stop breathes longer than a mid-word letter
-        const delay = _charDelay(text[i - 1], speed)
+        const delay = charDelay({ char: text[i - 1], speed, tuning })
         setTimeout(tick, delay)
       }
 
       // Kick off with the delay for the very first character
-      setTimeout(tick, _resolveSpeedMs(speed))
+      setTimeout(tick, resolveSpeedMs({ speed, tuning }))
     })
   }
 
-  function _pause(ms) {
+  function pauseWait(ms) {
     return new Promise((resolve) => {
       if (skipRequested) {
         resolve()
         return
       }
-      const timeout = setTimeout(() => resolve(), ms)
-      // Watch for skip during pause
-      const check = setInterval(() => {
-        if (skipRequested) {
-          clearTimeout(timeout)
-          clearInterval(check)
-          resolve()
-        }
+      // Whichever ends the pause — time or a skip — takes the other timer with it.
+      let watcher = null
+      const timeout = setTimeout(() => {
+        clearInterval(watcher)
+        resolve()
+      }, ms)
+      watcher = setInterval(() => {
+        if (!skipRequested) return
+        clearTimeout(timeout)
+        clearInterval(watcher)
+        resolve()
       }, 16)
-      // Clean up check when pause resolves normally
-      Promise.resolve().then(() => {
-        // interval will clear when pause resolves — but we need to also clear check
-        setTimeout(() => clearInterval(check), ms + 50)
-      })
     })
   }
 
@@ -321,7 +302,7 @@ export function useNarrative() {
    * Reactive ref holding in-progress token text (for live display).
    * The NarrativeLog component reads this to show characters as they appear.
    */
-  const _currentTokenProgress = ref('')
+  const tokenProgress = ref('')
 
   /**
    * Live-updated active entry state for the currently animating NarrativeText.
@@ -334,7 +315,7 @@ export function useNarrative() {
     log: readonly(log),
     queue: readonly(queue),
     isAnimating: readonly(isAnimating),
-    currentTokenProgress: readonly(_currentTokenProgress),
+    currentTokenProgress: readonly(tokenProgress),
     activeEntryState: readonly(activeEntryState),
     enqueue,
     skip,
@@ -350,16 +331,19 @@ export function useNarrative() {
  * Space only acts while text is animating, so it never eats a keypress
  * the rest of the screen might want.
  * @param {{ narrative: ReturnType<typeof useNarrative> }} input
- * @returns {Record<string, (e: KeyboardEvent) => void>}
+ * @returns {Array<{ key: string, handler: (e: KeyboardEvent) => void }>}
  */
 export function narrativeSkipBindings({ narrative }) {
-  return {
-    ' ': (e) => {
-      if (!narrative.isAnimating.value) return
-      e.preventDefault()
-      narrative.skip()
+  return [
+    {
+      key: ' ',
+      handler: (e) => {
+        if (!narrative.isAnimating.value) return
+        e.preventDefault()
+        narrative.skip()
+      },
     },
-  }
+  ]
 }
 
 // ---------------------------------------------------------------------------
@@ -373,7 +357,7 @@ export function narrativeSkipBindings({ narrative }) {
  * @param {Object[]} insanities
  * @returns {string}
  */
-function _applyPerceptionFilters(text, insanities) {
+function perceptionFiltersApply({ text, insanities }) {
   if (!insanities || insanities.length === 0) return text
   let result = text
   for (const insanity of insanities) {
@@ -397,20 +381,24 @@ function _applyPerceptionFilters(text, insanities) {
  * @param {Object} location
  * @returns {Object}
  */
-function _buildNarrativeContext(player, gameTime, location) {
+function narrativeContextBuild({ player, gameTime, location, tuning }) {
   const sobriety = player.status?.sobriety ?? 100
-  const energy = player.status?.energy ?? 80
-  const hunger = player.status?.hunger ?? 50
   const blend = player.blend ?? blendSober()
   // Every persona acting on the player is a flag, so content can key a
-  // variant on "telepath" or "priest" the way it keys one on "drunk".
+  // variant on "telepath" or "priest" the way it keys one on "drunk"; every
+  // condition in the blend is one too, by its id ("exhausted", "starving"),
+  // so a description agrees with the condition about when it applies.
   const personaFlags = Object.fromEntries(blend.weights.map((w) => [w.personaId, true]))
+  const conditionFlags = Object.fromEntries(
+    blend.weights
+      .filter((w) => w.source === PERSONA_SOURCES.condition)
+      .map((w) => [w.sourceId, true])
+  )
   return {
     period: gameTime?.period ?? 'morning',
     visitCount: location?.visitCount ?? 0,
-    drunk: sobriety < 30,
-    exhausted: energy < 20,
-    starving: hunger < 15,
+    drunk: sobriety < tuning.narrative.drunkBelowSobriety,
+    ...conditionFlags,
     ...personaFlags,
     personaId: blend.dominantPersonaId,
     inspired: Boolean(inspirationActive({ player })),
@@ -421,64 +409,66 @@ function _buildNarrativeContext(player, gameTime, location) {
  * Generates the narrative description for a location.
  * Picks the best variant, applies perception filters, templates in variables.
  *
- * @param {Object} location - Location per data contract
- * @param {Object} player
- * @param {Object} gameTime
+ * @param {{ location: Object, player: Object, gameTime: Object, tuning: Object }} input
+ *   location — Location per data contract
  * @returns {NarrativeText}
  */
-export function generateLocationNarrative(location, player, gameTime) {
-  const context = _buildNarrativeContext(player, gameTime, location)
-  let text = pickVariant(location.descriptions || {}, context)
-  text = template(text, {
-    location: location.display || '',
-    playerName: player.name || 'you',
-    day: gameTime?.day ?? 1,
-    hour: gameTime?.hour ?? 0,
+export function narrativeLocation({ location, player, gameTime, tuning }) {
+  const context = narrativeContextBuild({ player, gameTime, location, tuning })
+  let text = textVariantPick({ variants: location.descriptions || {}, context })
+  text = textFill({
+    text,
+    params: {
+      location: location.display || '',
+      playerName: player.name || 'you',
+      day: gameTime?.day ?? 1,
+      hour: gameTime?.hour ?? 0,
+    },
   })
-  text = _applyPerceptionFilters(text, player.psyche?.insanities)
-  return toNarrativeText(text)
+  text = perceptionFiltersApply({ text, insanities: player.psyche?.insanities })
+  return narrativeTextCreate({ text })
 }
 
 /**
  * Generates narrative text for an action resolution result.
  *
- * @param {Object} actionResult - result from resolveAction()
+ * @param {Object} actionResult - result from actionResolve()
  * @returns {NarrativeText}
  */
-export function generateActionNarrative(actionResult) {
+export function narrativeAction(actionResult) {
   // Why not is the loop's to say, in somebody's voice. There is no outcome to narrate.
-  if (actionResult.requirementFailure) return toNarrativeText('')
+  if (actionResult.requirementFailure) return narrativeTextCreate({ text: '' })
   const outcome = actionResult.outcome
-  if (!outcome) return toNarrativeText('')
+  if (!outcome) return narrativeTextCreate({ text: '' })
   if (outcome.narrative?.tokens) return outcome.narrative
-  if (typeof outcome.narrative === 'string') return toNarrativeText(outcome.narrative)
-  return toNarrativeText('')
+  if (typeof outcome.narrative === 'string') return narrativeTextCreate({ text: outcome.narrative })
+  return narrativeTextCreate({ text: '' })
 }
 
 /**
  * Generates narrative text for an event.
  *
- * @param {Object} event - GameEvent per data contract
- * @param {Object} player
+ * @param {{ event: Object, player: Object }} input
+ *   event — GameEvent per data contract
  * @returns {NarrativeText}
  */
-export function generateEventNarrative(event, player) {
-  if (!event.narrative) return toNarrativeText('')
+export function narrativeEvent({ event, player }) {
+  if (!event.narrative) return narrativeTextCreate({ text: '' })
   if (event.narrative.tokens) {
     const insanities = player.psyche?.insanities ?? []
     if (insanities.length === 0) return event.narrative
     const filteredTokens = event.narrative.tokens.map((token) => ({
       ...token,
-      text: _applyPerceptionFilters(token.text, insanities),
+      text: perceptionFiltersApply({ text: token.text, insanities }),
     }))
     return { tokens: filteredTokens }
   }
   if (typeof event.narrative === 'string') {
-    const filtered = _applyPerceptionFilters(
-      template(event.narrative, { playerName: player.name || 'you' }),
-      player.psyche?.insanities
-    )
-    return toNarrativeText(filtered)
+    const filtered = perceptionFiltersApply({
+      text: textFill({ text: event.narrative, params: { playerName: player.name || 'you' } }),
+      insanities: player.psyche?.insanities,
+    })
+    return narrativeTextCreate({ text: filtered })
   }
-  return toNarrativeText('')
+  return narrativeTextCreate({ text: '' })
 }

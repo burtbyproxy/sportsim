@@ -40,12 +40,15 @@
     </div>
 
     <!-- Skip hint -->
-    <div v-if="isAnimating" class="narrative-skip-hint">space to skip</div>
+    <div v-if="isAnimating" class="narrative-skip-hint">{{ game.ui?.narrative.skipHint }}</div>
   </div>
 </template>
 
 <script setup>
+import { useGameStore } from '../../stores/game.js'
 import { ref, watch, nextTick } from 'vue'
+
+const game = useGameStore()
 
 const props = defineProps({
   /** Array of completed log entries from useNarrative */

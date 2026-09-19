@@ -13,14 +13,17 @@
  * takes a single input struct and returns a result struct (ok/data/error).
  */
 
-import { roll } from '../utils/random.js'
+import { randomInt } from '../utils/random.js'
+import { resultOk, resultFail } from './result.js'
+import { numberClamp, numberRound, numberSum } from '../utils/number.js'
+import { listSortBy } from '../utils/list.js'
 
 /** Enumerated error codes for every blend result. The code is the contract. */
 export const BLEND_ERROR_CODES = Object.freeze({
-  PLAYER_MISSING: 'PLAYER_MISSING',
-  SUBSTANCE_UNKNOWN: 'SUBSTANCE_UNKNOWN',
-  DOSE_INVALID: 'DOSE_INVALID',
-  TICKS_INVALID: 'TICKS_INVALID',
+  playerMissing: 'PLAYER_MISSING',
+  substanceUnknown: 'SUBSTANCE_UNKNOWN',
+  doseInvalid: 'DOSE_INVALID',
+  ticksInvalid: 'TICKS_INVALID',
 })
 
 /** Persona id of the player's own self — the weight nothing else has taken. */
@@ -28,37 +31,21 @@ export const SOBER_PERSONA_ID = 'sober'
 
 /** Where a persona's weight came from. */
 export const PERSONA_SOURCES = Object.freeze({
-  SUBSTANCE: 'substance',
-  WITHDRAWAL: 'withdrawal',
-  CONDITION: 'condition',
+  substance: 'substance',
+  withdrawal: 'withdrawal',
+  condition: 'condition',
 })
 
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-function _ok(data) {
-  return { ok: true, data, error: null }
-}
-
-function _fail(code, message) {
-  return { ok: false, data: null, error: { code, message } }
-}
-
-function _round(value) {
-  return parseFloat(value.toFixed(2))
-}
-
-function _clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value))
-}
-
 /**
  * The first intoxication or habituation key that names no known substance.
  * @param {{ player: Object, substances: Object<string, Object> }} input
  * @returns {string|null}
  */
-function _unknownSubstanceId({ player, substances }) {
+function unknownSubstanceId({ player, substances }) {
   const keys = [
     ...Object.keys(player.intoxications ?? {}),
     ...Object.keys(player.habituations ?? {}),
@@ -73,7 +60,7 @@ function _unknownSubstanceId({ player, substances }) {
  * @param {{ substance: Object, intoxication: number }} input
  * @returns {Object|null}
  */
-function _bandActive({ substance, intoxication }) {
+function bandActive({ substance, intoxication }) {
   let active = null
   for (const band of substance.bands ?? []) {
     if (intoxication >= band.atLeast && (active === null || band.atLeast > active.atLeast)) {
@@ -89,7 +76,7 @@ function _bandActive({ substance, intoxication }) {
  * @param {{ substance: Object, intoxication: number, habituation: number }} input
  * @returns {boolean}
  */
-function _withdrawalActive({ substance, intoxication, habituation }) {
+function withdrawalActive({ substance, intoxication, habituation }) {
   const withdrawal = substance.withdrawal
   if (!withdrawal) return false
   return habituation >= withdrawal.habituationAtLeast && intoxication < withdrawal.intoxicationBelow
@@ -100,7 +87,7 @@ function _withdrawalActive({ substance, intoxication, habituation }) {
  * @param {{ condition: Object, status: Object }} input
  * @returns {boolean}
  */
-function _conditionActive({ condition, status }) {
+function conditionActive({ condition, status }) {
   const source = condition.source
   const value = status?.[source.status]
   if (value === undefined || value === null) return false
@@ -113,7 +100,7 @@ function _conditionActive({ condition, status }) {
  * Add a persona's modifiers to the running totals and the itemized list.
  * @param {{ totals: Object<string, number>, sources: Object[], modifiers: Object[], personaId: string, source: string, sourceId: string }} input
  */
-function _modifiersAdd({ totals, sources, modifiers, personaId, source, sourceId }) {
+function modifiersAdd({ totals, sources, modifiers, personaId, source, sourceId }) {
   for (const mod of modifiers ?? []) {
     totals[mod.stat] = (totals[mod.stat] ?? 0) + mod.value
     sources.push({ personaId, source, sourceId, stat: mod.stat, value: mod.value })
@@ -152,8 +139,8 @@ export function blendSober() {
  * @returns {number} 0–100
  */
 export function sobrietyDerive({ intoxications }) {
-  const total = Object.values(intoxications ?? {}).reduce((sum, v) => sum + v, 0)
-  return _round(_clamp(100 - total, 0, 100))
+  const total = numberSum({ values: Object.values(intoxications ?? {}) })
+  return numberRound({ value: numberClamp({ value: 100 - total, min: 0, max: 100 }), places: 2 })
 }
 
 /**
@@ -176,11 +163,17 @@ export function sobrietyDerive({ intoxications }) {
  */
 export function blendCompute({ player, substances = {}, conditions = {} }) {
   if (!player || typeof player !== 'object') {
-    return _fail(BLEND_ERROR_CODES.PLAYER_MISSING, 'blendCompute needs a player')
+    return resultFail({
+      code: BLEND_ERROR_CODES.playerMissing,
+      message: 'blendCompute needs a player',
+    })
   }
-  const unknown = _unknownSubstanceId({ player, substances })
+  const unknown = unknownSubstanceId({ player, substances })
   if (unknown !== null) {
-    return _fail(BLEND_ERROR_CODES.SUBSTANCE_UNKNOWN, `Unknown substance '${unknown}'`)
+    return resultFail({
+      code: BLEND_ERROR_CODES.substanceUnknown,
+      message: `Unknown substance '${unknown}'`,
+    })
   }
 
   const intoxications = player.intoxications ?? {}
@@ -197,84 +190,87 @@ export function blendCompute({ player, substances = {}, conditions = {} }) {
       raw.push({
         personaId: substance.persona.id,
         weight: intoxication / 100,
-        source: PERSONA_SOURCES.SUBSTANCE,
+        source: PERSONA_SOURCES.substance,
         sourceId: substance.id,
         family: substance.family,
       })
-      const band = _bandActive({ substance, intoxication })
+      const band = bandActive({ substance, intoxication })
       if (band) {
-        _modifiersAdd({
+        modifiersAdd({
           totals: modifiers,
           sources: modifierSources,
           modifiers: band.modifiers,
           personaId: substance.persona.id,
-          source: PERSONA_SOURCES.SUBSTANCE,
+          source: PERSONA_SOURCES.substance,
           sourceId: substance.id,
         })
       }
     }
 
-    if (_withdrawalActive({ substance, intoxication, habituation })) {
+    if (withdrawalActive({ substance, intoxication, habituation })) {
       raw.push({
         personaId: substance.withdrawal.persona.id,
         weight: habituation / 100,
-        source: PERSONA_SOURCES.WITHDRAWAL,
+        source: PERSONA_SOURCES.withdrawal,
         sourceId: substance.id,
         family: null,
       })
-      _modifiersAdd({
+      modifiersAdd({
         totals: modifiers,
         sources: modifierSources,
         modifiers: substance.withdrawal.modifiers,
         personaId: substance.withdrawal.persona.id,
-        source: PERSONA_SOURCES.WITHDRAWAL,
+        source: PERSONA_SOURCES.withdrawal,
         sourceId: substance.id,
       })
     }
   }
 
   for (const condition of Object.values(conditions)) {
-    if (!_conditionActive({ condition, status: player.status })) continue
+    if (!conditionActive({ condition, status: player.status })) continue
     raw.push({
       personaId: condition.persona.id,
       weight: condition.weight,
-      source: PERSONA_SOURCES.CONDITION,
+      source: PERSONA_SOURCES.condition,
       sourceId: condition.id,
       family: null,
     })
-    _modifiersAdd({
+    modifiersAdd({
       totals: modifiers,
       sources: modifierSources,
       modifiers: condition.modifiers,
       personaId: condition.persona.id,
-      source: PERSONA_SOURCES.CONDITION,
+      source: PERSONA_SOURCES.condition,
       sourceId: condition.id,
     })
   }
 
-  const total = raw.reduce((sum, entry) => sum + entry.weight, 0)
+  const total = numberSum({ values: raw.map((entry) => entry.weight) })
   const scale = total > 1 ? 1 / total : 1
-  const soberWeight = _round(Math.max(0, 1 - total))
+  const soberWeight = numberRound({ value: Math.max(0, 1 - total), places: 2 })
 
   const families = {}
-  const weights = raw
-    .map((entry) => {
-      const weight = _round(entry.weight * scale)
-      if (entry.family) families[entry.family] = _round((families[entry.family] ?? 0) + weight)
-      return {
-        personaId: entry.personaId,
-        weight,
-        source: entry.source,
-        sourceId: entry.sourceId,
-      }
-    })
-    .sort((a, b) => b.weight - a.weight)
+  const unsorted = raw.map((entry) => {
+    const weight = numberRound({ value: entry.weight * scale, places: 2 })
+    if (entry.family)
+      families[entry.family] = numberRound({
+        value: (families[entry.family] ?? 0) + weight,
+        places: 2,
+      })
+    return {
+      personaId: entry.personaId,
+      weight,
+      source: entry.source,
+      sourceId: entry.sourceId,
+    }
+  })
+  const weights = listSortBy({ items: unsorted, keyOf: (w) => w.weight, descending: true })
 
   const heaviest = weights[0]
   const dominantPersonaId =
     heaviest && heaviest.weight > soberWeight ? heaviest.personaId : SOBER_PERSONA_ID
 
-  return _ok({ weights, dominantPersonaId, soberWeight, modifiers, modifierSources, families })
+  return resultOk({ weights, dominantPersonaId, soberWeight, modifiers, modifierSources, families })
 }
 
 /**
@@ -286,14 +282,23 @@ export function blendCompute({ player, substances = {}, conditions = {} }) {
  */
 export function blendDecay({ player, substances = {}, ticksElapsed }) {
   if (!player || typeof player !== 'object') {
-    return _fail(BLEND_ERROR_CODES.PLAYER_MISSING, 'blendDecay needs a player')
+    return resultFail({
+      code: BLEND_ERROR_CODES.playerMissing,
+      message: 'blendDecay needs a player',
+    })
   }
   if (!Number.isFinite(ticksElapsed) || ticksElapsed < 0) {
-    return _fail(BLEND_ERROR_CODES.TICKS_INVALID, `ticksElapsed must be >= 0, got ${ticksElapsed}`)
+    return resultFail({
+      code: BLEND_ERROR_CODES.ticksInvalid,
+      message: `ticksElapsed must be >= 0, got ${ticksElapsed}`,
+    })
   }
-  const unknown = _unknownSubstanceId({ player, substances })
+  const unknown = unknownSubstanceId({ player, substances })
   if (unknown !== null) {
-    return _fail(BLEND_ERROR_CODES.SUBSTANCE_UNKNOWN, `Unknown substance '${unknown}'`)
+    return resultFail({
+      code: BLEND_ERROR_CODES.substanceUnknown,
+      message: `Unknown substance '${unknown}'`,
+    })
   }
 
   const intoxicationChanges = {}
@@ -301,14 +306,14 @@ export function blendDecay({ player, substances = {}, ticksElapsed }) {
 
   for (const [id, level] of Object.entries(player.intoxications ?? {})) {
     const delta = -Math.min(level, substances[id].decayPerTick * ticksElapsed)
-    if (delta !== 0) intoxicationChanges[id] = _round(delta)
+    if (delta !== 0) intoxicationChanges[id] = numberRound({ value: delta, places: 2 })
   }
   for (const [id, level] of Object.entries(player.habituations ?? {})) {
     const delta = -Math.min(level, substances[id].habituationDecayPerTick * ticksElapsed)
-    if (delta !== 0) habituationChanges[id] = _round(delta)
+    if (delta !== 0) habituationChanges[id] = numberRound({ value: delta, places: 2 })
   }
 
-  return _ok({ intoxicationChanges, habituationChanges })
+  return resultOk({ intoxicationChanges, habituationChanges })
 }
 
 /**
@@ -326,7 +331,10 @@ export function blendDecay({ player, substances = {}, ticksElapsed }) {
  */
 export function dosesApply({ player, substances = {}, doses = [], rng = Math.random }) {
   if (!player || typeof player !== 'object') {
-    return _fail(BLEND_ERROR_CODES.PLAYER_MISSING, 'dosesApply needs a player')
+    return resultFail({
+      code: BLEND_ERROR_CODES.playerMissing,
+      message: 'dosesApply needs a player',
+    })
   }
 
   const intoxicationChanges = {}
@@ -338,32 +346,51 @@ export function dosesApply({ player, substances = {}, doses = [], rng = Math.ran
   for (const dose of doses) {
     const substance = substances[dose?.substanceId]
     if (!substance) {
-      return _fail(BLEND_ERROR_CODES.SUBSTANCE_UNKNOWN, `Unknown substance '${dose?.substanceId}'`)
+      return resultFail({
+        code: BLEND_ERROR_CODES.substanceUnknown,
+        message: `Unknown substance '${dose?.substanceId}'`,
+      })
     }
     if (!Number.isFinite(dose.value) || dose.value <= 0) {
-      return _fail(BLEND_ERROR_CODES.DOSE_INVALID, `Dose of '${substance.id}' must be > 0`)
+      return resultFail({
+        code: BLEND_ERROR_CODES.doseInvalid,
+        message: `Dose of '${substance.id}' must be > 0`,
+      })
     }
     const chance = dose.chance ?? 1
     if (!Number.isFinite(chance) || chance < 0 || chance > 1) {
-      return _fail(BLEND_ERROR_CODES.DOSE_INVALID, `Dose chance of '${substance.id}' must be 0–1`)
+      return resultFail({
+        code: BLEND_ERROR_CODES.doseInvalid,
+        message: `Dose chance of '${substance.id}' must be 0–1`,
+      })
     }
-    if (chance < 1 && roll(1, 100, rng) > chance * 100) continue
+    if (chance < 1 && randomInt({ min: 1, max: 100, rng }) > chance * 100) continue
 
     const id = substance.id
-    const intoxDelta = _round(Math.min(dose.value, 100 - (intoxications[id] ?? 0)))
+    const intoxDelta = numberRound({
+      value: Math.min(dose.value, 100 - (intoxications[id] ?? 0)),
+      places: 2,
+    })
     intoxications[id] = (intoxications[id] ?? 0) + intoxDelta
     if (intoxDelta !== 0)
-      intoxicationChanges[id] = _round((intoxicationChanges[id] ?? 0) + intoxDelta)
+      intoxicationChanges[id] = numberRound({
+        value: (intoxicationChanges[id] ?? 0) + intoxDelta,
+        places: 2,
+      })
 
-    const habitDelta = _round(
-      Math.min(dose.value * substance.habituationRate, 100 - (habituations[id] ?? 0))
-    )
+    const habitDelta = numberRound({
+      value: Math.min(dose.value * substance.habituationRate, 100 - (habituations[id] ?? 0)),
+      places: 2,
+    })
     habituations[id] = (habituations[id] ?? 0) + habitDelta
     if (habitDelta !== 0)
-      habituationChanges[id] = _round((habituationChanges[id] ?? 0) + habitDelta)
+      habituationChanges[id] = numberRound({
+        value: (habituationChanges[id] ?? 0) + habitDelta,
+        places: 2,
+      })
 
     substanceIdsTaken.push(id)
   }
 
-  return _ok({ intoxicationChanges, habituationChanges, substanceIdsTaken })
+  return resultOk({ intoxicationChanges, habituationChanges, substanceIdsTaken })
 }

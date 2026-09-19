@@ -9,7 +9,7 @@ import {
   dosesApply,
   sobrietyDerive,
 } from './blend.js'
-import { seededRandom } from '../utils/random.js'
+import { randomSeeded } from '../utils/random.js'
 
 // --- Fixtures ---
 
@@ -138,14 +138,14 @@ describe('blendCompute', () => {
   it('rejects a missing player with PLAYER_MISSING', () => {
     const result = blendCompute({ player: null, substances, conditions })
     expect(result.ok).toBe(false)
-    expect(result.error.code).toBe(BLEND_ERROR_CODES.PLAYER_MISSING)
+    expect(result.error.code).toBe(BLEND_ERROR_CODES.playerMissing)
   })
 
   it('rejects an intoxication naming no known substance', () => {
     const player = makePlayer({ intoxications: { absinthe: 20 } })
     const result = blendCompute({ player, substances, conditions })
     expect(result.ok).toBe(false)
-    expect(result.error.code).toBe(BLEND_ERROR_CODES.SUBSTANCE_UNKNOWN)
+    expect(result.error.code).toBe(BLEND_ERROR_CODES.substanceUnknown)
     expect(result.error.message).toContain('absinthe')
   })
 
@@ -159,7 +159,7 @@ describe('blendCompute', () => {
     const player = makePlayer({ intoxications: { whiskey: 40 } })
     const { data } = blendCompute({ player, substances, conditions })
     expect(data.weights).toEqual([
-      { personaId: 'priest', weight: 0.4, source: PERSONA_SOURCES.SUBSTANCE, sourceId: 'whiskey' },
+      { personaId: 'priest', weight: 0.4, source: PERSONA_SOURCES.substance, sourceId: 'whiskey' },
     ])
     expect(data.soberWeight).toBe(0.6)
     expect(data.dominantPersonaId).toBe(SOBER_PERSONA_ID)
@@ -286,7 +286,7 @@ describe('blendCompute', () => {
     const player = makePlayer({ status: { hunger: 10 } })
     const { data } = blendCompute({ player, substances, conditions })
     expect(data.weights).toEqual([
-      { personaId: 'hollow', weight: 0.3, source: PERSONA_SOURCES.CONDITION, sourceId: 'starving' },
+      { personaId: 'hollow', weight: 0.3, source: PERSONA_SOURCES.condition, sourceId: 'starving' },
     ])
     expect(data.soberWeight).toBe(0.7)
     expect(data.families).toEqual({})
@@ -309,7 +309,7 @@ describe('blendCompute', () => {
     const player = makePlayer({ intoxications: {}, habituations: { whiskey: 50 } })
     const { data } = blendCompute({ player, substances, conditions })
     expect(data.weights).toEqual([
-      { personaId: 'shakes', weight: 0.5, source: PERSONA_SOURCES.WITHDRAWAL, sourceId: 'whiskey' },
+      { personaId: 'shakes', weight: 0.5, source: PERSONA_SOURCES.withdrawal, sourceId: 'whiskey' },
     ])
     expect(data.modifiers).toEqual({ toughness: -3, creativity: 2 })
     expect(data.families).toEqual({})
@@ -318,7 +318,7 @@ describe('blendCompute', () => {
   it('withdrawal stops once the substance is back in the bloodstream', () => {
     const player = makePlayer({ intoxications: { whiskey: 10 }, habituations: { whiskey: 50 } })
     const { data } = blendCompute({ player, substances, conditions })
-    expect(data.weights.map((w) => w.source)).toEqual([PERSONA_SOURCES.SUBSTANCE])
+    expect(data.weights.map((w) => w.source)).toEqual([PERSONA_SOURCES.substance])
   })
 
   it('withdrawal needs the habituation threshold', () => {
@@ -346,23 +346,23 @@ describe('blendCompute', () => {
 describe('blendDecay', () => {
   it('rejects a missing player', () => {
     const result = blendDecay({ player: null, substances, ticksElapsed: 1 })
-    expect(result.error.code).toBe(BLEND_ERROR_CODES.PLAYER_MISSING)
+    expect(result.error.code).toBe(BLEND_ERROR_CODES.playerMissing)
   })
 
   it('rejects negative or non-numeric ticks with TICKS_INVALID', () => {
     const player = makePlayer()
     expect(blendDecay({ player, substances, ticksElapsed: -1 }).error.code).toBe(
-      BLEND_ERROR_CODES.TICKS_INVALID
+      BLEND_ERROR_CODES.ticksInvalid
     )
     expect(blendDecay({ player, substances, ticksElapsed: NaN }).error.code).toBe(
-      BLEND_ERROR_CODES.TICKS_INVALID
+      BLEND_ERROR_CODES.ticksInvalid
     )
   })
 
   it('rejects an unknown substance', () => {
     const player = makePlayer({ habituations: { mead: 10 } })
     expect(blendDecay({ player, substances, ticksElapsed: 1 }).error.code).toBe(
-      BLEND_ERROR_CODES.SUBSTANCE_UNKNOWN
+      BLEND_ERROR_CODES.substanceUnknown
     )
   })
 
@@ -402,7 +402,7 @@ describe('blendDecay', () => {
 describe('dosesApply', () => {
   it('rejects a missing player', () => {
     const result = dosesApply({ player: null, substances, doses: [] })
-    expect(result.error.code).toBe(BLEND_ERROR_CODES.PLAYER_MISSING)
+    expect(result.error.code).toBe(BLEND_ERROR_CODES.playerMissing)
   })
 
   it('rejects a dose of an unknown substance', () => {
@@ -411,7 +411,7 @@ describe('dosesApply', () => {
       substances,
       doses: [{ substanceId: 'gin', value: 20 }],
     })
-    expect(result.error.code).toBe(BLEND_ERROR_CODES.SUBSTANCE_UNKNOWN)
+    expect(result.error.code).toBe(BLEND_ERROR_CODES.substanceUnknown)
   })
 
   it('rejects a dose that is not a positive number', () => {
@@ -421,7 +421,7 @@ describe('dosesApply', () => {
         substances,
         doses: [{ substanceId: 'whiskey', value }],
       })
-      expect(result.error.code).toBe(BLEND_ERROR_CODES.DOSE_INVALID)
+      expect(result.error.code).toBe(BLEND_ERROR_CODES.doseInvalid)
     }
   })
 
@@ -431,7 +431,7 @@ describe('dosesApply', () => {
       substances,
       doses: [{ substanceId: 'whiskey', value: 20, chance: 1.5 }],
     })
-    expect(result.error.code).toBe(BLEND_ERROR_CODES.DOSE_INVALID)
+    expect(result.error.code).toBe(BLEND_ERROR_CODES.doseInvalid)
   })
 
   it('a dose raises intoxication and habituation by the substance rate', () => {
@@ -495,7 +495,9 @@ describe('dosesApply', () => {
     const run = () =>
       Array.from(
         { length: 20 },
-        () => dosesApply({ player: makePlayer(), substances, doses, rng: seededRandom(7) }).data
+        () =>
+          dosesApply({ player: makePlayer(), substances, doses, rng: randomSeeded({ seed: 7 }) })
+            .data
       )
     expect(run()).toEqual(run())
   })

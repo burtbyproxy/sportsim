@@ -1,7 +1,6 @@
 {
   "id": "moms_house",
   "type": "home",
-  "variant": "house",
   "display": "Mom's House",
   "pieceAs": "in your mother's basement",
   "outdoors": false,
@@ -39,8 +38,6 @@
       "requirements": null
     }
   ],
-  "npcSlots": [],
-  "actionIds": ["raid_fridge", "stare_at_ceiling", "sleep"],
   "scavengeTableId": "basement",
   "surfaces": [
     {

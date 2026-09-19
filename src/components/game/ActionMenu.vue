@@ -1,19 +1,17 @@
 <template>
   <div class="action-menu">
     <div class="action-menu__label ui-label">
-      <span v-if="activeEvent">{{ activeEvent.title ?? 'what now' }}</span>
-      <span v-else-if="selectedCharacter">{{ selectedCharacter.name }}</span>
-      <span v-else>what now</span>
+      <span>{{ game.menuTitle }}</span>
     </div>
 
     <!-- Event choices — the world is waiting on you -->
-    <div v-if="activeEvent" class="action-menu__list">
+    <div v-if="game.activeEvent" class="action-menu__list">
       <button
-        v-for="(entry, i) in menuEntries"
+        v-for="(entry, i) in entries"
         :key="`choice-${i}`"
         class="action-item action-item--choice"
         :class="{ 'action-item--selected': navIndex === i }"
-        @click="choose(entry)"
+        @click="dispatch(entry)"
         @mouseenter="navIndex = i"
       >
         <span class="action-shortcut">{{ entry.key }}.</span>
@@ -21,61 +19,47 @@
       </button>
     </div>
 
-    <!-- Actions -->
-    <div v-else-if="filteredActions.length === 0 && exits.length === 0" class="action-menu__empty">
-      <span v-if="selectedCharacter">nothing to say to {{ selectedCharacter.name }}</span>
-      <span v-else>nothing to do here</span>
+    <div v-else-if="entries.length === 0" class="action-menu__empty">
+      <span>{{ game.menuEmptyText }}</span>
     </div>
 
     <div v-else class="action-menu__list">
-      <!-- Location / character actions -->
-      <button
-        v-for="(action, i) in sortedActions"
-        :key="action.id"
-        class="action-item"
-        :class="{
-          'action-item--disabled': !action.available,
-          'action-item--selected': navIndex === i,
-        }"
-        :disabled="!action.available || isResolving"
-        :title="
-          action.available ? durationFormat({ ticks: action.timeCost }) : disabledReason(action)
-        "
-        @click="executeAction(action)"
-        @mouseenter="navIndex = i"
+      <template
+        v-for="(entry, i) in entries"
+        :key="entry.kind + (entry.action?.id ?? entry.exit?.locationId)"
       >
-        <span class="action-shortcut">{{ i < 9 ? i + 1 + '.' : '  ' }}</span>
-        {{ action.label }}
-        <span v-if="action.timeCost > 0" class="action-time-cost">
-          {{ durationFormat({ ticks: action.timeCost }) }}
-        </span>
-      </button>
-
-      <!-- Separator between actions and exits -->
-      <div v-if="sortedActions.length > 0 && exits.length > 0" class="action-menu__separator" />
-
-      <!-- Exits — go somewhere -->
-      <button
-        v-for="(exit, i) in exits"
-        :key="exit.locationId"
-        class="action-item action-item--exit"
-        :class="{
-          'action-item--disabled': !canTravel(exit),
-          'action-item--selected': navIndex === sortedActions.length + i,
-        }"
-        :disabled="!canTravel(exit)"
-        :title="
-          canTravel(exit) ? durationFormat({ ticks: exit.travelTime }) : travelBlockReason(exit)
-        "
-        @click="travel(exit)"
-        @mouseenter="navIndex = sortedActions.length + i"
-      >
-        <span class="action-shortcut action-shortcut--exit">{{ exitKeyFor({ index: i }) }}.</span>
-        {{ exit.label }}
-        <span v-if="exit.travelTime > 0" class="action-time-cost">
-          {{ durationFormat({ ticks: exit.travelTime }) }}
-        </span>
-      </button>
+        <!-- Separator between actions and exits -->
+        <div
+          v-if="entry.kind === 'exit' && i > 0 && entries[i - 1].kind !== 'exit'"
+          class="action-menu__separator"
+        />
+        <button
+          class="action-item"
+          :class="{
+            'action-item--exit': entry.kind === 'exit',
+            'action-item--disabled': !entry.available,
+            'action-item--selected': navIndex === i,
+          }"
+          :disabled="!entry.available || isResolving"
+          :title="
+            entry.available
+              ? durationFormat({ ticks: entry.ticks, tuning: game.tuning })
+              : entry.reason
+          "
+          @click="dispatch(entry)"
+          @mouseenter="navIndex = i"
+        >
+          <span
+            class="action-shortcut"
+            :class="{ 'action-shortcut--exit': entry.kind === 'exit' }"
+            >{{ entry.key ? entry.key + '.' : '  ' }}</span
+          >
+          {{ entry.label }}
+          <span v-if="entry.ticks > 0" class="action-time-cost">
+            {{ durationFormat({ ticks: entry.ticks, tuning: game.tuning }) }}
+          </span>
+        </button>
+      </template>
     </div>
   </div>
 </template>
@@ -83,143 +67,46 @@
 <script setup>
 import { computed, inject, ref, watch } from 'vue'
 import { useGameStore } from '../../stores/game.js'
-import { meetsRequirements, REQUIREMENT_CODES } from '../../engine/actions.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
 import { useKeyboardNav } from '../../composables/useKeyboardNav.js'
-import { isOpen, exitMeetsRequirements } from '../../models/location.js'
-import { menuEntriesBuild, exitKeyFor } from '../../utils/menu.js'
 import { durationFormat } from '../../engine/clock.js'
 
 const game = useGameStore()
 const gameLoop = inject('gameLoop')
-const selectedCharacterId = inject('selectedCharacterId', null)
 
-/** Prevent double-clicks during resolution */
+/** Prevent double-clicks while an action resolves */
 const isResolving = ref(false)
 
-/** The event waiting on the player's choice, if any */
-const activeEvent = computed(() => game.activeEvent)
+/** The one list the menu shows; the store builds it, the loop decides what is in it. */
+const entries = computed(() => game.menuEntries)
 
-/** The selected character object (or null) */
-const selectedCharacter = computed(() => {
-  const id = selectedCharacterId?.value
-  if (!id) return null
-  return game.characters[id] ?? null
-})
-
-/**
- * Filter available actions by selected character.
- * - Character selected: show only actions with matching characterId
- * - No character selected: show only location/general actions (no characterId)
- */
-const filteredActions = computed(() => {
-  const all = game.availableActions
-  const charId = selectedCharacterId?.value ?? null
-  if (charId) {
-    return all.filter((a) => a.characterId === charId)
-  }
-  return all.filter((a) => !a.characterId)
-})
-
-/** Sort: available first by weight desc, then disabled by weight desc */
-const sortedActions = computed(() => {
-  const available = filteredActions.value
-    .filter((a) => a.available)
-    .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
-  const disabled = filteredActions.value
-    .filter((a) => !a.available)
-    .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
-  return [...available, ...disabled]
-})
-
-// ── Exits (injected from GameScreen which reads from game store) ─────────────
-
-const exits = computed(() => game.currentLocation?.exits ?? [])
-
-function canTravel(exit) {
-  if (!exit || game.makingActive) return false
-  const dest = game.locations[exit.locationId]
-  if (!dest) return false
-  if (!isOpen(dest, game.time.hour)) return false
-  return exitMeetsRequirements({ exit, player: game.player, gameTime: game.time }).meets
-}
-
-function travelBlockReason(exit) {
-  if (game.makingActive) return game.requirementReason({ code: REQUIREMENT_CODES.BUSY })
-  const dest = game.locations[exit.locationId]
-  if (!dest) return ''
-  if (!isOpen(dest, game.time.hour)) {
-    return (
-      dest.availability?.closedMessage || game.requirementReason({ code: REQUIREMENT_CODES.CLOSED })
-    )
-  }
-  const { meets, reasonCode, reasonParams } = exitMeetsRequirements({
-    exit,
-    player: game.player,
-    gameTime: game.time,
-  })
-  return meets ? '' : game.requirementReason({ code: reasonCode, params: reasonParams })
-}
-
-function choose(entry) {
-  if (!gameLoop || entry.kind !== 'choice') return
-  gameLoop.resolveEventChoice({ choiceIndex: entry.choiceIndex })
-}
-
-function travel(exit) {
-  if (!canTravel(exit) || activeEvent.value) return
-  if (gameLoop) {
-    gameLoop.travel(exit.locationId, exit.travelTime ?? 1)
-  }
-}
-
-// ── Actions ──────────────────────────────────────────────────────────────────
-
-async function executeAction(action) {
-  if (!action.available || isResolving.value || !gameLoop || activeEvent.value) return
+/** Hand an entry to the loop, which decides what comes of it. */
+async function dispatch(entry) {
+  if (!gameLoop || isResolving.value) return
+  if (entry.kind === 'choice')
+    return gameLoop.resolveEventChoice({ choiceIndex: entry.choiceIndex })
+  if (entry.kind === 'exit') return gameLoop.travel({ locationId: entry.exit.locationId })
   isResolving.value = true
   try {
-    await gameLoop.resolvePlayerAction(action)
+    await gameLoop.resolvePlayerAction(entry.action)
   } finally {
     isResolving.value = false
   }
 }
 
-function disabledReason(action) {
-  if (!game.player) return ''
-  if (action.unavailableReason) return action.unavailableReason
-  const { meets, reasonCode, reasonParams } = meetsRequirements(game.player, action, game.time)
-  return meets ? '' : game.requirementReason({ code: reasonCode, params: reasonParams })
-}
-
-// ── Keyboard navigation ──────────────────────────────────────────────────────
-
-// Arrow keys and Enter walk one list: actions first, then exits.
-const menuEntries = computed(() =>
-  menuEntriesBuild({
-    actions: sortedActions.value,
-    exits: exits.value,
-    exitAvailable: canTravel,
-    choices: activeEvent.value?.choices ?? [],
-  })
-)
-
 const {
   selectedIndex: navIndex,
   onKeydown: navKeydown,
   clamp,
-} = useKeyboardNav(menuEntries, {
-  onSelect: (entry) => {
-    if (entry.kind === 'choice') choose(entry)
-    else if (entry.kind === 'action') executeAction(entry.action)
-    else travel(entry.exit)
-  },
+} = useKeyboardNav({
+  items: entries,
+  onSelect: dispatch,
   skip: (entry) => !entry.available,
   loop: true,
 })
 
 // Keep the highlight valid when the list changes, and start from the top at a new place
-watch(menuEntries, () => clamp())
+watch(entries, () => clamp())
 watch(
   () => game.currentLocationId,
   () => {
@@ -227,26 +114,22 @@ watch(
   }
 )
 
-// Number keys 1–9 for action shortcuts, arrow keys + enter for nav.
-// useKeyboard handles input exclusion and repeat filtering automatically.
-const actionKeyBindings = Object.fromEntries(
-  [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => [
-    String(n),
-    (e) => {
-      const entry = menuEntries.value.find((m) => m.key === String(n))
-      if (!entry?.available) return
-      e.preventDefault()
-      if (entry.kind === 'choice') choose(entry)
-      else executeAction(entry.action)
-    },
-  ])
-)
+// Number keys 1–9 pick the entry with that key; arrows and Enter walk the list.
+const numberKeyBindings = ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((key) => ({
+  key,
+  handler: (e) => {
+    const entry = entries.value.find((m) => m.key === key)
+    if (!entry?.available) return
+    e.preventDefault()
+    dispatch(entry)
+  },
+}))
 
 useKeyboard({
-  ...actionKeyBindings,
-  ArrowUp: (e) => navKeydown(e),
-  ArrowDown: (e) => navKeydown(e),
-  Enter: (e) => navKeydown(e),
+  bindings: [
+    ...numberKeyBindings,
+    ...['ArrowUp', 'ArrowDown', 'Enter'].map((key) => ({ key, handler: navKeydown })),
+  ],
 })
 </script>
 

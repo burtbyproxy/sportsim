@@ -13,7 +13,7 @@
  * @param {Object} data - raw item data
  * @returns {import('./types').Item}
  */
-export function createItem(data) {
+export function itemCreate(data) {
   return {
     id: data.id,
     name: data.name,
@@ -40,9 +40,9 @@ export function createItem(data) {
  * Does NOT mutate the player — that is the engine's responsibility.
  * Pure.
  *
- * @param {import('./types').Item} item
+ * @param {{ item: import('./types').Item }} input
  * @returns {import('./types').ItemEffect[]}
  */
-export function applyEffects(item) {
+export function itemEffectsCopy({ item }) {
   return item.effects.map((e) => ({ ...e }))
 }

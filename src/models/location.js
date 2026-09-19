@@ -3,7 +3,7 @@
  * Serializable to JSON.
  */
 
-import { meetsRequirements } from '../engine/actions.js'
+import { requirementsMeet } from '../engine/actions.js'
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -15,11 +15,10 @@ import { meetsRequirements } from '../engine/actions.js'
  * @param {Object} data - raw location data
  * @returns {import('./types').Location}
  */
-export function createLocation(data) {
+export function locationCreate(data) {
   return {
     id: data.id,
     type: data.type,
-    variant: data.variant ?? null,
     display: data.display,
     // How the place reads inside a piece made on nothing but the spot: "outside the Denver Ave 7-11".
     pieceAs: data.pieceAs ?? null,
@@ -27,8 +26,6 @@ export function createLocation(data) {
     outdoors: data.outdoors ?? false,
     descriptions: data.descriptions ?? { default: '' },
     exits: Array.isArray(data.exits) ? data.exits.map((e) => ({ ...e })) : [],
-    npcSlots: Array.isArray(data.npcSlots) ? [...data.npcSlots] : [],
-    actionIds: Array.isArray(data.actionIds) ? [...data.actionIds] : [],
     discovered: data.discovered ?? false,
     availability: data.availability
       ? { ...data.availability }
@@ -56,8 +53,8 @@ export function createLocation(data) {
  * @returns {import('./types').Location}
  */
 export function locationRestore({ definition, saved }) {
-  if (!saved) return createLocation(definition)
-  return createLocation({
+  if (!saved) return locationCreate(definition)
+  return locationCreate({
     ...definition,
     discovered: saved.discovered ?? definition.discovered,
     visitCount: saved.visitCount,
@@ -67,27 +64,34 @@ export function locationRestore({ definition, saved }) {
 }
 
 /**
+ * Check whether the player meets an exit's requirements.
+ * Exits share the requirement vocabulary of actions, so the same rules apply:
+ * minVisits counts visits to the place the exit leads out of.
+ * @param {{ exit: Object, player: Object, gameTime: Object, location: Object }} input
+ *   location — where the player is standing.
+ * @returns {{ meets: boolean, reasonCode: string|null, reasonParams: Object<string, string> }}
+ */
+export function exitRequirementsMeet({ exit, player, gameTime, location }) {
+  if (!exit.requirements) return { meets: true, reasonCode: null, reasonParams: {} }
+  return requirementsMeet({
+    player,
+    action: { requirements: exit.requirements },
+    gameTime,
+    location,
+  })
+}
+
+/**
  * Check whether a location is open at a given hour (0-23).
  * Pure — does not mutate location.
  *
  * Handles overnight windows (e.g. openHour=20, closeHour=2).
  *
- * @param {import('./types').Location} location
- * @param {number} hour - 0 to 23
+ * @param {{ location: import('./types').Location, hour: number }} input
+ *   hour — 0 to 23
  * @returns {boolean}
  */
-/**
- * Check whether the player meets an exit's requirements.
- * Exits share the requirement vocabulary of actions, so the same rules apply.
- * @param {{ exit: Object, player: Object, gameTime: Object }} input
- * @returns {{ meets: boolean, reasonCode: string|null, reasonParams: Object<string, string> }}
- */
-export function exitMeetsRequirements({ exit, player, gameTime }) {
-  if (!exit.requirements) return { meets: true, reasonCode: null, reasonParams: {} }
-  return meetsRequirements(player, { requirements: exit.requirements }, gameTime)
-}
-
-export function isOpen(location, hour) {
+export function locationOpen({ location, hour }) {
   const { openHour, closeHour } = location.availability
   if (openHour === 0 && closeHour === 23) return true // always open
   if (openHour <= closeHour) {
@@ -101,9 +105,9 @@ export function isOpen(location, hour) {
  * Increment the visit count for a location.
  * Mutates location in place.
  *
- * @param {import('./types').Location} location
+ * @param {{ location: import('./types').Location }} input
  * @returns {void}
  */
-export function incrementVisitCount(location) {
+export function locationVisitAdd({ location }) {
   location.visitCount = (location.visitCount ?? 0) + 1
 }

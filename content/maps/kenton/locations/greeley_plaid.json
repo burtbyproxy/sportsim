@@ -1,7 +1,6 @@
 {
   "id": "greeley_plaid",
   "type": "market",
-  "variant": "convenience",
   "display": "Plaid Pantry",
   "pieceAs": "outside the Greeley Plaid",
   "outdoors": true,
@@ -33,8 +32,6 @@
       "requirements": null
     }
   ],
-  "npcSlots": [],
-  "actionIds": ["buy_hot_dog_greeley_plaid", "shoplift_greeley_plaid"],
   "scavengeTableId": "lot",
   "surfaces": [
     {

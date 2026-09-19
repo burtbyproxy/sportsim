@@ -83,10 +83,8 @@
   },
   "relationshipScore": 0,
   "currentLocationId": "columbia_park",
-  "dialogueTreeIds": [],
   "want": "An audience. Not fame — just someone listening. Maurice needs to be witnessed. The magic tricks, the life advice, the showing up wherever you are — it's all the same thing. He needs to matter to someone for an hour.",
   "fear": "Being alone at the end of the night. Not alone in a room — alone in the way where nobody noticed you left. The worst thing that can happen to Maurice is a room that doesn't change when he walks into it.",
-  "level": 1,
   "decisionWeights": {
     "low_sobriety": { "bias": "bar", "weight": 0.6 },
     "low_hunger": { "bias": "food", "weight": 0.7 },

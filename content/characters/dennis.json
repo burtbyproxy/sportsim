@@ -68,9 +68,7 @@
   },
   "relationshipScore": 0,
   "currentLocationId": "mocks_crest",
-  "dialogueTreeIds": [],
   "want": "To be the guy who knows things. The authority. The man with the right opinion delivered at the right volume. He had this at the Blue Parrot and lost it in the worst possible way. Now he's rebuilding at Mock's, quieter, but the need is the same.",
   "fear": "Being humiliated again. Not physically — Dennis can take a punch. What he can't take is the room watching and doing nothing. The silence afterward. Walking out and knowing every person in that bar has a story about you now.",
-  "level": 1,
   "decisionWeights": null
 }

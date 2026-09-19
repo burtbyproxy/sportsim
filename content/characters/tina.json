@@ -35,9 +35,7 @@
   },
   "relationshipScore": 5,
   "currentLocationId": "blue_parrot",
-  "dialogueTreeIds": [],
   "want": "To be liked. Not respected, not feared, not admired. Just liked. Tina wants every person in the room to feel good, and she'll break every rule behind the bar to make it happen. She doesn't understand that this is why she keeps getting fired.",
   "fear": "Confrontation. Any kind. She'd rather let someone walk out with a case of beer than have a conversation about it.",
-  "level": 1,
   "decisionWeights": null
 }

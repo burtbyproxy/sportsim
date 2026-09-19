@@ -40,7 +40,7 @@ describe('voiceLine', () => {
   it('a code nobody has a line for is an error', () => {
     const result = voiceLine({ code: 'inspiration.nope', personaId: 'priest', voices })
     expect(result.ok).toBe(false)
-    expect(result.error.code).toBe(VOICE_ERROR_CODES.CODE_UNKNOWN)
+    expect(result.error.code).toBe(VOICE_ERROR_CODES.codeUnknown)
   })
 
   it('a catalog without a sober voice cannot speak', () => {
@@ -49,7 +49,7 @@ describe('voiceLine', () => {
       personaId: 'priest',
       voices: { priest: voices.priest },
     })
-    expect(result.error.code).toBe(VOICE_ERROR_CODES.SOBER_MISSING)
+    expect(result.error.code).toBe(VOICE_ERROR_CODES.soberMissing)
   })
 
   it('fills {tokens} from params, in whichever voice speaks', () => {

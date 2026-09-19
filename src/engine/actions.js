@@ -3,54 +3,56 @@
  * Pure functions. Does NOT mutate player state. Returns changes for the store to apply.
  */
 
-import { rollCheck, rollContested } from './dice.js'
+import { checkRoll, checkContestedRoll, CONTEST_WINNERS } from './dice.js'
 import { inspirationActive } from './inspiration.js'
+import { inventoryHas } from './items.js'
+import { moneyFormat } from '../utils/money.js'
+import { listSortBy } from '../utils/list.js'
 
 /**
  * Why an action cannot be taken. Each is a voice code: the sentence the
  * player reads lives in content/voices, in the voice of whoever is in charge.
  */
 export const REQUIREMENT_CODES = Object.freeze({
-  STAT: 'requirement.stat',
-  ITEM: 'requirement.item',
-  MONEY: 'requirement.money',
-  SOBRIETY_MIN: 'requirement.sobriety.min',
-  SOBRIETY_MAX: 'requirement.sobriety.max',
-  HOUR_EARLY: 'requirement.hour.early',
-  HOUR_LATE: 'requirement.hour.late',
-  VISITS: 'requirement.visits',
-  TRAUMA: 'requirement.trauma',
-  ABILITY: 'requirement.ability',
-  INSPIRATION: 'requirement.inspiration',
-  TIME: 'requirement.time',
-  BUSY: 'requirement.busy',
-  CLOSED: 'requirement.closed',
+  stat: 'requirement.stat',
+  item: 'requirement.item',
+  money: 'requirement.money',
+  sobrietyMin: 'requirement.sobriety.min',
+  sobrietyMax: 'requirement.sobriety.max',
+  hourEarly: 'requirement.hour.early',
+  hourLate: 'requirement.hour.late',
+  visits: 'requirement.visits',
+  trauma: 'requirement.trauma',
+  ability: 'requirement.ability',
+  inspiration: 'requirement.inspiration',
+  time: 'requirement.time',
+  busy: 'requirement.busy',
+  closed: 'requirement.closed',
 })
 
-const _MET = Object.freeze({ meets: true, reasonCode: null, reasonParams: {} })
+const MET = Object.freeze({ meets: true, reasonCode: null, reasonParams: {} })
 
-function _refuse(reasonCode, reasonParams = {}) {
+function refuse({ reasonCode, reasonParams = {} }) {
   return { meets: false, reasonCode, reasonParams }
 }
 
 /**
  * Checks whether a player meets the requirements for an action.
- * @param {Object} player - Player per data contract
- * @param {Object} action - Action per data contract
- * @param {Object} gameTime - GameTime per data contract
+ * @param {{ player: Object, action: Object, gameTime: Object, location?: Object|null }} input
+ *   location — where the player is; its visitCount is what minVisits reads.
  * @returns {{ meets: boolean, reasonCode: string|null, reasonParams: Object<string, string> }}
  *   reasonCode — a voice code (content/voices) for why not; the words are content, never this module's.
  */
-export function meetsRequirements(player, action, gameTime) {
+export function requirementsMeet({ player, action, gameTime, location = null }) {
   const req = action.requirements
-  if (!req) return _MET
+  if (!req) return MET
 
   // Stat requirements
   if (req.minStats) {
     for (const [stat, minVal] of Object.entries(req.minStats)) {
       const base = player.stats?.[stat]?.base ?? 0
       if (base < minVal) {
-        return _refuse(REQUIREMENT_CODES.STAT, { stat })
+        return refuse({ reasonCode: REQUIREMENT_CODES.stat, reasonParams: { stat } })
       }
     }
   }
@@ -58,9 +60,8 @@ export function meetsRequirements(player, action, gameTime) {
   // Item requirements
   if (req.requiredItems) {
     for (const itemId of req.requiredItems) {
-      const hasItem = player.inventory?.some((i) => i.id === itemId && i.quantity > 0)
-      if (!hasItem) {
-        return _refuse(REQUIREMENT_CODES.ITEM, { itemId })
+      if (!inventoryHas({ inventory: player.inventory, itemId })) {
+        return refuse({ reasonCode: REQUIREMENT_CODES.item, reasonParams: { itemId } })
       }
     }
   }
@@ -69,9 +70,12 @@ export function meetsRequirements(player, action, gameTime) {
   if (req.minMoney !== null && req.minMoney !== undefined) {
     const money = player.status?.money ?? 0
     if (money < req.minMoney) {
-      return _refuse(REQUIREMENT_CODES.MONEY, {
-        cost: `$${req.minMoney.toFixed(2)}`,
-        money: `$${money.toFixed(2)}`,
+      return refuse({
+        reasonCode: REQUIREMENT_CODES.money,
+        reasonParams: {
+          cost: moneyFormat({ amount: req.minMoney }),
+          money: moneyFormat({ amount: money }),
+        },
       })
     }
   }
@@ -79,26 +83,26 @@ export function meetsRequirements(player, action, gameTime) {
   // Sobriety requirements
   const sobriety = player.status?.sobriety ?? 100
   if (req.minSobriety !== null && req.minSobriety !== undefined && sobriety < req.minSobriety) {
-    return _refuse(REQUIREMENT_CODES.SOBRIETY_MIN)
+    return refuse({ reasonCode: REQUIREMENT_CODES.sobrietyMin })
   }
   if (req.maxSobriety !== null && req.maxSobriety !== undefined && sobriety > req.maxSobriety) {
-    return _refuse(REQUIREMENT_CODES.SOBRIETY_MAX)
+    return refuse({ reasonCode: REQUIREMENT_CODES.sobrietyMax })
   }
 
   // Time of day requirements
   if (req.minHour !== null && req.minHour !== undefined && gameTime.hour < req.minHour) {
-    return _refuse(REQUIREMENT_CODES.HOUR_EARLY)
+    return refuse({ reasonCode: REQUIREMENT_CODES.hourEarly })
   }
   if (req.maxHour !== null && req.maxHour !== undefined && gameTime.hour >= req.maxHour) {
-    return _refuse(REQUIREMENT_CODES.HOUR_LATE)
+    return refuse({ reasonCode: REQUIREMENT_CODES.hourLate })
   }
 
   // Visit count requirements
   if (req.minVisits !== null && req.minVisits !== undefined) {
-    const locationData = player._locationData // visit counts injected by store if needed
-    const visits = locationData?.visitCount ?? 0
+    // How often the player has been HERE. The same count the event engine reads.
+    const visits = location?.visitCount ?? 0
     if (visits < req.minVisits) {
-      return _refuse(REQUIREMENT_CODES.VISITS)
+      return refuse({ reasonCode: REQUIREMENT_CODES.visits })
     }
   }
 
@@ -107,14 +111,14 @@ export function meetsRequirements(player, action, gameTime) {
     const playerTraumaIds = player.psyche?.traumas?.map((t) => t.id) ?? []
     for (const traumaId of req.requiredTraumas) {
       if (!playerTraumaIds.includes(traumaId)) {
-        return _refuse(REQUIREMENT_CODES.TRAUMA, { traumaId })
+        return refuse({ reasonCode: REQUIREMENT_CODES.trauma, reasonParams: { traumaId } })
       }
     }
   }
 
   // Inspiration — some things cannot be done cold
   if (req.requiresInspiration && !inspirationActive({ player })) {
-    return _refuse(REQUIREMENT_CODES.INSPIRATION)
+    return refuse({ reasonCode: REQUIREMENT_CODES.inspiration })
   }
 
   // Ability requirements
@@ -122,26 +126,28 @@ export function meetsRequirements(player, action, gameTime) {
     const playerAbilityIds = player.psyche?.abilities?.map((a) => a.id) ?? []
     for (const abilityId of req.requiredAbilities) {
       if (!playerAbilityIds.includes(abilityId)) {
-        return _refuse(REQUIREMENT_CODES.ABILITY, { abilityId })
+        return refuse({ reasonCode: REQUIREMENT_CODES.ability, reasonParams: { abilityId } })
       }
     }
   }
 
-  return _MET
+  return MET
 }
 
 /**
  * Whether an action belongs on a location's menu at all, before any
- * requirement is checked: it is listed there or it goes anywhere, and an
- * action of a kind the place cannot support is left off.
+ * requirement is checked. The action says where it lives: one place, or
+ * anywhere. An action of a kind the place cannot support is left off, and
+ * an action with someone is left off when they are not here.
  *
- * @param {{ action: Object, location: Object }} input
+ * @param {{ action: Object, location: Object, characters: Object[] }} input
+ *   characters — those present at the location.
  * @returns {boolean}
  */
-export function actionApplies({ action, location }) {
-  const listed = (location.actionIds || []).includes(action.id) || action.locationId === 'any'
-  if (!listed) return false
+export function actionApplies({ action, location, characters }) {
+  if (action.locationId !== 'any' && action.locationId !== location.id) return false
   if (action.kind === 'scavenge' && !location.scavengeTableId) return false
+  if (action.characterId && !characters.some((c) => c.id === action.characterId)) return false
   return true
 }
 
@@ -150,19 +156,19 @@ export function actionApplies({ action, location }) {
  * filtered by requirements and sorted by effective weight.
  * Obsessions boost weight of related actions.
  *
- * @param {Object} player
- * @param {Object} location
- * @param {Object} gameTime
- * @param {Object[]} actionRegistry - all action definitions
+ * @param {{ player: Object, location: Object, characters: Object[], gameTime: Object, actionRegistry: Object[] }} input
+ *   characters — those present at the location; actionRegistry — all action definitions
  * @returns {Object[]} - sorted array of available actions
  */
-export function getAvailableActions(player, location, gameTime, actionRegistry) {
-  // Actions listed here, plus "any" location actions the place can support
-  const eligible = actionRegistry.filter((action) => actionApplies({ action, location }))
+export function actionsAvailable({ player, location, characters, gameTime, actionRegistry }) {
+  // Actions that live here or anywhere, that the place and the company support
+  const eligible = actionRegistry.filter((action) =>
+    actionApplies({ action, location, characters })
+  )
 
   // Filter by requirements
   const available = eligible.filter((action) => {
-    const { meets } = meetsRequirements(player, action, gameTime)
+    const { meets } = requirementsMeet({ player, action, gameTime, location })
     return meets
   })
 
@@ -175,10 +181,10 @@ export function getAvailableActions(player, location, gameTime, actionRegistry) 
   }
 
   // Sort by effective weight (descending)
-  return available.sort((a, b) => {
-    const weightA = _effectiveWeight(a, obsessionStrengths)
-    const weightB = _effectiveWeight(b, obsessionStrengths)
-    return weightB - weightA
+  return listSortBy({
+    items: available,
+    keyOf: (action) => weightEffective({ action, obsessionStrengths }),
+    descending: true,
   })
 }
 
@@ -188,7 +194,7 @@ export function getAvailableActions(player, location, gameTime, actionRegistry) 
  * @param {Object<string, number>} obsessionStrengths
  * @returns {number}
  */
-function _effectiveWeight(action, obsessionStrengths) {
+function weightEffective({ action, obsessionStrengths }) {
   let weight = action.weight || 0
   if (action.obsessionIds) {
     for (const obsId of action.obsessionIds) {
@@ -206,7 +212,7 @@ function _effectiveWeight(action, obsessionStrengths) {
  * @param {Object} diceResult
  * @returns {Object} - ActionOutcome
  */
-function _selectOutcome(action, diceResult) {
+function outcomeSelect({ action, diceResult }) {
   if (diceResult.criticalSuccess && action.criticalSuccess) {
     return action.criticalSuccess
   }
@@ -220,16 +226,26 @@ function _selectOutcome(action, diceResult) {
  * Resolves a player action. Does NOT mutate player state.
  * Returns the outcome and any changes to be applied by the store.
  *
- * @param {Object} player
- * @param {Object} action - Action per data contract
- * @param {Object} gameTime
- * @param {Object[]} npcs - NPCs present at the location
- * @param {(() => number)} [rng=Math.random]
+ * @param {{ player: Object, action: Object, gameTime: Object, location?: Object|null, characters?: Object[], rng?: (() => number) }} input
+ *   characters — those present at the location; rng defaults to Math.random.
  * @returns {{ success: boolean, outcome: Object, diceResult: Object|null, requirementFailure: { code: string, params: Object }|null }}
  */
-export function resolveAction(player, action, gameTime, npcs = [], rng = Math.random) {
+export function actionResolve({
+  player,
+  action,
+  gameTime,
+  location = null,
+  characters = [],
+  rng = Math.random,
+  tuning,
+}) {
   // Check requirements first
-  const { meets, reasonCode, reasonParams } = meetsRequirements(player, action, gameTime)
+  const { meets, reasonCode, reasonParams } = requirementsMeet({
+    player,
+    action,
+    gameTime,
+    location,
+  })
   if (!meets) {
     return {
       success: false,
@@ -253,7 +269,7 @@ export function resolveAction(player, action, gameTime, npcs = [], rng = Math.ra
 
   // Contested roll
   if (check.opposedStat && check.opposedNpcId) {
-    const npc = npcs.find((n) => n.id === check.opposedNpcId)
+    const npc = characters.find((c) => c.id === check.opposedNpcId)
     if (!npc) {
       // NPC not present — treat as auto-success (can't contest an absent opponent)
       return {
@@ -264,19 +280,16 @@ export function resolveAction(player, action, gameTime, npcs = [], rng = Math.ra
       }
     }
 
-    const { winner, result1 } = rollContested(
-      player,
-      [],
-      check.stat,
-      npc,
-      [],
-      check.opposedStat,
-      rng
-    )
+    const contest = checkContestedRoll({
+      tuning,
+      first: { player, statName: check.stat },
+      second: { player: npc, statName: check.opposedStat },
+      rng,
+    })
 
-    const playerWon = winner === 1
-    const diceResult = { ...result1, success: playerWon }
-    const outcome = _selectOutcome(action, diceResult)
+    const playerWon = contest.winner === CONTEST_WINNERS.first
+    const diceResult = { ...contest.first, success: playerWon }
+    const outcome = outcomeSelect({ action, diceResult })
 
     return {
       success: playerWon,
@@ -287,8 +300,15 @@ export function resolveAction(player, action, gameTime, npcs = [], rng = Math.ra
   }
 
   // Standard check
-  const diceResult = rollCheck(player, check.stat, [], check.dc, rng)
-  const outcome = _selectOutcome(action, diceResult)
+  const diceResult = checkRoll({
+    tuning,
+    player,
+    statName: check.stat,
+    modifiers: [],
+    dc: check.dc,
+    rng,
+  })
+  const outcome = outcomeSelect({ action, diceResult })
 
   return {
     success: diceResult.success,

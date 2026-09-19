@@ -15,49 +15,39 @@
 import { SOBER_PERSONA_ID, blendSober } from './blend.js'
 import {
   checkModifier,
-  rollD20,
+  diceD20,
   statModifierItems,
-  isCriticalSuccess,
-  isCriticalFailure,
+  diceCriticalSuccess,
+  diceCriticalFailure,
 } from './dice.js'
-import { statXpApply } from './stats.js'
+import { statCreate, statXpApply } from './stats.js'
+import { resultOk, resultFail } from './result.js'
+import { numberClamp, numberRound, numberSum } from '../utils/number.js'
 
 /** Enumerated error codes for every skills result. The code is the contract. */
 export const SKILL_ERROR_CODES = Object.freeze({
-  PLAYER_MISSING: 'PLAYER_MISSING',
-  MEDIUM_UNKNOWN: 'MEDIUM_UNKNOWN',
-  AMOUNT_INVALID: 'AMOUNT_INVALID',
-  DC_INVALID: 'DC_INVALID',
+  playerMissing: 'PLAYER_MISSING',
+  mediumUnknown: 'MEDIUM_UNKNOWN',
+  amountInvalid: 'AMOUNT_INVALID',
+  dcInvalid: 'DC_INVALID',
 })
 
 /** Where a check's modifier item came from. */
 export const CHECK_ITEM_SOURCES = Object.freeze({
-  SKILL: 'skill',
-  SITUATIONAL: 'situational',
+  skill: 'skill',
+  situational: 'situational',
 })
 
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-function _ok(data) {
-  return { ok: true, data, error: null }
-}
-
-function _fail(code, message) {
-  return { ok: false, data: null, error: { code, message } }
-}
-
-function _round(value) {
-  return parseFloat(value.toFixed(2))
-}
-
 /**
  * Every persona with weight in the blend, sober included. Weights sum to one.
  * @param {{ player: Object }} input
  * @returns {{ personaId: string, weight: number }[]}
  */
-function _personaWeights({ player }) {
+function personaWeights({ player }) {
   const blend = player.blend ?? blendSober()
   const weights = blend.weights
     .filter((w) => w.weight > 0)
@@ -68,8 +58,8 @@ function _personaWeights({ player }) {
   return weights
 }
 
-function _cellValue(cell) {
-  return (cell.modifiers ?? []).reduce((sum, mod) => sum + mod.value, cell.base)
+function cellValueCompute(cell) {
+  return cell.base + numberSum({ values: (cell.modifiers ?? []).map((mod) => mod.value) })
 }
 
 // ---------------------------------------------------------------------------
@@ -81,7 +71,7 @@ function _cellValue(cell) {
  * @returns {{ base: number, modifiers: Object[], xp: number }}
  */
 export function skillCellCreate() {
-  return { base: 0, modifiers: [], xp: 0 }
+  return statCreate({ base: 0 })
 }
 
 /**
@@ -107,18 +97,27 @@ export function skillCellGet({ player, mediumId, personaId }) {
  */
 export function skillEffective({ player, mediumId, mediums = {} }) {
   if (!player || typeof player !== 'object') {
-    return _fail(SKILL_ERROR_CODES.PLAYER_MISSING, 'skillEffective needs a player')
+    return resultFail({
+      code: SKILL_ERROR_CODES.playerMissing,
+      message: 'skillEffective needs a player',
+    })
   }
   if (!mediums[mediumId]) {
-    return _fail(SKILL_ERROR_CODES.MEDIUM_UNKNOWN, `Unknown medium '${mediumId}'`)
+    return resultFail({
+      code: SKILL_ERROR_CODES.mediumUnknown,
+      message: `Unknown medium '${mediumId}'`,
+    })
   }
-  const contributions = _personaWeights({ player }).map(({ personaId, weight }) => ({
+  const contributions = personaWeights({ player }).map(({ personaId, weight }) => ({
     personaId,
     weight,
-    cellValue: _cellValue(skillCellGet({ player, mediumId, personaId })),
+    cellValue: cellValueCompute(skillCellGet({ player, mediumId, personaId })),
   }))
-  const value = _round(contributions.reduce((sum, c) => sum + c.weight * c.cellValue, 0))
-  return _ok({ value, contributions })
+  const value = numberRound({
+    value: numberSum({ values: contributions.map((c) => c.weight * c.cellValue) }),
+    places: 2,
+  })
+  return resultOk({ value, contributions })
 }
 
 /**
@@ -129,15 +128,24 @@ export function skillEffective({ player, mediumId, mediums = {} }) {
  * @param {{ player: Object, mediumId: string, mediums: Object<string, Object>, amount: number }} input
  * @returns {{ ok: boolean, data: { cells: Object<string, Object>, allocations: { personaId: string, xp: number }[], personaIdsLeveled: string[] }|null, error: Object|null }}
  */
-export function skillGain({ player, mediumId, mediums = {}, amount }) {
+export function skillGain({ player, mediumId, mediums = {}, amount, tuning }) {
   if (!player || typeof player !== 'object') {
-    return _fail(SKILL_ERROR_CODES.PLAYER_MISSING, 'skillGain needs a player')
+    return resultFail({
+      code: SKILL_ERROR_CODES.playerMissing,
+      message: 'skillGain needs a player',
+    })
   }
   if (!mediums[mediumId]) {
-    return _fail(SKILL_ERROR_CODES.MEDIUM_UNKNOWN, `Unknown medium '${mediumId}'`)
+    return resultFail({
+      code: SKILL_ERROR_CODES.mediumUnknown,
+      message: `Unknown medium '${mediumId}'`,
+    })
   }
   if (!Number.isFinite(amount) || amount <= 0) {
-    return _fail(SKILL_ERROR_CODES.AMOUNT_INVALID, `amount must be > 0, got ${amount}`)
+    return resultFail({
+      code: SKILL_ERROR_CODES.amountInvalid,
+      message: `amount must be > 0, got ${amount}`,
+    })
   }
 
   const cells = {}
@@ -147,17 +155,17 @@ export function skillGain({ player, mediumId, mediums = {}, amount }) {
   const allocations = []
   const personaIdsLeveled = []
 
-  for (const { personaId, weight } of _personaWeights({ player })) {
-    const xp = _round(amount * weight)
+  for (const { personaId, weight } of personaWeights({ player })) {
+    const xp = numberRound({ value: amount * weight, places: 2 })
     if (xp <= 0) continue
     const before = cells[personaId] ?? skillCellGet({ player, mediumId, personaId })
-    const { stat, leveledUp } = statXpApply({ stat: before, amount: xp })
+    const { stat, leveledUp } = statXpApply({ tuning, stat: before, amount: xp })
     cells[personaId] = stat
     allocations.push({ personaId, xp })
     if (leveledUp) personaIdsLeveled.push(personaId)
   }
 
-  return _ok({ cells, allocations, personaIdsLeveled })
+  return resultOk({ cells, allocations, personaIdsLeveled })
 }
 
 /**
@@ -182,48 +190,60 @@ export function skillCheckRoll({
   dc,
   modifiers = [],
   rng = Math.random,
+  tuning,
 }) {
   if (!player || typeof player !== 'object') {
-    return _fail(SKILL_ERROR_CODES.PLAYER_MISSING, 'skillCheckRoll needs a player')
+    return resultFail({
+      code: SKILL_ERROR_CODES.playerMissing,
+      message: 'skillCheckRoll needs a player',
+    })
   }
   const medium = mediums[mediumId]
   if (!medium) {
-    return _fail(SKILL_ERROR_CODES.MEDIUM_UNKNOWN, `Unknown medium '${mediumId}'`)
+    return resultFail({
+      code: SKILL_ERROR_CODES.mediumUnknown,
+      message: `Unknown medium '${mediumId}'`,
+    })
   }
   if (!Number.isFinite(dc)) {
-    return _fail(SKILL_ERROR_CODES.DC_INVALID, `dc must be a number, got ${dc}`)
+    return resultFail({
+      code: SKILL_ERROR_CODES.dcInvalid,
+      message: `dc must be a number, got ${dc}`,
+    })
   }
 
   const skill = skillEffective({ player, mediumId, mediums }).data
-  const skillModifier = Math.floor(Math.max(0, Math.min(100, skill.value)) / 10)
-  const statModifier = checkModifier({ player, statName: medium.stat })
-  const situational = modifiers.reduce((sum, m) => sum + m.value, 0)
-  const natural = rollD20(rng)
+  const skillModifier = Math.floor(
+    numberClamp({ value: skill.value, min: 0, max: 100 }) / tuning.skills.pointsPerModifier
+  )
+  const statModifier = checkModifier({ player, statName: medium.stat, tuning })
+  const situational = numberSum({ values: modifiers.map((m) => m.value) })
+  const natural = diceD20({ rng })
   const modifier = skillModifier + statModifier + situational
   const total = natural + modifier
 
   const modifierItems = [
     ...skill.contributions.map((c) => ({
-      source: CHECK_ITEM_SOURCES.SKILL,
+      source: CHECK_ITEM_SOURCES.skill,
       sourceId: c.personaId,
-      value: _round(c.weight * c.cellValue),
+      value: numberRound({ value: c.weight * c.cellValue, places: 2 }),
     })),
     ...statModifierItems({ player, statName: medium.stat }),
     ...modifiers.map((m) => ({
-      source: CHECK_ITEM_SOURCES.SITUATIONAL,
+      source: CHECK_ITEM_SOURCES.situational,
       sourceId: m.sourceId,
       value: m.value,
     })),
   ]
 
-  return _ok({
+  return resultOk({
     natural,
     modifier,
     total,
     dc,
     success: total >= dc,
-    criticalSuccess: isCriticalSuccess(natural),
-    criticalFailure: isCriticalFailure(natural),
+    criticalSuccess: diceCriticalSuccess({ natural }),
+    criticalFailure: diceCriticalFailure({ natural }),
     mediumId,
     stat: medium.stat,
     skillValue: skill.value,

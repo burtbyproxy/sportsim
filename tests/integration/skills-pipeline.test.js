@@ -9,23 +9,21 @@
  * @vitest-environment node
  */
 import { describe, it, expect } from 'vitest'
-import { readFileSync, readdirSync } from 'fs'
+import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '../../src/stores/game.js'
-import { createPlayer } from '../../src/models/player.js'
-import { createLocation } from '../../src/models/location.js'
+import { playerCreate } from '../../src/models/player.js'
+import { locationCreate } from '../../src/models/location.js'
 import { skillEffective, skillCheckRoll } from '../../src/engine/skills.js'
 import { saveMigrate, SAVE_VERSION } from '../../src/composables/useSave.js'
+import { contentDir, contentIds, tuningContent } from '../helpers/content.js'
 
-const loadDir = (dir) =>
-  readdirSync(resolve(dir))
-    .filter((f) => f.endsWith('.json'))
-    .map((f) => JSON.parse(readFileSync(resolve(dir, f), 'utf-8')))
+const tuning = tuningContent()
 
-const substances = loadDir('content/substances')
-const conditions = loadDir('content/conditions')
-const mediums = loadDir('content/mediums')
+const substances = contentDir({ dir: 'content/substances' })
+const conditions = contentDir({ dir: 'content/conditions' })
+const mediums = contentDir({ dir: 'content/mediums' })
 const momsHouse = JSON.parse(
   readFileSync(resolve('content/maps/kenton/locations/moms_house.json'), 'utf-8')
 )
@@ -33,45 +31,44 @@ const momsHouse = JSON.parse(
 function startGame() {
   setActivePinia(createPinia())
   const game = useGameStore()
-  for (const substance of substances) game.registerSubstance({ substance })
-  for (const condition of conditions) game.registerCondition({ condition })
-  for (const medium of mediums) game.registerMedium({ medium })
-  game.registerLocation(createLocation(momsHouse))
-  game.startNewGame(createPlayer('Tester'), 'moms_house')
+  game.tuningRegister({ tuning })
+  for (const substance of substances) game.substanceRegister({ substance })
+  for (const condition of conditions) game.conditionRegister({ condition })
+  for (const medium of mediums) game.mediumRegister({ medium })
+  game.locationRegister({ location: locationCreate(momsHouse) })
+  game.runStart({ player: playerCreate({ name: 'Tester' }), locationId: 'moms_house' })
   return game
 }
 
-const effective = (game, mediumId) =>
+const effective = ({ game, mediumId }) =>
   skillEffective({ player: game.player, mediumId, mediums: game.mediums }).data.value
 
 describe('skills pipeline', () => {
   it('every medium in content is registered and a new player has an empty grid', () => {
     const game = startGame()
     // One file per medium, named for it: adding a form is adding a file.
-    const mediumIdsInContent = readdirSync(resolve('content/mediums'))
-      .filter((f) => f.endsWith('.json'))
-      .map((f) => f.replace('.json', ''))
+    const mediumIdsInContent = contentIds({ dir: 'content/mediums' })
     expect(mediumIdsInContent.length).toBeGreaterThan(0)
     expect(Object.keys(game.mediums).sort()).toEqual(mediumIdsInContent.sort())
     expect(game.player.skills).toEqual({})
-    expect(effective(game, 'painting')).toBe(0)
+    expect(effective({ game, mediumId: 'painting' })).toBe(0)
   })
 
   it('painting sober trains the sober cell, and only the sober cell', () => {
     const game = startGame()
-    const result = game.applySkillGain({ mediumId: 'painting', amount: 8 })
+    const result = game.skillGainApply({ mediumId: 'painting', amount: 8 })
     expect(result.ok).toBe(true)
     expect(game.player.skills.painting).toEqual({ sober: { base: 0, modifiers: [], xp: 8 } })
   })
 
   it('painting stoned trains painting-stoned; sober painting stays where it was', () => {
     const game = startGame()
-    for (let n = 0; n < 5; n++) game.applySkillGain({ mediumId: 'painting', amount: 10 })
+    for (let n = 0; n < 5; n++) game.skillGainApply({ mediumId: 'painting', amount: 10 })
     const soberBefore = game.player.skills.painting.sober.base
     expect(soberBefore).toBeGreaterThan(0)
 
-    game.applyDoses({ doses: [{ substanceId: 'weed', value: 100 }] })
-    for (let n = 0; n < 5; n++) game.applySkillGain({ mediumId: 'painting', amount: 10 })
+    game.playerDosesApply({ doses: [{ substanceId: 'weed', value: 100 }] })
+    for (let n = 0; n < 5; n++) game.skillGainApply({ mediumId: 'painting', amount: 10 })
 
     expect(game.player.skills.painting.sober.base).toBe(soberBefore)
     expect(game.player.skills.painting.telepath.base).toBeGreaterThan(0)
@@ -79,35 +76,36 @@ describe('skills pipeline', () => {
 
   it('the effective skill follows the blend, not the best cell', () => {
     const game = startGame()
-    for (let n = 0; n < 10; n++) game.applySkillGain({ mediumId: 'carving', amount: 10 })
-    const soberCarving = effective(game, 'carving')
+    for (let n = 0; n < 10; n++) game.skillGainApply({ mediumId: 'carving', amount: 10 })
+    const soberCarving = effective({ game, mediumId: 'carving' })
     expect(soberCarving).toBeGreaterThan(0)
 
-    game.applyDoses({ doses: [{ substanceId: 'whiskey', value: 100 }] })
-    expect(effective(game, 'carving')).toBe(0) // the priest has never held a knife
-    expect(effective(game, 'painting')).toBe(0) // and carving was never painting
+    game.playerDosesApply({ doses: [{ substanceId: 'whiskey', value: 100 }] })
+    expect(effective({ game, mediumId: 'carving' })).toBe(0) // the priest has never held a knife
+    expect(effective({ game, mediumId: 'painting' })).toBe(0) // and carving was never painting
   })
 
   it('forty whiskey, forty weed, twenty you: practice splits three ways', () => {
     const game = startGame()
-    game.applyDoses({
+    game.playerDosesApply({
       doses: [
         { substanceId: 'whiskey', value: 40 },
         { substanceId: 'weed', value: 40 },
       ],
     })
-    const { data } = game.applySkillGain({ mediumId: 'drawing', amount: 10 })
+    const { data } = game.skillGainApply({ mediumId: 'drawing', amount: 10 })
     expect(data.allocations.map((a) => a.xp)).toEqual([4, 4, 2])
     expect(Object.keys(game.player.skills.drawing).sort()).toEqual(['priest', 'sober', 'telepath'])
   })
 
   it('a check itemizes the skill cells, the stat, and every persona touching it', () => {
     const game = startGame()
-    for (let n = 0; n < 5; n++) game.applySkillGain({ mediumId: 'painting', amount: 10 })
-    game.applyDoses({ doses: [{ substanceId: 'weed', value: 50 }] })
-    game.applyStatusChanges({ hunger: -45 }) // starving joins the blend
+    for (let n = 0; n < 5; n++) game.skillGainApply({ mediumId: 'painting', amount: 10 })
+    game.playerDosesApply({ doses: [{ substanceId: 'weed', value: 50 }] })
+    game.playerStatusApply({ changes: { hunger: -45 } }) // starving joins the blend
 
     const { data } = skillCheckRoll({
+      tuning,
       player: game.player,
       mediumId: 'painting',
       mediums: game.mediums,

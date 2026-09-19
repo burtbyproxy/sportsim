@@ -1,7 +1,6 @@
 {
   "id": "lombard_dental",
   "type": "clinic",
-  "variant": "dental",
   "display": "Lombard Dental",
   "pieceAs": "in the waiting room at Lombard Dental",
   "outdoors": false,
@@ -33,8 +32,6 @@
       "requirements": null
     }
   ],
-  "npcSlots": [],
-  "actionIds": ["free_toothbrush_dental", "read_magazines_dental"],
   "scavengeTableId": "lot",
   "surfaces": [
     {
