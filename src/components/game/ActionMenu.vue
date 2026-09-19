@@ -111,23 +111,21 @@ watch(
 )
 
 // Number keys 1–9 pick the entry with that key; arrows and Enter walk the list.
-const numberKeyBindings = Object.fromEntries(
-  ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((key) => [
-    key,
-    (e) => {
-      const entry = entries.value.find((m) => m.key === key)
-      if (!entry?.available) return
-      e.preventDefault()
-      dispatch(entry)
-    },
-  ])
-)
+const numberKeyBindings = ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((key) => ({
+  key,
+  handler: (e) => {
+    const entry = entries.value.find((m) => m.key === key)
+    if (!entry?.available) return
+    e.preventDefault()
+    dispatch(entry)
+  },
+}))
 
 useKeyboard({
-  ...numberKeyBindings,
-  ArrowUp: (e) => navKeydown(e),
-  ArrowDown: (e) => navKeydown(e),
-  Enter: (e) => navKeydown(e),
+  bindings: [
+    ...numberKeyBindings,
+    ...['ArrowUp', 'ArrowDown', 'Enter'].map((key) => ({ key, handler: navKeydown })),
+  ],
 })
 </script>
 

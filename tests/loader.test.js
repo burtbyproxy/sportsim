@@ -23,7 +23,7 @@ describe('contentMerge', () => {
   it('refuses an entry that is not an object, naming the file', () => {
     const merged = contentMerge({ files: [{ path: 'bad.json', value: ['just a string'] }] })
     expect(merged.error).toMatchObject({
-      code: LOADER_ERROR_CODES.ENTRY_NOT_OBJECT,
+      code: LOADER_ERROR_CODES.entryNotObject,
       params: { path: 'bad.json' },
     })
   })
@@ -31,7 +31,7 @@ describe('contentMerge', () => {
   it('refuses an entry with no id, naming the file', () => {
     const merged = contentMerge({ files: [{ path: 'anon.json', value: { name: 'Nobody' } }] })
     expect(merged.error).toMatchObject({
-      code: LOADER_ERROR_CODES.ENTRY_ID_MISSING,
+      code: LOADER_ERROR_CODES.entryIdMissing,
       params: { path: 'anon.json' },
     })
   })
@@ -44,7 +44,7 @@ describe('contentMerge', () => {
       ],
     })
     expect(merged.error).toMatchObject({
-      code: LOADER_ERROR_CODES.ENTRY_ID_DUPLICATE,
+      code: LOADER_ERROR_CODES.entryIdDuplicate,
       params: { path: 'second.json', id: 'dale', pathFirst: 'first.json' },
     })
   })
@@ -53,12 +53,12 @@ describe('contentMerge', () => {
 describe('contentLoad — the real content', () => {
   it('loads every collection keyed by the ids its files declare', () => {
     for (const [kind, dir] of [
-      [CONTENT_KINDS.CHARACTERS, 'content/characters'],
-      [CONTENT_KINDS.SUBSTANCES, 'content/substances'],
-      [CONTENT_KINDS.CONDITIONS, 'content/conditions'],
-      [CONTENT_KINDS.MEDIUMS, 'content/mediums'],
-      [CONTENT_KINDS.VOICES, 'content/voices'],
-      [CONTENT_KINDS.SCAVENGE_TABLES, 'content/scavenge'],
+      [CONTENT_KINDS.characters, 'content/characters'],
+      [CONTENT_KINDS.substances, 'content/substances'],
+      [CONTENT_KINDS.conditions, 'content/conditions'],
+      [CONTENT_KINDS.mediums, 'content/mediums'],
+      [CONTENT_KINDS.voices, 'content/voices'],
+      [CONTENT_KINDS.scavengeTables, 'content/scavenge'],
     ]) {
       const loaded = contentLoad({ kind })
       expect(loaded.ok, kind).toBe(true)
@@ -67,24 +67,24 @@ describe('contentLoad — the real content', () => {
   })
 
   it('loads a map by its id, and nothing for a map that is not there', () => {
-    const kenton = contentLoad({ kind: CONTENT_KINDS.LOCATIONS, mapId: 'kenton' })
+    const kenton = contentLoad({ kind: CONTENT_KINDS.locations, mapId: 'kenton' })
     expect(Object.keys(kenton.data).sort()).toEqual(
       contentIds({ dir: 'content/maps/kenton/locations' })
     )
     expect(
-      contentLoad({ kind: CONTENT_KINDS.ACTIONS, mapId: 'kenton' }).data.raid_fridge
+      contentLoad({ kind: CONTENT_KINDS.actions, mapId: 'kenton' }).data.raid_fridge
     ).toBeDefined()
-    expect(contentLoad({ kind: CONTENT_KINDS.LOCATIONS, mapId: 'atlantis' }).data).toEqual({})
+    expect(contentLoad({ kind: CONTENT_KINDS.locations, mapId: 'atlantis' }).data).toEqual({})
   })
 
   it('hands back the game config and the vocabulary as themselves', () => {
-    expect(contentLoad({ kind: CONTENT_KINDS.CONFIG }).data.mapId).toBe('kenton')
-    expect(contentLoad({ kind: CONTENT_KINDS.VOCABULARY }).data.stats.length).toBeGreaterThan(0)
+    expect(contentLoad({ kind: CONTENT_KINDS.config }).data.mapId).toBe('kenton')
+    expect(contentLoad({ kind: CONTENT_KINDS.vocabulary }).data.stats.length).toBeGreaterThan(0)
   })
 
   it('refuses a kind that does not exist', () => {
     expect(contentLoad({ kind: 'spells' }).error).toMatchObject({
-      code: LOADER_ERROR_CODES.KIND_UNKNOWN,
+      code: LOADER_ERROR_CODES.kindUnknown,
       params: { kind: 'spells' },
     })
   })

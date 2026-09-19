@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import {
-  GAME_ERROR_CODES,
+  MINIGAME_ERROR_CODES,
   GAME_MODIFIER_SOURCE_ID,
   gameStart,
   gameRoundResolve,
@@ -35,20 +35,20 @@ const value = ({ game, state }) => gameScore({ game, state }).data.modifier.valu
 describe('the contract', () => {
   it('refuses a game with no shape, an unknown shape, or no lines', () => {
     expect(gameStart({ game: null, personaId: 'sober' }).error.code).toBe(
-      GAME_ERROR_CODES.GAME_INVALID
+      MINIGAME_ERROR_CODES.gameInvalid
     )
     expect(
       gameStart({ game: { shape: 'staring', lines: {} }, personaId: 'sober' }).error.code
-    ).toBe(GAME_ERROR_CODES.SHAPE_UNKNOWN)
+    ).toBe(MINIGAME_ERROR_CODES.shapeUnknown)
     expect(gameStart({ game: { id: 'x', shape: 'steady' }, personaId: 'sober' }).error.code).toBe(
-      GAME_ERROR_CODES.GAME_INVALID
+      MINIGAME_ERROR_CODES.gameInvalid
     )
   })
 
   it('refuses a choice that is not on offer, and any choice once the game is over', () => {
     const { state, rounds } = play({ game: nerve, choices: ['stop', 'press'] })
     expect(state.offer).toBeNull()
-    expect(rounds[1].error.code).toBe(GAME_ERROR_CODES.GAME_OVER)
+    expect(rounds[1].error.code).toBe(MINIGAME_ERROR_CODES.gameOver)
     const fresh = gameStart({ game: nerve, personaId: 'sober' }).data.state
     const bad = gameRoundResolve({
       game: nerve,
@@ -56,7 +56,7 @@ describe('the contract', () => {
       choiceId: 'dance',
       personaId: 'sober',
     })
-    expect(bad.error.code).toBe(GAME_ERROR_CODES.CHOICE_UNKNOWN)
+    expect(bad.error.code).toBe(MINIGAME_ERROR_CODES.choiceUnknown)
   })
 
   it('hands the check one modifier, named for what it is', () => {
@@ -145,7 +145,7 @@ describe('push_luck — nerve', () => {
       choiceId: 'stop',
       personaId: 'suburban_gangster',
     })
-    expect(refused.error.code).toBe(GAME_ERROR_CODES.CHOICE_FORBIDDEN)
+    expect(refused.error.code).toBe(MINIGAME_ERROR_CODES.choiceForbidden)
 
     const { state } = play({
       game: nerve,

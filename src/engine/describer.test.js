@@ -83,15 +83,27 @@ describe('pieceDescribe', () => {
   })
 
   it.each([
-    ['an unknown tier', { tier: 'masterpiece' }, DESCRIBER_ERROR_CODES.TIER_UNKNOWN],
-    ['a part with no phrase', { surface: { id: 'wall' } }, DESCRIBER_ERROR_CODES.PART_MISSING],
-    ['an ingredient with no tool', { tool: null, ingredient }, DESCRIBER_ERROR_CODES.PART_MISSING],
-    [
-      'voices with no line for it',
-      { voices: { sober: { id: 'sober', lines: {} } } },
-      DESCRIBER_ERROR_CODES.LINE_MISSING,
-    ],
-  ])('refuses %s', (_, override, code) => {
+    {
+      name: 'an unknown tier',
+      override: { tier: 'masterpiece' },
+      code: DESCRIBER_ERROR_CODES.tierUnknown,
+    },
+    {
+      name: 'a part with no phrase',
+      override: { surface: { id: 'wall' } },
+      code: DESCRIBER_ERROR_CODES.partMissing,
+    },
+    {
+      name: 'an ingredient with no tool',
+      override: { tool: null, ingredient },
+      code: DESCRIBER_ERROR_CODES.partMissing,
+    },
+    {
+      name: 'voices with no line for it',
+      override: { voices: { sober: { id: 'sober', lines: {} } } },
+      code: DESCRIBER_ERROR_CODES.lineMissing,
+    },
+  ])('refuses $name', ({ override, code }) => {
     const result = pieceDescribe({
       tier: 'solid',
       medium,

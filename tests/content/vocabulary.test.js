@@ -30,7 +30,8 @@ describe("content/vocabulary.json — the game's words", () => {
       'nothing',
     ]
     for (const path of paths) {
-      const word = path.split('.').reduce((node, key) => node?.[key], ui)
+      let word = ui
+      for (const key of path.split('.')) word = word?.[key]
       expect(typeof word, `ui.${path}`).toBe('string')
       expect(word.length, `ui.${path}`).toBeGreaterThan(0)
     }

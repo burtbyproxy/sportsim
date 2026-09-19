@@ -10,7 +10,7 @@ import { resultOk, resultFail } from './result.js'
 
 /** Enumerated error codes for event resolution. The code is the contract. */
 export const EVENT_ERROR_CODES = Object.freeze({
-  CHOICE_INVALID: 'CHOICE_INVALID',
+  choiceInvalid: 'CHOICE_INVALID',
 })
 
 /**
@@ -22,7 +22,7 @@ export const EVENT_ERROR_CODES = Object.freeze({
  * @param {string[]} firedEventIds - one-time events that have already fired
  * @returns {boolean}
  */
-function _eventConditionsMeet({ event, player, location, gameTime, firedEventIds }) {
+function eventConditionsMeet({ event, player, location, gameTime, firedEventIds }) {
   // One-time events that already fired
   if (event.oneTime && firedEventIds.includes(event.id)) return false
 
@@ -113,7 +113,7 @@ export function eventsRandomCheck({
 }) {
   return events.filter((event) => {
     if (event.type !== 'random') return false
-    if (!_eventConditionsMeet({ event, player, location, gameTime, firedEventIds })) return false
+    if (!eventConditionsMeet({ event, player, location, gameTime, firedEventIds })) return false
     return randomChance({ probability: event.probability ?? 0, rng })
   })
 }
@@ -128,7 +128,7 @@ export function eventsRandomCheck({
 export function eventsTriggeredCheck({ player, location, gameTime, events, firedEventIds = [] }) {
   return events.filter((event) => {
     if (event.type !== 'triggered') return false
-    return _eventConditionsMeet({ event, player, location, gameTime, firedEventIds })
+    return eventConditionsMeet({ event, player, location, gameTime, firedEventIds })
   })
 }
 
@@ -148,7 +148,7 @@ export function eventResolve({ event, player, choiceIndex = null, rng = Math.ran
     const choice = event.choices[choiceIndex]
     if (!choice) {
       return resultFail({
-        code: EVENT_ERROR_CODES.CHOICE_INVALID,
+        code: EVENT_ERROR_CODES.choiceInvalid,
         message: `Event '${event.id}' has no choice ${choiceIndex}`,
         params: { eventId: event.id, choiceIndex },
       })

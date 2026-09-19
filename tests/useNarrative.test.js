@@ -107,7 +107,7 @@ describe('narrative typing speed', () => {
 function mountWithBindings(bindings) {
   const TestComponent = defineComponent({
     setup() {
-      useKeyboard(bindings)
+      useKeyboard({ bindings })
       return () => null
     },
   })

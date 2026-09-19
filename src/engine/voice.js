@@ -17,8 +17,8 @@ import { textFill } from '../utils/text.js'
 
 /** Enumerated error codes for every voice result. The code is the contract. */
 export const VOICE_ERROR_CODES = Object.freeze({
-  CODE_UNKNOWN: 'CODE_UNKNOWN',
-  SOBER_MISSING: 'SOBER_MISSING',
+  codeUnknown: 'CODE_UNKNOWN',
+  soberMissing: 'SOBER_MISSING',
 })
 
 /**
@@ -36,7 +36,7 @@ export const VOICE_ERROR_CODES = Object.freeze({
 export function voiceLine({ code, personaId = SOBER_PERSONA_ID, voices = {}, params = {} }) {
   const sober = voices[SOBER_PERSONA_ID]
   if (!sober) {
-    return resultFail({ code: VOICE_ERROR_CODES.SOBER_MISSING, message: 'No sober voice catalog' })
+    return resultFail({ code: VOICE_ERROR_CODES.soberMissing, message: 'No sober voice catalog' })
   }
   const own = voices[personaId]?.lines?.[code]
   if (typeof own === 'string') {
@@ -46,5 +46,5 @@ export function voiceLine({ code, personaId = SOBER_PERSONA_ID, voices = {}, par
   if (typeof fallback === 'string') {
     return resultOk({ text: textFill({ text: fallback, params }), personaId: SOBER_PERSONA_ID })
   }
-  return resultFail({ code: VOICE_ERROR_CODES.CODE_UNKNOWN, message: `No line for '${code}'` })
+  return resultFail({ code: VOICE_ERROR_CODES.codeUnknown, message: `No line for '${code}'` })
 }

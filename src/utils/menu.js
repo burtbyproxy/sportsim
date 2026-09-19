@@ -18,7 +18,7 @@ export const EXIT_KEYS = 'abcdefghijklmnopqrstuvwxyz'
  */
 export function menuEntriesBuild({ actions, exits, choices = [] }) {
   if (choices.length > 0) {
-    return choices.map((choice, i) => ({
+    return Array.from(choices.entries(), ([i, choice]) => ({
       kind: 'choice',
       key: i < 9 ? String(i + 1) : '',
       label: choice.label,
@@ -28,7 +28,7 @@ export function menuEntriesBuild({ actions, exits, choices = [] }) {
       choiceIndex: i,
     }))
   }
-  const actionEntries = actions.map((action, i) => ({
+  const actionEntries = Array.from(actions.entries(), ([i, action]) => ({
     kind: 'action',
     key: i < 9 ? String(i + 1) : '',
     label: action.label,
@@ -37,7 +37,7 @@ export function menuEntriesBuild({ actions, exits, choices = [] }) {
     reason: action.unavailableReason ?? null,
     action,
   }))
-  const exitEntries = exits.map((exit, i) => ({
+  const exitEntries = Array.from(exits.entries(), ([i, exit]) => ({
     kind: 'exit',
     key: EXIT_KEYS[i] ?? '',
     label: exit.label,

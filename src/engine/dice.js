@@ -5,7 +5,7 @@
  */
 
 import { randomInt } from '../utils/random.js'
-import { numberClamp } from '../utils/number.js'
+import { numberClamp, numberSum } from '../utils/number.js'
 
 /**
  * Everything acting on a player — every substance, every condition — reaches
@@ -40,10 +40,10 @@ export const STAT_POINTS_PER_MODIFIER = 10
 
 /** Where a stat's modifier item came from. */
 export const STAT_ITEM_SOURCES = Object.freeze({
-  BASE: 'base',
-  MODIFIER: 'modifier',
-  ABILITY: 'ability',
-  TRAUMA: 'trauma',
+  base: 'base',
+  modifier: 'modifier',
+  ability: 'ability',
+  trauma: 'trauma',
 })
 
 /**
@@ -60,10 +60,10 @@ export function statModifierItems({ player, statName }) {
 
   const statObj = player.stats?.[statName]
   if (statObj) {
-    items.push({ source: STAT_ITEM_SOURCES.BASE, sourceId: statName, value: statObj.base })
+    items.push({ source: STAT_ITEM_SOURCES.base, sourceId: statName, value: statObj.base })
     for (const mod of statObj.modifiers ?? []) {
       items.push({
-        source: STAT_ITEM_SOURCES.MODIFIER,
+        source: STAT_ITEM_SOURCES.modifier,
         sourceId: mod.source ?? statName,
         value: mod.value,
       })
@@ -79,14 +79,14 @@ export function statModifierItems({ player, statName }) {
     if (!ability.active) continue
     const effect = ability.effects?.diceModifiers?.[statName]
     if (effect !== undefined) {
-      items.push({ source: STAT_ITEM_SOURCES.ABILITY, sourceId: ability.id, value: effect })
+      items.push({ source: STAT_ITEM_SOURCES.ability, sourceId: ability.id, value: effect })
     }
   }
 
   for (const trauma of player.psyche?.traumas ?? []) {
     const effect = trauma.effects?.statModifiers?.[statName]
     if (effect !== undefined) {
-      items.push({ source: STAT_ITEM_SOURCES.TRAUMA, sourceId: trauma.id, value: effect })
+      items.push({ source: STAT_ITEM_SOURCES.trauma, sourceId: trauma.id, value: effect })
     }
   }
 
@@ -101,7 +101,7 @@ export function statModifierItems({ player, statName }) {
  * @returns {number}
  */
 export function statEffective({ player, statName }) {
-  return statModifierItems({ player, statName }).reduce((sum, item) => sum + item.value, 0)
+  return numberSum({ values: statModifierItems({ player, statName }).map((item) => item.value) })
 }
 
 /**
@@ -144,7 +144,7 @@ export function diceCriticalFailure({ natural }) {
 export function checkRoll({ player, statName, modifiers, dc, rng = Math.random }) {
   const natural = diceD20({ rng })
   const statModifier = checkModifier({ player, statName })
-  const extraModifiers = modifiers.reduce((sum, m) => sum + m, 0)
+  const extraModifiers = numberSum({ values: modifiers })
   const totalModifier = statModifier + extraModifiers
   const total = natural + totalModifier
 
@@ -166,7 +166,7 @@ export function checkRoll({ player, statName, modifiers, dc, rng = Math.random }
 }
 
 /** Who took a contest. */
-export const CONTEST_WINNERS = Object.freeze({ FIRST: 'first', SECOND: 'second', TIE: 'tie' })
+export const CONTEST_WINNERS = Object.freeze({ first: 'first', second: 'second', tie: 'tie' })
 
 /**
  * Two sides roll against each other; the higher total takes it.
@@ -183,8 +183,8 @@ export function checkContestedRoll({ first, second, rng = Math.random }) {
     checkRoll({ player, statName, modifiers, dc: 0, rng })
   const rolledFirst = side(first)
   const rolledSecond = side(second)
-  let winner = CONTEST_WINNERS.TIE
-  if (rolledFirst.total > rolledSecond.total) winner = CONTEST_WINNERS.FIRST
-  if (rolledSecond.total > rolledFirst.total) winner = CONTEST_WINNERS.SECOND
+  let winner = CONTEST_WINNERS.tie
+  if (rolledFirst.total > rolledSecond.total) winner = CONTEST_WINNERS.first
+  if (rolledSecond.total > rolledFirst.total) winner = CONTEST_WINNERS.second
   return { winner, first: rolledFirst, second: rolledSecond }
 }

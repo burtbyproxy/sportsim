@@ -34,10 +34,10 @@ export function itemUsable({ item }) {
 }
 
 export const ITEM_ERROR_CODES = Object.freeze({
-  PLAYER_MISSING: 'PLAYER_MISSING',
-  ITEM_MISSING: 'ITEM_MISSING',
-  ITEM_NOT_CONSUMABLE: 'ITEM_NOT_CONSUMABLE',
-  EFFECT_TARGET_UNKNOWN: 'EFFECT_TARGET_UNKNOWN',
+  playerMissing: 'PLAYER_MISSING',
+  itemMissing: 'ITEM_MISSING',
+  itemNotConsumable: 'ITEM_NOT_CONSUMABLE',
+  effectTargetUnknown: 'EFFECT_TARGET_UNKNOWN',
 })
 
 /** Statuses an effect may change directly. Sobriety is derived; money has its own door. */
@@ -58,17 +58,17 @@ export const ITEM_EFFECT_STATUSES = STATUS_IDS_WRITABLE_DEFAULT
 export function itemUseResolve({ player, itemId, statusIds = ITEM_EFFECT_STATUSES }) {
   if (!player || typeof player !== 'object') {
     return resultFail({
-      code: ITEM_ERROR_CODES.PLAYER_MISSING,
+      code: ITEM_ERROR_CODES.playerMissing,
       message: 'itemUseResolve needs a player',
     })
   }
   const item = (player.inventory ?? []).find((i) => i.id === itemId)
   if (!inventoryHas({ inventory: player.inventory, itemId })) {
-    return resultFail({ code: ITEM_ERROR_CODES.ITEM_MISSING, message: `Not carrying '${itemId}'` })
+    return resultFail({ code: ITEM_ERROR_CODES.itemMissing, message: `Not carrying '${itemId}'` })
   }
   if (!itemUsable({ item })) {
     return resultFail({
-      code: ITEM_ERROR_CODES.ITEM_NOT_CONSUMABLE,
+      code: ITEM_ERROR_CODES.itemNotConsumable,
       message: `'${itemId}' is not something you use up`,
     })
   }
@@ -85,7 +85,7 @@ export function itemUseResolve({ player, itemId, statusIds = ITEM_EFFECT_STATUSE
       })
     } else {
       return resultFail({
-        code: ITEM_ERROR_CODES.EFFECT_TARGET_UNKNOWN,
+        code: ITEM_ERROR_CODES.effectTargetUnknown,
         message: `'${itemId}' has an effect on '${effect.target}', which is neither a status nor a stat`,
       })
     }

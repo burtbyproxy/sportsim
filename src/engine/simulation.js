@@ -17,6 +17,7 @@ import {
 } from './schedule.js'
 import { statusDecayChanges } from './stats.js'
 import { randomChance } from '../utils/random.js'
+import { listSortBy } from '../utils/list.js'
 
 // ---------------------------------------------------------------------------
 // Tier: fixed
@@ -31,7 +32,7 @@ import { randomChance } from '../utils/random.js'
  * @param {() => number} rng
  * @returns {Object} CharacterUpdate { id, locationId }
  */
-function _simulateFixed({ character, gameTime, rng }) {
+function simulateFixed({ character, gameTime, rng }) {
   const entry = scheduleEntryResolve({
     schedule: character.schedule,
     hour: gameTime.hour,
@@ -59,7 +60,7 @@ function _simulateFixed({ character, gameTime, rng }) {
  * @param {() => number} rng
  * @returns {Object} CharacterUpdate { id, locationId }
  */
-function _simulateRoutine({ character, gameTime, rng }) {
+function simulateRoutine({ character, gameTime, rng }) {
   const { hour, minute } = gameTime
 
   // Check if in transit between schedule stops
@@ -93,7 +94,7 @@ function _simulateRoutine({ character, gameTime, rng }) {
  * @param {Object} character
  * @returns {string|null}
  */
-function _getStatusBias(character) {
+function getStatusBias(character) {
   const status = character.status
   if (!status) return null
   const weights = character.decisionWeights
@@ -117,8 +118,7 @@ function _getStatusBias(character) {
   if (candidates.length === 0) return null
 
   // Pick the highest-weight bias (deterministic — no RNG needed for bias selection)
-  candidates.sort((a, b) => b.weight - a.weight)
-  return candidates[0].bias
+  return listSortBy({ items: candidates, keyOf: (c) => c.weight, descending: true })[0].bias
 }
 
 /**
@@ -134,7 +134,7 @@ function _getStatusBias(character) {
  * @param {string} dayOfWeek
  * @returns {Object|null}
  */
-function _biasedEntryFind({ schedule, bias, dayOfWeek }) {
+function biasedEntryFind({ schedule, bias, dayOfWeek }) {
   if (!schedule || !schedule.entries) return null
 
   for (const entry of schedule.entries) {
@@ -157,7 +157,7 @@ function _biasedEntryFind({ schedule, bias, dayOfWeek }) {
  * @param {() => number} rng
  * @returns {Object} CharacterUpdate { id, locationId, statusChanges? }
  */
-function _simulateFull({ character, gameTime, rng }) {
+function simulateFull({ character, gameTime, rng }) {
   const { hour, minute } = gameTime
 
   // Apply stat decay (same rates as player — they're playing the same game)
@@ -166,9 +166,9 @@ function _simulateFull({ character, gameTime, rng }) {
     : undefined
 
   // Check status bias first
-  const bias = _getStatusBias(character)
+  const bias = getStatusBias(character)
   if (bias) {
-    const biasedEntry = _biasedEntryFind({
+    const biasedEntry = biasedEntryFind({
       schedule: character.schedule,
       bias,
       dayOfWeek: gameTime.dayOfWeek,
@@ -231,14 +231,14 @@ export function simulationTick({ characters, gameTime, rng = Math.random }) {
 
     switch (character.simulation) {
       case 'routine':
-        update = _simulateRoutine({ character, gameTime, rng })
+        update = simulateRoutine({ character, gameTime, rng })
         break
       case 'full':
-        update = _simulateFull({ character, gameTime, rng })
+        update = simulateFull({ character, gameTime, rng })
         break
       case 'fixed':
       default:
-        update = _simulateFixed({ character, gameTime, rng })
+        update = simulateFixed({ character, gameTime, rng })
         break
     }
 

@@ -69,7 +69,7 @@ function startGame({
   return { game, loop, narrative }
 }
 
-function strike(game, { mediumId = 'painting', strength = 60, ticksTotal = 12 } = {}) {
+function strike({ game, mediumId = 'painting', strength = 60, ticksTotal = 12 }) {
   return game.inspirationStrikeApply({
     source: { kind: 'event', id: 'test_strike' },
     mediumId,
@@ -79,7 +79,7 @@ function strike(game, { mediumId = 'painting', strength = 60, ticksTotal = 12 } 
 }
 
 /** Pick the menu entry whose label contains the text, the way a click would. */
-async function pick({ game, loop }, text) {
+async function pick({ text, game, loop }) {
   const entry = game.availableActions.find((a) => a.label.includes(text))
   expect(entry, `no menu entry containing '${text}' in: ${labels(game)}`).toBeTruthy()
   expect(entry.available, `'${entry.label}' is greyed out`).toBe(true)
@@ -106,10 +106,10 @@ describe('making pipeline', () => {
       at: 'glitters',
       mediumsUsed: mediums.filter((m) => !m.making.anywhere),
     })
-    strike(ctx.game)
+    strike({ game: ctx.game })
     ctx.loop.onLocationEntered()
     const tickBefore = ctx.game.time.tick
-    await pick(ctx, 'Make something')
+    await pick({ ...ctx, text: 'Make something' })
     expect(await logOf(ctx.narrative)).toContain(
       voiceLineOf({ personaId: 'sober', code: 'making.nothing_to_work_with' })
     )
@@ -120,27 +120,27 @@ describe('making pipeline', () => {
   it('paints on a carried door: sittings pass time, the door goes into the piece, the piece goes in the portfolio', async () => {
     const ctx = startGame({ carrying: ['grandmas_paints', 'cabinet_door'] })
     const { game } = ctx
-    strike(game)
+    strike({ game })
     ctx.loop.onLocationEntered()
     const tickBefore = game.time.tick
     const energyBefore = game.player.status.energy
 
-    await pick(ctx, 'Make something')
+    await pick({ ...ctx, text: 'Make something' })
     // Taking stock costs no time, and the menu is now the making menu.
     expect(game.time.tick).toBe(tickBefore)
     expect(labels(game)).toContain("Painting: Grandma's Watercolours, Cabinet Door")
     expect(labels(game)).toContain('Never mind')
 
-    await pick(ctx, 'Cabinet Door')
+    await pick({ ...ctx, text: 'Cabinet Door' })
     // The door is committed; the paints are not. No time has passed yet.
     expect(game.playerInventory.map((i) => i.id)).toEqual(['grandmas_paints'])
     expect(game.time.tick).toBe(tickBefore)
     expect(labels(game)).toBe('Keep at it | Walk away from it')
 
-    await pick(ctx, 'Keep at it')
+    await pick({ ...ctx, text: 'Keep at it' })
     expect(game.makingActive.ticksDone).toBe(2)
-    await pick(ctx, 'Keep at it')
-    await pick(ctx, 'Keep at it')
+    await pick({ ...ctx, text: 'Keep at it' })
+    await pick({ ...ctx, text: 'Keep at it' })
 
     const total = medium('painting').making.ticksTotal
     expect(game.time.tick).toBe(tickBefore + total)
@@ -179,13 +179,13 @@ describe('making pipeline', () => {
 
   it('offers what is carried to work in, and the ingredient ends up in the piece and out of the pockets', async () => {
     const ctx = startGame({ carrying: ['golf_pencil', 'coaster', 'brut_aftershave'] })
-    strike(ctx.game, { mediumId: 'drawing' })
+    strike({ game: ctx.game, mediumId: 'drawing' })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Coaster')
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Coaster' })
     expect(labels(ctx.game)).toContain('Just that')
-    await pick(ctx, 'Work in the')
-    await pick(ctx, 'Keep at it')
+    await pick({ ...ctx, text: 'Work in the' })
+    await pick({ ...ctx, text: 'Keep at it' })
     expect(ctx.game.playerInventory.map((i) => i.id)).toEqual(['golf_pencil'])
     expect(ctx.game.player.portfolio[0].workText).toBe(
       'a drawing, golf pencil and Brut on the back of a beer coaster'
@@ -195,12 +195,12 @@ describe('making pipeline', () => {
   it('a tag on a wall stays on the wall, greets you when you come back, and is covered by the next one', async () => {
     const ctx = startGame({ at: 'lombard_dental', carrying: ['sharpie'] })
     const { game } = ctx
-    strike(game, { mediumId: 'tagging' })
+    strike({ game, mediumId: 'tagging' })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Tagging: Sharpie, the back wall')
-    await pick(ctx, 'Keep going')
-    await pick(ctx, "That's enough")
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Tagging: Sharpie, the back wall' })
+    await pick({ ...ctx, text: 'Keep going' })
+    await pick({ ...ctx, text: "That's enough" })
 
     expect(game.player.portfolio).toHaveLength(0)
     const wall = () => game.locations.lombard_dental.marks
@@ -216,12 +216,12 @@ describe('making pipeline', () => {
     )
     expect(await logOf(ctx.narrative)).toContain(still)
 
-    strike(game, { mediumId: 'tagging' })
+    strike({ game, mediumId: 'tagging' })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Tagging: Sharpie, the back wall')
-    await pick(ctx, 'Keep going')
-    await pick(ctx, "That's enough")
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Tagging: Sharpie, the back wall' })
+    await pick({ ...ctx, text: 'Keep going' })
+    await pick({ ...ctx, text: "That's enough" })
     expect(wall().map((m) => m.status)).toEqual(['covered', 'fresh'])
     expect(wall()[0].endedBy).toEqual({ kind: 'mark', id: wall()[1].id })
     expect(await logOf(ctx.narrative)).toContain(
@@ -241,11 +241,11 @@ describe('making pipeline', () => {
 
   it('a performance needs no tool and leaves nothing but the doing', async () => {
     const ctx = startGame({ at: 'blue_parrot' })
-    strike(ctx.game, { mediumId: 'performance', ticksTotal: 6 })
+    strike({ game: ctx.game, mediumId: 'performance', ticksTotal: 6 })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Performance: the corner by the jukebox')
-    await pick(ctx, 'Hold it right here')
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Performance: the corner by the jukebox' })
+    await pick({ ...ctx, text: 'Hold it right here' })
     // You are told the room when you start and again after every move.
     const room = games.find((g) => g.id === 'room')
     const crowds = [room.params.crowdStart, ctx.game.makingActive.game.state.crowd]
@@ -256,7 +256,7 @@ describe('making pipeline', () => {
         crowds.filter((c) => c === crowd).length
       )
     }
-    await pick(ctx, 'Bow')
+    await pick({ ...ctx, text: 'Bow' })
     expect(ctx.game.player.portfolio).toHaveLength(0)
     expect(ctx.game.locations.blue_parrot.marks).toHaveLength(0)
     expect(ctx.game.player.experiences).toHaveLength(1)
@@ -271,11 +271,11 @@ describe('making pipeline', () => {
       carrying: ['golf_pencil', 'pizza_box'],
       rng: rngSequence({ values: [die(1)] }),
     })
-    strike(ctx.game, { mediumId: 'drawing' })
+    strike({ game: ctx.game, mediumId: 'drawing' })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Pizza Box')
-    await pick(ctx, 'Keep at it')
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Pizza Box' })
+    await pick({ ...ctx, text: 'Keep at it' })
     expect(ctx.game.player.portfolio).toHaveLength(0)
     expect(ctx.game.playerInventory.map((i) => i.id)).toEqual(['golf_pencil'])
     expect(ctx.game.player.experiences[0].tier).toBe('botched')
@@ -293,11 +293,11 @@ describe('making pipeline', () => {
     const { game } = ctx
     game.playerDosesApply({ doses: [{ substanceId: 'weed', value: 80 }] })
     expect(game.personaInCharge).toBe('telepath')
-    strike(game, { mediumId: 'drawing' })
+    strike({ game, mediumId: 'drawing' })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Coaster')
-    await pick(ctx, 'Keep at it')
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Coaster' })
+    await pick({ ...ctx, text: 'Keep at it' })
     const piece = game.player.portfolio[0]
     expect(piece.tier).toBe('rough')
     expect(piece.artistText).toBe(
@@ -316,9 +316,9 @@ describe('making pipeline', () => {
     const ctx = startGame({
       carrying: ['grandmas_paints', 'cabinet_door', 'golf_pencil', 'coaster'],
     })
-    strike(ctx.game, { ticksTotal: medium('painting').making.ticksTotal })
+    strike({ game: ctx.game, ticksTotal: medium('painting').making.ticksTotal })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
+    await pick({ ...ctx, text: 'Make something' })
     const entry = (text) => ctx.game.availableActions.find((a) => a.label.includes(text))
     expect(entry('Cabinet Door').available).toBe(false)
     expect(entry('Cabinet Door').unavailableReason).toBeTruthy()
@@ -346,11 +346,11 @@ describe('making pipeline', () => {
       rng: () => 0.1,
     })
     const { game } = ctx
-    strike(game)
+    strike({ game })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Cabinet Door')
-    await pick(ctx, 'Keep at it')
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Cabinet Door' })
+    await pick({ ...ctx, text: 'Keep at it' })
 
     expect(game.firedEventIds).toContain('test_barge')
     expect(game.makingActive).toBeNull()
@@ -366,7 +366,7 @@ describe('making pipeline', () => {
   })
 
   it('head down over the work, chance has a harder time finding you; hunger is not impressed', async () => {
-    const event = (id, extra) => ({
+    const event = ({ id, extra }) => ({
       id,
       title: id,
       oneTime: true,
@@ -377,7 +377,7 @@ describe('making pipeline', () => {
       ...extra,
     })
     // A coin-flip event against a roll of 0.3: it fires on an idle afternoon, not over a painting.
-    const coinFlip = event('test_coin_flip', { type: 'random', probability: 0.5 })
+    const coinFlip = event({ id: 'test_coin_flip', extra: { type: 'random', probability: 0.5 } })
     const roll = () => 0.3
 
     const idle = startGame({ events: [coinFlip], rng: roll })
@@ -389,13 +389,13 @@ describe('making pipeline', () => {
       events: [coinFlip],
       rng: roll,
     })
-    strike(ctx.game)
+    strike({ game: ctx.game })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Cabinet Door')
-    await pick(ctx, 'Keep at it')
-    await pick(ctx, 'Keep at it')
-    await pick(ctx, 'Keep at it')
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Cabinet Door' })
+    await pick({ ...ctx, text: 'Keep at it' })
+    await pick({ ...ctx, text: 'Keep at it' })
+    await pick({ ...ctx, text: 'Keep at it' })
     expect(ctx.game.firedEventIds).not.toContain('test_coin_flip')
     expect(ctx.game.player.portfolio).toHaveLength(1)
     // The work is over, and so is the protection.
@@ -403,17 +403,17 @@ describe('making pipeline', () => {
     expect(ctx.game.firedEventIds).toContain('test_coin_flip')
 
     // A triggered event does not roll, so there is nothing for focus to shrink.
-    const barges = event('test_triggered', { type: 'triggered' })
+    const barges = event({ id: 'test_triggered', extra: { type: 'triggered' } })
     const other = startGame({
       carrying: ['grandmas_paints', 'cabinet_door'],
       events: [barges],
       rng: roll,
     })
-    strike(other.game)
+    strike({ game: other.game })
     other.loop.onLocationEntered()
-    await pick(other, 'Make something')
-    await pick(other, 'Cabinet Door')
-    await pick(other, 'Keep at it')
+    await pick({ ...other, text: 'Make something' })
+    await pick({ ...other, text: 'Cabinet Door' })
+    await pick({ ...other, text: 'Keep at it' })
     expect(other.game.firedEventIds).toContain('test_triggered')
     expect(other.game.player.makings[0].status).toBe('abandoned')
   })
@@ -421,10 +421,10 @@ describe('making pipeline', () => {
   it('you cannot leave in the middle of it, but you can walk away from it', async () => {
     const ctx = startGame({ carrying: ['grandmas_paints', 'cabinet_door'] })
     const { game } = ctx
-    strike(game)
+    strike({ game })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Cabinet Door')
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Cabinet Door' })
 
     await ctx.loop.travel({ locationId: 'columbia_park' })
     expect(game.currentLocationId).toBe('moms_house')
@@ -432,7 +432,7 @@ describe('making pipeline', () => {
       voiceLineOf({ personaId: 'sober', code: 'requirement.busy' })
     )
 
-    await pick(ctx, 'Walk away')
+    await pick({ ...ctx, text: 'Walk away' })
     expect(game.player.makings[0]).toMatchObject({
       status: 'abandoned',
       endedBy: { kind: 'player', id: 'walked_away' },
@@ -448,11 +448,11 @@ describe('making pipeline', () => {
 
   it('never mind closes the menu and costs nothing', async () => {
     const ctx = startGame({ carrying: ['grandmas_paints', 'cabinet_door'] })
-    strike(ctx.game)
+    strike({ game: ctx.game })
     ctx.loop.onLocationEntered()
     const tickBefore = ctx.game.time.tick
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Never mind')
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Never mind' })
     expect(ctx.game.makingPicker).toBeNull()
     expect(ctx.game.time.tick).toBe(tickBefore)
     expect(ctx.game.playerInventory).toHaveLength(2)
@@ -463,24 +463,25 @@ describe('making pipeline', () => {
     const storage = new Map()
     vi.stubGlobal('localStorage', {
       getItem: (k) => storage.get(k) ?? null,
-      setItem: (k, v) => storage.set(k, v),
+      // Storage's own signature is setItem(key, value); a rest parameter takes it as one.
+      setItem: (...keyAndValue) => storage.set(...keyAndValue),
       removeItem: (k) => storage.delete(k),
     })
     const ctx = startGame({
       at: 'lombard_dental',
       carrying: ['sharpie', 'grandmas_paints', 'cabinet_door'],
     })
-    strike(ctx.game, { mediumId: 'tagging' })
+    strike({ game: ctx.game, mediumId: 'tagging' })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Tagging: Sharpie, the back wall')
-    await pick(ctx, 'Keep going')
-    await pick(ctx, "That's enough")
-    strike(ctx.game)
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Tagging: Sharpie, the back wall' })
+    await pick({ ...ctx, text: 'Keep going' })
+    await pick({ ...ctx, text: "That's enough" })
+    strike({ game: ctx.game })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Cabinet Door')
-    await pick(ctx, 'Keep at it')
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Cabinet Door' })
+    await pick({ ...ctx, text: 'Keep at it' })
     const id = useSave().saveWrite({ name: 'mid-painting' }).data.id
 
     setActivePinia(createPinia())
@@ -501,8 +502,8 @@ describe('making pipeline', () => {
     })
     loop.onLocationEntered()
     const again = { game: restored, loop }
-    await pick(again, 'Keep at it')
-    await pick(again, 'Keep at it')
+    await pick({ ...again, text: 'Keep at it' })
+    await pick({ ...again, text: 'Keep at it' })
     expect(restored.player.portfolio).toHaveLength(1)
     vi.unstubAllGlobals()
   })
@@ -521,14 +522,17 @@ describe('making pipeline', () => {
       },
       time: { tick: 0, hour: 8, day: 1 },
       // A v4 location: frozen at save time, knowing nothing about surfaces or marks.
-      locations: {
-        lombard_dental: {
-          id: 'lombard_dental',
-          display: 'Lombard Dental',
-          visitCount: 7,
-          discovered: true,
-        },
-      },
+      locations: Object.fromEntries([
+        [
+          'lombard_dental',
+          {
+            id: 'lombard_dental',
+            display: 'Lombard Dental',
+            visitCount: 7,
+            discovered: true,
+          },
+        ],
+      ]),
       characters: {},
       firedEventIds: [],
       counters: {},
@@ -555,17 +559,17 @@ describe('making pipeline', () => {
   it('a tag is nerve: every beat banked helps the check, and the tag takes as long as you kept going', async () => {
     const ctx = startGame({ at: 'lombard_dental', carrying: ['sharpie'] })
     const { game } = ctx
-    strike(game, { mediumId: 'tagging' })
+    strike({ game, mediumId: 'tagging' })
     ctx.loop.onLocationEntered()
     const tickBefore = game.time.tick
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Tagging: Sharpie, the back wall')
-    await pick(ctx, 'Keep going')
-    await pick(ctx, 'Keep going')
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Tagging: Sharpie, the back wall' })
+    await pick({ ...ctx, text: 'Keep going' })
+    await pick({ ...ctx, text: 'Keep going' })
     expect(await logOf(ctx.narrative)).toContain(
       voiceLineOf({ personaId: 'sober', code: 'game.nerve.pressed' })
     )
-    await pick(ctx, "That's enough")
+    await pick({ ...ctx, text: "That's enough" })
 
     // Three beats, three quarter hours — not the four the medium allows.
     expect(game.time.tick).toBe(tickBefore + 3)
@@ -584,12 +588,12 @@ describe('making pipeline', () => {
       rng: rngSequence({ values: [0.99, 0.0, die(15)] }),
     })
     const { game } = ctx
-    strike(game, { mediumId: 'tagging' })
+    strike({ game, mediumId: 'tagging' })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Tagging: Sharpie, the back wall')
-    await pick(ctx, 'Keep going')
-    await pick(ctx, 'Keep going')
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Tagging: Sharpie, the back wall' })
+    await pick({ ...ctx, text: 'Keep going' })
+    await pick({ ...ctx, text: 'Keep going' })
 
     expect(await logOf(ctx.narrative)).toContain(
       voiceLineOf({ personaId: 'sober', code: 'game.nerve.busted' })
@@ -615,11 +619,11 @@ describe('making pipeline', () => {
       if (practised) {
         ctx.game.player.skills = { tagging: { sober: { base: 40, modifiers: [], xp: 0 } } }
       }
-      strike(ctx.game, { mediumId: 'tagging' })
+      strike({ game: ctx.game, mediumId: 'tagging' })
       ctx.loop.onLocationEntered()
-      await pick(ctx, 'Make something')
-      await pick(ctx, 'Tagging: Sharpie, the back wall')
-      await pick(ctx, 'Keep going')
+      await pick({ ...ctx, text: 'Make something' })
+      await pick({ ...ctx, text: 'Tagging: Sharpie, the back wall' })
+      await pick({ ...ctx, text: 'Keep going' })
       return ctx.game.makingActive
     }
     expect(await beat({ practised: false })).toBeNull()
@@ -631,10 +635,10 @@ describe('making pipeline', () => {
     const { game } = ctx
     game.playerDosesApply({ doses: [{ substanceId: 'malt_liquor', value: 80 }] })
     expect(game.personaInCharge).toBe('suburban_gangster')
-    strike(game, { mediumId: 'tagging' })
+    strike({ game, mediumId: 'tagging' })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Tagging: Sharpie, the back wall')
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Tagging: Sharpie, the back wall' })
     const stop = () => game.availableActions.find((a) => a.label.includes("That's enough"))
     expect(stop().available).toBe(false)
     expect(stop().unavailableReason).toBe(
@@ -650,10 +654,10 @@ describe('making pipeline', () => {
   it('a few lines are the words you picked: they end up in the piece, in order', async () => {
     const ctx = startGame({ carrying: ['golf_pencil', 'bar_napkin'] })
     const { game } = ctx
-    strike(game, { mediumId: 'writing' })
+    strike({ game, mediumId: 'writing' })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Writing: Golf Pencil')
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Writing: Golf Pencil' })
     const picked = []
     for (let i = 0; i < 3; i++) {
       const offered = game.availableActions.filter((a) => a.kind === 'making_choice')
@@ -677,38 +681,38 @@ describe('making pipeline', () => {
     ctx.game.timeAdvance({ ticks: 13 * 4 })
     ctx.game.player.status.money = money
     if (doses.length > 0) ctx.game.playerDosesApply({ doses })
-    strike(ctx.game, { mediumId: 'karaoke', ticksTotal: 8 })
+    strike({ game: ctx.game, mediumId: 'karaoke', ticksTotal: 8 })
     ctx.loop.onLocationEntered()
     return ctx
   }
-  const entry = (game, text) => game.availableActions.find((a) => a.label.includes(text))
+  const entry = ({ game, text }) => game.availableActions.find((a) => a.label.includes(text))
 
   it('karaoke is only on at karaoke night', async () => {
     const ctx = startGame({ at: 'blue_parrot' })
-    strike(ctx.game, { mediumId: 'karaoke', ticksTotal: 8 })
+    strike({ game: ctx.game, mediumId: 'karaoke', ticksTotal: 8 })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
+    await pick({ ...ctx, text: 'Make something' })
     // Eight in the morning: the corner by the jukebox, but no machine.
     expect(labels(ctx.game)).toContain('Performance')
     expect(labels(ctx.game)).not.toContain('Karaoke')
 
     const night = karaokeNight()
     expect(night.game.time.hour).toBe(21)
-    await pick(night, 'Make something')
+    await pick({ ...night, text: 'Make something' })
     expect(labels(night.game)).toContain('Karaoke: the karaoke machine')
   })
 
   it('sober, nobody is getting you up there: it is on the menu, greyed out, and says so', async () => {
     const ctx = karaokeNight({ money: 20 })
     expect(ctx.game.personaInCharge).toBe('sober')
-    await pick(ctx, 'Make something')
+    await pick({ ...ctx, text: 'Make something' })
     const refusal = medium('karaoke').making.refusals.find((r) => r.personaId === 'sober').reason
     for (const plan of ctx.game.availableActions.filter((a) => a.label.startsWith('Karaoke'))) {
       expect(plan.available).toBe(false)
       expect(plan.unavailableReason).toBe(refusal)
     }
     // Refused at the boundary too: forcing the entry starts nothing and costs nothing.
-    await ctx.loop.resolvePlayerAction(entry(ctx.game, 'tape rolling'))
+    await ctx.loop.resolvePlayerAction(entry({ game: ctx.game, text: 'tape rolling' }))
     expect(ctx.game.makingActive).toBeNull()
     expect(ctx.game.playerMoney).toBe(20)
   })
@@ -716,17 +720,17 @@ describe('making pipeline', () => {
   it('the tape is five bucks up front, and broke you sing for nothing', async () => {
     const vodka = [{ substanceId: 'vodka', value: 80 }]
     const broke = karaokeNight({ doses: vodka, money: 2 })
-    await pick(broke, 'Make something')
-    expect(entry(broke.game, 'tape rolling').available).toBe(false)
-    expect(entry(broke.game, 'tape rolling').unavailableReason).toContain('5.00')
+    await pick({ ...broke, text: 'Make something' })
+    expect(entry({ game: broke.game, text: 'tape rolling' }).available).toBe(false)
+    expect(entry({ game: broke.game, text: 'tape rolling' }).unavailableReason).toContain('5.00')
     // Picking it anyway (a stray key) says why, in words, and starts nothing.
-    await broke.loop.resolvePlayerAction(entry(broke.game, 'tape rolling'))
+    await broke.loop.resolvePlayerAction(entry({ game: broke.game, text: 'tape rolling' }))
     expect(broke.game.makingActive).toBeNull()
     expect(await logOf(broke.narrative)).toContain(
-      entry(broke.game, 'tape rolling').unavailableReason
+      entry({ game: broke.game, text: 'tape rolling' }).unavailableReason
     )
-    await pick(broke, 'Karaoke: the karaoke machine')
-    await pick(broke, 'Hand back the mic')
+    await pick({ ...broke, text: 'Karaoke: the karaoke machine' })
+    await pick({ ...broke, text: 'Hand back the mic' })
     // You did it. There is nothing to show for it, on the wall or in your pockets.
     expect(broke.game.player.experiences).toHaveLength(1)
     expect(broke.game.player.portfolio).toHaveLength(0)
@@ -734,10 +738,10 @@ describe('making pipeline', () => {
     expect(broke.game.playerMoney).toBe(2)
 
     const flush = karaokeNight({ doses: vodka, money: 7 })
-    await pick(flush, 'Make something')
-    await pick(flush, 'tape rolling')
+    await pick({ ...flush, text: 'Make something' })
+    await pick({ ...flush, text: 'tape rolling' })
     expect(flush.game.playerMoney).toBe(2)
-    await pick(flush, 'Hand back the mic')
+    await pick({ ...flush, text: 'Hand back the mic' })
     expect(flush.game.player.portfolio).toHaveLength(1)
     expect(flush.game.player.portfolio[0]).toMatchObject({ mediumId: 'karaoke', kind: 'portable' })
     expect(flush.game.player.portfolio[0].workText).toContain('on a tape of a tape of a tape')
@@ -747,12 +751,12 @@ describe('making pipeline', () => {
   it('in your head it is always sing song real good; the room reports what whoever you are actually did', async () => {
     const heard = async (substanceId) => {
       const ctx = karaokeNight({ doses: [{ substanceId, value: 80 }] })
-      await pick(ctx, 'Make something')
-      await pick(ctx, 'Karaoke: the karaoke machine')
+      await pick({ ...ctx, text: 'Make something' })
+      await pick({ ...ctx, text: 'Karaoke: the karaoke machine' })
       // The menu is the inner mind, whoever is in charge.
       expect(labels(ctx.game)).toContain('Sing song real good')
       const persona = ctx.game.personaInCharge
-      await ctx.loop.resolvePlayerAction(entry(ctx.game, 'Sing song real good'))
+      await ctx.loop.resolvePlayerAction(entry({ game: ctx.game, text: 'Sing song real good' }))
       return { persona, log: await logOf(ctx.narrative) }
     }
     const vodka = await heard('vodka')
@@ -773,20 +777,22 @@ describe('making pipeline', () => {
     const malt = [{ substanceId: 'malt_liquor', value: 80 }]
     const bar = karaokeNight({ doses: malt, money: 20 })
     expect(bar.game.personaInCharge).toBe('suburban_gangster')
-    await pick(bar, 'Make something')
+    await pick({ ...bar, text: 'Make something' })
     const refusal = medium('karaoke').making.refusals.find(
       (r) => r.personaId === 'suburban_gangster'
     ).reason
-    expect(entry(bar.game, 'Karaoke: the karaoke machine').available).toBe(false)
-    expect(entry(bar.game, 'Karaoke: the karaoke machine').unavailableReason).toBe(refusal)
+    expect(entry({ game: bar.game, text: 'Karaoke: the karaoke machine' }).available).toBe(false)
+    expect(entry({ game: bar.game, text: 'Karaoke: the karaoke machine' }).unavailableReason).toBe(
+      refusal
+    )
 
     const ctx = startGame({ at: 'denver_711' })
     const { game } = ctx
     game.playerDosesApply({ doses: malt })
-    strike(game, { mediumId: 'freestyle' })
+    strike({ game, mediumId: 'freestyle' })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Freestyle: right here')
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Freestyle: right here' })
 
     const rhymes = games.find((g) => g.id === 'rhymes')
     const familyOf = (word) =>
@@ -859,17 +865,17 @@ describe('making pipeline', () => {
         pieceAs: 'white gloves',
       }),
     })
-    strike(game, { mediumId: 'mime' })
+    strike({ game, mediumId: 'mime' })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
+    await pick({ ...ctx, text: 'Make something' })
     // Anywhere, yes. Bare-handed, no.
     expect(labels(game)).not.toContain('Mime')
-    await pick(ctx, 'Never mind')
+    await pick({ ...ctx, text: 'Never mind' })
     game.player.inventory.push({ ...game.itemGet({ itemId: 'white_gloves' }) })
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Mime: White Gloves, right here')
-    await pick(ctx, 'Feel along the wall')
-    await pick(ctx, 'Find the door')
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Mime: White Gloves, right here' })
+    await pick({ ...ctx, text: 'Feel along the wall' })
+    await pick({ ...ctx, text: 'Find the door' })
 
     expect(game.player.experiences[0]).toMatchObject({ mediumId: 'mime', artifactId: null })
     expect(game.player.experiences[0].workText).toBe('a mime, white gloves in Columbia Park')
@@ -883,19 +889,19 @@ describe('making pipeline', () => {
   it('you can start freestyling or singing anywhere: every place in Kenton offers both, and neither leaves a trace', async () => {
     for (const location of locations) {
       const ctx = startGame({ at: location.id })
-      strike(ctx.game, { mediumId: 'freestyle' })
+      strike({ game: ctx.game, mediumId: 'freestyle' })
       ctx.loop.onLocationEntered()
-      await pick(ctx, 'Make something')
+      await pick({ ...ctx, text: 'Make something' })
       expect(labels(ctx.game), location.id).toContain('Freestyle: right here')
       expect(labels(ctx.game), location.id).toContain('Singing: right here')
     }
     const ctx = startGame({ at: 'lombard_dental' })
-    strike(ctx.game, { mediumId: 'singing' })
+    strike({ game: ctx.game, mediumId: 'singing' })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Singing: right here')
-    await pick(ctx, 'Keep it under your breath')
-    await pick(ctx, 'Trail off')
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Singing: right here' })
+    await pick({ ...ctx, text: 'Keep it under your breath' })
+    await pick({ ...ctx, text: 'Trail off' })
     expect(ctx.game.player.experiences[0].workText).toBe(
       'a song in the waiting room at Lombard Dental'
     )
@@ -929,7 +935,7 @@ describe('making pipeline', () => {
   it('an urge does not barge in on an idea you already have', async () => {
     const ctx = startGame({ rng: () => 0.001 })
     ctx.game.playerDosesApply({ doses: [{ substanceId: 'malt_liquor', value: 80 }] })
-    const mine = strike(ctx.game, { mediumId: 'painting' }).data.struck
+    const mine = strike({ game: ctx.game, mediumId: 'painting' }).data.struck
     await ctx.loop.tick({ ticks: 1 })
     expect(ctx.game.inspirationActive.id).toBe(mine.id)
   })
@@ -938,10 +944,10 @@ describe('making pipeline', () => {
     const encore = medium('freestyle').making.encore
     const run = async (roll) => {
       const ctx = startGame({ at: 'denver_711', rng: () => roll })
-      strike(ctx.game, { mediumId: 'freestyle' })
+      strike({ game: ctx.game, mediumId: 'freestyle' })
       ctx.loop.onLocationEntered()
-      await pick(ctx, 'Make something')
-      await pick(ctx, 'Freestyle: right here')
+      await pick({ ...ctx, text: 'Make something' })
+      await pick({ ...ctx, text: 'Freestyle: right here' })
       for (let bar = 0; bar < 4; bar++) {
         await ctx.loop.resolvePlayerAction(
           ctx.game.availableActions.find((a) => a.kind === 'making_choice')
@@ -963,8 +969,8 @@ describe('making pipeline', () => {
     )
     // And it can be acted on straight away.
     expect(labels(again.game)).toContain('Make something')
-    await pick(again, 'Make something')
-    expect(entry(again.game, 'Freestyle: right here').available).toBe(true)
+    await pick({ ...again, text: 'Make something' })
+    expect(entry({ game: again.game, text: 'Freestyle: right here' }).available).toBe(true)
 
     const done = await run(encore.chance + 0.01)
     expect(done.game.player.experiences).toHaveLength(1)
@@ -1000,13 +1006,13 @@ describe('making pipeline', () => {
 
   it('a spray can with one bad decision left in it has none left after the tag', async () => {
     const ctx = startGame({ at: 'lombard_dental', carrying: ['spray_can_dregs', 'sharpie'] })
-    strike(ctx.game, { mediumId: 'tagging' })
+    strike({ game: ctx.game, mediumId: 'tagging' })
     ctx.loop.onLocationEntered()
-    await pick(ctx, 'Make something')
-    await pick(ctx, 'Tagging: Nearly Empty Spray Can')
+    await pick({ ...ctx, text: 'Make something' })
+    await pick({ ...ctx, text: 'Tagging: Nearly Empty Spray Can' })
     // Spent the moment it is committed, like the door. The Sharpie would not have been.
     expect(ctx.game.playerInventory.map((i) => i.id)).toEqual(['sharpie'])
-    await pick(ctx, "That's enough")
+    await pick({ ...ctx, text: "That's enough" })
     expect(ctx.game.locations.lombard_dental.marks).toHaveLength(1)
   })
 
@@ -1041,8 +1047,8 @@ describe('making pipeline', () => {
 
     // Drunk and broke at the machine: the price is quoted by the gangster, not by the engine.
     const malt = karaokeNight({ doses: [{ substanceId: 'vodka', value: 80 }], money: 2 })
-    await pick(malt, 'Make something')
-    expect(entry(malt.game, 'tape rolling').unavailableReason).toBe(
+    await pick({ ...malt, text: 'Make something' })
+    expect(entry({ game: malt.game, text: 'tape rolling' }).unavailableReason).toBe(
       voiceLineOf({ personaId: 'sober', code: 'requirement.money' })
         .replace('{cost}', '$5.00')
         .replace('{money}', '$2.00')

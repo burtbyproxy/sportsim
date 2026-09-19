@@ -10,9 +10,15 @@
  * @returns {string}
  */
 export function textFill({ text, params }) {
-  return text.replace(/\{(\w+)\}/g, (token, name) =>
-    params[name] === undefined || params[name] === null ? token : String(params[name])
-  )
+  let filled = ''
+  let from = 0
+  for (const match of text.matchAll(/\{(\w+)\}/g)) {
+    const value = params[match[1]]
+    const shown = value === undefined || value === null ? match[0] : String(value)
+    filled += text.slice(from, match.index) + shown
+    from = match.index + match[0].length
+  }
+  return filled + text.slice(from)
 }
 
 /**

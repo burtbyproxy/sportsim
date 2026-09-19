@@ -11,7 +11,7 @@ function makePlayer(statusOverrides = {}) {
   }
 }
 
-function makeLocation(id = 'test_loc', visitCount = 0) {
+function makeLocation({ id = 'test_loc', visitCount = 0 }) {
   return { id, visitCount }
 }
 
@@ -42,7 +42,7 @@ describe('eventsRandomCheck', () => {
     const event = makeEvent({ probability: 1.0 })
     const result = eventsRandomCheck({
       player: makePlayer(),
-      location: makeLocation(),
+      location: makeLocation({}),
       gameTime: makeGameTime(),
       events: [event],
       firedEventIds: [],
@@ -56,7 +56,7 @@ describe('eventsRandomCheck', () => {
     const event = makeEvent({ probability: 0 })
     const result = eventsRandomCheck({
       player: makePlayer(),
-      location: makeLocation(),
+      location: makeLocation({}),
       gameTime: makeGameTime(),
       events: [event],
       firedEventIds: [],
@@ -69,7 +69,7 @@ describe('eventsRandomCheck', () => {
     const event = makeEvent({ type: 'triggered', probability: 1.0 })
     const result = eventsRandomCheck({
       player: makePlayer(),
-      location: makeLocation(),
+      location: makeLocation({}),
       gameTime: makeGameTime(),
       events: [event],
       firedEventIds: [],
@@ -82,7 +82,7 @@ describe('eventsRandomCheck', () => {
     const event = makeEvent({ oneTime: true, probability: 1.0 })
     const result = eventsRandomCheck({
       player: makePlayer(),
-      location: makeLocation(),
+      location: makeLocation({}),
       gameTime: makeGameTime(),
       events: [event],
       firedEventIds: ['test_event'],
@@ -95,7 +95,7 @@ describe('eventsRandomCheck', () => {
     const event = makeEvent({ oneTime: true, probability: 1.0 })
     const result = eventsRandomCheck({
       player: makePlayer(),
-      location: makeLocation(),
+      location: makeLocation({}),
       gameTime: makeGameTime(),
       events: [event],
       firedEventIds: [],
@@ -106,8 +106,8 @@ describe('eventsRandomCheck', () => {
 
   it('filters by location', () => {
     const event = makeEvent({ conditions: { locationId: 'specific_bar' }, probability: 1.0 })
-    const wrongLocation = makeLocation('wrong_place')
-    const rightLocation = makeLocation('specific_bar')
+    const wrongLocation = makeLocation({ id: 'wrong_place' })
+    const rightLocation = makeLocation({ id: 'specific_bar' })
 
     const wrongResult = eventsRandomCheck({
       player: makePlayer(),
@@ -134,7 +134,7 @@ describe('eventsRandomCheck', () => {
     const event = makeEvent({ conditions: { minHour: 20, maxHour: 24 }, probability: 1.0 })
     const daytimeResult = eventsRandomCheck({
       player: makePlayer(),
-      location: makeLocation(),
+      location: makeLocation({}),
       gameTime: makeGameTime(14),
       events: [event],
       firedEventIds: [],
@@ -142,7 +142,7 @@ describe('eventsRandomCheck', () => {
     })
     const nightResult = eventsRandomCheck({
       player: makePlayer(),
-      location: makeLocation(),
+      location: makeLocation({}),
       gameTime: makeGameTime(21),
       events: [event],
       firedEventIds: [],
@@ -163,7 +163,7 @@ describe('eventsRandomCheck', () => {
     expect(
       eventsRandomCheck({
         player: soberPlayer,
-        location: makeLocation(),
+        location: makeLocation({}),
         gameTime: makeGameTime(),
         events: [event],
         firedEventIds: [],
@@ -173,7 +173,7 @@ describe('eventsRandomCheck', () => {
     expect(
       eventsRandomCheck({
         player: drunkPlayer,
-        location: makeLocation(),
+        location: makeLocation({}),
         gameTime: makeGameTime(),
         events: [event],
         firedEventIds: [],
@@ -190,7 +190,7 @@ describe('eventsTriggeredCheck', () => {
     const event = makeEvent({ type: 'triggered', conditions: {} })
     const result = eventsTriggeredCheck({
       player: makePlayer(),
-      location: makeLocation(),
+      location: makeLocation({}),
       gameTime: makeGameTime(),
       events: [event],
     })
@@ -201,7 +201,7 @@ describe('eventsTriggeredCheck', () => {
     const event = makeEvent({ type: 'random' })
     const result = eventsTriggeredCheck({
       player: makePlayer(),
-      location: makeLocation(),
+      location: makeLocation({}),
       gameTime: makeGameTime(),
       events: [event],
     })
@@ -212,7 +212,7 @@ describe('eventsTriggeredCheck', () => {
     const event = makeEvent({ type: 'triggered', oneTime: true })
     const result = eventsTriggeredCheck({
       player: makePlayer(),
-      location: makeLocation(),
+      location: makeLocation({}),
       gameTime: makeGameTime(),
       events: [event],
       firedEventIds: ['test_event'],
@@ -225,7 +225,7 @@ describe('eventsTriggeredCheck', () => {
     const holding = (inventory) =>
       eventsTriggeredCheck({
         player: { ...makePlayer(), inventory },
-        location: makeLocation(),
+        location: makeLocation({}),
         gameTime: makeGameTime(),
         events: [event],
       })

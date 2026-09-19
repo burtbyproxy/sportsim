@@ -16,7 +16,7 @@ const momsHouse = JSON.parse(
   readFileSync(resolve('content/maps/kenton/locations/moms_house.json'), 'utf-8')
 )
 const morning = { period: 'morning', hour: 9 }
-const read = (location, player, time = morning) =>
+const read = ({ location, player, time = morning }) =>
   narrativeLocation({ location, player, gameTime: time })
     .tokens.map((t) => t.text)
     .join('')
@@ -29,39 +29,53 @@ function fresh() {
 
 describe('location narrative — which variant the player reads', () => {
   it('a sober first arrival reads the default', () => {
-    expect(read(locationCreate(momsHouse), fresh())).toBe(momsHouse.descriptions.default)
+    expect(read({ location: locationCreate(momsHouse), player: fresh() })).toBe(
+      momsHouse.descriptions.default
+    )
   })
 
   it('drunk begins below sobriety 30, not at it', () => {
     const player = fresh()
     player.status.sobriety = 30
-    expect(read(locationCreate(momsHouse), player)).toBe(momsHouse.descriptions.default)
+    expect(read({ location: locationCreate(momsHouse), player })).toBe(
+      momsHouse.descriptions.default
+    )
     player.status.sobriety = 29
-    expect(read(locationCreate(momsHouse), player)).toBe(momsHouse.descriptions.drunk)
+    expect(read({ location: locationCreate(momsHouse), player })).toBe(momsHouse.descriptions.drunk)
   })
 
   it('exhausted begins below energy 20', () => {
     const player = fresh()
     player.status.energy = 20
-    expect(read(locationCreate(momsHouse), player)).toBe(momsHouse.descriptions.default)
+    expect(read({ location: locationCreate(momsHouse), player })).toBe(
+      momsHouse.descriptions.default
+    )
     player.status.energy = 19
-    expect(read(locationCreate(momsHouse), player)).toBe(momsHouse.descriptions.exhausted)
+    expect(read({ location: locationCreate(momsHouse), player })).toBe(
+      momsHouse.descriptions.exhausted
+    )
   })
 
   it('starving begins below hunger 15', () => {
     const player = fresh()
     player.status.hunger = 14
-    expect(read(locationCreate(momsHouse), player)).toBe(momsHouse.descriptions.starving)
+    expect(read({ location: locationCreate(momsHouse), player })).toBe(
+      momsHouse.descriptions.starving
+    )
   })
 
   it('night reads the night variant, a return visit reads the repeat', () => {
-    expect(read(locationCreate(momsHouse), fresh(), { period: 'night', hour: 23 })).toBe(
-      momsHouse.descriptions.night
-    )
+    expect(
+      read({
+        location: locationCreate(momsHouse),
+        player: fresh(),
+        time: { period: 'night', hour: 23 },
+      })
+    ).toBe(momsHouse.descriptions.night)
     const visited = locationCreate({ ...momsHouse, visitCount: 2 })
-    expect(read(visited, fresh(), { period: 'afternoon', hour: 13 })).toBe(
-      momsHouse.descriptions.repeat
-    )
+    expect(
+      read({ location: visited, player: fresh(), time: { period: 'afternoon', hour: 13 } })
+    ).toBe(momsHouse.descriptions.repeat)
   })
 
   it('a persona in the blend is a variant key content can write to', () => {
@@ -76,7 +90,7 @@ describe('location narrative — which variant the player reads', () => {
       ...momsHouse,
       descriptions: { ...momsHouse.descriptions, telepath: 'Dave is thinking about you.' },
     })
-    expect(read(stonedBasement, player)).toBe('Dave is thinking about you.')
-    expect(read(stonedBasement, fresh())).toBe(momsHouse.descriptions.default)
+    expect(read({ location: stonedBasement, player })).toBe('Dave is thinking about you.')
+    expect(read({ location: stonedBasement, player: fresh() })).toBe(momsHouse.descriptions.default)
   })
 })

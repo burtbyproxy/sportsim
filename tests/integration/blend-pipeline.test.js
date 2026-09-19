@@ -71,7 +71,7 @@ describe('blend pipeline', () => {
       {
         personaId: 'one_of_the_guys',
         weight: 0.4,
-        source: PERSONA_SOURCES.SUBSTANCE,
+        source: PERSONA_SOURCES.substance,
         sourceId: 'beer',
       },
     ])
@@ -161,7 +161,7 @@ describe('blend pipeline', () => {
     expect(game.player.intoxications.nicotine).toBeUndefined()
     expect(game.player.blend.weights[0]).toMatchObject({
       personaId: 'train_wreck',
-      source: PERSONA_SOURCES.WITHDRAWAL,
+      source: PERSONA_SOURCES.withdrawal,
       sourceId: 'nicotine',
     })
     expect(game.player.blend.modifiers.charm).toBe(-5)

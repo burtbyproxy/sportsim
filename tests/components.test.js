@@ -157,13 +157,13 @@ describe('TitleScreen — picking up a save', () => {
     return { wrapper, router, game: useGameStore() }
   }
 
-  const index = (entries) => ({ sportsim_saves: JSON.stringify(entries) })
+  const index = (entries) => Object.fromEntries([['sportsim_saves', JSON.stringify(entries)]])
 
   it("a save that will not open says so, in content's words, and stays on the title", async () => {
     const { wrapper, router, game } = await mountTitle({
       saves: {
         ...index([{ id: 'broken', name: 'auto', timestamp: 1 }]),
-        sportsim_save_broken: 'not a save {{{',
+        ...Object.fromEntries([['sportsim_save_broken', 'not a save {{{']]),
       },
     })
 

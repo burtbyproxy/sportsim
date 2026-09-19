@@ -47,7 +47,7 @@ function makeValidSave(overrides = {}) {
       counters: {},
     },
     time: { day: 1, period: 'morning', tick: 0 },
-    locations: { moms_house: { id: 'moms_house', name: "Mom's House" } },
+    locations: Object.fromEntries([['moms_house', { id: 'moms_house', name: "Mom's House" }]]),
     characters: {},
     firedEventIds: [],
     ...overrides,
@@ -95,7 +95,7 @@ describe('saveValidate', () => {
       const save = makeValidSave()
       delete save[field]
       expect(saveValidate({ save }).error).toMatchObject({
-        code: SAVE_ERROR_CODES.FIELD_MISSING,
+        code: SAVE_ERROR_CODES.fieldMissing,
         params: { field },
       })
     })
@@ -103,7 +103,7 @@ describe('saveValidate', () => {
 
   it('rejects a save with version 0', () => {
     expect(saveValidate({ save: makeValidSave({ version: 0 }) }).error.code).toBe(
-      SAVE_ERROR_CODES.VERSION_INVALID
+      SAVE_ERROR_CODES.versionInvalid
     )
   })
 
@@ -164,7 +164,7 @@ describe('MAX_SAVES', () => {
  * Stand up the real save system over an in-memory localStorage, with the
  * real game store patched to the given state.
  */
-function buildSaveSystem(lsMock, gameState = {}) {
+function buildSaveSystem({ lsMock, gameState = {} }) {
   globalThis.localStorage = lsMock
   setActivePinia(createPinia())
   const game = useGameStore()
@@ -182,22 +182,25 @@ describe('saveWrite() and saveRead() — round trip', () => {
 
   beforeEach(() => {
     ls = storageInstall()
-    sys = buildSaveSystem(ls, {
-      player: {
-        id: 'p1',
-        name: 'Portland',
-        currentLocationId: 'moms_house',
-        status: {},
-        stats: {},
-        inventory: [],
-        psyche: {},
-        archetypeScores: {},
-        counters: {},
+    sys = buildSaveSystem({
+      lsMock: ls,
+      gameState: {
+        player: {
+          id: 'p1',
+          name: 'Portland',
+          currentLocationId: 'moms_house',
+          status: {},
+          stats: {},
+          inventory: [],
+          psyche: {},
+          archetypeScores: {},
+          counters: {},
+        },
+        time: { day: 3, period: 'afternoon', tick: 12 },
+        locations: Object.fromEntries([['moms_house', { id: 'moms_house' }]]),
+        characters: { npc1: { id: 'npc1', name: 'Stranger' } },
+        firedEventIds: ['event_intro'],
       },
-      time: { day: 3, period: 'afternoon', tick: 12 },
-      locations: { moms_house: { id: 'moms_house' } },
-      characters: { npc1: { id: 'npc1', name: 'Stranger' } },
-      firedEventIds: ['event_intro'],
     })
   })
 
@@ -237,19 +240,19 @@ describe('saveWrite() and saveRead() — round trip', () => {
   })
 
   it('saveRead() fails NOT_FOUND for an unknown ID', () => {
-    expect(sys.saveRead({ id: 'does-not-exist' }).error.code).toBe(SAVE_ERROR_CODES.NOT_FOUND)
+    expect(sys.saveRead({ id: 'does-not-exist' }).error.code).toBe(SAVE_ERROR_CODES.notFound)
   })
 
   it('saveRead() fails UNREADABLE for a corrupted (non-JSON) save', () => {
     ls.setItem('sportsim_save_bad', 'not json at all {{{{')
-    expect(sys.saveRead({ id: 'bad' }).error.code).toBe(SAVE_ERROR_CODES.UNREADABLE)
+    expect(sys.saveRead({ id: 'bad' }).error.code).toBe(SAVE_ERROR_CODES.unreadable)
   })
 
   it('saveRead() fails FIELD_MISSING for a save missing required fields', () => {
     const partial = { id: 'x', name: 'X', timestamp: 1, version: 1 } // missing player, time, etc.
     ls.setItem('sportsim_save_x', JSON.stringify(partial))
     expect(sys.saveRead({ id: 'x' }).error).toMatchObject({
-      code: SAVE_ERROR_CODES.FIELD_MISSING,
+      code: SAVE_ERROR_CODES.fieldMissing,
       params: { field: 'player' },
     })
   })
@@ -257,7 +260,7 @@ describe('saveWrite() and saveRead() — round trip', () => {
   it('saveRead() fails VERSION_INVALID for a save with version 0', () => {
     const bad = makeValidSave({ version: 0 })
     ls.setItem('sportsim_save_bad', JSON.stringify(bad))
-    expect(sys.saveRead({ id: 'bad' }).error.code).toBe(SAVE_ERROR_CODES.VERSION_INVALID)
+    expect(sys.saveRead({ id: 'bad' }).error.code).toBe(SAVE_ERROR_CODES.versionInvalid)
   })
 
   it('default name uses day and period from game state', () => {
@@ -277,7 +280,7 @@ describe('savesList() and saveDelete()', () => {
 
   beforeEach(() => {
     ls = storageInstall()
-    sys = buildSaveSystem(ls)
+    sys = buildSaveSystem({ lsMock: ls })
   })
 
   it('savesList() returns empty array when no saves exist', () => {
@@ -313,7 +316,7 @@ describe('savesList() and saveDelete()', () => {
   it('saveDelete() means saveRead() finds nothing for that ID', () => {
     const id = sys.saveWrite({ name: 'ToDelete' }).data.id
     sys.saveDelete({ id })
-    expect(sys.saveRead({ id }).error.code).toBe(SAVE_ERROR_CODES.NOT_FOUND)
+    expect(sys.saveRead({ id }).error.code).toBe(SAVE_ERROR_CODES.notFound)
   })
 
   it('saveDelete() does not affect other saves', () => {
@@ -341,7 +344,7 @@ describe('saveAuto()', () => {
 
   beforeEach(() => {
     ls = storageInstall()
-    sys = buildSaveSystem(ls)
+    sys = buildSaveSystem({ lsMock: ls })
   })
 
   it('creates a save named "auto"', () => {
@@ -380,7 +383,7 @@ describe('MAX_SAVES limit', () => {
 
   beforeEach(() => {
     ls = storageInstall()
-    sys = buildSaveSystem(ls)
+    sys = buildSaveSystem({ lsMock: ls })
   })
 
   it('saveWrite() refuses at MAX_SAVES capacity', () => {
@@ -390,7 +393,7 @@ describe('MAX_SAVES limit', () => {
     }
     const overflow = sys.saveWrite({ name: 'Overflow' })
     expect(overflow.error).toMatchObject({
-      code: SAVE_ERROR_CODES.LIMIT_REACHED,
+      code: SAVE_ERROR_CODES.limitReached,
       params: { limit: MAX_SAVES },
     })
   })
@@ -424,22 +427,25 @@ describe('saveExport()', () => {
 
   beforeEach(() => {
     ls = storageInstall()
-    sys = buildSaveSystem(ls, {
-      player: {
-        id: 'p1',
-        name: 'Exporter',
-        currentLocationId: 'moms_house',
-        status: {},
-        stats: {},
-        inventory: [],
-        psyche: {},
-        archetypeScores: {},
-        counters: {},
+    sys = buildSaveSystem({
+      lsMock: ls,
+      gameState: {
+        player: {
+          id: 'p1',
+          name: 'Exporter',
+          currentLocationId: 'moms_house',
+          status: {},
+          stats: {},
+          inventory: [],
+          psyche: {},
+          archetypeScores: {},
+          counters: {},
+        },
+        time: { day: 1, period: 'morning', tick: 0 },
+        locations: {},
+        characters: {},
+        firedEventIds: [],
       },
-      time: { day: 1, period: 'morning', tick: 0 },
-      locations: {},
-      characters: {},
-      firedEventIds: [],
     })
   })
 
@@ -462,7 +468,7 @@ describe('saveExport()', () => {
   })
 
   it('returns null for an unknown save ID', () => {
-    expect(sys.saveExport({ id: 'no-such-id' }).error.code).toBe(SAVE_ERROR_CODES.NOT_FOUND)
+    expect(sys.saveExport({ id: 'no-such-id' }).error.code).toBe(SAVE_ERROR_CODES.notFound)
   })
 
   it('exported JSON is pretty-printed (contains newlines)', () => {
@@ -482,22 +488,25 @@ describe('saveImport()', () => {
 
   beforeEach(() => {
     ls = storageInstall()
-    sys = buildSaveSystem(ls, {
-      player: {
-        id: 'p1',
-        name: 'Importer',
-        currentLocationId: 'moms_house',
-        status: {},
-        stats: {},
-        inventory: [],
-        psyche: {},
-        archetypeScores: {},
-        counters: {},
+    sys = buildSaveSystem({
+      lsMock: ls,
+      gameState: {
+        player: {
+          id: 'p1',
+          name: 'Importer',
+          currentLocationId: 'moms_house',
+          status: {},
+          stats: {},
+          inventory: [],
+          psyche: {},
+          archetypeScores: {},
+          counters: {},
+        },
+        time: { day: 2, period: 'evening', tick: 4 },
+        locations: {},
+        characters: {},
+        firedEventIds: [],
       },
-      time: { day: 2, period: 'evening', tick: 4 },
-      locations: {},
-      characters: {},
-      firedEventIds: [],
     })
   })
 
@@ -531,19 +540,19 @@ describe('saveImport()', () => {
 
   it('returns null for invalid JSON', () => {
     expect(sys.saveImport({ json: 'this is not json }{{' }).error.code).toBe(
-      SAVE_ERROR_CODES.UNREADABLE
+      SAVE_ERROR_CODES.unreadable
     )
   })
 
   it('returns null for valid JSON but missing required fields', () => {
     const bad = JSON.stringify({ version: 1, name: 'incomplete' })
-    expect(sys.saveImport({ json: bad }).error.code).toBe(SAVE_ERROR_CODES.FIELD_MISSING)
+    expect(sys.saveImport({ json: bad }).error.code).toBe(SAVE_ERROR_CODES.fieldMissing)
   })
 
   it('returns null for a save with version 0', () => {
     const bad = makeValidSave({ version: 0 })
     expect(sys.saveImport({ json: JSON.stringify(bad) }).error.code).toBe(
-      SAVE_ERROR_CODES.VERSION_INVALID
+      SAVE_ERROR_CODES.versionInvalid
     )
   })
 
@@ -552,7 +561,7 @@ describe('saveImport()', () => {
       sys.saveWrite({ name: `Save ${i}` })
     }
     const json = JSON.stringify(makeValidSave())
-    expect(sys.saveImport({ json }).error.code).toBe(SAVE_ERROR_CODES.LIMIT_REACHED)
+    expect(sys.saveImport({ json }).error.code).toBe(SAVE_ERROR_CODES.limitReached)
   })
 
   it('can round-trip export then import', () => {
@@ -583,7 +592,7 @@ describe('resilience — corrupted index', () => {
 
   beforeEach(() => {
     ls = storageInstall()
-    sys = buildSaveSystem(ls)
+    sys = buildSaveSystem({ lsMock: ls })
   })
 
   it('a corrupted index with no saves behind it lists nothing', () => {
@@ -598,7 +607,7 @@ describe('resilience — corrupted index', () => {
 
     const listed = sys.savesList().data.map((entry) => entry.id)
     expect(listed.sort()).toEqual([first, second].sort())
-    expect(JSON.parse(ls._store().sportsim_saves)).toHaveLength(2)
+    expect(JSON.parse(ls.contents().sportsim_saves)).toHaveLength(2)
   })
 
   it('a new save after a corrupted index keeps the old ones listed', () => {
@@ -685,7 +694,12 @@ describe('saveMigrate', () => {
   it('a v6 save loses the fields nothing read, and keeps what was lived', () => {
     const v6 = makeValidSave({ version: 6 })
     v6.counters = { drinks: 2 }
-    v6.player = { ...v6.player, level: 1, xp: 0, counters: { hoops_sessions: 3 } }
+    v6.player = {
+      ...v6.player,
+      level: 1,
+      xp: 0,
+      counters: Object.fromEntries([['hoops_sessions', 3]]),
+    }
     v6.characters = {
       tina: {
         id: 'tina',
@@ -695,21 +709,24 @@ describe('saveMigrate', () => {
         want: 'To be liked.',
       },
     }
-    v6.locations = {
-      blue_parrot: {
-        id: 'blue_parrot',
-        variant: 'tavern',
-        npcSlots: ['tina'],
-        actionIds: [],
-        visitCount: 4,
-      },
-    }
+    v6.locations = Object.fromEntries([
+      [
+        'blue_parrot',
+        {
+          id: 'blue_parrot',
+          variant: 'tavern',
+          npcSlots: ['tina'],
+          actionIds: [],
+          visitCount: 4,
+        },
+      ],
+    ])
     const migrated = saveMigrate({ save: v6 })
     expect(migrated.version).toBe(7)
     expect(migrated).not.toHaveProperty('counters')
     expect(migrated.player).not.toHaveProperty('level')
     expect(migrated.player).not.toHaveProperty('xp')
-    expect(migrated.player.counters).toEqual({ hoops_sessions: 3 })
+    expect(migrated.player.counters).toEqual(Object.fromEntries([['hoops_sessions', 3]]))
     expect(migrated.characters.tina).toEqual({ id: 'tina', want: 'To be liked.' })
     expect(migrated.locations.blue_parrot).toEqual({ id: 'blue_parrot', visitCount: 4 })
   })
@@ -740,7 +757,7 @@ describe('saveRead() and saveImport() — old saves and fresh ids', () => {
 
   beforeEach(() => {
     ls = storageInstall()
-    sys = buildSaveSystem(ls)
+    sys = buildSaveSystem({ lsMock: ls })
   })
 
   function v1OnDisk() {

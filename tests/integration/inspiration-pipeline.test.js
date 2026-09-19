@@ -72,7 +72,7 @@ describe('inspiration pipeline', () => {
 
     const active = game.inspirationActive
     expect(active).toMatchObject({
-      status: INSPIRATION_STATUSES.ACTIVE,
+      status: INSPIRATION_STATUSES.active,
       sourceKind: 'event',
       sourceId: 'rock_bottom_echo',
       mediumId: 'painting',
@@ -127,7 +127,7 @@ describe('inspiration pipeline', () => {
     const entries = await narrativeSettle({ narrative })
 
     expect(game.inspirationActive).toBeNull()
-    expect(statuses(game)).toEqual([INSPIRATION_STATUSES.EXPIRED])
+    expect(statuses(game)).toEqual([INSPIRATION_STATUSES.expired])
     expect(entries.at(-1)).toBe(voiceLineOf({ personaId: 'sober', code: 'inspiration.expired' }))
     expect(game.inspirationLabel).toBe(
       voiceLineOf({ personaId: 'sober', code: 'inspiration.status.none' })
@@ -150,7 +150,7 @@ describe('inspiration pipeline', () => {
 
     expect(game.inspirationActive).toBeNull()
     expect(game.player.inspirations[0]).toMatchObject({
-      status: INSPIRATION_STATUSES.INTERRUPTED,
+      status: INSPIRATION_STATUSES.interrupted,
       endedBy: { kind: 'event', id: 'found_change' },
     })
     expect(entries).toContain(voiceLineOf({ personaId: 'sober', code: 'inspiration.interrupted' }))
@@ -170,7 +170,7 @@ describe('inspiration pipeline', () => {
     await loop.tick({ ticks: 1 })
     const entries = await narrativeSettle({ narrative })
 
-    expect(statuses(game)).toEqual([INSPIRATION_STATUSES.REPLACED, INSPIRATION_STATUSES.ACTIVE])
+    expect(statuses(game)).toEqual([INSPIRATION_STATUSES.replaced, INSPIRATION_STATUSES.active])
     expect(game.player.inspirations[0].endedBy).toEqual({ kind: 'event', id: 'rain' })
     expect(game.inspirationActive.mediumId).toBe('writing')
     expect(entries).not.toContain(
@@ -198,7 +198,7 @@ describe('inspiration pipeline', () => {
     const entries = await narrativeSettle({ narrative })
 
     expect(game.player.inspirations[0]).toMatchObject({
-      status: INSPIRATION_STATUSES.INTERRUPTED,
+      status: INSPIRATION_STATUSES.interrupted,
       endedBy: { kind: 'action', id: 'sleep' },
     })
     expect(entries).toContain(voiceLineOf({ personaId: 'sober', code: 'inspiration.interrupted' }))
@@ -262,7 +262,7 @@ describe('inspiration pipeline', () => {
     const spent = game.inspirationSpendApply({ spentOn: { kind: 'piece', id: 'p1' } })
     expect(spent.ok).toBe(true)
     expect(game.player.inspirations[0]).toMatchObject({
-      status: INSPIRATION_STATUSES.SPENT,
+      status: INSPIRATION_STATUSES.spent,
       endedBy: { kind: 'piece', id: 'p1' },
     })
   })

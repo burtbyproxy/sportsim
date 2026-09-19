@@ -163,7 +163,7 @@ describe('requirementsMeet — minVisits', () => {
   })
 
   it('reads the count from the location, not from the player', () => {
-    const player = makePlayer({ _locationData: { visitCount: 9 } })
+    const player = makePlayer(Object.fromEntries([['_locationData', { visitCount: 9 }]]))
     expect(requirementsMeet({ player, action, gameTime, location: { visitCount: 0 } }).meets).toBe(
       false
     )
@@ -493,38 +493,38 @@ describe('requirementsMeet — requiresInspiration', () => {
 
 describe('actionApplies', () => {
   const place = { id: 'bar', scavengeTableId: 'bar_back' }
-  const applies = (action, { location = place, characters = [] } = {}) =>
+  const applies = ({ action, location = place, characters = [] }) =>
     actionApplies({ action, location, characters })
 
   it('an action that lives here applies', () => {
-    expect(applies({ id: 'order_beer', locationId: 'bar' })).toBe(true)
+    expect(applies({ action: { id: 'order_beer', locationId: 'bar' } })).toBe(true)
   })
 
   it('an action that lives somewhere else does not', () => {
-    expect(applies({ id: 'pray', locationId: 'church' })).toBe(false)
+    expect(applies({ action: { id: 'pray', locationId: 'church' } })).toBe(false)
   })
 
   it('an "any" action applies everywhere', () => {
-    expect(applies({ id: 'loiter', locationId: 'any' })).toBe(true)
+    expect(applies({ action: { id: 'loiter', locationId: 'any' } })).toBe(true)
   })
 
   it('looking around applies only where there is a table to draw from', () => {
     const scavenge = { id: 'scavenge', locationId: 'any', kind: 'scavenge' }
-    expect(applies(scavenge)).toBe(true)
-    expect(applies(scavenge, { location: { ...place, scavengeTableId: null } })).toBe(false)
+    expect(applies({ action: scavenge })).toBe(true)
+    expect(applies({ action: scavenge, location: { ...place, scavengeTableId: null } })).toBe(false)
   })
 
   it('an action with someone applies only while they are here', () => {
     const talk = { id: 'talk_to_dale', locationId: 'bar', characterId: 'dale' }
-    expect(applies(talk, { characters: [{ id: 'dale' }] })).toBe(true)
-    expect(applies(talk, { characters: [{ id: 'tina' }] })).toBe(false)
-    expect(applies(talk)).toBe(false)
+    expect(applies({ action: talk, characters: [{ id: 'dale' }] })).toBe(true)
+    expect(applies({ action: talk, characters: [{ id: 'tina' }] })).toBe(false)
+    expect(applies({ action: talk })).toBe(false)
   })
 
   it('an "any" action with someone follows them, and only them', () => {
     const talk = { id: 'talk_to_maurice', locationId: 'any', characterId: 'maurice' }
-    expect(applies(talk, { characters: [{ id: 'maurice' }] })).toBe(true)
-    expect(applies(talk)).toBe(false)
+    expect(applies({ action: talk, characters: [{ id: 'maurice' }] })).toBe(true)
+    expect(applies({ action: talk })).toBe(false)
   })
 })
 

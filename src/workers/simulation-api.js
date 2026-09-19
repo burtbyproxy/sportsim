@@ -19,17 +19,17 @@ export function toPlainSnapshot(value) {
   return JSON.parse(JSON.stringify(value))
 }
 
-let _worker = null
-let _sim = null
+let workerInstance = null
+let simulationRemote = null
 
 function getWorker() {
-  if (!_worker) {
-    _worker = new Worker(new URL('./simulation.worker.js', import.meta.url), {
+  if (!workerInstance) {
+    workerInstance = new Worker(new URL('./simulation.worker.js', import.meta.url), {
       type: 'module',
     })
-    _sim = wrap(_worker)
+    simulationRemote = wrap(workerInstance)
   }
-  return _sim
+  return simulationRemote
 }
 
 export const sim = {
@@ -49,10 +49,10 @@ export const sim = {
    * Terminate the worker (call on app teardown if needed).
    */
   terminate() {
-    if (_worker) {
-      _worker.terminate()
-      _worker = null
-      _sim = null
+    if (workerInstance) {
+      workerInstance.terminate()
+      workerInstance = null
+      simulationRemote = null
     }
   },
 }

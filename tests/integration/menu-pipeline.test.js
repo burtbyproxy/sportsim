@@ -148,7 +148,12 @@ describe('the menu', () => {
       { ...game.itemGet({ itemId: 'single_sock' }) }
     )
     const usable = Object.fromEntries(game.playerInventory.map((i) => [i.id, i.usable]))
-    expect(usable).toEqual({ tallboy_oly: true, single_sock: false })
+    expect(usable).toEqual(
+      Object.fromEntries([
+        ['tallboy_oly', true],
+        ['single_sock', false],
+      ])
+    )
   })
 
   it("the menu is headed by the question, the person picked out, or the event, in content's words", () => {

@@ -39,19 +39,17 @@ onMounted(() => {
 })
 
 // Letter keys a–z leave by the exit with that key; the loop decides whether you can.
-useKeyboard(
-  Object.fromEntries(
-    EXIT_KEYS.split('').map((letter) => [
-      letter,
-      (e) => {
-        const entry = game.menuEntries.find((m) => m.kind === 'exit' && m.key === letter)
-        if (!entry || !gameLoop) return
-        e.preventDefault()
-        gameLoop.travel({ locationId: entry.exit.locationId })
-      },
-    ])
-  )
-)
+useKeyboard({
+  bindings: EXIT_KEYS.split('').map((letter) => ({
+    key: letter,
+    handler: (e) => {
+      const entry = game.menuEntries.find((m) => m.kind === 'exit' && m.key === letter)
+      if (!entry || !gameLoop) return
+      e.preventDefault()
+      gameLoop.travel({ locationId: entry.exit.locationId })
+    },
+  })),
+})
 </script>
 
 <style lang="scss" scoped>

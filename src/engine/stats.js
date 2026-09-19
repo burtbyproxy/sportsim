@@ -47,7 +47,7 @@ export const STAT_XP_CHECK_FAILURE = 1
  * @param {number} currentBase - current stat base value
  * @returns {number}
  */
-function _xpThreshold(currentBase) {
+function xpThreshold(currentBase) {
   // Costs more XP the higher your stat — diminishing returns
   return 10 + currentBase * 2
 }
@@ -67,13 +67,13 @@ export function statXpApply({ stat, amount }) {
     modifiers: [...(stat.modifiers || [])],
   }
   let leveledUp = false
-  while (next.xp >= _xpThreshold(next.base)) {
-    next.xp -= _xpThreshold(next.base)
+  while (next.xp >= xpThreshold(next.base)) {
+    next.xp -= xpThreshold(next.base)
     next.base = Math.min(next.base + 1, 100)
     leveledUp = true
     if (next.base === 100) break
   }
-  if (next.base === 100 && next.xp >= _xpThreshold(100)) next.xp = 0
+  if (next.base === 100 && next.xp >= xpThreshold(100)) next.xp = 0
   return { stat: next, leveledUp }
 }
 

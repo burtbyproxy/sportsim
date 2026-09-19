@@ -206,7 +206,7 @@ describe('makingOptions', () => {
       gameState: {},
       gameTime: { tick: 0, hour: 15 },
     })
-    expect(early.error.code).toBe(MAKING_ERROR_CODES.SURFACE_INVALID)
+    expect(early.error.code).toBe(MAKING_ERROR_CODES.surfaceInvalid)
   })
 
   it('lists carried ingredients and nothing else', () => {
@@ -218,7 +218,7 @@ describe('makingOptions', () => {
   it('refuses without an inspiration', () => {
     const player = playerWith({ carrying: ['paints', 'door'], inspired: false })
     const result = makingOptions({ player, location: alley, items, mediums })
-    expect(result.error.code).toBe(MAKING_ERROR_CODES.INSPIRATION_NONE)
+    expect(result.error.code).toBe(MAKING_ERROR_CODES.inspirationNone)
   })
 })
 
@@ -236,7 +236,7 @@ describe('makingStart', () => {
     })
     expect(result.ok).toBe(true)
     expect(result.data.making).toMatchObject({
-      status: MAKING_STATUSES.IN_PROGRESS,
+      status: MAKING_STATUSES.inProgress,
       inspirationId: player.inspirations[0].id,
       ticksTotal: 4,
       ticksDone: 0,
@@ -279,56 +279,61 @@ describe('makingStart', () => {
   })
 
   it.each([
-    ['a tool not carried', { carrying: ['door'] }, doorPlan, MAKING_ERROR_CODES.TOOL_INVALID],
-    [
-      'a tool for another medium',
-      { carrying: ['paints'] },
-      { ...wallPlan, toolItemId: 'paints' },
-      MAKING_ERROR_CODES.TOOL_INVALID,
-    ],
-    [
-      'a surface not carried',
-      { carrying: ['paints'] },
-      doorPlan,
-      MAKING_ERROR_CODES.SURFACE_INVALID,
-    ],
-    [
-      'a surface that is not here',
-      { carrying: ['spray'] },
-      { ...wallPlan, surfaceId: 'ceiling' },
-      MAKING_ERROR_CODES.SURFACE_INVALID,
-    ],
-    [
-      'a wall that does not take the medium',
-      { carrying: ['spray'] },
-      { ...wallPlan, surfaceId: 'corner' },
-      MAKING_ERROR_CODES.SURFACE_INVALID,
-    ],
-    [
-      'an ingredient in a medium that takes none',
-      { carrying: ['spray', 'brut'] },
-      { ...wallPlan, ingredientItemId: 'brut' },
-      MAKING_ERROR_CODES.INGREDIENT_INVALID,
-    ],
-    [
-      'an ingredient not carried',
-      { carrying: ['paints', 'door'] },
-      { ...doorPlan, ingredientItemId: 'brut' },
-      MAKING_ERROR_CODES.INGREDIENT_INVALID,
-    ],
-    [
-      'an idea that will not last',
-      { carrying: ['paints', 'door'], ticksTotal: 4 },
-      doorPlan,
-      MAKING_ERROR_CODES.TIME_SHORT,
-    ],
-    [
-      'an unknown medium',
-      { carrying: ['paints', 'door'] },
-      { ...doorPlan, mediumId: 'macrame' },
-      MAKING_ERROR_CODES.MEDIUM_UNKNOWN,
-    ],
-  ])('refuses %s', (_, setup, plan, code) => {
+    {
+      name: 'a tool not carried',
+      setup: { carrying: ['door'] },
+      plan: doorPlan,
+      code: MAKING_ERROR_CODES.toolInvalid,
+    },
+    {
+      name: 'a tool for another medium',
+      setup: { carrying: ['paints'] },
+      plan: { ...wallPlan, toolItemId: 'paints' },
+      code: MAKING_ERROR_CODES.toolInvalid,
+    },
+    {
+      name: 'a surface not carried',
+      setup: { carrying: ['paints'] },
+      plan: doorPlan,
+      code: MAKING_ERROR_CODES.surfaceInvalid,
+    },
+    {
+      name: 'a surface that is not here',
+      setup: { carrying: ['spray'] },
+      plan: { ...wallPlan, surfaceId: 'ceiling' },
+      code: MAKING_ERROR_CODES.surfaceInvalid,
+    },
+    {
+      name: 'a wall that does not take the medium',
+      setup: { carrying: ['spray'] },
+      plan: { ...wallPlan, surfaceId: 'corner' },
+      code: MAKING_ERROR_CODES.surfaceInvalid,
+    },
+    {
+      name: 'an ingredient in a medium that takes none',
+      setup: { carrying: ['spray', 'brut'] },
+      plan: { ...wallPlan, ingredientItemId: 'brut' },
+      code: MAKING_ERROR_CODES.ingredientInvalid,
+    },
+    {
+      name: 'an ingredient not carried',
+      setup: { carrying: ['paints', 'door'] },
+      plan: { ...doorPlan, ingredientItemId: 'brut' },
+      code: MAKING_ERROR_CODES.ingredientInvalid,
+    },
+    {
+      name: 'an idea that will not last',
+      setup: { carrying: ['paints', 'door'], ticksTotal: 4 },
+      plan: doorPlan,
+      code: MAKING_ERROR_CODES.timeShort,
+    },
+    {
+      name: 'an unknown medium',
+      setup: { carrying: ['paints', 'door'] },
+      plan: { ...doorPlan, mediumId: 'macrame' },
+      code: MAKING_ERROR_CODES.mediumUnknown,
+    },
+  ])('refuses $name', ({ setup, plan, code }) => {
     const result = makingStart({
       player: playerWith(setup),
       location: alley,
@@ -354,7 +359,7 @@ describe('makingStart', () => {
       plan: wallPlan,
       gameTime: { tick: 2 },
     })
-    expect(result.error.code).toBe(MAKING_ERROR_CODES.ALREADY_MAKING)
+    expect(result.error.code).toBe(MAKING_ERROR_CODES.alreadyMaking)
   })
 })
 
@@ -396,7 +401,7 @@ describe('what a plan can cost, and who will not do it', () => {
         gameState: {},
         gameTime: { tick: 0 },
       })
-    expect(start(4.99).error.code).toBe(MAKING_ERROR_CODES.MONEY_SHORT)
+    expect(start(4.99).error.code).toBe(MAKING_ERROR_CODES.moneyShort)
     expect(start(5).data.moneyCost).toBe(5)
     // A free wall costs nothing.
     const free = makingStart({
@@ -426,7 +431,7 @@ describe('what a plan can cost, and who will not do it', () => {
         gameState: {},
         gameTime: { tick: 0 },
       })
-    expect(start(sober).error.code).toBe(MAKING_ERROR_CODES.PERSONA_REFUSES)
+    expect(start(sober).error.code).toBe(MAKING_ERROR_CODES.personaRefuses)
     const drunk = { ...sober, blend: { ...sober.blend, dominantPersonaId: 'host' } }
     expect(start(drunk).ok).toBe(true)
   })
@@ -466,7 +471,7 @@ describe('a form that can be done anywhere', () => {
   })
 
   it('starts only for a form marked anywhere, and only on the spot you are standing on', () => {
-    const start = (meds, plan) =>
+    const start = ({ meds, plan }) =>
       makingStart({
         player: inspired(),
         location: nowhere,
@@ -476,10 +481,12 @@ describe('a form that can be done anywhere', () => {
         gameState: {},
         gameTime: { tick: 0 },
       })
-    expect(start(loose, herePlan).ok).toBe(true)
-    expect(start(mediums, herePlan).error.code).toBe(MAKING_ERROR_CODES.SURFACE_INVALID)
-    expect(start(loose, { ...herePlan, surfaceId: 'elsewhere' }).error.code).toBe(
-      MAKING_ERROR_CODES.SURFACE_INVALID
+    expect(start({ meds: loose, plan: herePlan }).ok).toBe(true)
+    expect(start({ meds: mediums, plan: herePlan }).error.code).toBe(
+      MAKING_ERROR_CODES.surfaceInvalid
+    )
+    expect(start({ meds: loose, plan: { ...herePlan, surfaceId: 'elsewhere' } }).error.code).toBe(
+      MAKING_ERROR_CODES.surfaceInvalid
     )
   })
 
@@ -509,7 +516,7 @@ describe('a form that can be done anywhere', () => {
       gameTime: { tick: 3 },
       rng: () => 0.99,
     })
-    expect(result.data.tier).toBe(MAKING_TIERS.INSPIRED)
+    expect(result.data.tier).toBe(MAKING_TIERS.inspired)
     expect(result.data.artifact).toBeNull()
   })
 })
@@ -617,10 +624,10 @@ describe('makingWork', () => {
   it('is an error with nothing in progress, and with a nonsense amount of work', () => {
     const idle = playerWith({ carrying: [] })
     expect(makingWork({ player: idle, ticksWorked: 1, gameTime: { tick: 0 } }).error.code).toBe(
-      MAKING_ERROR_CODES.NONE_IN_PROGRESS
+      MAKING_ERROR_CODES.noneInProgress
     )
     expect(makingWork({ player: idle, ticksWorked: 0, gameTime: { tick: 0 } }).error.code).toBe(
-      MAKING_ERROR_CODES.TICKS_INVALID
+      MAKING_ERROR_CODES.ticksInvalid
     )
   })
 })
@@ -644,7 +651,7 @@ describe('makingFinish', () => {
       gameTime: { tick: 3 },
       rng: die(15),
     })
-    expect(result.error.code).toBe(MAKING_ERROR_CODES.WORK_UNFINISHED)
+    expect(result.error.code).toBe(MAKING_ERROR_CODES.workUnfinished)
   })
 
   it('refuses when the idea it was started on is gone, even if another has struck', () => {
@@ -664,15 +671,15 @@ describe('makingFinish', () => {
       gameTime: { tick: 5 },
       rng: die(15),
     })
-    expect(result.error.code).toBe(MAKING_ERROR_CODES.INSPIRATION_NONE)
+    expect(result.error.code).toBe(MAKING_ERROR_CODES.inspirationNone)
   })
 
   it.each([
-    [1, MAKING_TIERS.BOTCHED],
-    [5, MAKING_TIERS.ROUGH],
-    [15, MAKING_TIERS.SOLID],
-    [20, MAKING_TIERS.INSPIRED],
-  ])('a %i on the die makes it %s', (face, tier) => {
+    { face: 1, tier: MAKING_TIERS.botched },
+    { face: 5, tier: MAKING_TIERS.rough },
+    { face: 15, tier: MAKING_TIERS.solid },
+    { face: 20, tier: MAKING_TIERS.inspired },
+  ])('a $face on the die makes it $tier', ({ face, tier }) => {
     const result = makingFinish({
       player: readyToFinish(),
       location: alley,
@@ -693,7 +700,7 @@ describe('makingFinish', () => {
       rng: die(10),
     })
     const item = result.data.check.modifierItems.find(
-      (m) => m.sourceId === MAKING_MODIFIER_SOURCE_IDS.INSPIRATION
+      (m) => m.sourceId === MAKING_MODIFIER_SOURCE_IDS.inspiration
     )
     expect(item.value).toBe(3)
     expect(result.data.check.total).toBe(10 + 1 + 3)
@@ -714,7 +721,7 @@ describe('makingFinish', () => {
       value: -4,
     })
     expect(result.data.check.total).toBe(15 + 1 + 3 - 4)
-    expect(result.data.tier).toBe(MAKING_TIERS.SOLID)
+    expect(result.data.tier).toBe(MAKING_TIERS.solid)
   })
 
   it('a medium the idea did not ask for costs the check', () => {
@@ -726,7 +733,7 @@ describe('makingFinish', () => {
       rng: die(10),
     })
     const sourceIds = result.data.check.modifierItems.map((m) => m.sourceId)
-    expect(sourceIds).toContain(MAKING_MODIFIER_SOURCE_IDS.WRONG_MEDIUM)
+    expect(sourceIds).toContain(MAKING_MODIFIER_SOURCE_IDS.wrongMedium)
     expect(result.data.check.total).toBe(10 + 1 + 3 - 2)
   })
 
@@ -739,7 +746,7 @@ describe('makingFinish', () => {
       rng: die(10),
     })
     const sourceIds = result.data.check.modifierItems.map((m) => m.sourceId)
-    expect(sourceIds).not.toContain(MAKING_MODIFIER_SOURCE_IDS.WRONG_MEDIUM)
+    expect(sourceIds).not.toContain(MAKING_MODIFIER_SOURCE_IDS.wrongMedium)
   })
 
   it('work on something carried leaves a portable, unshown artifact and a finished record', () => {
@@ -753,8 +760,8 @@ describe('makingFinish', () => {
     })
     const { artifact, experience, making } = result.data
     expect(artifact).toMatchObject({
-      kind: ARTIFACT_KINDS.PORTABLE,
-      status: ARTIFACT_STATUSES.UNSHOWN,
+      kind: ARTIFACT_KINDS.portable,
+      status: ARTIFACT_STATUSES.unshown,
       surfaceId: 'door',
       toolItemId: 'paints',
       madeAtLocationId: 'alley',
@@ -762,7 +769,7 @@ describe('makingFinish', () => {
     })
     expect(experience.artifactId).toBe(artifact.id)
     expect(experience.dominantPersonaId).toBe('sober')
-    expect(making.status).toBe(MAKING_STATUSES.FINISHED)
+    expect(making.status).toBe(MAKING_STATUSES.finished)
     expect(making.experienceId).toBe(experience.id)
     expect(makingActive({ player: { makings: result.data.makings } })).toBeNull()
   })
@@ -771,9 +778,9 @@ describe('makingFinish', () => {
     const location = {
       ...alley,
       marks: [
-        { id: 'old', surfaceId: 'wall', status: ARTIFACT_STATUSES.FRESH },
-        { id: 'older', surfaceId: 'wall', status: ARTIFACT_STATUSES.COVERED },
-        { id: 'elsewhere', surfaceId: 'dumpster', status: ARTIFACT_STATUSES.FRESH },
+        { id: 'old', surfaceId: 'wall', status: ARTIFACT_STATUSES.fresh },
+        { id: 'older', surfaceId: 'wall', status: ARTIFACT_STATUSES.covered },
+        { id: 'elsewhere', surfaceId: 'dumpster', status: ARTIFACT_STATUSES.fresh },
       ],
     }
     const result = makingFinish({
@@ -784,8 +791,8 @@ describe('makingFinish', () => {
       rng: die(15),
     })
     expect(result.data.artifact).toMatchObject({
-      kind: ARTIFACT_KINDS.FIXED,
-      status: ARTIFACT_STATUSES.FRESH,
+      kind: ARTIFACT_KINDS.fixed,
+      status: ARTIFACT_STATUSES.fresh,
     })
     expect(result.data.markIdsCovered).toEqual(['old'])
   })
@@ -805,14 +812,14 @@ describe('makingFinish', () => {
     })
     const result = makingFinish({ player, location, mediums, gameTime: { tick: 5 }, rng: die(20) })
     expect(result.data.artifact).toBeNull()
-    expect(result.data.experience.tier).toBe(MAKING_TIERS.INSPIRED)
+    expect(result.data.experience.tier).toBe(MAKING_TIERS.inspired)
   })
 
   it('a surface the place marks portable hands you something to carry, and the wall is untouched', () => {
     const location = {
       ...alley,
       surfaces: [{ id: 'wall', mediumIds: ['tagging'], artifact: 'portable' }],
-      marks: [{ id: 'old', surfaceId: 'wall', status: ARTIFACT_STATUSES.FRESH }],
+      marks: [{ id: 'old', surfaceId: 'wall', status: ARTIFACT_STATUSES.fresh }],
     }
     const player = worked({
       player: started({
@@ -824,8 +831,8 @@ describe('makingFinish', () => {
     })
     const result = makingFinish({ player, location, mediums, gameTime: { tick: 5 }, rng: die(15) })
     expect(result.data.artifact).toMatchObject({
-      kind: ARTIFACT_KINDS.PORTABLE,
-      status: ARTIFACT_STATUSES.UNSHOWN,
+      kind: ARTIFACT_KINDS.portable,
+      status: ARTIFACT_STATUSES.unshown,
     })
     expect(result.data.markIdsCovered).toEqual([])
   })
@@ -833,7 +840,7 @@ describe('makingFinish', () => {
   it('a botched piece leaves the experience and nothing else, and covers nothing', () => {
     const location = {
       ...alley,
-      marks: [{ id: 'old', surfaceId: 'wall', status: ARTIFACT_STATUSES.FRESH }],
+      marks: [{ id: 'old', surfaceId: 'wall', status: ARTIFACT_STATUSES.fresh }],
     }
     const result = makingFinish({
       player: readyToFinish({ plan: wallPlan, mediumId: 'tagging' }),
@@ -861,7 +868,7 @@ describe('makingFinish', () => {
       gameTime: { tick: 5 },
       rng: die(20),
     })
-    expect(result.data.tier).toBe(MAKING_TIERS.INSPIRED)
+    expect(result.data.tier).toBe(MAKING_TIERS.inspired)
     expect(result.data.artifact).toBeNull()
   })
 })
@@ -875,7 +882,7 @@ describe('makingAbandon', () => {
       gameTime: { tick: 9 },
     })
     expect(result.data.abandoned).toMatchObject({
-      status: MAKING_STATUSES.ABANDONED,
+      status: MAKING_STATUSES.abandoned,
       endedBy: { kind: 'clock', id: 'clock' },
       updatedAtTick: 9,
     })
@@ -894,7 +901,7 @@ describe('makingAbandon', () => {
     expect(nothing.ok).toBe(true)
     expect(nothing.data.abandoned).toBeNull()
     expect(makingAbandon({ player: idle, reason: {}, gameTime: { tick: 0 } }).error.code).toBe(
-      MAKING_ERROR_CODES.REASON_INVALID
+      MAKING_ERROR_CODES.reasonInvalid
     )
   })
 })
@@ -903,8 +910,8 @@ describe('marksCover', () => {
   it('covers the named marks, leaves the rest, and mutates nothing', () => {
     const location = {
       marks: [
-        { id: 'a', status: ARTIFACT_STATUSES.FRESH, endedBy: null, updatedAtTick: 1 },
-        { id: 'b', status: ARTIFACT_STATUSES.FRESH, endedBy: null, updatedAtTick: 1 },
+        { id: 'a', status: ARTIFACT_STATUSES.fresh, endedBy: null, updatedAtTick: 1 },
+        { id: 'b', status: ARTIFACT_STATUSES.fresh, endedBy: null, updatedAtTick: 1 },
       ],
     }
     const marks = marksCover({
@@ -914,11 +921,11 @@ describe('marksCover', () => {
       gameTime: { tick: 8 },
     })
     expect(marks[0]).toMatchObject({
-      status: ARTIFACT_STATUSES.COVERED,
+      status: ARTIFACT_STATUSES.covered,
       endedBy: { kind: 'mark', id: 'new' },
       updatedAtTick: 8,
     })
-    expect(marks[1].status).toBe(ARTIFACT_STATUSES.FRESH)
-    expect(location.marks[0].status).toBe(ARTIFACT_STATUSES.FRESH)
+    expect(marks[1].status).toBe(ARTIFACT_STATUSES.fresh)
+    expect(location.marks[0].status).toBe(ARTIFACT_STATUSES.fresh)
   })
 })

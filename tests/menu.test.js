@@ -52,12 +52,12 @@ describe('menuEntriesBuild', () => {
   })
 
   it('actions past the ninth and exits past the twenty-sixth get no key', () => {
-    const many = Array.from({ length: 10 }, (_, i) => ({
+    const many = Array.from(Array(10).keys(), (i) => ({
       id: `a${i}`,
       label: `A${i}`,
       available: true,
     }))
-    const manyExits = Array.from({ length: 27 }, (_, i) => ({
+    const manyExits = Array.from(Array(27).keys(), (i) => ({
       locationId: `l${i}`,
       label: `L${i}`,
     }))

@@ -7,31 +7,32 @@ import { checkRoll, checkContestedRoll, CONTEST_WINNERS } from './dice.js'
 import { inspirationActive } from './inspiration.js'
 import { inventoryHas } from './items.js'
 import { moneyFormat } from '../utils/money.js'
+import { listSortBy } from '../utils/list.js'
 
 /**
  * Why an action cannot be taken. Each is a voice code: the sentence the
  * player reads lives in content/voices, in the voice of whoever is in charge.
  */
 export const REQUIREMENT_CODES = Object.freeze({
-  STAT: 'requirement.stat',
-  ITEM: 'requirement.item',
-  MONEY: 'requirement.money',
-  SOBRIETY_MIN: 'requirement.sobriety.min',
-  SOBRIETY_MAX: 'requirement.sobriety.max',
-  HOUR_EARLY: 'requirement.hour.early',
-  HOUR_LATE: 'requirement.hour.late',
-  VISITS: 'requirement.visits',
-  TRAUMA: 'requirement.trauma',
-  ABILITY: 'requirement.ability',
-  INSPIRATION: 'requirement.inspiration',
-  TIME: 'requirement.time',
-  BUSY: 'requirement.busy',
-  CLOSED: 'requirement.closed',
+  stat: 'requirement.stat',
+  item: 'requirement.item',
+  money: 'requirement.money',
+  sobrietyMin: 'requirement.sobriety.min',
+  sobrietyMax: 'requirement.sobriety.max',
+  hourEarly: 'requirement.hour.early',
+  hourLate: 'requirement.hour.late',
+  visits: 'requirement.visits',
+  trauma: 'requirement.trauma',
+  ability: 'requirement.ability',
+  inspiration: 'requirement.inspiration',
+  time: 'requirement.time',
+  busy: 'requirement.busy',
+  closed: 'requirement.closed',
 })
 
-const _MET = Object.freeze({ meets: true, reasonCode: null, reasonParams: {} })
+const MET = Object.freeze({ meets: true, reasonCode: null, reasonParams: {} })
 
-function _refuse({ reasonCode, reasonParams = {} }) {
+function refuse({ reasonCode, reasonParams = {} }) {
   return { meets: false, reasonCode, reasonParams }
 }
 
@@ -44,14 +45,14 @@ function _refuse({ reasonCode, reasonParams = {} }) {
  */
 export function requirementsMeet({ player, action, gameTime, location = null }) {
   const req = action.requirements
-  if (!req) return _MET
+  if (!req) return MET
 
   // Stat requirements
   if (req.minStats) {
     for (const [stat, minVal] of Object.entries(req.minStats)) {
       const base = player.stats?.[stat]?.base ?? 0
       if (base < minVal) {
-        return _refuse({ reasonCode: REQUIREMENT_CODES.STAT, reasonParams: { stat } })
+        return refuse({ reasonCode: REQUIREMENT_CODES.stat, reasonParams: { stat } })
       }
     }
   }
@@ -60,7 +61,7 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
   if (req.requiredItems) {
     for (const itemId of req.requiredItems) {
       if (!inventoryHas({ inventory: player.inventory, itemId })) {
-        return _refuse({ reasonCode: REQUIREMENT_CODES.ITEM, reasonParams: { itemId } })
+        return refuse({ reasonCode: REQUIREMENT_CODES.item, reasonParams: { itemId } })
       }
     }
   }
@@ -69,8 +70,8 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
   if (req.minMoney !== null && req.minMoney !== undefined) {
     const money = player.status?.money ?? 0
     if (money < req.minMoney) {
-      return _refuse({
-        reasonCode: REQUIREMENT_CODES.MONEY,
+      return refuse({
+        reasonCode: REQUIREMENT_CODES.money,
         reasonParams: {
           cost: moneyFormat({ amount: req.minMoney }),
           money: moneyFormat({ amount: money }),
@@ -82,18 +83,18 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
   // Sobriety requirements
   const sobriety = player.status?.sobriety ?? 100
   if (req.minSobriety !== null && req.minSobriety !== undefined && sobriety < req.minSobriety) {
-    return _refuse({ reasonCode: REQUIREMENT_CODES.SOBRIETY_MIN })
+    return refuse({ reasonCode: REQUIREMENT_CODES.sobrietyMin })
   }
   if (req.maxSobriety !== null && req.maxSobriety !== undefined && sobriety > req.maxSobriety) {
-    return _refuse({ reasonCode: REQUIREMENT_CODES.SOBRIETY_MAX })
+    return refuse({ reasonCode: REQUIREMENT_CODES.sobrietyMax })
   }
 
   // Time of day requirements
   if (req.minHour !== null && req.minHour !== undefined && gameTime.hour < req.minHour) {
-    return _refuse({ reasonCode: REQUIREMENT_CODES.HOUR_EARLY })
+    return refuse({ reasonCode: REQUIREMENT_CODES.hourEarly })
   }
   if (req.maxHour !== null && req.maxHour !== undefined && gameTime.hour >= req.maxHour) {
-    return _refuse({ reasonCode: REQUIREMENT_CODES.HOUR_LATE })
+    return refuse({ reasonCode: REQUIREMENT_CODES.hourLate })
   }
 
   // Visit count requirements
@@ -101,7 +102,7 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
     // How often the player has been HERE. The same count the event engine reads.
     const visits = location?.visitCount ?? 0
     if (visits < req.minVisits) {
-      return _refuse({ reasonCode: REQUIREMENT_CODES.VISITS })
+      return refuse({ reasonCode: REQUIREMENT_CODES.visits })
     }
   }
 
@@ -110,14 +111,14 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
     const playerTraumaIds = player.psyche?.traumas?.map((t) => t.id) ?? []
     for (const traumaId of req.requiredTraumas) {
       if (!playerTraumaIds.includes(traumaId)) {
-        return _refuse({ reasonCode: REQUIREMENT_CODES.TRAUMA, reasonParams: { traumaId } })
+        return refuse({ reasonCode: REQUIREMENT_CODES.trauma, reasonParams: { traumaId } })
       }
     }
   }
 
   // Inspiration — some things cannot be done cold
   if (req.requiresInspiration && !inspirationActive({ player })) {
-    return _refuse({ reasonCode: REQUIREMENT_CODES.INSPIRATION })
+    return refuse({ reasonCode: REQUIREMENT_CODES.inspiration })
   }
 
   // Ability requirements
@@ -125,12 +126,12 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
     const playerAbilityIds = player.psyche?.abilities?.map((a) => a.id) ?? []
     for (const abilityId of req.requiredAbilities) {
       if (!playerAbilityIds.includes(abilityId)) {
-        return _refuse({ reasonCode: REQUIREMENT_CODES.ABILITY, reasonParams: { abilityId } })
+        return refuse({ reasonCode: REQUIREMENT_CODES.ability, reasonParams: { abilityId } })
       }
     }
   }
 
-  return _MET
+  return MET
 }
 
 /**
@@ -180,10 +181,10 @@ export function actionsAvailable({ player, location, characters, gameTime, actio
   }
 
   // Sort by effective weight (descending)
-  return available.sort((a, b) => {
-    const weightA = _weightEffective({ action: a, obsessionStrengths })
-    const weightB = _weightEffective({ action: b, obsessionStrengths })
-    return weightB - weightA
+  return listSortBy({
+    items: available,
+    keyOf: (action) => weightEffective({ action, obsessionStrengths }),
+    descending: true,
   })
 }
 
@@ -193,7 +194,7 @@ export function actionsAvailable({ player, location, characters, gameTime, actio
  * @param {Object<string, number>} obsessionStrengths
  * @returns {number}
  */
-function _weightEffective({ action, obsessionStrengths }) {
+function weightEffective({ action, obsessionStrengths }) {
   let weight = action.weight || 0
   if (action.obsessionIds) {
     for (const obsId of action.obsessionIds) {
@@ -211,7 +212,7 @@ function _weightEffective({ action, obsessionStrengths }) {
  * @param {Object} diceResult
  * @returns {Object} - ActionOutcome
  */
-function _outcomeSelect({ action, diceResult }) {
+function outcomeSelect({ action, diceResult }) {
   if (diceResult.criticalSuccess && action.criticalSuccess) {
     return action.criticalSuccess
   }
@@ -284,9 +285,9 @@ export function actionResolve({
       rng,
     })
 
-    const playerWon = contest.winner === CONTEST_WINNERS.FIRST
+    const playerWon = contest.winner === CONTEST_WINNERS.first
     const diceResult = { ...contest.first, success: playerWon }
-    const outcome = _outcomeSelect({ action, diceResult })
+    const outcome = outcomeSelect({ action, diceResult })
 
     return {
       success: playerWon,
@@ -298,7 +299,7 @@ export function actionResolve({
 
   // Standard check
   const diceResult = checkRoll({ player, statName: check.stat, modifiers: [], dc: check.dc, rng })
-  const outcome = _outcomeSelect({ action, diceResult })
+  const outcome = outcomeSelect({ action, diceResult })
 
   return {
     success: diceResult.success,

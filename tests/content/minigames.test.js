@@ -15,24 +15,33 @@ describe('content/games/*.json — Minigame contract', () => {
   for (const { data } of loadJsonFiles(join(CONTENT_ROOT, 'conditions')))
     personaIds.add(data.persona?.id)
 
-  const SHAPES = {
-    steady: { choices: ['work'], lines: ['work'], params: [] },
-    push_luck: {
-      choices: ['press', 'stop'],
-      lines: ['pressed', 'busted', 'stopped'],
-      params: ['riskBase', 'riskStep', 'skillRelief', 'bankCap', 'bustModifier', 'timidModifier'],
-    },
-    word_pick: {
-      choices: [],
-      lines: ['picked'],
-      params: ['picksPerRound', 'voiceCap', 'mushModifier', 'registers'],
-    },
-    read_room: {
-      choices: ['push', 'hold', 'bow'],
-      lines: ['pushed', 'held', 'bowed', 'crowd'],
-      params: ['crowdStart', 'scoreCap', 'transitions'],
-    },
-  }
+  const SHAPES = Object.fromEntries([
+    ['steady', { choices: ['work'], lines: ['work'], params: [] }],
+    [
+      'push_luck',
+      {
+        choices: ['press', 'stop'],
+        lines: ['pressed', 'busted', 'stopped'],
+        params: ['riskBase', 'riskStep', 'skillRelief', 'bankCap', 'bustModifier', 'timidModifier'],
+      },
+    ],
+    [
+      'word_pick',
+      {
+        choices: [],
+        lines: ['picked'],
+        params: ['picksPerRound', 'voiceCap', 'mushModifier', 'registers'],
+      },
+    ],
+    [
+      'read_room',
+      {
+        choices: ['push', 'hold', 'bow'],
+        lines: ['pushed', 'held', 'bowed', 'crowd'],
+        params: ['crowdStart', 'scoreCap', 'transitions'],
+      },
+    ],
+  ])
 
   for (const { file, data } of files) {
     it(`${file} — valid game`, () => {

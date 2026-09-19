@@ -17,7 +17,7 @@ import { storageInstall } from './helpers/storage.js'
 const brokenAt = (brokenKind) => (input) =>
   input.kind === brokenKind
     ? resultFail({
-        code: LOADER_ERROR_CODES.ENTRY_ID_MISSING,
+        code: LOADER_ERROR_CODES.entryIdMissing,
         message: 'broken on purpose',
         params: { path: `/content/${brokenKind}/bad.json` },
       })
@@ -30,10 +30,10 @@ describe('useBoot', () => {
   })
 
   it('content that will not load stops the boot, says which file, and registers nothing', () => {
-    const boot = useBoot({ load: brokenAt(CONTENT_KINDS.VOICES) })
+    const boot = useBoot({ load: brokenAt(CONTENT_KINDS.voices) })
     const booted = boot.gameBoot()
     expect(booted.error).toMatchObject({
-      code: LOADER_ERROR_CODES.ENTRY_ID_MISSING,
+      code: LOADER_ERROR_CODES.entryIdMissing,
       params: { path: '/content/voices/bad.json' },
     })
     const game = useGameStore()
@@ -42,9 +42,9 @@ describe('useBoot', () => {
   })
 
   it('a new game on a map whose places will not load does not start', () => {
-    const boot = useBoot({ load: brokenAt(CONTENT_KINDS.LOCATIONS) })
+    const boot = useBoot({ load: brokenAt(CONTENT_KINDS.locations) })
     expect(boot.gameBoot().ok).toBe(true)
-    expect(boot.gameNew().error.code).toBe(LOADER_ERROR_CODES.ENTRY_ID_MISSING)
+    expect(boot.gameNew().error.code).toBe(LOADER_ERROR_CODES.entryIdMissing)
     expect(useGameStore().isRunning).toBe(false)
   })
 
@@ -52,6 +52,6 @@ describe('useBoot', () => {
     const boot = useBoot()
     boot.gameBoot()
     expect(boot.gameResumable().data.resumable).toBe(false)
-    expect(boot.gameResume().error.code).toBe(SAVE_ERROR_CODES.NOT_FOUND)
+    expect(boot.gameResume().error.code).toBe(SAVE_ERROR_CODES.notFound)
   })
 })

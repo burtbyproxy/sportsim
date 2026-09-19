@@ -12,7 +12,7 @@ function neverRng() {
   return 0.99
 } // effectively never present
 
-function makeTime(hour = 12, minute = 0, dayOfWeek = 'monday') {
+function makeTime({ hour = 12, minute = 0, dayOfWeek = 'monday' }) {
   return { hour, minute, dayOfWeek, tick: 0, day: 1, period: 'afternoon' }
 }
 
@@ -63,12 +63,12 @@ function makeFull(overrides = {}) {
     id: 'rival',
     simulation: 'full',
     status: { hunger: 60, sobriety: 70, energy: 65, mood: 45, health: 90 },
-    decisionWeights: {
-      low_sobriety: { bias: 'bar', weight: 0.7 },
-      low_hunger: { bias: 'food', weight: 0.8 },
-      low_mood: { bias: 'alone', weight: 0.5 },
-      low_energy: null,
-    },
+    decisionWeights: Object.fromEntries([
+      ['low_sobriety', { bias: 'bar', weight: 0.7 }],
+      ['low_hunger', { bias: 'food', weight: 0.8 }],
+      ['low_mood', { bias: 'alone', weight: 0.5 }],
+      ['low_energy', null],
+    ]),
     schedule: {
       entries: [
         { locationId: 'columbia_park', startHour: 8, endHour: 20, probability: 1.0, days: ['all'] },
@@ -97,7 +97,7 @@ describe('simulationTick — fixed tier', () => {
   it('returns locationId when in schedule window and rng passes', () => {
     const result = simulationTick({
       characters: [makeFixed()],
-      gameTime: makeTime(18),
+      gameTime: makeTime({ hour: 18 }),
       rng: alwaysRng,
     })
     expect(result[0].locationId).toBe('blue_parrot')
@@ -106,7 +106,7 @@ describe('simulationTick — fixed tier', () => {
   it('returns null when rng fails probability', () => {
     const result = simulationTick({
       characters: [makeFixed()],
-      gameTime: makeTime(18),
+      gameTime: makeTime({ hour: 18 }),
       rng: neverRng,
     })
     expect(result[0].locationId).toBeNull()
@@ -115,7 +115,7 @@ describe('simulationTick — fixed tier', () => {
   it('returns null when outside schedule window', () => {
     const result = simulationTick({
       characters: [makeFixed()],
-      gameTime: makeTime(10),
+      gameTime: makeTime({ hour: 10 }),
       rng: alwaysRng,
     })
     expect(result[0].locationId).toBeNull()
@@ -123,14 +123,18 @@ describe('simulationTick — fixed tier', () => {
 
   it('returns null when schedule is empty', () => {
     const c = { ...makeFixed(), schedule: { entries: [] } }
-    const result = simulationTick({ characters: [c], gameTime: makeTime(18), rng: alwaysRng })
+    const result = simulationTick({
+      characters: [c],
+      gameTime: makeTime({ hour: 18 }),
+      rng: alwaysRng,
+    })
     expect(result[0].locationId).toBeNull()
   })
 
   it('result has correct id', () => {
     const result = simulationTick({
       characters: [makeFixed()],
-      gameTime: makeTime(18),
+      gameTime: makeTime({ hour: 18 }),
       rng: alwaysRng,
     })
     expect(result[0].id).toBe('bartender')
@@ -139,7 +143,7 @@ describe('simulationTick — fixed tier', () => {
   it('does not include statusChanges', () => {
     const result = simulationTick({
       characters: [makeFixed()],
-      gameTime: makeTime(18),
+      gameTime: makeTime({ hour: 18 }),
       rng: alwaysRng,
     })
     expect(result[0].statusChanges).toBeUndefined()
@@ -154,7 +158,7 @@ describe('simulationTick — routine tier', () => {
   it('returns matching schedule location when rng passes', () => {
     const result = simulationTick({
       characters: [makeRoutine()],
-      gameTime: makeTime(14),
+      gameTime: makeTime({ hour: 14 }),
       rng: alwaysRng,
     })
     expect(result[0].locationId).toBe('mocks_crest')
@@ -163,7 +167,7 @@ describe('simulationTick — routine tier', () => {
   it('returns null when outside all schedule windows', () => {
     const result = simulationTick({
       characters: [makeRoutine()],
-      gameTime: makeTime(3),
+      gameTime: makeTime({ hour: 3 }),
       rng: alwaysRng,
     })
     expect(result[0].locationId).toBeNull()
@@ -172,7 +176,7 @@ describe('simulationTick — routine tier', () => {
   it('returns null when rng fails probability', () => {
     const result = simulationTick({
       characters: [makeRoutine()],
-      gameTime: makeTime(14),
+      gameTime: makeTime({ hour: 14 }),
       rng: neverRng,
     })
     expect(result[0].locationId).toBeNull()
@@ -188,7 +192,7 @@ describe('simulationTick — full tier — normal path', () => {
     // hunger=60 (not < 20), sobriety=70 (not < 30) — no bias fires
     const result = simulationTick({
       characters: [makeFull()],
-      gameTime: makeTime(10),
+      gameTime: makeTime({ hour: 10 }),
       rng: alwaysRng,
     })
     expect(result[0].locationId).toBe('columbia_park')
@@ -197,7 +201,7 @@ describe('simulationTick — full tier — normal path', () => {
   it('includes statusChanges', () => {
     const result = simulationTick({
       characters: [makeFull()],
-      gameTime: makeTime(10),
+      gameTime: makeTime({ hour: 10 }),
       rng: alwaysRng,
     })
     expect(result[0].statusChanges).toBeDefined()
@@ -205,7 +209,11 @@ describe('simulationTick — full tier — normal path', () => {
 
   it('returns null when outside all schedule windows and rng fails', () => {
     const c = makeFull({ schedule: { entries: [] } })
-    const result = simulationTick({ characters: [c], gameTime: makeTime(10), rng: alwaysRng })
+    const result = simulationTick({
+      characters: [c],
+      gameTime: makeTime({ hour: 10 }),
+      rng: alwaysRng,
+    })
     expect(result[0].locationId).toBeNull()
   })
 })
@@ -245,7 +253,7 @@ describe('simulationTick — full tier — bias fires, entry found', () => {
   it('a drunk character skips the first scheduled stop for the bar-typed entry', () => {
     const result = simulationTick({
       characters: [withSobriety(10)],
-      gameTime: makeTime(10),
+      gameTime: makeTime({ hour: 10 }),
       rng: alwaysRng,
     })
     expect(result[0].locationId).toBe('blue_parrot')
@@ -254,7 +262,7 @@ describe('simulationTick — full tier — bias fires, entry found', () => {
   it('the same character sober keeps the schedule', () => {
     const result = simulationTick({
       characters: [withSobriety(70)],
-      gameTime: makeTime(10),
+      gameTime: makeTime({ hour: 10 }),
       rng: alwaysRng,
     })
     expect(result[0].locationId).toBe('columbia_park')
@@ -273,7 +281,11 @@ describe('simulationTick — full tier — bias fallthrough', () => {
       status: { hunger: 10, sobriety: 70, energy: 65, mood: 45, health: 90 },
       // schedule entries: columbia_park (8-20) and moms_house (20-8) — neither is food
     })
-    const result = simulationTick({ characters: [c], gameTime: makeTime(10), rng: alwaysRng })
+    const result = simulationTick({
+      characters: [c],
+      gameTime: makeTime({ hour: 10 }),
+      rng: alwaysRng,
+    })
     // Hour 10 is in columbia_park's window — that's the normal resolution
     expect(result[0].locationId).toBe('columbia_park')
   })
@@ -282,7 +294,11 @@ describe('simulationTick — full tier — bias fallthrough', () => {
     const c = makeFull({
       status: { hunger: 10, sobriety: 70, energy: 65, mood: 45, health: 90 },
     })
-    const result = simulationTick({ characters: [c], gameTime: makeTime(10), rng: alwaysRng })
+    const result = simulationTick({
+      characters: [c],
+      gameTime: makeTime({ hour: 10 }),
+      rng: alwaysRng,
+    })
     expect(result[0].statusChanges).toBeDefined()
   })
 
@@ -291,7 +307,11 @@ describe('simulationTick — full tier — bias fallthrough', () => {
       status: { hunger: 10, sobriety: 70, energy: 65, mood: 45, health: 90 },
       schedule: { entries: [] }, // no entries at all
     })
-    const result = simulationTick({ characters: [c], gameTime: makeTime(10), rng: alwaysRng })
+    const result = simulationTick({
+      characters: [c],
+      gameTime: makeTime({ hour: 10 }),
+      rng: alwaysRng,
+    })
     expect(result[0].locationId).toBeNull()
   })
 
@@ -302,7 +322,11 @@ describe('simulationTick — full tier — bias fallthrough', () => {
       status: { hunger: 10, sobriety: 10, energy: 65, mood: 45, health: 90 },
       // no bar or food entries in schedule
     })
-    const result = simulationTick({ characters: [c], gameTime: makeTime(10), rng: alwaysRng })
+    const result = simulationTick({
+      characters: [c],
+      gameTime: makeTime({ hour: 10 }),
+      rng: alwaysRng,
+    })
     expect(result[0].locationId).toBe('columbia_park')
   })
 })
@@ -314,17 +338,19 @@ describe('simulationTick — full tier — bias fallthrough', () => {
 describe('simulationTick — multiple characters', () => {
   it('returns one update per character', () => {
     const characters = [makeFixed(), makeRoutine(), makeFull()]
-    const result = simulationTick({ characters, gameTime: makeTime(12), rng: alwaysRng })
+    const result = simulationTick({ characters, gameTime: makeTime({ hour: 12 }), rng: alwaysRng })
     expect(result).toHaveLength(3)
   })
 
   it('each update has the correct id', () => {
     const characters = [makeFixed(), makeRoutine(), makeFull()]
-    const result = simulationTick({ characters, gameTime: makeTime(12), rng: alwaysRng })
+    const result = simulationTick({ characters, gameTime: makeTime({ hour: 12 }), rng: alwaysRng })
     expect(result.map((r) => r.id)).toEqual(['bartender', 'carl', 'rival'])
   })
 
   it('returns empty array for empty input', () => {
-    expect(simulationTick({ characters: [], gameTime: makeTime(12), rng: alwaysRng })).toEqual([])
+    expect(
+      simulationTick({ characters: [], gameTime: makeTime({ hour: 12 }), rng: alwaysRng })
+    ).toEqual([])
   })
 })

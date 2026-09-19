@@ -15,14 +15,14 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
           cache: 'npm'
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.25'
+          go-version-file: 'tools/go.mod'
       - run: npm ci
       - run: npm run lint
       - run: npm run format:check
-      - run: npx vitest run
-      - run: go install codeberg.org/galaxi/boundary-first-development/cmd/bfd@latest
-      - run: '$(go env GOPATH)/bin/bfd conform'
+      - run: npm run test:run
+      # bfd is pinned in tools/go.mod; it runs from the repo root.
+      - run: '"$(go -C tools tool -n bfd)" conform'

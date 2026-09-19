@@ -20,10 +20,10 @@ import { numberClamp } from '../utils/number.js'
 
 /** Enumerated error codes for every scavenge result. The code is the contract. */
 export const SCAVENGE_ERROR_CODES = Object.freeze({
-  PLAYER_MISSING: 'PLAYER_MISSING',
-  LOCATION_MISSING: 'LOCATION_MISSING',
-  TABLE_UNKNOWN: 'TABLE_UNKNOWN',
-  ITEM_UNKNOWN: 'ITEM_UNKNOWN',
+  playerMissing: 'PLAYER_MISSING',
+  locationMissing: 'LOCATION_MISSING',
+  tableUnknown: 'TABLE_UNKNOWN',
+  itemUnknown: 'ITEM_UNKNOWN',
 })
 
 /** A spot can only be picked so clean. */
@@ -97,27 +97,27 @@ export function scavengeSearch({
 }) {
   if (!player || typeof player !== 'object') {
     return resultFail({
-      code: SCAVENGE_ERROR_CODES.PLAYER_MISSING,
+      code: SCAVENGE_ERROR_CODES.playerMissing,
       message: 'scavengeSearch needs a player',
     })
   }
   if (!location || typeof location !== 'object') {
     return resultFail({
-      code: SCAVENGE_ERROR_CODES.LOCATION_MISSING,
+      code: SCAVENGE_ERROR_CODES.locationMissing,
       message: 'scavengeSearch needs a location',
     })
   }
   const table = tables[location.scavengeTableId]
   if (!table) {
     return resultFail({
-      code: SCAVENGE_ERROR_CODES.TABLE_UNKNOWN,
+      code: SCAVENGE_ERROR_CODES.tableUnknown,
       message: `Location '${location.id}' names no known scavenge table ('${location.scavengeTableId}')`,
     })
   }
   const unknown = table.entries.find((entry) => !items[entry.itemId])
   if (unknown) {
     return resultFail({
-      code: SCAVENGE_ERROR_CODES.ITEM_UNKNOWN,
+      code: SCAVENGE_ERROR_CODES.itemUnknown,
       message: `Unknown item '${unknown.itemId}'`,
     })
   }

@@ -183,7 +183,7 @@ const narrative = useNarrative()
 provide('narrative', narrative)
 
 // Space skips the running narrative from anywhere on the screen
-useKeyboard(narrativeSkipBindings({ narrative }))
+useKeyboard({ bindings: narrativeSkipBindings({ narrative }) })
 
 const save = useSave()
 const gameLoop = useGameLoop({ actionRegistry, eventRegistry, narrative, save })

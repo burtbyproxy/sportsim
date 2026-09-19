@@ -43,7 +43,7 @@ function makePlayer(overrides = {}) {
 }
 
 /** A blend snapshot carrying only the given stat modifiers, attributed to one test persona. */
-function withBlend(player, modifiers) {
+function withBlend({ player, modifiers }) {
   player.blend = {
     ...blendSober(),
     modifiers,
@@ -117,22 +117,22 @@ describe('statEffective', () => {
 
   describe('blend modifiers', () => {
     it('applies a penalty carried by the blend snapshot', () => {
-      const player = withBlend(makePlayer(), { wits: -5 })
+      const player = withBlend({ player: makePlayer(), modifiers: { wits: -5 } })
       expect(statEffective({ player, statName: 'wits' })).toBe(7)
     })
 
     it('applies a bonus carried by the blend snapshot', () => {
-      const player = withBlend(makePlayer(), { charm: 3 })
+      const player = withBlend({ player: makePlayer(), modifiers: { charm: 3 } })
       expect(statEffective({ player, statName: 'charm' })).toBe(13)
     })
 
     it('leaves stats the blend does not name alone', () => {
-      const player = withBlend(makePlayer(), { charm: 3 })
+      const player = withBlend({ player: makePlayer(), modifiers: { charm: 3 } })
       expect(statEffective({ player, statName: 'toughness' })).toBe(8)
     })
 
     it("stacks the blend with the stat's own modifiers", () => {
-      const player = withBlend(makePlayer(), { wits: -5 })
+      const player = withBlend({ player: makePlayer(), modifiers: { wits: -5 } })
       player.stats.wits.modifiers = [{ source: 'test', value: -3, duration: null }]
       expect(statEffective({ player, statName: 'wits' })).toBe(4)
     })
@@ -151,7 +151,7 @@ describe('statEffective', () => {
 
   describe('statModifierItems', () => {
     it('itemizes base, each modifier, each persona, each ability, each trauma — no cap', () => {
-      const player = withBlend(makePlayer(), { charm: 3 })
+      const player = withBlend({ player: makePlayer(), modifiers: { charm: 3 } })
       player.blend.modifierSources.push({
         personaId: 'hollow',
         source: 'condition',
@@ -171,13 +171,13 @@ describe('statEffective', () => {
 
       const items = statModifierItems({ player, statName: 'charm' })
       expect(items).toEqual([
-        { source: STAT_ITEM_SOURCES.BASE, sourceId: 'charm', value: 10 },
-        { source: STAT_ITEM_SOURCES.MODIFIER, sourceId: 'clean_shirt', value: 2 },
-        { source: STAT_ITEM_SOURCES.MODIFIER, sourceId: 'black_eye', value: -4 },
+        { source: STAT_ITEM_SOURCES.base, sourceId: 'charm', value: 10 },
+        { source: STAT_ITEM_SOURCES.modifier, sourceId: 'clean_shirt', value: 2 },
+        { source: STAT_ITEM_SOURCES.modifier, sourceId: 'black_eye', value: -4 },
         { source: 'substance', sourceId: 'test_persona', value: 3 },
         { source: 'condition', sourceId: 'hollow', value: -1 },
-        { source: STAT_ITEM_SOURCES.ABILITY, sourceId: 'gift_of_gab', value: 5 },
-        { source: STAT_ITEM_SOURCES.TRAUMA, sourceId: 'mugged_in_park', value: -2 },
+        { source: STAT_ITEM_SOURCES.ability, sourceId: 'gift_of_gab', value: 5 },
+        { source: STAT_ITEM_SOURCES.trauma, sourceId: 'mugged_in_park', value: -2 },
       ])
       expect(statEffective({ player, statName: 'charm' })).toBe(13)
     })
@@ -228,7 +228,7 @@ describe('statEffective', () => {
 
 describe('checkRoll', () => {
   it('returns every modifier itemized, situational ones included', () => {
-    const player = withBlend(makePlayer(), { charm: 3 })
+    const player = withBlend({ player: makePlayer(), modifiers: { charm: 3 } })
     const result = checkRoll({
       player,
       statName: 'charm',
@@ -237,7 +237,7 @@ describe('checkRoll', () => {
       rng: () => 0.5,
     })
     expect(result.modifierItems).toEqual([
-      { source: STAT_ITEM_SOURCES.BASE, sourceId: 'charm', value: 10 },
+      { source: STAT_ITEM_SOURCES.base, sourceId: 'charm', value: 10 },
       { source: 'substance', sourceId: 'test_persona', value: 3 },
       { source: 'situational', sourceId: null, value: 2 },
       { source: 'situational', sourceId: null, value: -1 },
@@ -312,7 +312,7 @@ describe('checkContestedRoll', () => {
       second: { player: makePlayer(), statName: 'charm', modifiers: [3] },
       rng: same,
     })
-    expect(result.winner).toBe(CONTEST_WINNERS.SECOND)
+    expect(result.winner).toBe(CONTEST_WINNERS.second)
     expect(result.second.total - result.first.total).toBe(3)
   })
 
@@ -343,7 +343,7 @@ describe('checkContestedRoll', () => {
       second: { player: player2, statName: 'charm' },
       rng: rng,
     })
-    expect(result.winner).toBe(CONTEST_WINNERS.FIRST)
+    expect(result.winner).toBe(CONTEST_WINNERS.first)
   })
 
   it('winner 2 when player2 rolls higher', () => {
@@ -359,7 +359,7 @@ describe('checkContestedRoll', () => {
       second: { player: player2, statName: 'charm' },
       rng: rng,
     })
-    expect(result.winner).toBe(CONTEST_WINNERS.SECOND)
+    expect(result.winner).toBe(CONTEST_WINNERS.second)
   })
 
   it('tie when totals are equal', () => {
@@ -371,7 +371,7 @@ describe('checkContestedRoll', () => {
       second: { player: player2, statName: 'charm' },
       rng: alwaysSame,
     })
-    expect(result.winner).toBe(CONTEST_WINNERS.TIE)
+    expect(result.winner).toBe(CONTEST_WINNERS.tie)
   })
 })
 
@@ -404,7 +404,7 @@ describe('checkModifier', () => {
   it('the blend shifts the stat before conversion', () => {
     const player = withCharm(38)
     expect(checkModifier({ player, statName: 'charm' })).toBe(3)
-    withBlend(player, { charm: 3 }) // 41 → +4
+    withBlend({ player, modifiers: { charm: 3 } }) // 41 → +4
     expect(checkModifier({ player, statName: 'charm' })).toBe(4)
   })
 

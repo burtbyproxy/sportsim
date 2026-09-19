@@ -3,6 +3,8 @@
  * Every function takes one struct; an optional rng makes it reproducible in tests.
  */
 
+import { numberSum } from './number.js'
+
 /**
  * Creates a seeded pseudo-random number generator using a simple mulberry32 algorithm.
  * Returns a function that produces values in [0, 1).
@@ -39,7 +41,7 @@ export function randomPickWeighted({ items, weightOf, rng = Math.random }) {
   if (!items || items.length === 0) return null
 
   const weights = items.map(weightOf)
-  const total = weights.reduce((sum, w) => sum + w, 0)
+  const total = numberSum({ values: weights })
   if (total <= 0) return null
 
   let target = rng() * total

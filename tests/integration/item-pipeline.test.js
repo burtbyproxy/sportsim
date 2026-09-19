@@ -49,7 +49,7 @@ function startGame({ at = 'moms_house' } = {}) {
 }
 
 /** Put n of a real content item in the player's hands, the way an outcome does. */
-function give(game, itemId, n = 1) {
+function give({ game, itemId, n = 1 }) {
   for (let i = 0; i < n; i++) game.player.inventory.push({ ...game.itemGet({ itemId }) })
   // stackables arrive one at a time through inventoryAdd in play; collapse them the same way
   const first = game.player.inventory.find((i) => i.id === itemId)
@@ -65,7 +65,7 @@ describe('item pipeline', () => {
 
   it('a tallboy can finally be drunk: beer in, mood up, one fewer, a tick gone, and a line', async () => {
     const game = startGame()
-    give(game, 'tallboy_oly', 2)
+    give({ game, itemId: 'tallboy_oly', n: 2 })
     const narrative = useNarrative()
     const loop = useGameLoop({ narrative })
     const moodBefore = game.player.status.mood
@@ -90,7 +90,7 @@ describe('item pipeline', () => {
 
   it('the last one leaves the inventory', async () => {
     const game = startGame()
-    give(game, 'coffee_711')
+    give({ game, itemId: 'coffee_711' })
     const loop = useGameLoop()
     await loop.useItem({ itemId: 'coffee_711' })
     expect(game.playerInventory).toEqual([])
@@ -99,7 +99,7 @@ describe('item pipeline', () => {
 
   it('cigarettes build the habit the blend later punishes', async () => {
     const game = startGame()
-    give(game, 'pack_cigarettes', 3)
+    give({ game, itemId: 'pack_cigarettes', n: 3 })
     const loop = useGameLoop()
     for (let n = 0; n < 3; n++) await loop.useItem({ itemId: 'pack_cigarettes' })
     expect(game.player.habituations.nicotine).toBeGreaterThanOrEqual(30)
@@ -109,7 +109,7 @@ describe('item pipeline', () => {
 
   it('you cannot drink a sock, and trying costs nothing', async () => {
     const game = startGame()
-    give(game, 'single_sock')
+    give({ game, itemId: 'single_sock' })
     const result = game.playerItemUse({ itemId: 'single_sock' })
     expect(result.ok).toBe(false)
     expect(result.error.code).toBe('ITEM_NOT_CONSUMABLE')
@@ -138,7 +138,7 @@ describe('item pipeline', () => {
         effects: [{ target: 'wits', value: 5, duration: 3 }],
       }),
     })
-    give(game, 'test_tonic')
+    give({ game, itemId: 'test_tonic' })
     const loop = useGameLoop()
     const witsBefore = statEffective({ player: game.player, statName: 'wits' })
 
@@ -152,7 +152,7 @@ describe('item pipeline', () => {
 
   it('nothing can be used while an event is waiting on a choice', async () => {
     const game = startGame()
-    give(game, 'tallboy_oly')
+    give({ game, itemId: 'tallboy_oly' })
     game.eventActiveSet({ event: { id: 'someone', choices: [{ label: 'x', outcome: {} }] } })
     const loop = useGameLoop()
     await loop.useItem({ itemId: 'tallboy_oly' })
@@ -236,7 +236,10 @@ describe('failures are shown in play, never swallowed', () => {
   it('a character whose blend cannot be worked out is reported by name, after the tick', async () => {
     const game = startGame()
     game.characterRegister({
-      character: characterCreate({ ...maurice, intoxications: { moonshine_x: 40 } }),
+      character: characterCreate({
+        ...maurice,
+        intoxications: Object.fromEntries([['moonshine_x', 40]]),
+      }),
     })
     const narrative = useNarrative()
     const loop = useGameLoop({ narrative, simulation: simulationLocal })
@@ -250,7 +253,10 @@ describe('failures are shown in play, never swallowed', () => {
   it('the store keeps the fault, with who it was about, until the loop takes it', () => {
     const game = startGame()
     game.characterRegister({
-      character: characterCreate({ ...maurice, intoxications: { moonshine_x: 40 } }),
+      character: characterCreate({
+        ...maurice,
+        intoxications: Object.fromEntries([['moonshine_x', 40]]),
+      }),
     })
     game.blendRefresh()
     expect(game.faults[0]).toMatchObject({
@@ -264,7 +270,10 @@ describe('failures are shown in play, never swallowed', () => {
   it('wearing off counts as its own failure, beside working out the blend', () => {
     const game = startGame()
     game.characterRegister({
-      character: characterCreate({ ...maurice, intoxications: { moonshine_x: 40 } }),
+      character: characterCreate({
+        ...maurice,
+        intoxications: Object.fromEntries([['moonshine_x', 40]]),
+      }),
     })
     game.faultsDrain()
     game.blendDecayApply({ ticksElapsed: 1 })

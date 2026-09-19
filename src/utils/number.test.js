@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { numberClamp, numberRound } from './number.js'
+import { numberClamp, numberRound, numberSum } from './number.js'
 
 describe('numberClamp', () => {
   it('leaves a value inside the range alone', () => {
@@ -25,5 +25,15 @@ describe('numberRound', () => {
 
   it('rounds to a whole number at zero places', () => {
     expect(numberRound({ value: 2.6, places: 0 })).toBe(3)
+  })
+})
+
+describe('numberSum', () => {
+  it('adds a list up', () => {
+    expect(numberSum({ values: [1, 2, 3.5] })).toBe(6.5)
+  })
+
+  it('an empty list sums to nothing', () => {
+    expect(numberSum({ values: [] })).toBe(0)
   })
 })

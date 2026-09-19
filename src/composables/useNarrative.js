@@ -75,7 +75,7 @@ export function meanCharDelayMs({ text, speed }) {
  * @param {string} speed
  * @returns {number}
  */
-function _resolveSpeedMs(speed) {
+function resolveSpeedMs(speed) {
   const setting = SPEED_MS[speed] ?? SPEED_MS.normal
   if (setting === 0) return 0
   return randomInt({ min: setting.min, max: setting.max })
@@ -88,8 +88,8 @@ function _resolveSpeedMs(speed) {
  * @param {string} speed - speed tier name
  * @returns {number} ms to wait before rendering the next character
  */
-function _charDelay({ char, speed }) {
-  const base = _resolveSpeedMs(speed)
+function charDelay({ char, speed }) {
+  const base = resolveSpeedMs(speed)
   const extra = PUNCTUATION_PAUSE[char]
   if (!extra) return base
   return base + randomInt({ min: extra.min, max: extra.max })
@@ -137,7 +137,7 @@ export function useNarrative() {
   function enqueue(narrativeText) {
     queue.value.push(narrativeText)
     if (!isAnimating.value) {
-      _processQueue()
+      processQueue()
     }
   }
 
@@ -160,13 +160,13 @@ export function useNarrative() {
     renderGeneration++
     skipRequested = true
     activeEntryState.value = null
-    _currentTokenProgress.value = ''
+    tokenProgress.value = ''
   }
 
   /**
    * Internal: process the queue, one entry at a time.
    */
-  async function _processQueue() {
+  async function processQueue() {
     if (queue.value.length === 0) {
       isAnimating.value = false
       return
@@ -179,11 +179,11 @@ export function useNarrative() {
 
     emit({ event: 'animation-start', data: narrativeText })
 
-    const entry = await _renderNarrativeText(narrativeText)
+    const entry = await renderNarrativeText(narrativeText)
 
     // clearLog ran while this was rendering — the entry belongs to a dead scene
     if (generation !== renderGeneration) {
-      _processQueue()
+      processQueue()
       return
     }
 
@@ -192,7 +192,7 @@ export function useNarrative() {
     emit({ event: 'animation-complete', data: entry })
 
     // Process next in queue
-    _processQueue()
+    processQueue()
   }
 
   /**
@@ -200,7 +200,7 @@ export function useNarrative() {
    * Returns a plain object safe to store in log.
    * Updates activeEntryState in real-time so components can show live progress.
    */
-  async function _renderNarrativeText(narrativeText) {
+  async function renderNarrativeText(narrativeText) {
     const renderedTokens = []
 
     // Initialize live entry state
@@ -223,7 +223,7 @@ export function useNarrative() {
         currentToken: token,
       }
 
-      const rendered = await _animateToken(token)
+      const rendered = await animateToken(token)
       renderedTokens.push({ ...token, rendered })
 
       // Token done — update completed list
@@ -233,7 +233,7 @@ export function useNarrative() {
       }
 
       if (!skipRequested && token.pauseAfter > 0) {
-        await _pause(token.pauseAfter)
+        await pauseWait(token.pauseAfter)
       }
     }
 
@@ -251,7 +251,7 @@ export function useNarrative() {
    * delay — base speed randomised within the tier's range, plus punctuation and
    * word-boundary pauses stacked on top.  Feels like a human typing at 2am.
    */
-  function _animateToken(token) {
+  function animateToken(token) {
     return new Promise((resolve) => {
       const speed = token.speed ?? 'normal'
       const text = token.text
@@ -272,7 +272,7 @@ export function useNarrative() {
 
         i++
         // Emit partial render via a reactive ref the component can watch
-        _currentTokenProgress.value = text.slice(0, i)
+        tokenProgress.value = text.slice(0, i)
 
         if (i >= text.length) {
           resolve(text)
@@ -281,16 +281,16 @@ export function useNarrative() {
 
         // Delay for the NEXT character is based on the character we just typed
         // — punctuation after a full-stop breathes longer than a mid-word letter
-        const delay = _charDelay({ char: text[i - 1], speed })
+        const delay = charDelay({ char: text[i - 1], speed })
         setTimeout(tick, delay)
       }
 
       // Kick off with the delay for the very first character
-      setTimeout(tick, _resolveSpeedMs(speed))
+      setTimeout(tick, resolveSpeedMs(speed))
     })
   }
 
-  function _pause(ms) {
+  function pauseWait(ms) {
     return new Promise((resolve) => {
       if (skipRequested) {
         resolve()
@@ -315,7 +315,7 @@ export function useNarrative() {
    * Reactive ref holding in-progress token text (for live display).
    * The NarrativeLog component reads this to show characters as they appear.
    */
-  const _currentTokenProgress = ref('')
+  const tokenProgress = ref('')
 
   /**
    * Live-updated active entry state for the currently animating NarrativeText.
@@ -328,7 +328,7 @@ export function useNarrative() {
     log: readonly(log),
     queue: readonly(queue),
     isAnimating: readonly(isAnimating),
-    currentTokenProgress: readonly(_currentTokenProgress),
+    currentTokenProgress: readonly(tokenProgress),
     activeEntryState: readonly(activeEntryState),
     enqueue,
     skip,
@@ -344,16 +344,19 @@ export function useNarrative() {
  * Space only acts while text is animating, so it never eats a keypress
  * the rest of the screen might want.
  * @param {{ narrative: ReturnType<typeof useNarrative> }} input
- * @returns {Record<string, (e: KeyboardEvent) => void>}
+ * @returns {Array<{ key: string, handler: (e: KeyboardEvent) => void }>}
  */
 export function narrativeSkipBindings({ narrative }) {
-  return {
-    ' ': (e) => {
-      if (!narrative.isAnimating.value) return
-      e.preventDefault()
-      narrative.skip()
+  return [
+    {
+      key: ' ',
+      handler: (e) => {
+        if (!narrative.isAnimating.value) return
+        e.preventDefault()
+        narrative.skip()
+      },
     },
-  }
+  ]
 }
 
 // ---------------------------------------------------------------------------
@@ -367,7 +370,7 @@ export function narrativeSkipBindings({ narrative }) {
  * @param {Object[]} insanities
  * @returns {string}
  */
-function _perceptionFiltersApply({ text, insanities }) {
+function perceptionFiltersApply({ text, insanities }) {
   if (!insanities || insanities.length === 0) return text
   let result = text
   for (const insanity of insanities) {
@@ -391,7 +394,7 @@ function _perceptionFiltersApply({ text, insanities }) {
  * @param {Object} location
  * @returns {Object}
  */
-function _narrativeContextBuild({ player, gameTime, location }) {
+function narrativeContextBuild({ player, gameTime, location }) {
   const sobriety = player.status?.sobriety ?? 100
   const energy = player.status?.energy ?? 80
   const hunger = player.status?.hunger ?? 50
@@ -420,7 +423,7 @@ function _narrativeContextBuild({ player, gameTime, location }) {
  * @returns {NarrativeText}
  */
 export function narrativeLocation({ location, player, gameTime }) {
-  const context = _narrativeContextBuild({ player, gameTime, location })
+  const context = narrativeContextBuild({ player, gameTime, location })
   let text = textVariantPick({ variants: location.descriptions || {}, context })
   text = textFill({
     text,
@@ -431,7 +434,7 @@ export function narrativeLocation({ location, player, gameTime }) {
       hour: gameTime?.hour ?? 0,
     },
   })
-  text = _perceptionFiltersApply({ text, insanities: player.psyche?.insanities })
+  text = perceptionFiltersApply({ text, insanities: player.psyche?.insanities })
   return narrativeTextCreate({ text })
 }
 
@@ -465,12 +468,12 @@ export function narrativeEvent({ event, player }) {
     if (insanities.length === 0) return event.narrative
     const filteredTokens = event.narrative.tokens.map((token) => ({
       ...token,
-      text: _perceptionFiltersApply({ text: token.text, insanities }),
+      text: perceptionFiltersApply({ text: token.text, insanities }),
     }))
     return { tokens: filteredTokens }
   }
   if (typeof event.narrative === 'string') {
-    const filtered = _perceptionFiltersApply({
+    const filtered = perceptionFiltersApply({
       text: textFill({ text: event.narrative, params: { playerName: player.name || 'you' } }),
       insanities: player.psyche?.insanities,
     })

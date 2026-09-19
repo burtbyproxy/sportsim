@@ -11,50 +11,50 @@ import { resultOk, resultFail } from '../engine/result.js'
 
 /** Why content could not be loaded. */
 export const LOADER_ERROR_CODES = Object.freeze({
-  KIND_UNKNOWN: 'CONTENT_KIND_UNKNOWN',
-  FILE_MISSING: 'CONTENT_FILE_MISSING',
-  ENTRY_NOT_OBJECT: 'CONTENT_ENTRY_NOT_OBJECT',
-  ENTRY_ID_MISSING: 'CONTENT_ENTRY_ID_MISSING',
-  ENTRY_ID_DUPLICATE: 'CONTENT_ENTRY_ID_DUPLICATE',
+  kindUnknown: 'CONTENT_KIND_UNKNOWN',
+  fileMissing: 'CONTENT_FILE_MISSING',
+  entryNotObject: 'CONTENT_ENTRY_NOT_OBJECT',
+  entryIdMissing: 'CONTENT_ENTRY_ID_MISSING',
+  entryIdDuplicate: 'CONTENT_ENTRY_ID_DUPLICATE',
 })
 
 /** What there is to load. */
 export const CONTENT_KINDS = Object.freeze({
-  LOCATIONS: 'locations',
-  ACTIONS: 'actions',
-  EVENTS: 'events',
-  CHARACTERS: 'characters',
-  ITEMS: 'items',
-  SUBSTANCES: 'substances',
-  CONDITIONS: 'conditions',
-  MEDIUMS: 'mediums',
-  VOICES: 'voices',
-  SCAVENGE_TABLES: 'scavengeTables',
-  GAMES: 'games',
-  CONFIG: 'config',
-  VOCABULARY: 'vocabulary',
+  locations: 'locations',
+  actions: 'actions',
+  events: 'events',
+  characters: 'characters',
+  items: 'items',
+  substances: 'substances',
+  conditions: 'conditions',
+  mediums: 'mediums',
+  voices: 'voices',
+  scavengeTables: 'scavengeTables',
+  games: 'games',
+  config: 'config',
+  vocabulary: 'vocabulary',
 })
 
 // Vite resolves these at build time; each value is a module with the JSON as its default.
-const _SOURCES = {
-  [CONTENT_KINDS.LOCATIONS]: import.meta.glob('/content/maps/*/locations/*.json', { eager: true }),
-  [CONTENT_KINDS.ACTIONS]: import.meta.glob('/content/maps/*/actions/*.json', { eager: true }),
-  [CONTENT_KINDS.EVENTS]: import.meta.glob('/content/maps/*/events/*.json', { eager: true }),
-  [CONTENT_KINDS.CHARACTERS]: import.meta.glob('/content/characters/*.json', { eager: true }),
-  [CONTENT_KINDS.ITEMS]: import.meta.glob('/content/items/*.json', { eager: true }),
-  [CONTENT_KINDS.SUBSTANCES]: import.meta.glob('/content/substances/*.json', { eager: true }),
-  [CONTENT_KINDS.CONDITIONS]: import.meta.glob('/content/conditions/*.json', { eager: true }),
-  [CONTENT_KINDS.MEDIUMS]: import.meta.glob('/content/mediums/*.json', { eager: true }),
-  [CONTENT_KINDS.VOICES]: import.meta.glob('/content/voices/*.json', { eager: true }),
-  [CONTENT_KINDS.SCAVENGE_TABLES]: import.meta.glob('/content/scavenge/*.json', { eager: true }),
-  [CONTENT_KINDS.GAMES]: import.meta.glob('/content/games/*.json', { eager: true }),
-  [CONTENT_KINDS.CONFIG]: import.meta.glob('/content/game.json', { eager: true }),
-  [CONTENT_KINDS.VOCABULARY]: import.meta.glob('/content/vocabulary.json', { eager: true }),
+const SOURCES = {
+  [CONTENT_KINDS.locations]: import.meta.glob('/content/maps/*/locations/*.json', { eager: true }),
+  [CONTENT_KINDS.actions]: import.meta.glob('/content/maps/*/actions/*.json', { eager: true }),
+  [CONTENT_KINDS.events]: import.meta.glob('/content/maps/*/events/*.json', { eager: true }),
+  [CONTENT_KINDS.characters]: import.meta.glob('/content/characters/*.json', { eager: true }),
+  [CONTENT_KINDS.items]: import.meta.glob('/content/items/*.json', { eager: true }),
+  [CONTENT_KINDS.substances]: import.meta.glob('/content/substances/*.json', { eager: true }),
+  [CONTENT_KINDS.conditions]: import.meta.glob('/content/conditions/*.json', { eager: true }),
+  [CONTENT_KINDS.mediums]: import.meta.glob('/content/mediums/*.json', { eager: true }),
+  [CONTENT_KINDS.voices]: import.meta.glob('/content/voices/*.json', { eager: true }),
+  [CONTENT_KINDS.scavengeTables]: import.meta.glob('/content/scavenge/*.json', { eager: true }),
+  [CONTENT_KINDS.games]: import.meta.glob('/content/games/*.json', { eager: true }),
+  [CONTENT_KINDS.config]: import.meta.glob('/content/game.json', { eager: true }),
+  [CONTENT_KINDS.vocabulary]: import.meta.glob('/content/vocabulary.json', { eager: true }),
 }
 
 /** Kinds that live under a map, and kinds that are one file, not a collection. */
-const _KINDS_BY_MAP = [CONTENT_KINDS.LOCATIONS, CONTENT_KINDS.ACTIONS, CONTENT_KINDS.EVENTS]
-const _KINDS_SINGLE = [CONTENT_KINDS.CONFIG, CONTENT_KINDS.VOCABULARY]
+const KINDS_BY_MAP = [CONTENT_KINDS.locations, CONTENT_KINDS.actions, CONTENT_KINDS.events]
+const KINDS_SINGLE = [CONTENT_KINDS.config, CONTENT_KINDS.vocabulary]
 
 /**
  * Entries from several files, keyed by id. A file holds one entry or a list
@@ -70,21 +70,21 @@ export function contentMerge({ files }) {
     for (const entry of Array.isArray(value) ? value : [value]) {
       if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
         return resultFail({
-          code: LOADER_ERROR_CODES.ENTRY_NOT_OBJECT,
+          code: LOADER_ERROR_CODES.entryNotObject,
           message: `${path}: an entry is not an object`,
           params: { path },
         })
       }
       if (!entry.id) {
         return resultFail({
-          code: LOADER_ERROR_CODES.ENTRY_ID_MISSING,
+          code: LOADER_ERROR_CODES.entryIdMissing,
           message: `${path}: an entry has no id`,
           params: { path },
         })
       }
       if (entry.id in byId) {
         return resultFail({
-          code: LOADER_ERROR_CODES.ENTRY_ID_DUPLICATE,
+          code: LOADER_ERROR_CODES.entryIdDuplicate,
           message: `${path}: '${entry.id}' is already in ${pathById[entry.id]}`,
           params: { path, id: entry.id, pathFirst: pathById[entry.id] },
         })
@@ -104,21 +104,21 @@ export function contentMerge({ files }) {
  * @returns {{ ok: boolean, data: Object|null, error: Object|null }}
  */
 export function contentLoad({ kind, mapId }) {
-  const source = _SOURCES[kind]
+  const source = SOURCES[kind]
   if (!source) {
     return resultFail({
-      code: LOADER_ERROR_CODES.KIND_UNKNOWN,
+      code: LOADER_ERROR_CODES.kindUnknown,
       message: `No content kind '${kind}'`,
       params: { kind },
     })
   }
   const files = Object.entries(source)
-    .filter(([path]) => !_KINDS_BY_MAP.includes(kind) || _mapIdFromPath({ path }) === mapId)
+    .filter(([path]) => !KINDS_BY_MAP.includes(kind) || mapIdFromPath({ path }) === mapId)
     .map(([path, module]) => ({ path, value: module.default ?? module }))
-  if (_KINDS_SINGLE.includes(kind)) {
+  if (KINDS_SINGLE.includes(kind)) {
     if (files.length === 0) {
       return resultFail({
-        code: LOADER_ERROR_CODES.FILE_MISSING,
+        code: LOADER_ERROR_CODES.fileMissing,
         message: `No ${kind} file`,
         params: { kind },
       })
@@ -133,7 +133,7 @@ export function contentLoad({ kind, mapId }) {
  * @param {{ path: string }} input
  * @returns {string|null}
  */
-function _mapIdFromPath({ path }) {
+function mapIdFromPath({ path }) {
   const match = path.match(/\/content\/maps\/([^/]+)\//)
   return match ? match[1] : null
 }

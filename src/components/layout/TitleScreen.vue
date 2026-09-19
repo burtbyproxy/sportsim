@@ -119,23 +119,19 @@ const { selectedIndex, onKeydown: navKeydown } = useKeyboardNav({
 // Letter shortcuts: n → new game, l → load game.
 // Arrow nav + Enter handled by useKeyboardNav via navKeydown.
 useKeyboard({
-  n: (e) => {
-    const item = menuItems.value.find((m) => m.shortcut === 'n' && !m.disabled)
-    if (item) {
-      e.preventDefault()
-      item.action()
-    }
-  },
-  l: (e) => {
-    const item = menuItems.value.find((m) => m.shortcut === 'l' && !m.disabled)
-    if (item) {
-      e.preventDefault()
-      item.action()
-    }
-  },
-  ArrowUp: (e) => navKeydown(e),
-  ArrowDown: (e) => navKeydown(e),
-  Enter: (e) => navKeydown(e),
+  bindings: [
+    // Each menu item's shortcut letter runs it, unless it is greyed out.
+    ...['n', 'l'].map((key) => ({
+      key,
+      handler: (e) => {
+        const item = menuItems.value.find((m) => m.shortcut === key && !m.disabled)
+        if (!item) return
+        e.preventDefault()
+        item.action()
+      },
+    })),
+    ...['ArrowUp', 'ArrowDown', 'Enter'].map((key) => ({ key, handler: navKeydown })),
+  ],
 })
 </script>
 

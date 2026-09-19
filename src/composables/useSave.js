@@ -26,12 +26,12 @@ export const AUTO_SAVE_NAME = 'auto'
  * contract; the message is for whoever is debugging.
  */
 export const SAVE_ERROR_CODES = Object.freeze({
-  LIMIT_REACHED: 'SAVE_LIMIT_REACHED',
-  NOT_FOUND: 'SAVE_NOT_FOUND',
-  UNREADABLE: 'SAVE_UNREADABLE',
-  FIELD_MISSING: 'SAVE_FIELD_MISSING',
-  VERSION_INVALID: 'SAVE_VERSION_INVALID',
-  STORAGE_FAILED: 'SAVE_STORAGE_FAILED',
+  limitReached: 'SAVE_LIMIT_REACHED',
+  notFound: 'SAVE_NOT_FOUND',
+  unreadable: 'SAVE_UNREADABLE',
+  fieldMissing: 'SAVE_FIELD_MISSING',
+  versionInvalid: 'SAVE_VERSION_INVALID',
+  storageFailed: 'SAVE_STORAGE_FAILED',
 })
 
 /**
@@ -57,12 +57,12 @@ const REQUIRED_SAVE_FIELDS = [
  */
 export function saveValidate({ save }) {
   if (!save || typeof save !== 'object') {
-    return resultFail({ code: SAVE_ERROR_CODES.UNREADABLE, message: 'Not an object' })
+    return resultFail({ code: SAVE_ERROR_CODES.unreadable, message: 'Not an object' })
   }
   for (const field of REQUIRED_SAVE_FIELDS) {
     if (!(field in save)) {
       return resultFail({
-        code: SAVE_ERROR_CODES.FIELD_MISSING,
+        code: SAVE_ERROR_CODES.fieldMissing,
         message: `Missing field "${field}"`,
         params: { field },
       })
@@ -70,7 +70,7 @@ export function saveValidate({ save }) {
   }
   if (typeof save.version !== 'number' || save.version < 1) {
     return resultFail({
-      code: SAVE_ERROR_CODES.VERSION_INVALID,
+      code: SAVE_ERROR_CODES.versionInvalid,
       message: `Invalid version "${save.version}"`,
     })
   }
@@ -141,8 +141,8 @@ export function saveMigrate({ save }) {
     for (const making of migrated.player?.makings ?? []) {
       if (making.game) continue
       making.game = null
-      if (making.status === MAKING_STATUSES.IN_PROGRESS) {
-        making.status = MAKING_STATUSES.ABANDONED
+      if (making.status === MAKING_STATUSES.inProgress) {
+        making.status = MAKING_STATUSES.abandoned
         making.endedBy = { kind: 'migration', id: 'v6' }
         making.updatedAtTick = migrated.time?.tick ?? making.updatedAtTick
       }
@@ -192,7 +192,7 @@ export function useSave() {
     const listed = savesList()
     if (listed.data.length >= MAX_SAVES) {
       return resultFail({
-        code: SAVE_ERROR_CODES.LIMIT_REACHED,
+        code: SAVE_ERROR_CODES.limitReached,
         message: `${MAX_SAVES} saves already; delete one first`,
         params: { limit: MAX_SAVES },
       })
@@ -211,7 +211,7 @@ export function useSave() {
       firedEventIds: game.firedEventIds,
       activeEvent: game.activeEvent,
     }
-    return _saveStore({ save: saveData, index: listed.data })
+    return saveStore({ save: saveData, index: listed.data })
   }
 
   /**
@@ -220,16 +220,16 @@ export function useSave() {
    * @returns {{ ok: boolean, data: Object|null, error: Object|null }}
    */
   function saveRead({ id }) {
-    const raw = _storageGet({ key: SAVE_PREFIX + id })
+    const raw = storageGet({ key: SAVE_PREFIX + id })
     if (!raw.ok) return raw
     if (raw.data === null) {
       return resultFail({
-        code: SAVE_ERROR_CODES.NOT_FOUND,
+        code: SAVE_ERROR_CODES.notFound,
         message: `No save "${id}"`,
         params: { id },
       })
     }
-    const parsed = _jsonParse({ text: raw.data })
+    const parsed = jsonParse({ text: raw.data })
     if (!parsed.ok) return parsed
     const valid = saveValidate({ save: parsed.data })
     if (!valid.ok) return valid
@@ -243,11 +243,11 @@ export function useSave() {
    * @returns {{ ok: boolean, data: Array<{ id: string, name: string, timestamp: number }>, error: Object|null }}
    */
   function savesList() {
-    const raw = _storageGet({ key: SAVE_INDEX_KEY })
+    const raw = storageGet({ key: SAVE_INDEX_KEY })
     if (raw.ok && raw.data === null) return resultOk([])
-    const parsed = raw.ok ? _jsonParse({ text: raw.data }) : raw
+    const parsed = raw.ok ? jsonParse({ text: raw.data }) : raw
     if (parsed.ok && Array.isArray(parsed.data)) return resultOk(parsed.data)
-    return resultOk(_indexRebuild())
+    return resultOk(indexRebuild())
   }
 
   /**
@@ -261,7 +261,7 @@ export function useSave() {
       localStorage.removeItem(SAVE_PREFIX + id)
       localStorage.setItem(SAVE_INDEX_KEY, JSON.stringify(index))
     } catch (e) {
-      return resultFail({ code: SAVE_ERROR_CODES.STORAGE_FAILED, message: String(e) })
+      return resultFail({ code: SAVE_ERROR_CODES.storageFailed, message: String(e) })
     }
     return resultOk({ id })
   }
@@ -297,20 +297,20 @@ export function useSave() {
    * @returns {{ ok: boolean, data: { id: string }|null, error: Object|null }}
    */
   function saveImport({ json }) {
-    const parsed = _jsonParse({ text: json })
+    const parsed = jsonParse({ text: json })
     if (!parsed.ok) return parsed
     const valid = saveValidate({ save: parsed.data })
     if (!valid.ok) return valid
     const listed = savesList()
     if (listed.data.length >= MAX_SAVES) {
       return resultFail({
-        code: SAVE_ERROR_CODES.LIMIT_REACHED,
+        code: SAVE_ERROR_CODES.limitReached,
         message: `${MAX_SAVES} saves already; delete one first`,
         params: { limit: MAX_SAVES },
       })
     }
     const imported = { ...saveMigrate({ save: valid.data }), id: crypto.randomUUID() }
-    return _saveStore({ save: imported, index: listed.data })
+    return saveStore({ save: imported, index: listed.data })
   }
 
   /**
@@ -318,13 +318,13 @@ export function useSave() {
    * @param {{ save: Object, index: Array<Object> }} input
    * @returns {{ ok: boolean, data: { id: string }|null, error: Object|null }}
    */
-  function _saveStore({ save, index }) {
+  function saveStore({ save, index }) {
     try {
       localStorage.setItem(SAVE_PREFIX + save.id, JSON.stringify(save))
       const entry = { id: save.id, name: save.name, timestamp: save.timestamp }
       localStorage.setItem(SAVE_INDEX_KEY, JSON.stringify([...index, entry]))
     } catch (e) {
-      return resultFail({ code: SAVE_ERROR_CODES.STORAGE_FAILED, message: String(e) })
+      return resultFail({ code: SAVE_ERROR_CODES.storageFailed, message: String(e) })
     }
     return resultOk({ id: save.id })
   }
@@ -333,13 +333,13 @@ export function useSave() {
    * The index, rebuilt from every readable save in storage, and written back.
    * @returns {Array<{ id: string, name: string, timestamp: number }>}
    */
-  function _indexRebuild() {
+  function indexRebuild() {
     const index = []
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i)
         if (!key?.startsWith(SAVE_PREFIX)) continue
-        const parsed = _jsonParse({ text: localStorage.getItem(key) })
+        const parsed = jsonParse({ text: localStorage.getItem(key) })
         if (!parsed.ok || !saveValidate({ save: parsed.data }).ok) continue
         const { id, name, timestamp } = parsed.data
         index.push({ id, name, timestamp })
@@ -359,11 +359,11 @@ export function useSave() {
  * @param {{ key: string }} input
  * @returns {{ ok: boolean, data: string|null, error: Object|null }}
  */
-function _storageGet({ key }) {
+function storageGet({ key }) {
   try {
     return resultOk(localStorage.getItem(key))
   } catch (e) {
-    return resultFail({ code: SAVE_ERROR_CODES.STORAGE_FAILED, message: String(e) })
+    return resultFail({ code: SAVE_ERROR_CODES.storageFailed, message: String(e) })
   }
 }
 
@@ -372,10 +372,10 @@ function _storageGet({ key }) {
  * @param {{ text: string }} input
  * @returns {{ ok: boolean, data: *, error: Object|null }}
  */
-function _jsonParse({ text }) {
+function jsonParse({ text }) {
   try {
     return resultOk(JSON.parse(text))
   } catch (e) {
-    return resultFail({ code: SAVE_ERROR_CODES.UNREADABLE, message: String(e) })
+    return resultFail({ code: SAVE_ERROR_CODES.unreadable, message: String(e) })
   }
 }

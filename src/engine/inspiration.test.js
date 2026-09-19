@@ -46,7 +46,7 @@ describe('inspirationActive', () => {
   it('returns a copy of the active record', () => {
     const player = inspiredPlayer()
     const active = inspirationActive({ player })
-    expect(active.status).toBe(INSPIRATION_STATUSES.ACTIVE)
+    expect(active.status).toBe(INSPIRATION_STATUSES.active)
     active.strength = 0
     expect(player.inspirations[0].strength).toBe(60)
   })
@@ -63,7 +63,7 @@ describe('inspirationStrike', () => {
       ticksTotal: 4,
       gameTime: at(0),
     })
-    expect(result.error.code).toBe(INSPIRATION_ERROR_CODES.PLAYER_MISSING)
+    expect(result.error.code).toBe(INSPIRATION_ERROR_CODES.playerMissing)
   })
 
   it('rejects a source without a kind and an id', () => {
@@ -75,7 +75,7 @@ describe('inspirationStrike', () => {
         ticksTotal: 4,
         gameTime: at(0),
       })
-      expect(result.error.code).toBe(INSPIRATION_ERROR_CODES.SOURCE_INVALID)
+      expect(result.error.code).toBe(INSPIRATION_ERROR_CODES.sourceInvalid)
     }
   })
 
@@ -88,7 +88,7 @@ describe('inspirationStrike', () => {
         ticksTotal: 4,
         gameTime: at(0),
       })
-      expect(result.error.code).toBe(INSPIRATION_ERROR_CODES.STRENGTH_INVALID)
+      expect(result.error.code).toBe(INSPIRATION_ERROR_CODES.strengthInvalid)
     }
   })
 
@@ -101,7 +101,7 @@ describe('inspirationStrike', () => {
         ticksTotal,
         gameTime: at(0),
       })
-      expect(result.error.code).toBe(INSPIRATION_ERROR_CODES.TICKS_INVALID)
+      expect(result.error.code).toBe(INSPIRATION_ERROR_CODES.ticksInvalid)
     }
   })
 
@@ -124,7 +124,7 @@ describe('inspirationStrike', () => {
     })
     expect(data.replaced).toBeNull()
     expect(data.struck).toMatchObject({
-      status: INSPIRATION_STATUSES.ACTIVE,
+      status: INSPIRATION_STATUSES.active,
       sourceKind: 'event',
       sourceId: 'rock_bottom_echo',
       mediumId: 'painting',
@@ -183,14 +183,14 @@ describe('inspirationStrike', () => {
       gameTime: at(14),
     })
     expect(data.replaced).toMatchObject({
-      status: INSPIRATION_STATUSES.REPLACED,
+      status: INSPIRATION_STATUSES.replaced,
       sourceId: 'rock_bottom_echo',
       endedBy: { kind: 'event', id: 'rain' },
       updatedAtTick: 14,
     })
     expect(data.inspirations.map((r) => r.status)).toEqual([
-      INSPIRATION_STATUSES.REPLACED,
-      INSPIRATION_STATUSES.ACTIVE,
+      INSPIRATION_STATUSES.replaced,
+      INSPIRATION_STATUSES.active,
     ])
   })
 
@@ -218,11 +218,11 @@ describe('inspirationStrike', () => {
 describe('inspirationTick', () => {
   it('rejects a missing player and bad ticks', () => {
     expect(inspirationTick({ player: null, ticksElapsed: 1, gameTime: at(1) }).error.code).toBe(
-      INSPIRATION_ERROR_CODES.PLAYER_MISSING
+      INSPIRATION_ERROR_CODES.playerMissing
     )
     expect(
       inspirationTick({ player: makePlayer(), ticksElapsed: -1, gameTime: at(1) }).error.code
-    ).toBe(INSPIRATION_ERROR_CODES.TICKS_INVALID)
+    ).toBe(INSPIRATION_ERROR_CODES.ticksInvalid)
   })
 
   it('runs the clock down without expiring', () => {
@@ -240,7 +240,7 @@ describe('inspirationTick', () => {
     const player = inspiredPlayer()
     const { data } = inspirationTick({ player, ticksElapsed: 8, gameTime: at(18) })
     expect(data.expired).toMatchObject({
-      status: INSPIRATION_STATUSES.EXPIRED,
+      status: INSPIRATION_STATUSES.expired,
       ticksRemaining: 0,
       endedBy: { kind: 'clock', id: 'clock' },
     })
@@ -270,7 +270,7 @@ describe('inspirationTick', () => {
     }).data.inspirations
     const { data } = inspirationTick({ player, ticksElapsed: 8, gameTime: at(19) })
     expect(data.expired).toBeNull()
-    expect(data.inspirations[0].status).toBe(INSPIRATION_STATUSES.INTERRUPTED)
+    expect(data.inspirations[0].status).toBe(INSPIRATION_STATUSES.interrupted)
     expect(data.inspirations[0].ticksRemaining).toBe(8)
   })
 })
@@ -280,11 +280,11 @@ describe('inspirationTick', () => {
 describe('inspirationInterrupt', () => {
   it('rejects a missing player and a reason without kind and id', () => {
     expect(inspirationInterrupt({ player: null, reason: rain, gameTime: at(1) }).error.code).toBe(
-      INSPIRATION_ERROR_CODES.PLAYER_MISSING
+      INSPIRATION_ERROR_CODES.playerMissing
     )
     expect(
       inspirationInterrupt({ player: makePlayer(), reason: {}, gameTime: at(1) }).error.code
-    ).toBe(INSPIRATION_ERROR_CODES.SOURCE_INVALID)
+    ).toBe(INSPIRATION_ERROR_CODES.sourceInvalid)
   })
 
   it('kills the active inspiration and names what did it', () => {
@@ -295,7 +295,7 @@ describe('inspirationInterrupt', () => {
       gameTime: at(12),
     })
     expect(data.interrupted).toMatchObject({
-      status: INSPIRATION_STATUSES.INTERRUPTED,
+      status: INSPIRATION_STATUSES.interrupted,
       endedBy: { kind: 'action', id: 'sleep' },
       updatedAtTick: 12,
     })
@@ -324,7 +324,7 @@ describe('inspirationSpend', () => {
       gameTime: at(15),
     })
     expect(data.spent).toMatchObject({
-      status: INSPIRATION_STATUSES.SPENT,
+      status: INSPIRATION_STATUSES.spent,
       endedBy: { kind: 'piece', id: 'p1' },
     })
   })
@@ -335,12 +335,12 @@ describe('inspirationSpend', () => {
       spentOn: { kind: 'piece', id: 'p1' },
       gameTime: at(1),
     })
-    expect(result.error.code).toBe(INSPIRATION_ERROR_CODES.NONE_ACTIVE)
+    expect(result.error.code).toBe(INSPIRATION_ERROR_CODES.noneActive)
   })
 
   it('rejects a bad spentOn', () => {
     const result = inspirationSpend({ player: inspiredPlayer(), spentOn: null, gameTime: at(1) })
-    expect(result.error.code).toBe(INSPIRATION_ERROR_CODES.SOURCE_INVALID)
+    expect(result.error.code).toBe(INSPIRATION_ERROR_CODES.sourceInvalid)
   })
 })
 
@@ -351,14 +351,14 @@ describe('inspirationUrge', () => {
     },
     quiet: {},
   }
-  const as = (personaId, inspirations = []) => ({
+  const as = ({ personaId, inspirations = [] }) => ({
     blend: { dominantPersonaId: personaId, weights: [], soberWeight: 0 },
     inspirations,
   })
 
   it('lands for the persona in charge when the roll is under the odds, and names who it was', () => {
     const hit = inspirationUrge({
-      player: as('gangster'),
+      player: as({ personaId: 'gangster' }),
       personas,
       ticksElapsed: 1,
       rng: () => 0.09,
@@ -368,7 +368,7 @@ describe('inspirationUrge', () => {
       personaId: 'gangster',
     })
     const miss = inspirationUrge({
-      player: as('gangster'),
+      player: as({ personaId: 'gangster' }),
       personas,
       ticksElapsed: 1,
       rng: () => 0.1,
@@ -379,28 +379,54 @@ describe('inspirationUrge', () => {
   it('more time is more chances: a roll that misses one tick lands over four', () => {
     const roll = () => 0.3
     expect(
-      inspirationUrge({ player: as('gangster'), personas, ticksElapsed: 1, rng: roll }).data.urge
+      inspirationUrge({
+        player: as({ personaId: 'gangster' }),
+        personas,
+        ticksElapsed: 1,
+        rng: roll,
+      }).data.urge
     ).toBeNull()
     // 1 - 0.9^4 = 0.344
     expect(
-      inspirationUrge({ player: as('gangster'), personas, ticksElapsed: 4, rng: roll }).data.urge
+      inspirationUrge({
+        player: as({ personaId: 'gangster' }),
+        personas,
+        ticksElapsed: 4,
+        rng: roll,
+      }).data.urge
     ).not.toBeNull()
   })
 
   it('moves nobody who has no urges, nobody already moved, and nobody when no time passed', () => {
     const always = () => 0.0
     expect(
-      inspirationUrge({ player: as('quiet'), personas, ticksElapsed: 4, rng: always }).data.urge
+      inspirationUrge({
+        player: as({ personaId: 'quiet' }),
+        personas,
+        ticksElapsed: 4,
+        rng: always,
+      }).data.urge
     ).toBeNull()
     expect(
-      inspirationUrge({ player: as('stranger'), personas, ticksElapsed: 4, rng: always }).data.urge
+      inspirationUrge({
+        player: as({ personaId: 'stranger' }),
+        personas,
+        ticksElapsed: 4,
+        rng: always,
+      }).data.urge
     ).toBeNull()
     expect(
-      inspirationUrge({ player: as('gangster'), personas, ticksElapsed: 0, rng: always }).data.urge
+      inspirationUrge({
+        player: as({ personaId: 'gangster' }),
+        personas,
+        ticksElapsed: 0,
+        rng: always,
+      }).data.urge
     ).toBeNull()
-    const busy = as('gangster', [
-      { id: 'i1', status: 'active', personaSnapshot: {}, endedBy: null },
-    ])
+    const busy = as({
+      personaId: 'gangster',
+      inspirations: [{ id: 'i1', status: 'active', personaSnapshot: {}, endedBy: null }],
+    })
     expect(
       inspirationUrge({ player: busy, personas, ticksElapsed: 4, rng: always }).data.urge
     ).toBeNull()
@@ -410,8 +436,9 @@ describe('inspirationUrge', () => {
     expect(inspirationUrge({ player: null, personas, ticksElapsed: 1 }).error.code).toBe(
       'PLAYER_MISSING'
     )
-    expect(inspirationUrge({ player: as('gangster'), personas, ticksElapsed: -1 }).error.code).toBe(
-      'TICKS_INVALID'
-    )
+    expect(
+      inspirationUrge({ player: as({ personaId: 'gangster' }), personas, ticksElapsed: -1 }).error
+        .code
+    ).toBe('TICKS_INVALID')
   })
 })

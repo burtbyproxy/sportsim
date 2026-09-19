@@ -22,26 +22,26 @@ function makePlayer(inventory) {
 describe('itemUseResolve', () => {
   it('rejects a missing player', () => {
     expect(itemUseResolve({ player: null, itemId: 'x' }).error.code).toBe(
-      ITEM_ERROR_CODES.PLAYER_MISSING
+      ITEM_ERROR_CODES.playerMissing
     )
   })
 
   it('rejects an item the player is not carrying', () => {
     const result = itemUseResolve({ player: makePlayer([]), itemId: 'tallboy_oly' })
-    expect(result.error.code).toBe(ITEM_ERROR_CODES.ITEM_MISSING)
+    expect(result.error.code).toBe(ITEM_ERROR_CODES.itemMissing)
   })
 
   it('rejects an item with none left', () => {
     const player = makePlayer([{ ...tallboy, quantity: 0 }])
     expect(itemUseResolve({ player, itemId: 'tallboy_oly' }).error.code).toBe(
-      ITEM_ERROR_CODES.ITEM_MISSING
+      ITEM_ERROR_CODES.itemMissing
     )
   })
 
   it('rejects something that is not used up: you cannot drink a sock', () => {
     const player = makePlayer([{ id: 'single_sock', name: 'A Sock', type: 'junk', quantity: 1 }])
     expect(itemUseResolve({ player, itemId: 'single_sock' }).error.code).toBe(
-      ITEM_ERROR_CODES.ITEM_NOT_CONSUMABLE
+      ITEM_ERROR_CODES.itemNotConsumable
     )
   })
 
@@ -93,7 +93,7 @@ describe('itemUseResolve', () => {
       effects: [{ target: 'sobriety', value: -20, duration: null }],
     }
     expect(itemUseResolve({ player: makePlayer([cursed]), itemId: 'cursed' }).error.code).toBe(
-      ITEM_ERROR_CODES.EFFECT_TARGET_UNKNOWN
+      ITEM_ERROR_CODES.effectTargetUnknown
     )
   })
 

@@ -37,7 +37,7 @@ function startGame() {
   return game
 }
 
-const effective = (game, mediumId) =>
+const effective = ({ game, mediumId }) =>
   skillEffective({ player: game.player, mediumId, mediums: game.mediums }).data.value
 
 describe('skills pipeline', () => {
@@ -48,7 +48,7 @@ describe('skills pipeline', () => {
     expect(mediumIdsInContent.length).toBeGreaterThan(0)
     expect(Object.keys(game.mediums).sort()).toEqual(mediumIdsInContent.sort())
     expect(game.player.skills).toEqual({})
-    expect(effective(game, 'painting')).toBe(0)
+    expect(effective({ game, mediumId: 'painting' })).toBe(0)
   })
 
   it('painting sober trains the sober cell, and only the sober cell', () => {
@@ -74,12 +74,12 @@ describe('skills pipeline', () => {
   it('the effective skill follows the blend, not the best cell', () => {
     const game = startGame()
     for (let n = 0; n < 10; n++) game.skillGainApply({ mediumId: 'carving', amount: 10 })
-    const soberCarving = effective(game, 'carving')
+    const soberCarving = effective({ game, mediumId: 'carving' })
     expect(soberCarving).toBeGreaterThan(0)
 
     game.playerDosesApply({ doses: [{ substanceId: 'whiskey', value: 100 }] })
-    expect(effective(game, 'carving')).toBe(0) // the priest has never held a knife
-    expect(effective(game, 'painting')).toBe(0) // and carving was never painting
+    expect(effective({ game, mediumId: 'carving' })).toBe(0) // the priest has never held a knife
+    expect(effective({ game, mediumId: 'painting' })).toBe(0) // and carving was never painting
   })
 
   it('forty whiskey, forty weed, twenty you: practice splits three ways', () => {

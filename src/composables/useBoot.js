@@ -13,13 +13,14 @@ import { playerCreate } from '../models/player.js'
 import { characterCreate } from '../models/character.js'
 import { locationCreate } from '../models/location.js'
 import { itemCreate } from '../models/item.js'
+import { listSortBy } from '../utils/list.js'
 
 /**
  * Load several kinds of content, stopping at the first that fails.
  * @param {{ load: Function, kinds: string[], mapId?: string }} input
  * @returns {{ ok: boolean, data: Object<string, Object>|null, error: Object|null }}
  */
-function _contentLoadAll({ load, kinds, mapId }) {
+function contentLoadAll({ load, kinds, mapId }) {
   const loaded = {}
   for (const kind of kinds) {
     const result = load({ kind, mapId })
@@ -45,53 +46,53 @@ export function useBoot({ load = contentLoad } = {}) {
    * @returns {{ ok: boolean, data: { mapId: string }|null, error: Object|null }}
    */
   function gameBoot() {
-    const config = load({ kind: CONTENT_KINDS.CONFIG })
+    const config = load({ kind: CONTENT_KINDS.config })
     if (!config.ok) return config
-    const loaded = _contentLoadAll({
+    const loaded = contentLoadAll({
       load,
       mapId: config.data.mapId,
       kinds: [
-        CONTENT_KINDS.VOCABULARY,
-        CONTENT_KINDS.ITEMS,
-        CONTENT_KINDS.SUBSTANCES,
-        CONTENT_KINDS.CONDITIONS,
-        CONTENT_KINDS.MEDIUMS,
-        CONTENT_KINDS.VOICES,
-        CONTENT_KINDS.SCAVENGE_TABLES,
-        CONTENT_KINDS.GAMES,
-        CONTENT_KINDS.ACTIONS,
-        CONTENT_KINDS.EVENTS,
+        CONTENT_KINDS.vocabulary,
+        CONTENT_KINDS.items,
+        CONTENT_KINDS.substances,
+        CONTENT_KINDS.conditions,
+        CONTENT_KINDS.mediums,
+        CONTENT_KINDS.voices,
+        CONTENT_KINDS.scavengeTables,
+        CONTENT_KINDS.games,
+        CONTENT_KINDS.actions,
+        CONTENT_KINDS.events,
       ],
     })
     if (!loaded.ok) return loaded
     const content = loaded.data
     game.configRegister({ config: config.data })
-    game.vocabularyRegister({ vocabulary: content[CONTENT_KINDS.VOCABULARY] })
-    for (const item of Object.values(content[CONTENT_KINDS.ITEMS])) {
+    game.vocabularyRegister({ vocabulary: content[CONTENT_KINDS.vocabulary] })
+    for (const item of Object.values(content[CONTENT_KINDS.items])) {
       game.itemRegister({ item: itemCreate(item) })
     }
-    for (const substance of Object.values(content[CONTENT_KINDS.SUBSTANCES])) {
+    for (const substance of Object.values(content[CONTENT_KINDS.substances])) {
       game.substanceRegister({ substance })
     }
-    for (const condition of Object.values(content[CONTENT_KINDS.CONDITIONS])) {
+    for (const condition of Object.values(content[CONTENT_KINDS.conditions])) {
       game.conditionRegister({ condition })
     }
-    for (const medium of Object.values(content[CONTENT_KINDS.MEDIUMS])) {
+    for (const medium of Object.values(content[CONTENT_KINDS.mediums])) {
       game.mediumRegister({ medium })
     }
-    for (const voice of Object.values(content[CONTENT_KINDS.VOICES])) {
+    for (const voice of Object.values(content[CONTENT_KINDS.voices])) {
       game.voiceRegister({ voice })
     }
-    for (const table of Object.values(content[CONTENT_KINDS.SCAVENGE_TABLES])) {
+    for (const table of Object.values(content[CONTENT_KINDS.scavengeTables])) {
       game.scavengeTableRegister({ table })
     }
-    for (const minigame of Object.values(content[CONTENT_KINDS.GAMES])) {
+    for (const minigame of Object.values(content[CONTENT_KINDS.games])) {
       game.minigameRegister({ minigame })
     }
-    for (const action of Object.values(content[CONTENT_KINDS.ACTIONS])) {
+    for (const action of Object.values(content[CONTENT_KINDS.actions])) {
       game.actionRegister({ action })
     }
-    for (const event of Object.values(content[CONTENT_KINDS.EVENTS])) {
+    for (const event of Object.values(content[CONTENT_KINDS.events])) {
       game.eventRegister({ event })
     }
     return resultOk({ mapId: config.data.mapId })
@@ -104,10 +105,10 @@ export function useBoot({ load = contentLoad } = {}) {
    */
   function gameNew() {
     const { config, vocabulary } = game
-    const world = _contentLoadAll({
+    const world = contentLoadAll({
       load,
       mapId: config.mapId,
-      kinds: [CONTENT_KINDS.LOCATIONS, CONTENT_KINDS.CHARACTERS],
+      kinds: [CONTENT_KINDS.locations, CONTENT_KINDS.characters],
     })
     if (!world.ok) return world
     const player = playerCreate({
@@ -118,10 +119,10 @@ export function useBoot({ load = contentLoad } = {}) {
       },
     })
     game.runStart({ player, locationId: config.start.locationId })
-    for (const location of Object.values(world.data[CONTENT_KINDS.LOCATIONS])) {
+    for (const location of Object.values(world.data[CONTENT_KINDS.locations])) {
       game.locationRegister({ location: locationCreate(location) })
     }
-    for (const character of Object.values(world.data[CONTENT_KINDS.CHARACTERS])) {
+    for (const character of Object.values(world.data[CONTENT_KINDS.characters])) {
       game.characterRegister({ character: characterCreate(character) })
     }
     return resultOk({ locationId: config.start.locationId })
@@ -133,13 +134,17 @@ export function useBoot({ load = contentLoad } = {}) {
    * @returns {{ ok: boolean, data: { id: string }|null, error: Object|null }}
    */
   function gameResume() {
-    const [latest] = [...save.savesList().data].sort((a, b) => b.timestamp - a.timestamp)
+    const [latest] = listSortBy({
+      items: save.savesList().data,
+      keyOf: (entry) => entry.timestamp,
+      descending: true,
+    })
     if (!latest) {
-      return resultFail({ code: SAVE_ERROR_CODES.NOT_FOUND, message: 'No saves' })
+      return resultFail({ code: SAVE_ERROR_CODES.notFound, message: 'No saves' })
     }
     const read = save.saveRead({ id: latest.id })
     if (!read.ok) return read
-    const locations = load({ kind: CONTENT_KINDS.LOCATIONS, mapId: game.config.mapId })
+    const locations = load({ kind: CONTENT_KINDS.locations, mapId: game.config.mapId })
     if (!locations.ok) return locations
     game.runLoad({ save: read.data })
     game.locationsRestore({ definitions: locations.data })

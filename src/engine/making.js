@@ -28,39 +28,40 @@ import { inspirationActive } from './inspiration.js'
 import { skillCheckRoll } from './skills.js'
 import { locationOpen } from '../models/location.js'
 import { resultOk, resultFail } from './result.js'
+import { listSortBy } from '../utils/list.js'
 
 /** Enumerated error codes for every making result. The code is the contract. */
 export const MAKING_ERROR_CODES = Object.freeze({
-  PLAYER_MISSING: 'PLAYER_MISSING',
-  LOCATION_MISSING: 'LOCATION_MISSING',
-  INSPIRATION_NONE: 'INSPIRATION_NONE',
-  ALREADY_MAKING: 'ALREADY_MAKING',
-  NONE_IN_PROGRESS: 'NONE_IN_PROGRESS',
-  MEDIUM_UNKNOWN: 'MEDIUM_UNKNOWN',
-  TOOL_INVALID: 'TOOL_INVALID',
-  SURFACE_INVALID: 'SURFACE_INVALID',
-  INGREDIENT_INVALID: 'INGREDIENT_INVALID',
-  TIME_SHORT: 'TIME_SHORT',
-  MONEY_SHORT: 'MONEY_SHORT',
-  PERSONA_REFUSES: 'PERSONA_REFUSES',
-  TICKS_INVALID: 'TICKS_INVALID',
-  WORK_UNFINISHED: 'WORK_UNFINISHED',
-  REASON_INVALID: 'REASON_INVALID',
+  playerMissing: 'PLAYER_MISSING',
+  locationMissing: 'LOCATION_MISSING',
+  inspirationNone: 'INSPIRATION_NONE',
+  alreadyMaking: 'ALREADY_MAKING',
+  noneInProgress: 'NONE_IN_PROGRESS',
+  mediumUnknown: 'MEDIUM_UNKNOWN',
+  toolInvalid: 'TOOL_INVALID',
+  surfaceInvalid: 'SURFACE_INVALID',
+  ingredientInvalid: 'INGREDIENT_INVALID',
+  timeShort: 'TIME_SHORT',
+  moneyShort: 'MONEY_SHORT',
+  personaRefuses: 'PERSONA_REFUSES',
+  ticksInvalid: 'TICKS_INVALID',
+  workUnfinished: 'WORK_UNFINISHED',
+  reasonInvalid: 'REASON_INVALID',
 })
 
 /** Every state a making record can be in. */
 export const MAKING_STATUSES = Object.freeze({
-  IN_PROGRESS: 'in_progress',
-  FINISHED: 'finished',
-  ABANDONED: 'abandoned',
+  inProgress: 'in_progress',
+  finished: 'finished',
+  abandoned: 'abandoned',
 })
 
 /** Where the surface of a making comes from. */
 export const MAKING_SURFACE_KINDS = Object.freeze({
-  ITEM: 'item',
-  LOCATION: 'location',
+  item: 'item',
+  location: 'location',
   /** No surface but where you are standing: a form that can be done anywhere. */
-  PLACE: 'place',
+  place: 'place',
 })
 
 /**
@@ -69,30 +70,30 @@ export const MAKING_SURFACE_KINDS = Object.freeze({
  * the recorder over the karaoke machine. Some keep nothing at all.
  */
 export const SURFACE_ARTIFACTS = Object.freeze({
-  FIXED: 'fixed',
-  PORTABLE: 'portable',
-  NONE: 'none',
+  fixed: 'fixed',
+  portable: 'portable',
+  none: 'none',
 })
 
 /** How a finished piece came out. Words, never a number. */
 export const MAKING_TIERS = Object.freeze({
-  BOTCHED: 'botched',
-  ROUGH: 'rough',
-  SOLID: 'solid',
-  INSPIRED: 'inspired',
+  botched: 'botched',
+  rough: 'rough',
+  solid: 'solid',
+  inspired: 'inspired',
 })
 
 /** Whether an artifact travels with the player or stays where it was made. */
 export const ARTIFACT_KINDS = Object.freeze({
-  PORTABLE: 'portable',
-  FIXED: 'fixed',
+  portable: 'portable',
+  fixed: 'fixed',
 })
 
 /** Every state an artifact can be in so far. Showing and the weather come later. */
 export const ARTIFACT_STATUSES = Object.freeze({
-  UNSHOWN: 'unshown',
-  FRESH: 'fresh',
-  COVERED: 'covered',
+  unshown: 'unshown',
+  fresh: 'fresh',
+  covered: 'covered',
 })
 
 /** The one state an experience has until somebody starts telling it. */
@@ -113,15 +114,15 @@ export const MAKING_WRONG_MEDIUM_PENALTY = -2
 
 /** Source ids of the situational modifiers a making check itemizes. */
 export const MAKING_MODIFIER_SOURCE_IDS = Object.freeze({
-  INSPIRATION: 'inspiration',
-  WRONG_MEDIUM: 'inspiration_wrong_medium',
+  inspiration: 'inspiration',
+  wrongMedium: 'inspiration_wrong_medium',
 })
 
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-function _copies(player) {
+function copies(player) {
   return (player.makings ?? []).map((record) => ({
     ...record,
     game: record.game ? JSON.parse(JSON.stringify(record.game)) : null,
@@ -129,11 +130,11 @@ function _copies(player) {
   }))
 }
 
-function _carried({ player, itemId }) {
+function itemsCarried({ player, itemId }) {
   return (player.inventory ?? []).some((i) => i.id === itemId && (i.quantity ?? 1) > 0)
 }
 
-function _itemsCarriedOfType({ player, items, type }) {
+function itemsCarriedOfType({ player, items, type }) {
   const seen = new Set()
   const found = []
   for (const carried of player.inventory ?? []) {
@@ -146,27 +147,31 @@ function _itemsCarriedOfType({ player, items, type }) {
   return found
 }
 
-function _takesMedium({ thing, mediumId }) {
+function takesMedium({ thing, mediumId }) {
   return (thing.mediumIds ?? []).includes(mediumId)
 }
 
 /** A surface the place only offers at certain hours: the karaoke machine, say. */
-function _surfaceOpen({ surface, gameTime }) {
+function surfaceOpen({ surface, gameTime }) {
   if (!surface.hours) return true
   return locationOpen({ location: { availability: surface.hours }, hour: gameTime?.hour ?? 0 })
 }
 
-function _surfaceFind({ player, location, items, surfaceKind, surfaceId, gameTime }) {
-  if (surfaceKind === MAKING_SURFACE_KINDS.ITEM) {
+function surfaceFind({ player, location, items, surfaceKind, surfaceId, gameTime }) {
+  if (surfaceKind === MAKING_SURFACE_KINDS.item) {
     const definition = items[surfaceId]
-    if (!definition || definition.type !== 'surface' || !_carried({ player, itemId: surfaceId })) {
+    if (
+      !definition ||
+      definition.type !== 'surface' ||
+      !itemsCarried({ player, itemId: surfaceId })
+    ) {
       return null
     }
     return definition
   }
-  if (surfaceKind === MAKING_SURFACE_KINDS.LOCATION) {
+  if (surfaceKind === MAKING_SURFACE_KINDS.location) {
     const surface = (location.surfaces ?? []).find((s) => s.id === surfaceId) ?? null
-    return surface && _surfaceOpen({ surface, gameTime }) ? surface : null
+    return surface && surfaceOpen({ surface, gameTime }) ? surface : null
   }
   return null
 }
@@ -175,16 +180,16 @@ function _surfaceFind({ player, location, items, surfaceKind, surfaceId, gameTim
  * Whoever is in charge may flatly refuse a form: sober, nobody is getting you
  * up there. Returns the reason, or null.
  */
-function _refusal({ player, medium }) {
+function refusalBuild({ player, medium }) {
   const personaId = (player.blend ?? blendSober()).dominantPersonaId
   const refusal = (medium.making.refusals ?? []).find((r) => r.personaId === personaId)
   return refusal ? refusal.reason : null
 }
 
-function _tierFrom(check) {
-  if (check.criticalFailure) return MAKING_TIERS.BOTCHED
-  if (check.criticalSuccess) return MAKING_TIERS.INSPIRED
-  return check.success ? MAKING_TIERS.SOLID : MAKING_TIERS.ROUGH
+function tierFrom(check) {
+  if (check.criticalFailure) return MAKING_TIERS.botched
+  if (check.criticalSuccess) return MAKING_TIERS.inspired
+  return check.success ? MAKING_TIERS.solid : MAKING_TIERS.rough
 }
 
 // ---------------------------------------------------------------------------
@@ -198,7 +203,7 @@ function _tierFrom(check) {
  */
 export function makingActive({ player }) {
   if (!player) return null
-  return _copies(player).find((r) => r.status === MAKING_STATUSES.IN_PROGRESS) ?? null
+  return copies(player).find((r) => r.status === MAKING_STATUSES.inProgress) ?? null
 }
 
 /**
@@ -219,50 +224,50 @@ export function makingActive({ player }) {
 export function makingOptions({ player, location, items = {}, mediums = {}, gameTime }) {
   if (!player || typeof player !== 'object') {
     return resultFail({
-      code: MAKING_ERROR_CODES.PLAYER_MISSING,
+      code: MAKING_ERROR_CODES.playerMissing,
       message: 'makingOptions needs a player',
     })
   }
   if (!location || typeof location !== 'object') {
     return resultFail({
-      code: MAKING_ERROR_CODES.LOCATION_MISSING,
+      code: MAKING_ERROR_CODES.locationMissing,
       message: 'makingOptions needs a location',
     })
   }
   const inspiration = inspirationActive({ player })
   if (!inspiration) {
     return resultFail({
-      code: MAKING_ERROR_CODES.INSPIRATION_NONE,
+      code: MAKING_ERROR_CODES.inspirationNone,
       message: 'Nothing is moving the player',
     })
   }
 
-  const tools = _itemsCarriedOfType({ player, items, type: 'tool' })
-  const surfaceItems = _itemsCarriedOfType({ player, items, type: 'surface' })
+  const tools = itemsCarriedOfType({ player, items, type: 'tool' })
+  const surfaceItems = itemsCarriedOfType({ player, items, type: 'surface' })
   const plans = []
   for (const medium of Object.values(mediums)) {
     if (!medium.making) continue
     const toolIds = medium.making.toolRequired
-      ? tools.filter((t) => _takesMedium({ thing: t, mediumId: medium.id })).map((t) => t.id)
+      ? tools.filter((t) => takesMedium({ thing: t, mediumId: medium.id })).map((t) => t.id)
       : [null]
     const surfaces = [
       ...surfaceItems
-        .filter((s) => _takesMedium({ thing: s, mediumId: medium.id }))
-        .map((s) => ({ surfaceKind: MAKING_SURFACE_KINDS.ITEM, surfaceId: s.id })),
+        .filter((s) => takesMedium({ thing: s, mediumId: medium.id }))
+        .map((s) => ({ surfaceKind: MAKING_SURFACE_KINDS.item, surfaceId: s.id })),
       ...(location.surfaces ?? [])
-        .filter((s) => _takesMedium({ thing: s, mediumId: medium.id }))
-        .filter((s) => _surfaceOpen({ surface: s, gameTime }))
+        .filter((s) => takesMedium({ thing: s, mediumId: medium.id }))
+        .filter((s) => surfaceOpen({ surface: s, gameTime }))
         .map((s) => ({
-          surfaceKind: MAKING_SURFACE_KINDS.LOCATION,
+          surfaceKind: MAKING_SURFACE_KINDS.location,
           surfaceId: s.id,
           cost: s.cost ?? 0,
         })),
     ]
     // A form that can be done anywhere needs nothing but the ground under you.
     if (medium.making.anywhere) {
-      surfaces.push({ surfaceKind: MAKING_SURFACE_KINDS.PLACE, surfaceId: location.id, cost: 0 })
+      surfaces.push({ surfaceKind: MAKING_SURFACE_KINDS.place, surfaceId: location.id, cost: 0 })
     }
-    const refusedReason = _refusal({ player, medium })
+    const refusedReason = refusalBuild({ player, medium })
     for (const toolItemId of toolIds) {
       for (const surface of surfaces) {
         const cost = surface.cost ?? 0
@@ -280,12 +285,15 @@ export function makingOptions({ player, location, items = {}, mediums = {}, game
       }
     }
   }
-  const wanted = (plan) => (plan.mediumId === inspiration.mediumId ? 0 : 1)
-  plans.sort((a, b) => wanted(a) - wanted(b))
+  // The medium the idea is for comes first.
+  const ordered = listSortBy({
+    items: plans,
+    keyOf: (plan) => (plan.mediumId === inspiration.mediumId ? 0 : 1),
+  })
 
   return resultOk({
-    plans,
-    ingredientItemIds: _itemsCarriedOfType({ player, items, type: 'ingredient' }).map((i) => i.id),
+    plans: ordered,
+    ingredientItemIds: itemsCarriedOfType({ player, items, type: 'ingredient' }).map((i) => i.id),
   })
 }
 
@@ -319,33 +327,33 @@ export function makingStart({
 }) {
   if (!player || typeof player !== 'object') {
     return resultFail({
-      code: MAKING_ERROR_CODES.PLAYER_MISSING,
+      code: MAKING_ERROR_CODES.playerMissing,
       message: 'makingStart needs a player',
     })
   }
   if (!location || typeof location !== 'object') {
     return resultFail({
-      code: MAKING_ERROR_CODES.LOCATION_MISSING,
+      code: MAKING_ERROR_CODES.locationMissing,
       message: 'makingStart needs a location',
     })
   }
   if (makingActive({ player })) {
     return resultFail({
-      code: MAKING_ERROR_CODES.ALREADY_MAKING,
+      code: MAKING_ERROR_CODES.alreadyMaking,
       message: 'The player is already making something',
     })
   }
   const inspiration = inspirationActive({ player })
   if (!inspiration) {
     return resultFail({
-      code: MAKING_ERROR_CODES.INSPIRATION_NONE,
+      code: MAKING_ERROR_CODES.inspirationNone,
       message: 'Nothing is moving the player',
     })
   }
   const medium = mediums[plan?.mediumId]
   if (!medium?.making) {
     return resultFail({
-      code: MAKING_ERROR_CODES.MEDIUM_UNKNOWN,
+      code: MAKING_ERROR_CODES.mediumUnknown,
       message: `'${plan?.mediumId}' is not a medium anything can be made in`,
     })
   }
@@ -356,30 +364,30 @@ export function makingStart({
     const usable =
       tool &&
       tool.type === 'tool' &&
-      _takesMedium({ thing: tool, mediumId: medium.id }) &&
-      _carried({ player, itemId: toolItemId })
+      takesMedium({ thing: tool, mediumId: medium.id }) &&
+      itemsCarried({ player, itemId: toolItemId })
     if (!usable) {
       return resultFail({
-        code: MAKING_ERROR_CODES.TOOL_INVALID,
+        code: MAKING_ERROR_CODES.toolInvalid,
         message: `'${toolItemId}' is not a carried tool for ${medium.id}`,
       })
     }
   } else if (toolItemId !== null) {
     return resultFail({
-      code: MAKING_ERROR_CODES.TOOL_INVALID,
+      code: MAKING_ERROR_CODES.toolInvalid,
       message: `${medium.id} takes no tool`,
     })
   }
 
   const surface =
-    surfaceKind === MAKING_SURFACE_KINDS.PLACE
+    surfaceKind === MAKING_SURFACE_KINDS.place
       ? medium.making.anywhere && surfaceId === location.id
         ? { id: location.id, mediumIds: [medium.id] }
         : null
-      : _surfaceFind({ player, location, items, surfaceKind, surfaceId, gameTime })
-  if (!surface || !_takesMedium({ thing: surface, mediumId: medium.id })) {
+      : surfaceFind({ player, location, items, surfaceKind, surfaceId, gameTime })
+  if (!surface || !takesMedium({ thing: surface, mediumId: medium.id })) {
     return resultFail({
-      code: MAKING_ERROR_CODES.SURFACE_INVALID,
+      code: MAKING_ERROR_CODES.surfaceInvalid,
       message: `'${surfaceId}' (${surfaceKind}) is not a surface here that takes ${medium.id}`,
     })
   }
@@ -390,10 +398,10 @@ export function makingStart({
       medium.making.takesIngredient &&
       ingredient &&
       ingredient.type === 'ingredient' &&
-      _carried({ player, itemId: ingredientItemId })
+      itemsCarried({ player, itemId: ingredientItemId })
     if (!usable) {
       return resultFail({
-        code: MAKING_ERROR_CODES.INGREDIENT_INVALID,
+        code: MAKING_ERROR_CODES.ingredientInvalid,
         message: `'${ingredientItemId}' is not a carried ingredient ${medium.id} can take`,
       })
     }
@@ -401,17 +409,17 @@ export function makingStart({
 
   if (inspiration.ticksRemaining <= medium.making.ticksTotal) {
     return resultFail({
-      code: MAKING_ERROR_CODES.TIME_SHORT,
+      code: MAKING_ERROR_CODES.timeShort,
       message: 'The idea will not last as long as the work',
     })
   }
-  const refusedReason = _refusal({ player, medium })
+  const refusedReason = refusalBuild({ player, medium })
   if (refusedReason)
-    return resultFail({ code: MAKING_ERROR_CODES.PERSONA_REFUSES, message: refusedReason })
-  const moneyCost = surfaceKind === MAKING_SURFACE_KINDS.LOCATION ? (surface.cost ?? 0) : 0
+    return resultFail({ code: MAKING_ERROR_CODES.personaRefuses, message: refusedReason })
+  const moneyCost = surfaceKind === MAKING_SURFACE_KINDS.location ? (surface.cost ?? 0) : 0
   if ((player.status?.money ?? 0) < moneyCost) {
     return resultFail({
-      code: MAKING_ERROR_CODES.MONEY_SHORT,
+      code: MAKING_ERROR_CODES.moneyShort,
       message: `That costs ${moneyCost} and the player is short`,
     })
   }
@@ -419,7 +427,7 @@ export function makingStart({
   const tick = gameTime?.tick ?? 0
   const making = {
     id: uuidv4(),
-    status: MAKING_STATUSES.IN_PROGRESS,
+    status: MAKING_STATUSES.inProgress,
     mediumId: medium.id,
     toolItemId,
     surfaceKind,
@@ -437,11 +445,11 @@ export function makingStart({
   }
   const itemIdsConsumed = []
   if (toolItemId !== null && items[toolItemId].spentOnUse) itemIdsConsumed.push(toolItemId)
-  if (surfaceKind === MAKING_SURFACE_KINDS.ITEM) itemIdsConsumed.push(surfaceId)
+  if (surfaceKind === MAKING_SURFACE_KINDS.item) itemIdsConsumed.push(surfaceId)
   if (ingredientItemId !== null) itemIdsConsumed.push(ingredientItemId)
 
   return resultOk({
-    makings: [..._copies(player), making],
+    makings: [...copies(player), making],
     making: { ...making },
     itemIdsConsumed,
     moneyCost,
@@ -460,21 +468,21 @@ export function makingStart({
 export function makingWork({ player, ticksWorked, gameState, workDone = false, gameTime }) {
   if (!player || typeof player !== 'object') {
     return resultFail({
-      code: MAKING_ERROR_CODES.PLAYER_MISSING,
+      code: MAKING_ERROR_CODES.playerMissing,
       message: 'makingWork needs a player',
     })
   }
   if (!Number.isInteger(ticksWorked) || ticksWorked < 1) {
     return resultFail({
-      code: MAKING_ERROR_CODES.TICKS_INVALID,
+      code: MAKING_ERROR_CODES.ticksInvalid,
       message: `ticksWorked must be an integer >= 1, got ${ticksWorked}`,
     })
   }
-  const makings = _copies(player)
-  const making = makings.find((r) => r.status === MAKING_STATUSES.IN_PROGRESS)
+  const makings = copies(player)
+  const making = makings.find((r) => r.status === MAKING_STATUSES.inProgress)
   if (!making) {
     return resultFail({
-      code: MAKING_ERROR_CODES.NONE_IN_PROGRESS,
+      code: MAKING_ERROR_CODES.noneInProgress,
       message: 'The player is not making anything',
     })
   }
@@ -530,54 +538,54 @@ export function makingFinish({
 }) {
   if (!player || typeof player !== 'object') {
     return resultFail({
-      code: MAKING_ERROR_CODES.PLAYER_MISSING,
+      code: MAKING_ERROR_CODES.playerMissing,
       message: 'makingFinish needs a player',
     })
   }
   if (!location || typeof location !== 'object') {
     return resultFail({
-      code: MAKING_ERROR_CODES.LOCATION_MISSING,
+      code: MAKING_ERROR_CODES.locationMissing,
       message: 'makingFinish needs a location',
     })
   }
-  const makings = _copies(player)
-  const making = makings.find((r) => r.status === MAKING_STATUSES.IN_PROGRESS)
+  const makings = copies(player)
+  const making = makings.find((r) => r.status === MAKING_STATUSES.inProgress)
   if (!making) {
     return resultFail({
-      code: MAKING_ERROR_CODES.NONE_IN_PROGRESS,
+      code: MAKING_ERROR_CODES.noneInProgress,
       message: 'The player is not making anything',
     })
   }
   if (making.ticksDone < making.ticksTotal) {
     return resultFail({
-      code: MAKING_ERROR_CODES.WORK_UNFINISHED,
+      code: MAKING_ERROR_CODES.workUnfinished,
       message: 'There is still work to do',
     })
   }
   const inspiration = inspirationActive({ player })
   if (!inspiration || inspiration.id !== making.inspirationId) {
     return resultFail({
-      code: MAKING_ERROR_CODES.INSPIRATION_NONE,
+      code: MAKING_ERROR_CODES.inspirationNone,
       message: 'The idea behind this work is gone',
     })
   }
   const medium = mediums[making.mediumId]
   if (!medium?.making) {
     return resultFail({
-      code: MAKING_ERROR_CODES.MEDIUM_UNKNOWN,
+      code: MAKING_ERROR_CODES.mediumUnknown,
       message: `'${making.mediumId}' is not a medium anything can be made in`,
     })
   }
 
   const modifiers = [
     {
-      sourceId: MAKING_MODIFIER_SOURCE_IDS.INSPIRATION,
+      sourceId: MAKING_MODIFIER_SOURCE_IDS.inspiration,
       value: Math.max(1, Math.floor(inspiration.strength / MAKING_STRENGTH_PER_MODIFIER)),
     },
   ]
   if (inspiration.mediumId !== null && inspiration.mediumId !== medium.id) {
     modifiers.push({
-      sourceId: MAKING_MODIFIER_SOURCE_IDS.WRONG_MEDIUM,
+      sourceId: MAKING_MODIFIER_SOURCE_IDS.wrongMedium,
       value: MAKING_WRONG_MEDIUM_PENALTY,
     })
   }
@@ -592,7 +600,7 @@ export function makingFinish({
   })
   if (!rolled.ok) return rolled
   const check = rolled.data
-  const tier = _tierFrom(check)
+  const tier = tierFrom(check)
 
   const tick = gameTime?.tick ?? 0
   const blend = player.blend ?? blendSober()
@@ -601,21 +609,21 @@ export function makingFinish({
   // what it leaves: a wall keeps the piece, the karaoke machine with the tape
   // rolling hands you a tape, and the machine on its own keeps nothing.
   const placed = (location.surfaces ?? []).find((s) => s.id === making.surfaceId)
-  let leaves = placed?.artifact ?? SURFACE_ARTIFACTS.FIXED
-  if (making.surfaceKind === MAKING_SURFACE_KINDS.ITEM) leaves = SURFACE_ARTIFACTS.PORTABLE
+  let leaves = placed?.artifact ?? SURFACE_ARTIFACTS.fixed
+  if (making.surfaceKind === MAKING_SURFACE_KINDS.item) leaves = SURFACE_ARTIFACTS.portable
   // Done on nothing but the spot you stood on, it leaves nothing on it.
-  if (making.surfaceKind === MAKING_SURFACE_KINDS.PLACE) leaves = SURFACE_ARTIFACTS.NONE
-  const fixed = leaves === SURFACE_ARTIFACTS.FIXED
+  if (making.surfaceKind === MAKING_SURFACE_KINDS.place) leaves = SURFACE_ARTIFACTS.none
+  const fixed = leaves === SURFACE_ARTIFACTS.fixed
   const leavesArtifact =
     medium.making.leavesArtifact &&
-    leaves !== SURFACE_ARTIFACTS.NONE &&
-    tier !== MAKING_TIERS.BOTCHED
+    leaves !== SURFACE_ARTIFACTS.none &&
+    tier !== MAKING_TIERS.botched
 
   const artifact = leavesArtifact
     ? {
         id: uuidv4(),
-        status: fixed ? ARTIFACT_STATUSES.FRESH : ARTIFACT_STATUSES.UNSHOWN,
-        kind: fixed ? ARTIFACT_KINDS.FIXED : ARTIFACT_KINDS.PORTABLE,
+        status: fixed ? ARTIFACT_STATUSES.fresh : ARTIFACT_STATUSES.unshown,
+        kind: fixed ? ARTIFACT_KINDS.fixed : ARTIFACT_KINDS.portable,
         experienceId,
         makingId: making.id,
         mediumId: medium.id,
@@ -652,7 +660,7 @@ export function makingFinish({
     updatedAtTick: tick,
   }
 
-  making.status = MAKING_STATUSES.FINISHED
+  making.status = MAKING_STATUSES.finished
   making.experienceId = experienceId
   making.endedBy = { kind: 'experience', id: experienceId }
   making.updatedAtTick = tick
@@ -660,7 +668,7 @@ export function makingFinish({
   const markIdsCovered =
     artifact && fixed
       ? (location.marks ?? [])
-          .filter((m) => m.surfaceId === making.surfaceId && m.status === ARTIFACT_STATUSES.FRESH)
+          .filter((m) => m.surfaceId === making.surfaceId && m.status === ARTIFACT_STATUSES.fresh)
           .map((m) => m.id)
       : []
 
@@ -692,7 +700,7 @@ export function makingFinish({
 export function makingAbandon({ player, reason, gameTime }) {
   if (!player || typeof player !== 'object') {
     return resultFail({
-      code: MAKING_ERROR_CODES.PLAYER_MISSING,
+      code: MAKING_ERROR_CODES.playerMissing,
       message: 'makingAbandon needs a player',
     })
   }
@@ -705,14 +713,14 @@ export function makingAbandon({ player, reason, gameTime }) {
     reason.id.length > 0
   if (!valid) {
     return resultFail({
-      code: MAKING_ERROR_CODES.REASON_INVALID,
+      code: MAKING_ERROR_CODES.reasonInvalid,
       message: 'reason needs a kind and an id',
     })
   }
-  const makings = _copies(player)
-  const making = makings.find((r) => r.status === MAKING_STATUSES.IN_PROGRESS)
+  const makings = copies(player)
+  const making = makings.find((r) => r.status === MAKING_STATUSES.inProgress)
   if (!making) return resultOk({ makings, abandoned: null })
-  making.status = MAKING_STATUSES.ABANDONED
+  making.status = MAKING_STATUSES.abandoned
   making.endedBy = { ...reason }
   making.updatedAtTick = gameTime?.tick ?? making.updatedAtTick
   return resultOk({ makings, abandoned: { ...making } })
@@ -730,7 +738,7 @@ export function marksCover({ location, markIdsCovered, coveredBy, gameTime }) {
     markIdsCovered.includes(mark.id)
       ? {
           ...mark,
-          status: ARTIFACT_STATUSES.COVERED,
+          status: ARTIFACT_STATUSES.covered,
           endedBy: { ...coveredBy },
           updatedAtTick: gameTime?.tick ?? mark.updatedAtTick,
         }

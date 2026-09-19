@@ -60,12 +60,12 @@ function makeFullCharacter(overrides = {}) {
     want: 'Recognition.',
     fear: 'Irrelevance.',
     status: { hunger: 60, sobriety: 70, energy: 65, mood: 45, health: 90 },
-    decisionWeights: {
-      low_sobriety: { bias: 'bar', weight: 0.7 },
-      low_hunger: { bias: 'food', weight: 0.8 },
-      low_mood: { bias: 'alone', weight: 0.5 },
-      low_energy: null,
-    },
+    decisionWeights: Object.fromEntries([
+      ['low_sobriety', { bias: 'bar', weight: 0.7 }],
+      ['low_hunger', { bias: 'food', weight: 0.8 }],
+      ['low_mood', { bias: 'alone', weight: 0.5 }],
+      ['low_energy', null],
+    ]),
     ...overrides,
   })
 }

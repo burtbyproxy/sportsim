@@ -21,9 +21,9 @@ import { resultOk, resultFail } from './result.js'
 
 /** Enumerated error codes for every describer result. The code is the contract. */
 export const DESCRIBER_ERROR_CODES = Object.freeze({
-  TIER_UNKNOWN: 'TIER_UNKNOWN',
-  PART_MISSING: 'PART_MISSING',
-  LINE_MISSING: 'LINE_MISSING',
+  tierUnknown: 'TIER_UNKNOWN',
+  partMissing: 'PART_MISSING',
+  lineMissing: 'LINE_MISSING',
 })
 
 /**
@@ -59,7 +59,7 @@ export function pieceDescribe({
 }) {
   if (!Object.values(MAKING_TIERS).includes(tier)) {
     return resultFail({
-      code: DESCRIBER_ERROR_CODES.TIER_UNKNOWN,
+      code: DESCRIBER_ERROR_CODES.tierUnknown,
       message: `Unknown tier '${tier}'`,
     })
   }
@@ -72,7 +72,7 @@ export function pieceDescribe({
   for (const [name, part] of Object.entries(parts)) {
     if (typeof part?.pieceAs !== 'string' || part.pieceAs.length === 0) {
       return resultFail({
-        code: DESCRIBER_ERROR_CODES.PART_MISSING,
+        code: DESCRIBER_ERROR_CODES.partMissing,
         message: `The ${name} has no pieceAs phrase`,
       })
     }
@@ -80,7 +80,7 @@ export function pieceDescribe({
 
   if (ingredient && !tool) {
     return resultFail({
-      code: DESCRIBER_ERROR_CODES.PART_MISSING,
+      code: DESCRIBER_ERROR_CODES.partMissing,
       message: 'An ingredient needs a tool to work it in',
     })
   }
@@ -91,7 +91,7 @@ export function pieceDescribe({
 
   const work = voiceLine({ code: workCode, personaId, voices, params })
   if (!work.ok)
-    return resultFail({ code: DESCRIBER_ERROR_CODES.LINE_MISSING, message: work.error.message })
+    return resultFail({ code: DESCRIBER_ERROR_CODES.lineMissing, message: work.error.message })
 
   const artist = voiceLine({
     code: `piece.artist.${tier}`,
@@ -100,7 +100,7 @@ export function pieceDescribe({
     params: { ...params, work: work.data.text },
   })
   if (!artist.ok)
-    return resultFail({ code: DESCRIBER_ERROR_CODES.LINE_MISSING, message: artist.error.message })
+    return resultFail({ code: DESCRIBER_ERROR_CODES.lineMissing, message: artist.error.message })
 
   let artistText = artist.data.text
   if (words.length > 0) {
@@ -111,7 +111,7 @@ export function pieceDescribe({
       params: { words: words.join(', ') },
     })
     if (!said.ok)
-      return resultFail({ code: DESCRIBER_ERROR_CODES.LINE_MISSING, message: said.error.message })
+      return resultFail({ code: DESCRIBER_ERROR_CODES.lineMissing, message: said.error.message })
     artistText = `${artistText} ${said.data.text}`
   }
 

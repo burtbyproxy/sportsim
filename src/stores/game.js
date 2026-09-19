@@ -38,10 +38,10 @@ import { resultOk, resultFail } from '../engine/result.js'
 import { numberRound } from '../utils/number.js'
 
 /** Enumerated error codes for the store's own refusals. Engine results pass through with theirs. */
-export const GAME_ERROR_CODES = Object.freeze({
-  NONE_IN_PROGRESS: 'NONE_IN_PROGRESS',
-  PLAYER_MISSING: 'PLAYER_MISSING',
-  STAT_UNKNOWN: 'STAT_UNKNOWN',
+export const STORE_ERROR_CODES = Object.freeze({
+  noneInProgress: 'NONE_IN_PROGRESS',
+  playerMissing: 'PLAYER_MISSING',
+  statUnknown: 'STAT_UNKNOWN',
 })
 
 /**
@@ -49,7 +49,7 @@ export const GAME_ERROR_CODES = Object.freeze({
  * @param {{ levels: Object<string, number>, changes: Object<string, number> }} input
  * @returns {void}
  */
-function _levelsApply({ levels, changes }) {
+function levelsApply({ levels, changes }) {
   for (const [id, delta] of Object.entries(changes)) {
     const next = numberRound({ value: (levels[id] ?? 0) + delta, places: 2 })
     if (next <= 0) {
@@ -283,7 +283,7 @@ export const useGameStore = defineStore('game', {
           code = 'work.whereabouts.carried'
         } else if (mark) {
           code =
-            mark.status === ARTIFACT_STATUSES.FRESH
+            mark.status === ARTIFACT_STATUSES.fresh
               ? 'work.whereabouts.fresh'
               : 'work.whereabouts.covered'
         }
@@ -429,15 +429,15 @@ export const useGameStore = defineStore('game', {
      */
     playerDosesApply({ doses, rng = Math.random }) {
       if (!this.player)
-        return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
+        return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
       this.player.intoxications ??= {}
       this.player.habituations ??= {}
       const result = dosesApply({ player: this.player, substances: this.substances, doses, rng })
       if (!result.ok) {
         return result
       }
-      _levelsApply({ levels: this.player.intoxications, changes: result.data.intoxicationChanges })
-      _levelsApply({ levels: this.player.habituations, changes: result.data.habituationChanges })
+      levelsApply({ levels: this.player.intoxications, changes: result.data.intoxicationChanges })
+      levelsApply({ levels: this.player.habituations, changes: result.data.habituationChanges })
       this.blendRefresh()
       return result
     },
@@ -461,8 +461,8 @@ export const useGameStore = defineStore('game', {
           })
           continue
         }
-        _levelsApply({ levels: subject.intoxications, changes: result.data.intoxicationChanges })
-        _levelsApply({ levels: subject.habituations, changes: result.data.habituationChanges })
+        levelsApply({ levels: subject.intoxications, changes: result.data.intoxicationChanges })
+        levelsApply({ levels: subject.habituations, changes: result.data.habituationChanges })
       }
       this.blendRefresh()
     },
@@ -502,7 +502,7 @@ export const useGameStore = defineStore('game', {
       const stat = this.player?.stats?.[statName]
       if (!stat) {
         return resultFail({
-          code: GAME_ERROR_CODES.STAT_UNKNOWN,
+          code: STORE_ERROR_CODES.statUnknown,
           message: `No stat '${statName}' to train`,
         })
       }
@@ -717,7 +717,7 @@ export const useGameStore = defineStore('game', {
      */
     scavengeApply({ rng = Math.random } = {}) {
       if (!this.player) {
-        return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
+        return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
       }
       const result = scavengeSearch({
         player: this.player,
@@ -786,7 +786,7 @@ export const useGameStore = defineStore('game', {
      */
     inspirationStrikeApply({ source, mediumId = null, strength, ticksTotal }) {
       if (!this.player) {
-        return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
+        return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
       }
       const result = inspirationStrike({
         player: this.player,
@@ -812,7 +812,7 @@ export const useGameStore = defineStore('game', {
      */
     inspirationUrgeApply({ ticksElapsed, rng = Math.random }) {
       if (!this.player) {
-        return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
+        return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
       }
       const rolled = inspirationUrge({
         player: this.player,
@@ -842,7 +842,7 @@ export const useGameStore = defineStore('game', {
      */
     inspirationTickApply({ ticksElapsed }) {
       if (!this.player) {
-        return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
+        return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
       }
       const result = inspirationTick({ player: this.player, ticksElapsed, gameTime: this.time })
       if (!result.ok) {
@@ -859,7 +859,7 @@ export const useGameStore = defineStore('game', {
      */
     inspirationInterruptApply({ reason }) {
       if (!this.player) {
-        return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
+        return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
       }
       const result = inspirationInterrupt({ player: this.player, reason, gameTime: this.time })
       if (!result.ok) {
@@ -876,7 +876,7 @@ export const useGameStore = defineStore('game', {
      */
     inspirationSpendApply({ spentOn }) {
       if (!this.player) {
-        return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
+        return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
       }
       const result = inspirationSpend({ player: this.player, spentOn, gameTime: this.time })
       if (!result.ok) {
@@ -894,7 +894,7 @@ export const useGameStore = defineStore('game', {
      */
     skillGainApply({ mediumId, amount }) {
       if (!this.player) {
-        return resultFail({ code: GAME_ERROR_CODES.PLAYER_MISSING, message: 'No player' })
+        return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
       }
       const result = skillGain({ player: this.player, mediumId, mediums: this.mediums, amount })
       if (!result.ok) {
@@ -959,7 +959,7 @@ export const useGameStore = defineStore('game', {
       const making = this.makingActive
       if (!making) {
         return resultFail({
-          code: GAME_ERROR_CODES.NONE_IN_PROGRESS,
+          code: STORE_ERROR_CODES.noneInProgress,
           message: 'The player is not making anything',
         })
       }
@@ -1029,9 +1029,9 @@ export const useGameStore = defineStore('game', {
         medium: this.mediums[making.mediumId],
         tool: making.toolItemId ? this.items[making.toolItemId] : null,
         surface:
-          making.surfaceKind === MAKING_SURFACE_KINDS.ITEM
+          making.surfaceKind === MAKING_SURFACE_KINDS.item
             ? this.items[making.surfaceId]
-            : making.surfaceKind === MAKING_SURFACE_KINDS.PLACE
+            : making.surfaceKind === MAKING_SURFACE_KINDS.place
               ? location
               : (location.surfaces ?? []).find((s) => s.id === making.surfaceId),
         ingredient: making.ingredientItemId ? this.items[making.ingredientItemId] : null,
@@ -1052,11 +1052,11 @@ export const useGameStore = defineStore('game', {
       this.player.makings = result.data.makings
       this.player.experiences ??= []
       this.player.experiences.push(experience)
-      if (artifact?.kind === ARTIFACT_KINDS.PORTABLE) {
+      if (artifact?.kind === ARTIFACT_KINDS.portable) {
         this.player.portfolio ??= []
         this.player.portfolio.push(artifact)
       }
-      if (artifact?.kind === ARTIFACT_KINDS.FIXED) {
+      if (artifact?.kind === ARTIFACT_KINDS.fixed) {
         location.marks = [
           ...marksCover({
             location,

@@ -13,12 +13,12 @@ import { rngForNatural, rngSequence } from '../../tests/helpers/rng.js'
 
 // --- Fixtures ---
 
-const items = {
-  cardboard: { id: 'cardboard', name: 'Cardboard' },
-  lone_shoe: { id: 'lone_shoe', name: 'A Shoe' },
-  sharpie: { id: 'sharpie', name: 'Sharpie' },
-  nice_piece_of_wood: { id: 'nice_piece_of_wood', name: 'Nice Piece of Wood' },
-}
+const items = Object.fromEntries([
+  ['cardboard', { id: 'cardboard', name: 'Cardboard' }],
+  ['lone_shoe', { id: 'lone_shoe', name: 'A Shoe' }],
+  ['sharpie', { id: 'sharpie', name: 'Sharpie' }],
+  ['nice_piece_of_wood', { id: 'nice_piece_of_wood', name: 'Nice Piece of Wood' }],
+])
 
 const tables = {
   lot: {
@@ -115,10 +115,10 @@ describe('scavengeSearch', () => {
   it('rejects a missing player and a missing location', () => {
     const base = { tables, items, gameTime: at(0) }
     expect(scavengeSearch({ ...base, player: null, location: lot() }).error.code).toBe(
-      SCAVENGE_ERROR_CODES.PLAYER_MISSING
+      SCAVENGE_ERROR_CODES.playerMissing
     )
     expect(scavengeSearch({ ...base, player: makePlayer(), location: null }).error.code).toBe(
-      SCAVENGE_ERROR_CODES.LOCATION_MISSING
+      SCAVENGE_ERROR_CODES.locationMissing
     )
   })
 
@@ -131,7 +131,7 @@ describe('scavengeSearch', () => {
       items,
       gameTime: at(0),
     })
-    expect(result.error.code).toBe(SCAVENGE_ERROR_CODES.TABLE_UNKNOWN)
+    expect(result.error.code).toBe(SCAVENGE_ERROR_CODES.tableUnknown)
   })
 
   it('rejects a table that names an item nobody defined', () => {
@@ -142,7 +142,7 @@ describe('scavengeSearch', () => {
       items: { cardboard: items.cardboard },
       gameTime: at(0),
     })
-    expect(result.error.code).toBe(SCAVENGE_ERROR_CODES.ITEM_UNKNOWN)
+    expect(result.error.code).toBe(SCAVENGE_ERROR_CODES.itemUnknown)
   })
 
   it('a failed check finds nothing and leaves the spot as it was', () => {
@@ -309,7 +309,7 @@ describe('scavengeSearch', () => {
     })
 
     const again = scavengeSearch({
-      player: makePlayer({ counters: { scavenged_nice_piece_of_wood: 1 } }),
+      player: makePlayer({ counters: Object.fromEntries([['scavenged_nice_piece_of_wood', 1]]) }),
       location: basement(),
       tables,
       items,

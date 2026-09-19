@@ -15,9 +15,9 @@ vi.mock('../src/data/loader.js', async (importOriginal) => {
   return {
     ...real,
     contentLoad: (input) =>
-      input.kind === real.CONTENT_KINDS.ITEMS
+      input.kind === real.CONTENT_KINDS.items
         ? resultFail({
-            code: real.LOADER_ERROR_CODES.ENTRY_ID_DUPLICATE,
+            code: real.LOADER_ERROR_CODES.entryIdDuplicate,
             message: 'broken on purpose',
             params: { path: '/content/items/twice.json' },
           })

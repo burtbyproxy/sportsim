@@ -19,3 +19,14 @@ export function numberClamp({ value, min, max }) {
 export function numberRound({ value, places }) {
   return parseFloat(value.toFixed(places))
 }
+
+/**
+ * The sum of a list of numbers; an empty list sums to 0.
+ * @param {{ values: number[] }} input
+ * @returns {number}
+ */
+export function numberSum({ values }) {
+  let total = 0
+  for (const value of values) total += value
+  return total
+}
