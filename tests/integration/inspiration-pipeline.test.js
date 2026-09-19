@@ -75,7 +75,7 @@ describe('inspiration pipeline', () => {
     const narrative = useNarrative()
     const loop = useGameLoop({ eventRegistry: [forced('rock_bottom_echo')], narrative })
 
-    await loop.tick(1)
+    await loop.tick({ ticks: 1 })
     const entries = await settle(narrative)
 
     const active = game.inspirationActive
@@ -101,7 +101,7 @@ describe('inspiration pipeline', () => {
     const loop = useGameLoop({ eventRegistry: [forced('rock_bottom_echo')], narrative })
     game.applyDoses({ doses: [{ substanceId: 'whiskey', value: 90 }] })
 
-    await loop.tick(1)
+    await loop.tick({ ticks: 1 })
     const entries = await settle(narrative)
 
     expect(game.inspirationActive.dominantPersonaId).toBe('priest')
@@ -121,11 +121,11 @@ describe('inspiration pipeline', () => {
       ticksTotal: 8,
     })
 
-    await loop.tick(5)
+    await loop.tick({ ticks: 5 })
     expect(game.inspirationActive.ticksRemaining).toBe(3)
     expect(game.inspirationLabel).toBe(voice('sober', 'inspiration.status.fading'))
 
-    await loop.tick(3)
+    await loop.tick({ ticks: 3 })
     const entries = await settle(narrative)
 
     expect(game.inspirationActive).toBeNull()
@@ -145,7 +145,7 @@ describe('inspiration pipeline', () => {
       ticksTotal: 20,
     })
 
-    await loop.tick(1)
+    await loop.tick({ ticks: 1 })
     const entries = await settle(narrative)
 
     expect(game.inspirationActive).toBeNull()
@@ -167,7 +167,7 @@ describe('inspiration pipeline', () => {
       ticksTotal: 20,
     })
 
-    await loop.tick(1)
+    await loop.tick({ ticks: 1 })
     const entries = await settle(narrative)
 
     expect(statuses(game)).toEqual([INSPIRATION_STATUSES.REPLACED, INSPIRATION_STATUSES.ACTIVE])
@@ -184,7 +184,7 @@ describe('inspiration pipeline', () => {
     const game = startGame()
     const narrative = useNarrative()
     const loop = useGameLoop({ actionRegistry: momsHouseActions, narrative })
-    await loop.tick(52) // 8:00 → 21:00, when sleep becomes possible
+    await loop.tick({ ticks: 52 }) // 8:00 → 21:00, when sleep becomes possible
     game.applyInspirationStrike({
       source: { kind: 'event', id: 'test' },
       mediumId: 'painting',
@@ -214,7 +214,7 @@ describe('inspiration pipeline', () => {
     })
 
     await loop.resolvePlayerAction(actionById('raid_fridge'))
-    await loop.travel('moms_house', 2)
+    await loop.travel({ locationId: 'moms_house', travelTicks: 2 })
 
     expect(game.inspirationActive).not.toBeNull()
     expect(game.inspirationActive.ticksRemaining).toBe(17)
@@ -238,7 +238,7 @@ describe('inspiration pipeline', () => {
       true
     )
 
-    await loop.tick(2)
+    await loop.tick({ ticks: 2 })
     expect(requirementsMeet({ player: game.player, action: make, gameTime: game.time }).meets).toBe(
       false
     )

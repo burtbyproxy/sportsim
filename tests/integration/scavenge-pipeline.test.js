@@ -235,7 +235,7 @@ describe('scavenge pipeline', () => {
     const note = { ...momsHouseEvents.find((e) => e.id === 'moms_note'), conditions: {} }
     const loop = useGameLoop({ eventRegistry: [note] })
 
-    await loop.tick(1)
+    await loop.tick({ ticks: 1 })
 
     expect(game.playerInventory.map((i) => i.id)).toEqual(['grandmas_paints'])
   })

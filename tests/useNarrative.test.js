@@ -65,7 +65,7 @@ describe('useNarrative clearLog', () => {
   it('does not emit animation-complete for a render that was cleared', async () => {
     const narrative = useNarrative()
     const completed = vi.fn()
-    narrative.on('animation-complete', completed)
+    narrative.on({ event: 'animation-complete', handler: completed })
 
     narrative.enqueue(narrativeTextCreate({ text: 'Cleared before it finishes.' }))
     await vi.advanceTimersByTimeAsync(40)

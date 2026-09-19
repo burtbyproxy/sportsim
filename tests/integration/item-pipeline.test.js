@@ -112,7 +112,7 @@ describe('item pipeline', () => {
     const loop = useGameLoop()
     for (let n = 0; n < 3; n++) await loop.useItem({ itemId: 'pack_cigarettes' })
     expect(game.player.habituations.nicotine).toBeGreaterThanOrEqual(30)
-    await loop.tick(8)
+    await loop.tick({ ticks: 8 })
     expect(game.player.blend.weights.map((w) => w.personaId)).toContain('train_wreck')
   })
 
@@ -154,8 +154,8 @@ describe('item pipeline', () => {
     await loop.useItem({ itemId: 'test_tonic' }) // one tick passes in the using
     expect(statEffective({ player: game.player, statName: 'wits' })).toBe(witsBefore + 5)
 
-    await loop.tick(1)
-    await loop.tick(1)
+    await loop.tick({ ticks: 1 })
+    await loop.tick({ ticks: 1 })
     expect(statEffective({ player: game.player, statName: 'wits' })).toBe(witsBefore)
   })
 
@@ -234,7 +234,7 @@ describe('failures are shown in play, never swallowed', () => {
     }
     const loop = useGameLoop({ narrative, simulation: broken })
 
-    await loop.tick(1)
+    await loop.tick({ ticks: 1 })
 
     expect(await settle(narrative)).toContain('[SIMULATION_FAILED]')
     expect(game.time.tick).toBe(1)
@@ -246,7 +246,7 @@ describe('failures are shown in play, never swallowed', () => {
     const narrative = useNarrative()
     const loop = useGameLoop({ narrative, simulation: simulationLocal })
 
-    await loop.tick(1)
+    await loop.tick({ ticks: 1 })
 
     expect(await settle(narrative)).toContain('[SUBSTANCE_UNKNOWN]')
     expect(game.faults).toEqual([])
@@ -332,7 +332,7 @@ describe('the store keeps statuses in bounds', () => {
     const before = { ...game.characters.maurice.status }
     const loop = useGameLoop({ simulation: simulationLocal })
 
-    await loop.tick(8)
+    await loop.tick({ ticks: 8 })
 
     const after = game.characters.maurice.status
     expect(after.hunger).toBeLessThan(before.hunger)

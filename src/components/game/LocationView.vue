@@ -75,7 +75,7 @@ watch(
 function travel(exit) {
   if (!canTravel(exit) || game.activeEvent) return
   if (gameLoop) {
-    gameLoop.travel(exit.locationId, exit.travelTime ?? 1)
+    gameLoop.travel({ locationId: exit.locationId, travelTicks: exit.travelTime ?? 1 })
   }
 }
 

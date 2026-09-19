@@ -41,11 +41,7 @@ import {
   makingOptions,
 } from '../engine/making.js'
 import { eventsRandomCheck, eventsTriggeredCheck, eventResolve } from '../engine/events.js'
-import {
-  generateActionNarrative,
-  generateEventNarrative,
-  generateLocationNarrative,
-} from './useNarrative.js'
+import { narrativeAction, narrativeEvent, narrativeLocation } from './useNarrative.js'
 import { narrativeTextCreate } from '../utils/text.js'
 import { sim } from '../workers/simulation-api.js'
 import { moneyFormat } from '../utils/money.js'
@@ -92,11 +88,11 @@ export function useGameLoop({
    *
    * Async because the simulation worker call returns a Promise.
    *
-   * @param {number} ticks
-   * @param {string|null} toLocationId - if set, move to this location after tick
+   * @param {{ ticks?: number, locationId?: string|null }} [input]
+   *   locationId — if set, move there after the tick
    * @returns {Promise<void>}
    */
-  async function tick(ticks = 1, toLocationId = null) {
+  async function tick({ ticks = 1, locationId = null } = {}) {
     if (!game.player) return
 
     // 1. Advance clock
@@ -146,8 +142,8 @@ export function useGameLoop({
     else if (urge.data.struck) _voiceEnqueue({ code: 'inspiration.urge' })
 
     // 5. Move if requested — the new scene's prose goes into a fresh log
-    if (toLocationId) {
-      game.moveTo(toLocationId)
+    if (locationId) {
+      game.moveTo(locationId)
       _locationEnter()
     }
 
@@ -174,14 +170,20 @@ export function useGameLoop({
   function _locationEnter() {
     if (narrative && game.currentLocation && game.player) {
       narrative.clearLog()
-      narrative.enqueue(generateLocationNarrative(game.currentLocation, game.player, game.time))
+      narrative.enqueue(
+        narrativeLocation({
+          location: game.currentLocation,
+          player: game.player,
+          gameTime: game.time,
+        })
+      )
       for (const mark of game.currentLocation.marks ?? []) {
         if (mark.status === ARTIFACT_STATUSES.FRESH) {
           _voiceEnqueue({ code: 'mark.still_here', params: { work: mark.workText } })
         }
       }
       if (game.activeEvent) {
-        _narrativeEnqueue(generateEventNarrative(game.activeEvent, game.player))
+        _narrativeEnqueue(narrativeEvent({ event: game.activeEvent, player: game.player }))
       }
     }
     _refreshActions()
@@ -213,7 +215,7 @@ export function useGameLoop({
 
   function _eventStart(event) {
     if (event.oneTime) game.markEventFired(event.id)
-    _narrativeEnqueue(generateEventNarrative(event, game.player))
+    _narrativeEnqueue(narrativeEvent({ event, player: game.player }))
     // The world barging in kills whatever was moving the player — unless
     // the world is what's moving them, in which case the strike replaces it.
     if (!event.outcome?.inspiration) {
@@ -288,7 +290,7 @@ export function useGameLoop({
     const result = game.applyItemUse({ itemId, rng })
     if (!result.ok) return _failureShow(result)
     _voiceEnqueue({ code: 'item.used', params: { item: result.data.item.name } })
-    await tick(1)
+    await tick({ ticks: 1 })
   }
 
   /** A line in the voice of whoever is in charge, if the renderer is listening. */
@@ -441,7 +443,7 @@ export function useGameLoop({
     })
 
     if (picker.step === 'ingredient') {
-      const choose = (ingredientItemId, label) =>
+      const choose = ({ ingredientItemId, label }) =>
         _makingEntry({
           id: `making_ingredient_${ingredientItemId ?? 'none'}`,
           label,
@@ -449,15 +451,18 @@ export function useGameLoop({
           data: { ingredientItemId },
         })
       return [
-        choose(null, game.voiceLine({ code: 'menu.making.ingredient.none' })),
+        choose({
+          ingredientItemId: null,
+          label: game.voiceLine({ code: 'menu.making.ingredient.none' }),
+        }),
         ...options.data.ingredientItemIds.map((itemId) =>
-          choose(
-            itemId,
-            game.voiceLine({
+          choose({
+            ingredientItemId: itemId,
+            label: game.voiceLine({
               code: 'menu.making.ingredient',
               params: { ingredient: game.getItem(itemId).name },
-            })
-          )
+            }),
+          })
         ),
         cancel,
       ]
@@ -527,7 +532,7 @@ export function useGameLoop({
     _voiceEnqueue({ code: played.data.lineCode, params: played.data.lineParams })
     const cost = game.mediums[before.mediumId].making.statusChanges
     if (cost) game.applyStatusChanges(cost)
-    await tick(played.data.ticksWorked)
+    await tick({ ticks: played.data.ticksWorked })
 
     const after = game.makingActive
     if (!after) return
@@ -582,15 +587,14 @@ export function useGameLoop({
 
   /**
    * Travel to a location — advances time by travel cost, then moves.
-   * @param {string} locationId
-   * @param {number} travelTicks
+   * @param {{ locationId: string, travelTicks?: number }} input
    * @returns {Promise<void>}
    */
-  async function travel(locationId, travelTicks = 0) {
+  async function travel({ locationId, travelTicks = 0 }) {
     // Work in progress holds you where you are; walking away is a choice.
     if (game.makingActive) return
     game.makingPickerSet({ picker: null })
-    await tick(travelTicks > 0 ? travelTicks : 1, locationId)
+    await tick({ ticks: travelTicks > 0 ? travelTicks : 1, locationId })
     if (save) {
       const saved = save.saveAuto()
       if (!saved.ok) _voiceEnqueue({ code: 'save.failed' })
@@ -621,7 +625,7 @@ export function useGameLoop({
       rng,
     })
 
-    _narrativeEnqueue(generateActionNarrative(result))
+    _narrativeEnqueue(narrativeAction(result))
 
     if (!result.success && result.requirementFailure) {
       // Requirements not met — shouldn't happen if the menu is correct, but say why.
@@ -655,7 +659,7 @@ export function useGameLoop({
     }
 
     // Advance time by action cost
-    await tick(action.timeCost ?? 1)
+    await tick({ ticks: action.timeCost ?? 1 })
   }
 
   /**

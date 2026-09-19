@@ -153,7 +153,7 @@ describe('useGameLoop → auto-save', () => {
     const save = useSave()
     const loop = useGameLoop({ actionRegistry: momsHouseActions, save })
 
-    await loop.travel('columbia_park', 2)
+    await loop.travel({ locationId: 'columbia_park', travelTicks: 2 })
 
     const saves = save.savesList().data
     expect(saves).toHaveLength(1)
@@ -171,8 +171,8 @@ describe('useGameLoop → auto-save', () => {
     const save = useSave()
     const loop = useGameLoop({ actionRegistry: momsHouseActions, save })
 
-    await loop.travel('columbia_park', 1)
-    await loop.travel('moms_house', 1)
+    await loop.travel({ locationId: 'columbia_park', travelTicks: 1 })
+    await loop.travel({ locationId: 'moms_house', travelTicks: 1 })
 
     const saves = save.savesList().data
     expect(saves).toHaveLength(1)
@@ -185,7 +185,7 @@ describe('useGameLoop → auto-save', () => {
     const save = useSave()
     const loop = useGameLoop({ actionRegistry: momsHouseActions, save })
     await loop.resolvePlayerAction(byId('raid_fridge'))
-    await loop.travel('columbia_park', 1)
+    await loop.travel({ locationId: 'columbia_park', travelTicks: 1 })
     const hungerAtSave = game.player.status.hunger
 
     setActivePinia(createPinia())
@@ -210,7 +210,7 @@ describe('useGameLoop → auto-save', () => {
     const narrative = useNarrative()
     const loop = useGameLoop({ actionRegistry: momsHouseActions, narrative, save: useSave() })
 
-    await loop.travel('columbia_park', 1)
+    await loop.travel({ locationId: 'columbia_park', travelTicks: 1 })
     const entries = await settle(narrative)
 
     expect(entries).toContain(voices.find((v) => v.id === 'sober').lines['save.failed'])
@@ -251,7 +251,7 @@ describe('useGameLoop → events', () => {
     })
     const moneyBefore = game.player.status.money
 
-    await loop.tick(1)
+    await loop.tick({ ticks: 1 })
     const entries = await settle(narrative)
 
     expect(entries).toHaveLength(1)
@@ -269,7 +269,7 @@ describe('useGameLoop → events', () => {
       narrative,
       rng: never,
     })
-    await loop.tick(1)
+    await loop.tick({ ticks: 1 })
     expect(await settle(narrative)).toHaveLength(0)
     expect(game.activeEvent).toBeNull()
   })
@@ -285,9 +285,9 @@ describe('useGameLoop → events', () => {
       rng: never,
     })
 
-    await loop.tick(1)
-    await loop.tick(1)
-    await loop.tick(1)
+    await loop.tick({ ticks: 1 })
+    await loop.tick({ ticks: 1 })
+    await loop.tick({ ticks: 1 })
 
     expect(await settle(narrative)).toHaveLength(1)
     expect(game.firedEventIds).toEqual(['first_starving'])
@@ -303,7 +303,7 @@ describe('useGameLoop → events', () => {
       narrative,
       rng: always,
     })
-    await loop.tick(16) // 8:00 → 12:00, inside mom's waking hours
+    await loop.tick({ ticks: 16 }) // 8:00 → 12:00, inside mom's waking hours
     expect(game.activeEvent?.id).toBe('mom_upstairs')
     const hungerBefore = game.player.status.hunger
 
@@ -324,9 +324,9 @@ describe('useGameLoop → events', () => {
       eventRegistry: [eventById('mom_upstairs'), eventById('found_change')],
       rng: always,
     })
-    await loop.tick(16)
+    await loop.tick({ ticks: 16 })
     const moneyAfterFirst = game.player.status.money
-    await loop.tick(1)
+    await loop.tick({ ticks: 1 })
     expect(game.activeEvent?.id).toBe('mom_upstairs')
     expect(game.player.status.money).toBe(moneyAfterFirst)
   })
@@ -347,9 +347,9 @@ describe('useGameLoop → events', () => {
       rng: botch,
     })
 
-    await loop.tick(56) // 8:00 → 22:00, after the cruiser starts prowling
+    await loop.tick({ ticks: 56 }) // 8:00 → 22:00, after the cruiser starts prowling
     game.applyDoses({ doses: [{ substanceId: 'beer', value: 80 }] }) // sobriety 20; beer wears off over time
-    await loop.tick(1)
+    await loop.tick({ ticks: 1 })
     expect(game.activeEvent?.id).toBe('cop_hassle')
     loop.resolveEventChoice({ choiceIndex: 1 })
     const entries = await settle(narrative)
@@ -370,9 +370,9 @@ describe('useGameLoop → events', () => {
       save,
       rng: always,
     })
-    await loop.tick(16) // noon; nothing fires at home for a park event
+    await loop.tick({ ticks: 16 }) // noon; nothing fires at home for a park event
 
-    await loop.travel('columbia_park', 1)
+    await loop.travel({ locationId: 'columbia_park', travelTicks: 1 })
     expect(game.activeEvent?.id).toBe('park_acquaintance')
 
     setActivePinia(createPinia())
@@ -399,7 +399,7 @@ describe('useGameLoop → scene order on arrival', () => {
       rng: always,
     })
 
-    await loop.travel('columbia_park', 1)
+    await loop.travel({ locationId: 'columbia_park', travelTicks: 1 })
     const entries = await settle(narrative)
 
     expect(entries).toHaveLength(2)

@@ -154,7 +154,7 @@ describe('making pipeline', () => {
     expect(game.time.tick).toBe(tickBefore + total)
     // The work costs what the medium says per sitting, on top of what the hours cost anyway.
     const idle = startGame()
-    await idle.loop.tick(total)
+    await idle.loop.tick({ ticks: total })
     const hoursAlone = energyBefore - idle.game.player.status.energy
     const sittings = 3
     expect(game.player.status.energy).toBe(
@@ -362,7 +362,7 @@ describe('making pipeline', () => {
     const roll = () => 0.3
 
     const idle = startGame({ events: [coinFlip], rng: roll })
-    await idle.loop.tick(2)
+    await idle.loop.tick({ ticks: 2 })
     expect(idle.game.firedEventIds).toContain('test_coin_flip')
 
     const ctx = startGame({
@@ -380,7 +380,7 @@ describe('making pipeline', () => {
     expect(ctx.game.firedEventIds).not.toContain('test_coin_flip')
     expect(ctx.game.player.portfolio).toHaveLength(1)
     // The work is over, and so is the protection.
-    await ctx.loop.tick(2)
+    await ctx.loop.tick({ ticks: 2 })
     expect(ctx.game.firedEventIds).toContain('test_coin_flip')
 
     // A triggered event does not roll, so there is nothing for focus to shrink.
@@ -407,7 +407,7 @@ describe('making pipeline', () => {
     await pick(ctx, 'Make something')
     await pick(ctx, 'Cabinet Door')
 
-    await ctx.loop.travel('blue_parrot', 1)
+    await ctx.loop.travel({ locationId: 'blue_parrot', travelTicks: 1 })
     expect(game.currentLocationId).toBe('moms_house')
 
     await pick(ctx, 'Walk away')
@@ -418,7 +418,7 @@ describe('making pipeline', () => {
     // The idea is still there. The door is not.
     expect(game.inspirationActive).not.toBeNull()
     expect(await logOf(ctx.narrative)).toContain(voice('sober', 'making.abandoned.walked_away'))
-    await ctx.loop.travel('blue_parrot', 1)
+    await ctx.loop.travel({ locationId: 'blue_parrot', travelTicks: 1 })
     expect(game.currentLocationId).toBe('blue_parrot')
   })
 
@@ -864,7 +864,7 @@ describe('making pipeline', () => {
     const ctx = startGame({ rng: () => urge.chancePerTick / 2 })
     ctx.game.applyDoses({ doses: [{ substanceId: 'malt_liquor', value: 80 }] })
     expect(ctx.game.inspirationActive).toBeNull()
-    await ctx.loop.tick(1)
+    await ctx.loop.tick({ ticks: 1 })
     expect(ctx.game.inspirationActive).toMatchObject({
       mediumId: 'freestyle',
       sourceKind: 'persona',
@@ -875,7 +875,7 @@ describe('making pipeline', () => {
 
     // Sober, the same roll moves nobody.
     const sober = startGame({ rng: () => urge.chancePerTick / 2 })
-    await sober.loop.tick(1)
+    await sober.loop.tick({ ticks: 1 })
     expect(sober.game.inspirationActive).toBeNull()
   })
 
@@ -883,7 +883,7 @@ describe('making pipeline', () => {
     const ctx = startGame({ rng: () => 0.001 })
     ctx.game.applyDoses({ doses: [{ substanceId: 'malt_liquor', value: 80 }] })
     const mine = strike(ctx.game, { mediumId: 'painting' }).data.struck
-    await ctx.loop.tick(1)
+    await ctx.loop.tick({ ticks: 1 })
     expect(ctx.game.inspirationActive.id).toBe(mine.id)
   })
 
@@ -966,7 +966,7 @@ describe('making pipeline', () => {
     const at = async (ticksIn) => {
       const ctx = startGame({ at: 'blue_parrot', events: [pull], rng: () => 0 })
       ctx.game.advanceTime(ticksIn)
-      await ctx.loop.tick(1)
+      await ctx.loop.tick({ ticks: 1 })
       return ctx.game.inspirationActive
     }
     expect(await at(4 * 4)).toBeNull()
@@ -1095,7 +1095,7 @@ describe('making pipeline', () => {
       outcome: { moneyChange: -100 },
     }
     const ctx = startGame({ events: [fork] })
-    await ctx.loop.tick(1)
+    await ctx.loop.tick({ ticks: 1 })
     expect(ctx.game.activeEvent?.id).toBe('test_fork')
     const moneyBefore = ctx.game.playerMoney
     ctx.loop.resolveEventChoice({ choiceIndex: 5 })

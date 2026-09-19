@@ -88,7 +88,7 @@ function _resolveSpeedMs(speed) {
  * @param {string} speed - speed tier name
  * @returns {number} ms to wait before rendering the next character
  */
-function _charDelay(char, speed) {
+function _charDelay({ char, speed }) {
   const base = _resolveSpeedMs(speed)
   const extra = PUNCTUATION_PAUSE[char]
   if (!extra) return base
@@ -117,17 +117,17 @@ export function useNarrative() {
   /** Event callbacks */
   const listeners = { 'animation-start': [], 'animation-complete': [], skip: [] }
 
-  function emit(event, data) {
+  function emit({ event, data }) {
     for (const cb of listeners[event] ?? []) cb(data)
   }
 
-  function on(event, cb) {
+  function on({ event, handler }) {
     listeners[event] = listeners[event] ?? []
-    listeners[event].push(cb)
+    listeners[event].push(handler)
   }
 
-  function off(event, cb) {
-    listeners[event] = (listeners[event] ?? []).filter((c) => c !== cb)
+  function off({ event, handler }) {
+    listeners[event] = (listeners[event] ?? []).filter((c) => c !== handler)
   }
 
   /**
@@ -146,7 +146,7 @@ export function useNarrative() {
    */
   function skip() {
     skipRequested = true
-    emit('skip')
+    emit({ event: 'skip' })
   }
 
   /**
@@ -177,7 +177,7 @@ export function useNarrative() {
     skipRequested = false
     const generation = renderGeneration
 
-    emit('animation-start', narrativeText)
+    emit({ event: 'animation-start', data: narrativeText })
 
     const entry = await _renderNarrativeText(narrativeText)
 
@@ -189,7 +189,7 @@ export function useNarrative() {
 
     log.value.push(entry)
 
-    emit('animation-complete', entry)
+    emit({ event: 'animation-complete', data: entry })
 
     // Process next in queue
     _processQueue()
@@ -281,7 +281,7 @@ export function useNarrative() {
 
         // Delay for the NEXT character is based on the character we just typed
         // — punctuation after a full-stop breathes longer than a mid-word letter
-        const delay = _charDelay(text[i - 1], speed)
+        const delay = _charDelay({ char: text[i - 1], speed })
         setTimeout(tick, delay)
       }
 
@@ -367,7 +367,7 @@ export function narrativeSkipBindings({ narrative }) {
  * @param {Object[]} insanities
  * @returns {string}
  */
-function _applyPerceptionFilters(text, insanities) {
+function _perceptionFiltersApply({ text, insanities }) {
   if (!insanities || insanities.length === 0) return text
   let result = text
   for (const insanity of insanities) {
@@ -391,7 +391,7 @@ function _applyPerceptionFilters(text, insanities) {
  * @param {Object} location
  * @returns {Object}
  */
-function _buildNarrativeContext(player, gameTime, location) {
+function _narrativeContextBuild({ player, gameTime, location }) {
   const sobriety = player.status?.sobriety ?? 100
   const energy = player.status?.energy ?? 80
   const hunger = player.status?.hunger ?? 50
@@ -415,13 +415,12 @@ function _buildNarrativeContext(player, gameTime, location) {
  * Generates the narrative description for a location.
  * Picks the best variant, applies perception filters, templates in variables.
  *
- * @param {Object} location - Location per data contract
- * @param {Object} player
- * @param {Object} gameTime
+ * @param {{ location: Object, player: Object, gameTime: Object }} input
+ *   location — Location per data contract
  * @returns {NarrativeText}
  */
-export function generateLocationNarrative(location, player, gameTime) {
-  const context = _buildNarrativeContext(player, gameTime, location)
+export function narrativeLocation({ location, player, gameTime }) {
+  const context = _narrativeContextBuild({ player, gameTime, location })
   let text = textVariantPick({ variants: location.descriptions || {}, context })
   text = textFill({
     text,
@@ -432,7 +431,7 @@ export function generateLocationNarrative(location, player, gameTime) {
       hour: gameTime?.hour ?? 0,
     },
   })
-  text = _applyPerceptionFilters(text, player.psyche?.insanities)
+  text = _perceptionFiltersApply({ text, insanities: player.psyche?.insanities })
   return narrativeTextCreate({ text })
 }
 
@@ -442,7 +441,7 @@ export function generateLocationNarrative(location, player, gameTime) {
  * @param {Object} actionResult - result from actionResolve()
  * @returns {NarrativeText}
  */
-export function generateActionNarrative(actionResult) {
+export function narrativeAction(actionResult) {
   // Why not is the loop's to say, in somebody's voice. There is no outcome to narrate.
   if (actionResult.requirementFailure) return narrativeTextCreate({ text: '' })
   const outcome = actionResult.outcome
@@ -455,26 +454,26 @@ export function generateActionNarrative(actionResult) {
 /**
  * Generates narrative text for an event.
  *
- * @param {Object} event - GameEvent per data contract
- * @param {Object} player
+ * @param {{ event: Object, player: Object }} input
+ *   event — GameEvent per data contract
  * @returns {NarrativeText}
  */
-export function generateEventNarrative(event, player) {
+export function narrativeEvent({ event, player }) {
   if (!event.narrative) return narrativeTextCreate({ text: '' })
   if (event.narrative.tokens) {
     const insanities = player.psyche?.insanities ?? []
     if (insanities.length === 0) return event.narrative
     const filteredTokens = event.narrative.tokens.map((token) => ({
       ...token,
-      text: _applyPerceptionFilters(token.text, insanities),
+      text: _perceptionFiltersApply({ text: token.text, insanities }),
     }))
     return { tokens: filteredTokens }
   }
   if (typeof event.narrative === 'string') {
-    const filtered = _applyPerceptionFilters(
-      textFill({ text: event.narrative, params: { playerName: player.name || 'you' } }),
-      player.psyche?.insanities
-    )
+    const filtered = _perceptionFiltersApply({
+      text: textFill({ text: event.narrative, params: { playerName: player.name || 'you' } }),
+      insanities: player.psyche?.insanities,
+    })
     return narrativeTextCreate({ text: filtered })
   }
   return narrativeTextCreate({ text: '' })

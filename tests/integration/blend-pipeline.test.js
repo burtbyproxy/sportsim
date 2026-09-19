@@ -90,7 +90,7 @@ describe('blend pipeline', () => {
     const loop = useGameLoop({ actionRegistry: barActions })
     const order = barActions.find((a) => a.id === 'order_beer_parrot')
 
-    await loop.tick(12) // 8:00 → 11:00, when the Parrot starts pouring
+    await loop.tick({ ticks: 12 }) // 8:00 → 11:00, when the Parrot starts pouring
     await loop.resolvePlayerAction(order)
 
     // 15 in, 2 off over the action's tick
@@ -109,7 +109,7 @@ describe('blend pipeline', () => {
       ],
     })
 
-    await loop.tick(4)
+    await loop.tick({ ticks: 4 })
 
     // whiskey 1.5/tick, weed 3/tick
     expect(game.player.intoxications).toEqual({ whiskey: 24, weed: 18 })
@@ -121,7 +121,7 @@ describe('blend pipeline', () => {
     const loop = useGameLoop()
     game.applyDoses({ doses: [{ substanceId: 'weed', value: 20 }] })
 
-    await loop.tick(10)
+    await loop.tick({ ticks: 10 })
 
     expect(game.player.intoxications).toEqual({})
     expect(game.player.status.sobriety).toBe(100)
@@ -160,7 +160,7 @@ describe('blend pipeline', () => {
     expect(game.player.habituations.nicotine).toBe(37.5)
     expect(personaIds(game)).toEqual(['mr_cool'])
 
-    await loop.tick(10) // 8/tick: gone
+    await loop.tick({ ticks: 10 }) // 8/tick: gone
 
     expect(game.player.intoxications.nicotine).toBeUndefined()
     expect(game.player.blend.weights[0]).toMatchObject({
@@ -207,7 +207,7 @@ describe('blend pipeline', () => {
     expect(game.characters.maurice.blend.weights[0].personaId).toBe('one_of_the_guys')
 
     const loop = useGameLoop()
-    await loop.tick(20)
+    await loop.tick({ ticks: 20 })
 
     expect(game.characters.maurice.intoxications).toEqual({})
     expect(game.characters.maurice.status.sobriety).toBe(100)

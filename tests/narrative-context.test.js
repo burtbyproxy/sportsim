@@ -7,7 +7,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
-import { generateLocationNarrative } from '../src/composables/useNarrative.js'
+import { narrativeLocation } from '../src/composables/useNarrative.js'
 import { locationCreate } from '../src/models/location.js'
 import { playerCreate } from '../src/models/player.js'
 import { blendSober } from '../src/engine/blend.js'
@@ -17,7 +17,7 @@ const momsHouse = JSON.parse(
 )
 const morning = { period: 'morning', hour: 9 }
 const read = (location, player, time = morning) =>
-  generateLocationNarrative(location, player, time)
+  narrativeLocation({ location, player, gameTime: time })
     .tokens.map((t) => t.text)
     .join('')
 

@@ -4,15 +4,15 @@ import { numberClamp } from '../utils/number.js'
 /**
  * Reusable arrow-key list navigation.
  *
- * @param {import('vue').Ref<Array>} items - reactive list of items to navigate
- * @param {object} options
- * @param {function} options.onSelect  - called with items[selectedIndex] on Enter
- * @param {function} [options.skip]    - (item) => bool — return true to skip this item
- * @param {boolean}  [options.loop]    - wrap around at ends (default true)
+ * @param {{ items: import('vue').Ref<Array>, onSelect: Function, skip?: Function, loop?: boolean }} input
+ *   items — reactive list of items to navigate
+ *   onSelect — called with items[selectedIndex] on Enter
+ *   skip — (item) => bool; true skips this item
+ *   loop — wrap around at the ends (default true)
  *
  * @returns {{ selectedIndex: Ref<number>, onKeydown: function }}
  */
-export function useKeyboardNav(items, { onSelect, skip = null, loop = true } = {}) {
+export function useKeyboardNav({ items, onSelect, skip = null, loop = true }) {
   const selectedIndex = ref(0)
 
   /** Move to the next non-skipped index in a given direction (+1 or -1). */

@@ -175,7 +175,7 @@ function choose(entry) {
 function travel(exit) {
   if (!canTravel(exit) || activeEvent.value) return
   if (gameLoop) {
-    gameLoop.travel(exit.locationId, exit.travelTime ?? 1)
+    gameLoop.travel({ locationId: exit.locationId, travelTicks: exit.travelTime ?? 1 })
   }
 }
 
@@ -218,7 +218,8 @@ const {
   selectedIndex: navIndex,
   onKeydown: navKeydown,
   clamp,
-} = useKeyboardNav(menuEntries, {
+} = useKeyboardNav({
+  items: menuEntries,
   onSelect: (entry) => {
     if (entry.kind === 'choice') choose(entry)
     else if (entry.kind === 'action') executeAction(entry.action)

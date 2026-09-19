@@ -107,7 +107,8 @@ const menuItems = computed(() =>
     : []
 )
 
-const { selectedIndex, onKeydown: navKeydown } = useKeyboardNav(menuItems, {
+const { selectedIndex, onKeydown: navKeydown } = useKeyboardNav({
+  items: menuItems,
   onSelect: (item) => {
     if (!item.disabled) item.action()
   },
