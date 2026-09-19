@@ -42,7 +42,7 @@ export const INSPIRATION_STATUSES = Object.freeze({
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-function _playerCheck(player, fn) {
+function _playerCheck({ player, fn }) {
   if (!player || typeof player !== 'object') {
     return resultFail({
       code: INSPIRATION_ERROR_CODES.PLAYER_MISSING,
@@ -123,7 +123,7 @@ export function inspirationStrike({
   gameTime,
   locationId = null,
 }) {
-  const bad = _playerCheck(player, 'inspirationStrike')
+  const bad = _playerCheck({ player, fn: 'inspirationStrike' })
   if (bad) return bad
   if (!_sourceValid(source)) {
     return resultFail({
@@ -186,7 +186,7 @@ export function inspirationStrike({
  * @returns {{ ok: boolean, data: { inspirations: Object[], expired: Object|null }|null, error: Object|null }}
  */
 export function inspirationTick({ player, ticksElapsed, gameTime }) {
-  const bad = _playerCheck(player, 'inspirationTick')
+  const bad = _playerCheck({ player, fn: 'inspirationTick' })
   if (bad) return bad
   if (!Number.isFinite(ticksElapsed) || ticksElapsed < 0) {
     return resultFail({
@@ -224,7 +224,7 @@ export function inspirationTick({ player, ticksElapsed, gameTime }) {
  * @returns {{ ok: boolean, data: { urge: Object|null, personaId: string }|null, error: Object|null }}
  */
 export function inspirationUrge({ player, personas = {}, ticksElapsed, rng = Math.random }) {
-  const bad = _playerCheck(player, 'inspirationUrge')
+  const bad = _playerCheck({ player, fn: 'inspirationUrge' })
   if (bad) return bad
   if (!Number.isFinite(ticksElapsed) || ticksElapsed < 0) {
     return resultFail({
@@ -251,7 +251,7 @@ export function inspirationUrge({ player, personas = {}, ticksElapsed, rng = Mat
  * @returns {{ ok: boolean, data: { inspirations: Object[], interrupted: Object|null }|null, error: Object|null }}
  */
 export function inspirationInterrupt({ player, reason, gameTime }) {
-  const bad = _playerCheck(player, 'inspirationInterrupt')
+  const bad = _playerCheck({ player, fn: 'inspirationInterrupt' })
   if (bad) return bad
   if (!_sourceValid(reason)) {
     return resultFail({
@@ -277,7 +277,7 @@ export function inspirationInterrupt({ player, reason, gameTime }) {
  * @returns {{ ok: boolean, data: { inspirations: Object[], spent: Object }|null, error: Object|null }}
  */
 export function inspirationSpend({ player, spentOn, gameTime }) {
-  const bad = _playerCheck(player, 'inspirationSpend')
+  const bad = _playerCheck({ player, fn: 'inspirationSpend' })
   if (bad) return bad
   if (!_sourceValid(spentOn)) {
     return resultFail({

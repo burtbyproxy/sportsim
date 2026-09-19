@@ -40,7 +40,7 @@ import {
   ARTIFACT_STATUSES,
   makingOptions,
 } from '../engine/making.js'
-import { checkRandomEvents, checkTriggeredEvents, resolveEvent } from '../engine/events.js'
+import { eventsRandomCheck, eventsTriggeredCheck, eventResolve } from '../engine/events.js'
 import {
   generateActionNarrative,
   generateEventNarrative,
@@ -193,15 +193,19 @@ export function useGameLoop({
    */
   function _eventsCheck() {
     if (game.activeEvent || !game.player || !game.currentLocation) return
-    const base = [game.player, game.currentLocation, game.time]
+    const here = { player: game.player, location: game.currentLocation, gameTime: game.time }
     // Head down over the work, chance has a harder time finding you.
     const focus = game.makingActive ? MAKING_FOCUS_EVENT_FACTOR : 1
     const odds = eventRegistry.map((e) =>
       e.type === 'random' ? { ...e, probability: (e.probability ?? 0) * focus } : e
     )
     const [hit] = [
-      ...checkTriggeredEvents(...base, eventRegistry, game.firedEventIds),
-      ...checkRandomEvents(...base, odds, game.firedEventIds, rng),
+      ...eventsTriggeredCheck({
+        ...here,
+        events: eventRegistry,
+        firedEventIds: game.firedEventIds,
+      }),
+      ...eventsRandomCheck({ ...here, events: odds, firedEventIds: game.firedEventIds, rng }),
     ]
     if (!hit) return
     _eventStart(eventRegistry.find((e) => e.id === hit.id))
@@ -221,8 +225,9 @@ export function useGameLoop({
       game.setActiveEvent(event)
       return
     }
-    const { outcome } = resolveEvent(event, game.player, null, rng)
-    _eventOutcomeApply(outcome, { kind: 'event', id: event.id })
+    const resolved = eventResolve({ event, player: game.player, rng })
+    if (!resolved.ok) return _failureShow(resolved)
+    _eventOutcomeApply({ outcome: resolved.data.outcome, source: { kind: 'event', id: event.id } })
   }
 
   /**
@@ -232,17 +237,18 @@ export function useGameLoop({
   function resolveEventChoice({ choiceIndex }) {
     const event = game.activeEvent
     if (!event || !game.player) return
-    const { outcome, diceResult, error } = resolveEvent(event, game.player, choiceIndex, rng)
-    // A choice the event never offered resolves nothing: the event keeps waiting.
-    if (error) return
+    const resolved = eventResolve({ event, player: game.player, choiceIndex, rng })
+    // A choice the event never offered resolves nothing: the event keeps waiting, and says why.
+    if (!resolved.ok) return _failureShow(resolved)
+    const { outcome, diceResult } = resolved.data
     _checkTrain(diceResult)
     game.clearActiveEvent()
-    _eventOutcomeApply(outcome, { kind: 'event', id: event.id })
+    _eventOutcomeApply({ outcome, source: { kind: 'event', id: event.id } })
     _makingReconcile()
     _refreshActions()
   }
 
-  function _eventOutcomeApply(outcome, source) {
+  function _eventOutcomeApply({ outcome, source }) {
     if (!outcome) return
     if (outcome.narrative) {
       const text =
@@ -251,7 +257,7 @@ export function useGameLoop({
           : outcome.narrative
       _narrativeEnqueue(text)
     }
-    _outcomeApply(outcome, source)
+    _outcomeApply({ outcome, source })
   }
 
   function _narrativeEnqueue(narrativeText) {
@@ -629,7 +635,7 @@ export function useGameLoop({
     if (!outcome) return
 
     _checkTrain(result.diceResult)
-    _outcomeApply(outcome, { kind: 'action', id: action.id })
+    _outcomeApply({ outcome, source: { kind: 'action', id: action.id } })
 
     // Taking stock costs no time: the menu becomes the making menu.
     if (action.kind === 'make') {
@@ -658,7 +664,7 @@ export function useGameLoop({
    * @param {Object} outcome
    * @param {{ kind: string, id: string }} source - what produced the outcome
    */
-  function _outcomeApply(outcome, source) {
+  function _outcomeApply({ outcome, source }) {
     // Apply status changes
     if (outcome.statusChanges) {
       game.applyStatusChanges(outcome.statusChanges)

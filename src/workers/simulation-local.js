@@ -5,7 +5,7 @@
  * tick: { gameTime, characters } → { characters: CharacterUpdate[] }
  * CharacterUpdate: { id: string, locationId: string|null, statusChanges?: Object }
  */
-import { simulateTick } from '../engine/simulation.js'
+import { simulationTick } from '../engine/simulation.js'
 
 export const simulationLocal = {
   /**
@@ -14,6 +14,6 @@ export const simulationLocal = {
    * @returns {{ characters: Array<{ id: string, locationId: string|null, statusChanges?: Object }> }}
    */
   tick({ gameTime, characters }) {
-    return { characters: simulateTick(characters, gameTime) }
+    return { characters: simulationTick({ characters, gameTime }) }
   },
 }

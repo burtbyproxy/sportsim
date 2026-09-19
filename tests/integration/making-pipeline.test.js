@@ -20,7 +20,7 @@ import { itemCreate } from '../../src/models/item.js'
 import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
 import { useSave, saveMigrate, SAVE_VERSION } from '../../src/composables/useSave.js'
-import { checkRandomEvents } from '../../src/engine/events.js'
+import { eventsRandomCheck } from '../../src/engine/events.js'
 import { itemUseResolve } from '../../src/engine/items.js'
 
 const loadDir = (dir) =>
@@ -930,14 +930,14 @@ describe('making pipeline', () => {
     const canFire = (locationId) => {
       const ctx = startGame({ at: locationId })
       ctx.game.applyDoses({ doses: [{ substanceId: 'beer', value: 80 }] })
-      return checkRandomEvents(
-        ctx.game.player,
-        ctx.game.currentLocation,
-        { ...ctx.game.time, hour: 22 },
+      return eventsRandomCheck({
+        player: ctx.game.player,
+        location: ctx.game.currentLocation,
+        gameTime: { ...ctx.game.time, hour: 22 },
         events,
-        [],
-        everythingFires
-      ).map((e) => e.id)
+        firedEventIds: [],
+        rng: everythingFires,
+      }).map((e) => e.id)
     }
     for (const indoors of ['moms_house', 'blue_parrot', 'lombard_dental']) {
       expect(canFire(indoors), indoors).not.toContain('cop_hassle')
@@ -1101,6 +1101,7 @@ describe('making pipeline', () => {
     ctx.loop.resolveEventChoice({ choiceIndex: 5 })
     expect(ctx.game.activeEvent?.id).toBe('test_fork')
     expect(ctx.game.playerMoney).toBe(moneyBefore)
+    expect(await logOf(ctx.narrative)).toContain('[CHOICE_INVALID]')
     ctx.loop.resolveEventChoice({ choiceIndex: 0 })
     expect(ctx.game.activeEvent).toBeNull()
     expect(ctx.game.playerMoney).toBe(moneyBefore + 1)

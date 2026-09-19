@@ -6,6 +6,7 @@
 import { randomChance } from '../utils/random.js'
 import { checkRoll } from './dice.js'
 import { inventoryHas } from './items.js'
+import { resultOk, resultFail } from './result.js'
 
 /** Enumerated error codes for event resolution. The code is the contract. */
 export const EVENT_ERROR_CODES = Object.freeze({
@@ -21,7 +22,7 @@ export const EVENT_ERROR_CODES = Object.freeze({
  * @param {string[]} firedEventIds - one-time events that have already fired
  * @returns {boolean}
  */
-function _meetsEventConditions(event, player, location, gameTime, firedEventIds) {
+function _eventConditionsMeet({ event, player, location, gameTime, firedEventIds }) {
   // One-time events that already fired
   if (event.oneTime && firedEventIds.includes(event.id)) return false
 
@@ -98,25 +99,21 @@ function _meetsEventConditions(event, player, location, gameTime, firedEventIds)
  * Checks all registered random events and returns those that fire this tick.
  * Uses probability rolls (randomChance()) to determine which events trigger.
  *
- * @param {Object} player
- * @param {Object} location
- * @param {Object} gameTime
- * @param {Object[]} eventRegistry - all event definitions
- * @param {string[]} firedEventIds
- * @param {(() => number)} [rng=Math.random]
+ * @param {{ player: Object, location: Object, gameTime: Object, events: Object[], firedEventIds?: string[], rng?: (() => number) }} input
+ *   events — all event definitions
  * @returns {Object[]} - events that fire this tick
  */
-export function checkRandomEvents(
+export function eventsRandomCheck({
   player,
   location,
   gameTime,
-  eventRegistry,
+  events,
   firedEventIds = [],
-  rng = Math.random
-) {
-  return eventRegistry.filter((event) => {
+  rng = Math.random,
+}) {
+  return events.filter((event) => {
     if (event.type !== 'random') return false
-    if (!_meetsEventConditions(event, player, location, gameTime, firedEventIds)) return false
+    if (!_eventConditionsMeet({ event, player, location, gameTime, firedEventIds })) return false
     return randomChance({ probability: event.probability ?? 0, rng })
   })
 }
@@ -125,23 +122,13 @@ export function checkRandomEvents(
  * Checks all registered condition-based (triggered) events.
  * No probability roll — conditions either pass or don't.
  *
- * @param {Object} player
- * @param {Object} location
- * @param {Object} gameTime
- * @param {Object[]} eventRegistry
- * @param {string[]} firedEventIds
+ * @param {{ player: Object, location: Object, gameTime: Object, events: Object[], firedEventIds?: string[] }} input
  * @returns {Object[]} - events that should trigger
  */
-export function checkTriggeredEvents(
-  player,
-  location,
-  gameTime,
-  eventRegistry,
-  firedEventIds = []
-) {
-  return eventRegistry.filter((event) => {
+export function eventsTriggeredCheck({ player, location, gameTime, events, firedEventIds = [] }) {
+  return events.filter((event) => {
     if (event.type !== 'triggered') return false
-    return _meetsEventConditions(event, player, location, gameTime, firedEventIds)
+    return _eventConditionsMeet({ event, player, location, gameTime, firedEventIds })
   })
 }
 
@@ -149,26 +136,22 @@ export function checkTriggeredEvents(
  * Resolves an event — either a player choice or the automatic outcome.
  * Does NOT mutate state. Returns outcome for the store to apply.
  *
- * @param {Object} event - GameEvent per data contract
- * @param {Object} player
- * @param {number|null} [choiceIndex=null] - which choice the player made (null = no choices)
- * @param {(() => number)} [rng=Math.random]
- * @returns {{ outcome: Object|null, diceResult: Object|null, error?: { code: string, message: string } }}
- *   error — the choice asked for is not one the event offers; nothing was resolved.
+ * @param {{ event: Object, player: Object, choiceIndex?: number|null, rng?: (() => number) }} input
+ *   event — GameEvent per data contract
+ *   choiceIndex — which choice the player made (null = no choices)
+ * @returns {{ ok: boolean, data: { outcome: Object|null, diceResult: Object|null }|null, error: Object|null }}
+ *   fails with CHOICE_INVALID when the choice asked for is not one the event offers.
  */
-export function resolveEvent(event, player, choiceIndex = null, rng = Math.random) {
+export function eventResolve({ event, player, choiceIndex = null, rng = Math.random }) {
   // Choice-based event
   if (event.choices && event.choices.length > 0 && choiceIndex !== null) {
     const choice = event.choices[choiceIndex]
     if (!choice) {
-      return {
-        outcome: null,
-        diceResult: null,
-        error: {
-          code: EVENT_ERROR_CODES.CHOICE_INVALID,
-          message: `Event '${event.id}' has no choice ${choiceIndex}`,
-        },
-      }
+      return resultFail({
+        code: EVENT_ERROR_CODES.CHOICE_INVALID,
+        message: `Event '${event.id}' has no choice ${choiceIndex}`,
+        params: { eventId: event.id, choiceIndex },
+      })
     }
     if (choice.check) {
       const diceResult = checkRoll({
@@ -181,13 +164,13 @@ export function resolveEvent(event, player, choiceIndex = null, rng = Math.rando
       const outcome = diceResult.success
         ? choice.outcome
         : (choice.failureOutcome ?? choice.outcome)
-      return { outcome, diceResult }
+      return resultOk({ outcome, diceResult })
     } else {
       // No check on this choice — auto-resolve
-      return { outcome: choice.outcome, diceResult: null }
+      return resultOk({ outcome: choice.outcome, diceResult: null })
     }
   }
 
   // Automatic outcome
-  return { outcome: event.outcome, diceResult: null }
+  return resultOk({ outcome: event.outcome, diceResult: null })
 }

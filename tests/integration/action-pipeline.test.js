@@ -446,7 +446,7 @@ describe('actionResolve — real Kenton action data', () => {
     })
     // Natural 1 triggers criticalFailure outcome. Note: result.success may still be true if
     // luck modifier + natural 1 clears the dc — criticalFailure outcome is selected by
-    // _selectOutcome before the success check. This is correct engine behavior.
+    // _outcomeSelect before the success check. This is correct engine behavior.
     expect(result.diceResult.criticalFailure).toBe(true)
     expect(result.diceResult.natural).toBe(1)
     expect(result.outcome.statusChanges.mood).toBe(-15)

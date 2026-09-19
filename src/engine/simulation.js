@@ -31,7 +31,7 @@ import { randomChance } from '../utils/random.js'
  * @param {() => number} rng
  * @returns {Object} CharacterUpdate { id, locationId }
  */
-function _simulateFixed(character, gameTime, rng) {
+function _simulateFixed({ character, gameTime, rng }) {
   const entry = scheduleEntryResolve({
     schedule: character.schedule,
     hour: gameTime.hour,
@@ -59,7 +59,7 @@ function _simulateFixed(character, gameTime, rng) {
  * @param {() => number} rng
  * @returns {Object} CharacterUpdate { id, locationId }
  */
-function _simulateRoutine(character, gameTime, rng) {
+function _simulateRoutine({ character, gameTime, rng }) {
   const { hour, minute } = gameTime
 
   // Check if in transit between schedule stops
@@ -134,7 +134,7 @@ function _getStatusBias(character) {
  * @param {string} dayOfWeek
  * @returns {Object|null}
  */
-function _findBiasedEntry(schedule, bias, dayOfWeek) {
+function _biasedEntryFind({ schedule, bias, dayOfWeek }) {
   if (!schedule || !schedule.entries) return null
 
   for (const entry of schedule.entries) {
@@ -157,7 +157,7 @@ function _findBiasedEntry(schedule, bias, dayOfWeek) {
  * @param {() => number} rng
  * @returns {Object} CharacterUpdate { id, locationId, statusChanges? }
  */
-function _simulateFull(character, gameTime, rng) {
+function _simulateFull({ character, gameTime, rng }) {
   const { hour, minute } = gameTime
 
   // Apply stat decay (same rates as player — they're playing the same game)
@@ -168,7 +168,11 @@ function _simulateFull(character, gameTime, rng) {
   // Check status bias first
   const bias = _getStatusBias(character)
   if (bias) {
-    const biasedEntry = _findBiasedEntry(character.schedule, bias, gameTime.dayOfWeek)
+    const biasedEntry = _biasedEntryFind({
+      schedule: character.schedule,
+      bias,
+      dayOfWeek: gameTime.dayOfWeek,
+    })
     if (biasedEntry) {
       const present = randomChance({ probability: biasedEntry.probability, rng })
       return {
@@ -214,12 +218,12 @@ function _simulateFull(character, gameTime, rng) {
  *
  * CharacterUpdate: { id: string, locationId: string|null, statusChanges?: Object }
  *
- * @param {Object[]} characters - array of Character objects
- * @param {Object} gameTime - GameTime per data contract
- * @param {() => number} [rng=Math.random]
+ * @param {{ characters: Object[], gameTime: Object, rng?: () => number }} input
+ *   characters — array of Character objects
+ *   gameTime — GameTime per data contract
  * @returns {Array<{ id: string, locationId: string|null, statusChanges?: Object }>}
  */
-export function simulateTick(characters, gameTime, rng = Math.random) {
+export function simulationTick({ characters, gameTime, rng = Math.random }) {
   const updates = []
 
   for (const character of characters) {
@@ -227,14 +231,14 @@ export function simulateTick(characters, gameTime, rng = Math.random) {
 
     switch (character.simulation) {
       case 'routine':
-        update = _simulateRoutine(character, gameTime, rng)
+        update = _simulateRoutine({ character, gameTime, rng })
         break
       case 'full':
-        update = _simulateFull(character, gameTime, rng)
+        update = _simulateFull({ character, gameTime, rng })
         break
       case 'fixed':
       default:
-        update = _simulateFixed(character, gameTime, rng)
+        update = _simulateFixed({ character, gameTime, rng })
         break
     }
 

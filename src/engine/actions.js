@@ -31,7 +31,7 @@ export const REQUIREMENT_CODES = Object.freeze({
 
 const _MET = Object.freeze({ meets: true, reasonCode: null, reasonParams: {} })
 
-function _refuse(reasonCode, reasonParams = {}) {
+function _refuse({ reasonCode, reasonParams = {} }) {
   return { meets: false, reasonCode, reasonParams }
 }
 
@@ -51,7 +51,7 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
     for (const [stat, minVal] of Object.entries(req.minStats)) {
       const base = player.stats?.[stat]?.base ?? 0
       if (base < minVal) {
-        return _refuse(REQUIREMENT_CODES.STAT, { stat })
+        return _refuse({ reasonCode: REQUIREMENT_CODES.STAT, reasonParams: { stat } })
       }
     }
   }
@@ -60,7 +60,7 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
   if (req.requiredItems) {
     for (const itemId of req.requiredItems) {
       if (!inventoryHas({ inventory: player.inventory, itemId })) {
-        return _refuse(REQUIREMENT_CODES.ITEM, { itemId })
+        return _refuse({ reasonCode: REQUIREMENT_CODES.ITEM, reasonParams: { itemId } })
       }
     }
   }
@@ -69,9 +69,12 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
   if (req.minMoney !== null && req.minMoney !== undefined) {
     const money = player.status?.money ?? 0
     if (money < req.minMoney) {
-      return _refuse(REQUIREMENT_CODES.MONEY, {
-        cost: moneyFormat({ amount: req.minMoney }),
-        money: moneyFormat({ amount: money }),
+      return _refuse({
+        reasonCode: REQUIREMENT_CODES.MONEY,
+        reasonParams: {
+          cost: moneyFormat({ amount: req.minMoney }),
+          money: moneyFormat({ amount: money }),
+        },
       })
     }
   }
@@ -79,18 +82,18 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
   // Sobriety requirements
   const sobriety = player.status?.sobriety ?? 100
   if (req.minSobriety !== null && req.minSobriety !== undefined && sobriety < req.minSobriety) {
-    return _refuse(REQUIREMENT_CODES.SOBRIETY_MIN)
+    return _refuse({ reasonCode: REQUIREMENT_CODES.SOBRIETY_MIN })
   }
   if (req.maxSobriety !== null && req.maxSobriety !== undefined && sobriety > req.maxSobriety) {
-    return _refuse(REQUIREMENT_CODES.SOBRIETY_MAX)
+    return _refuse({ reasonCode: REQUIREMENT_CODES.SOBRIETY_MAX })
   }
 
   // Time of day requirements
   if (req.minHour !== null && req.minHour !== undefined && gameTime.hour < req.minHour) {
-    return _refuse(REQUIREMENT_CODES.HOUR_EARLY)
+    return _refuse({ reasonCode: REQUIREMENT_CODES.HOUR_EARLY })
   }
   if (req.maxHour !== null && req.maxHour !== undefined && gameTime.hour >= req.maxHour) {
-    return _refuse(REQUIREMENT_CODES.HOUR_LATE)
+    return _refuse({ reasonCode: REQUIREMENT_CODES.HOUR_LATE })
   }
 
   // Visit count requirements
@@ -98,7 +101,7 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
     // How often the player has been HERE. The same count the event engine reads.
     const visits = location?.visitCount ?? 0
     if (visits < req.minVisits) {
-      return _refuse(REQUIREMENT_CODES.VISITS)
+      return _refuse({ reasonCode: REQUIREMENT_CODES.VISITS })
     }
   }
 
@@ -107,14 +110,14 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
     const playerTraumaIds = player.psyche?.traumas?.map((t) => t.id) ?? []
     for (const traumaId of req.requiredTraumas) {
       if (!playerTraumaIds.includes(traumaId)) {
-        return _refuse(REQUIREMENT_CODES.TRAUMA, { traumaId })
+        return _refuse({ reasonCode: REQUIREMENT_CODES.TRAUMA, reasonParams: { traumaId } })
       }
     }
   }
 
   // Inspiration — some things cannot be done cold
   if (req.requiresInspiration && !inspirationActive({ player })) {
-    return _refuse(REQUIREMENT_CODES.INSPIRATION)
+    return _refuse({ reasonCode: REQUIREMENT_CODES.INSPIRATION })
   }
 
   // Ability requirements
@@ -122,7 +125,7 @@ export function requirementsMeet({ player, action, gameTime, location = null }) 
     const playerAbilityIds = player.psyche?.abilities?.map((a) => a.id) ?? []
     for (const abilityId of req.requiredAbilities) {
       if (!playerAbilityIds.includes(abilityId)) {
-        return _refuse(REQUIREMENT_CODES.ABILITY, { abilityId })
+        return _refuse({ reasonCode: REQUIREMENT_CODES.ABILITY, reasonParams: { abilityId } })
       }
     }
   }
@@ -178,8 +181,8 @@ export function actionsAvailable({ player, location, characters, gameTime, actio
 
   // Sort by effective weight (descending)
   return available.sort((a, b) => {
-    const weightA = _effectiveWeight(a, obsessionStrengths)
-    const weightB = _effectiveWeight(b, obsessionStrengths)
+    const weightA = _weightEffective({ action: a, obsessionStrengths })
+    const weightB = _weightEffective({ action: b, obsessionStrengths })
     return weightB - weightA
   })
 }
@@ -190,7 +193,7 @@ export function actionsAvailable({ player, location, characters, gameTime, actio
  * @param {Object<string, number>} obsessionStrengths
  * @returns {number}
  */
-function _effectiveWeight(action, obsessionStrengths) {
+function _weightEffective({ action, obsessionStrengths }) {
   let weight = action.weight || 0
   if (action.obsessionIds) {
     for (const obsId of action.obsessionIds) {
@@ -208,7 +211,7 @@ function _effectiveWeight(action, obsessionStrengths) {
  * @param {Object} diceResult
  * @returns {Object} - ActionOutcome
  */
-function _selectOutcome(action, diceResult) {
+function _outcomeSelect({ action, diceResult }) {
   if (diceResult.criticalSuccess && action.criticalSuccess) {
     return action.criticalSuccess
   }
@@ -283,7 +286,7 @@ export function actionResolve({
 
     const playerWon = contest.winner === CONTEST_WINNERS.FIRST
     const diceResult = { ...contest.first, success: playerWon }
-    const outcome = _selectOutcome(action, diceResult)
+    const outcome = _outcomeSelect({ action, diceResult })
 
     return {
       success: playerWon,
@@ -295,7 +298,7 @@ export function actionResolve({
 
   // Standard check
   const diceResult = checkRoll({ player, statName: check.stat, modifiers: [], dc: check.dc, rng })
-  const outcome = _selectOutcome(action, diceResult)
+  const outcome = _outcomeSelect({ action, diceResult })
 
   return {
     success: diceResult.success,
