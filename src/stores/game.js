@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { createClock, advanceClock } from '../engine/clock.js'
+import { clockCreate, clockAdvance } from '../engine/clock.js'
 import { blendCompute, blendDecay, dosesApply, sobrietyDerive } from '../engine/blend.js'
 import { skillGain } from '../engine/skills.js'
 import {
@@ -64,7 +64,7 @@ function _levelsApply({ levels, changes }) {
 export const useGameStore = defineStore('game', {
   state: () => ({
     /** @type {import('../engine/clock.js').GameTime} */
-    time: createClock(),
+    time: clockCreate(),
 
     /** @type {Object|null} */
     player: null,
@@ -276,7 +276,7 @@ export const useGameStore = defineStore('game', {
     startNewGame(player, startLocationId) {
       this.player = player
       this.currentLocationId = startLocationId
-      this.time = createClock()
+      this.time = clockCreate()
       this.firedEventIds = []
       this.activeEvent = null
       this.characters = {}
@@ -292,7 +292,7 @@ export const useGameStore = defineStore('game', {
      * @param {number} ticks
      */
     advanceTime(ticks = 1) {
-      this.time = advanceClock(this.time, ticks)
+      this.time = clockAdvance({ gameTime: this.time, ticks })
     },
 
     /**
@@ -1077,7 +1077,7 @@ export const useGameStore = defineStore('game', {
       this.availableActions = []
       this.makingPicker = null
       this.isRunning = false
-      this.time = createClock()
+      this.time = clockCreate()
     },
   },
 })

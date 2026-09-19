@@ -3,8 +3,8 @@
  * Pure functions. No side effects. No Vue. No DOM.
  */
 
-import { chance } from '../utils/random.js'
-import { rollCheck } from './dice.js'
+import { randomChance } from '../utils/random.js'
+import { checkRoll } from './dice.js'
 import { inventoryHas } from './items.js'
 
 /** Enumerated error codes for event resolution. The code is the contract. */
@@ -96,7 +96,7 @@ function _meetsEventConditions(event, player, location, gameTime, firedEventIds)
 
 /**
  * Checks all registered random events and returns those that fire this tick.
- * Uses probability rolls (chance()) to determine which events trigger.
+ * Uses probability rolls (randomChance()) to determine which events trigger.
  *
  * @param {Object} player
  * @param {Object} location
@@ -117,7 +117,7 @@ export function checkRandomEvents(
   return eventRegistry.filter((event) => {
     if (event.type !== 'random') return false
     if (!_meetsEventConditions(event, player, location, gameTime, firedEventIds)) return false
-    return chance(event.probability ?? 0, rng)
+    return randomChance({ probability: event.probability ?? 0, rng })
   })
 }
 
@@ -171,7 +171,13 @@ export function resolveEvent(event, player, choiceIndex = null, rng = Math.rando
       }
     }
     if (choice.check) {
-      const diceResult = rollCheck(player, choice.check.stat, [], choice.check.dc, rng)
+      const diceResult = checkRoll({
+        player,
+        statName: choice.check.stat,
+        modifiers: [],
+        dc: choice.check.dc,
+        rng,
+      })
       const outcome = diceResult.success
         ? choice.outcome
         : (choice.failureOutcome ?? choice.outcome)

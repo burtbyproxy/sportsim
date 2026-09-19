@@ -10,9 +10,13 @@
  * Pure functions. No side effects. No Vue. No DOM.
  */
 
-import { resolveSchedule, isInTransit, getTransitDestination } from './schedule.js'
-import { getStatDecayEffects } from './stats.js'
-import { chance } from '../utils/random.js'
+import {
+  scheduleEntryResolve,
+  scheduleTransitActive,
+  scheduleTransitDestination,
+} from './schedule.js'
+import { statusDecayChanges } from './stats.js'
+import { randomChance } from '../utils/random.js'
 
 // ---------------------------------------------------------------------------
 // Tier: fixed
@@ -28,13 +32,17 @@ import { chance } from '../utils/random.js'
  * @returns {Object} CharacterUpdate { id, locationId }
  */
 function _simulateFixed(character, gameTime, rng) {
-  const entry = resolveSchedule(character.schedule, gameTime.hour, gameTime.dayOfWeek)
+  const entry = scheduleEntryResolve({
+    schedule: character.schedule,
+    hour: gameTime.hour,
+    dayOfWeek: gameTime.dayOfWeek,
+  })
 
   if (!entry) {
     return { id: character.id, locationId: null }
   }
 
-  const present = chance(entry.probability, rng)
+  const present = randomChance({ probability: entry.probability, rng })
   return { id: character.id, locationId: present ? entry.locationId : null }
 }
 
@@ -55,18 +63,22 @@ function _simulateRoutine(character, gameTime, rng) {
   const { hour, minute } = gameTime
 
   // Check if in transit between schedule stops
-  if (isInTransit(character.schedule, hour, minute)) {
-    const destination = getTransitDestination(character.schedule, hour, minute)
+  if (scheduleTransitActive({ schedule: character.schedule, hour, minute })) {
+    const destination = scheduleTransitDestination({ schedule: character.schedule, hour, minute })
     // In transit — show at destination (they're en route, close enough)
     return { id: character.id, locationId: destination }
   }
 
-  const entry = resolveSchedule(character.schedule, hour, gameTime.dayOfWeek)
+  const entry = scheduleEntryResolve({
+    schedule: character.schedule,
+    hour,
+    dayOfWeek: gameTime.dayOfWeek,
+  })
   if (!entry) {
     return { id: character.id, locationId: null }
   }
 
-  const present = chance(entry.probability, rng)
+  const present = randomChance({ probability: entry.probability, rng })
   return { id: character.id, locationId: present ? entry.locationId : null }
 }
 
@@ -150,7 +162,7 @@ function _simulateFull(character, gameTime, rng) {
 
   // Apply stat decay (same rates as player — they're playing the same game)
   const statusChanges = character.status
-    ? getStatDecayEffects(character, 1) // one tick
+    ? statusDecayChanges({ status: character.status, ticksElapsed: 1 }) // one tick
     : undefined
 
   // Check status bias first
@@ -158,7 +170,7 @@ function _simulateFull(character, gameTime, rng) {
   if (bias) {
     const biasedEntry = _findBiasedEntry(character.schedule, bias, gameTime.dayOfWeek)
     if (biasedEntry) {
-      const present = chance(biasedEntry.probability, rng)
+      const present = randomChance({ probability: biasedEntry.probability, rng })
       return {
         id: character.id,
         locationId: present ? biasedEntry.locationId : null,
@@ -169,18 +181,22 @@ function _simulateFull(character, gameTime, rng) {
   }
 
   // Transit check (same as routine)
-  if (isInTransit(character.schedule, hour, minute)) {
-    const destination = getTransitDestination(character.schedule, hour, minute)
+  if (scheduleTransitActive({ schedule: character.schedule, hour, minute })) {
+    const destination = scheduleTransitDestination({ schedule: character.schedule, hour, minute })
     return { id: character.id, locationId: destination, statusChanges }
   }
 
   // Normal schedule resolution
-  const entry = resolveSchedule(character.schedule, hour, gameTime.dayOfWeek)
+  const entry = scheduleEntryResolve({
+    schedule: character.schedule,
+    hour,
+    dayOfWeek: gameTime.dayOfWeek,
+  })
   if (!entry) {
     return { id: character.id, locationId: null, statusChanges }
   }
 
-  const present = chance(entry.probability, rng)
+  const present = randomChance({ probability: entry.probability, rng })
   return {
     id: character.id,
     locationId: present ? entry.locationId : null,

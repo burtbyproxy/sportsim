@@ -13,8 +13,8 @@
  * written.
  */
 
-import { rollCheck } from './dice.js'
-import { weightedPick } from '../utils/random.js'
+import { checkRoll } from './dice.js'
+import { randomPickWeighted } from '../utils/random.js'
 import { resultOk, resultFail } from './result.js'
 import { numberClamp } from '../utils/number.js'
 
@@ -125,7 +125,13 @@ export function scavengeSearch({
   const tick = gameTime?.tick ?? 0
   const depletionBefore = scavengeDepletion({ location, gameTime })
   const situational = depletionBefore > 0 ? [-depletionBefore * SCAVENGE_DEPLETION_PENALTY] : []
-  const check = rollCheck(player, table.stat, situational, table.dc, rng)
+  const check = checkRoll({
+    player,
+    statName: table.stat,
+    modifiers: situational,
+    dc: table.dc,
+    rng,
+  })
 
   let entry = null
   if (check.success) {
@@ -134,7 +140,7 @@ export function scavengeSearch({
     )
     const rare = candidates.filter((e) => e.rare)
     const pool = check.criticalSuccess && rare.length > 0 ? rare : candidates
-    entry = weightedPick(pool, (e) => e.weight, rng)
+    entry = randomPickWeighted({ items: pool, weightOf: (e) => e.weight, rng })
   }
 
   // A find works the spot over and restarts its restock clock. Coming up

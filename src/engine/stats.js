@@ -1,5 +1,5 @@
 /**
- * Stats Engine — stat progression, archetype tracking, and natural decay.
+ * Stats Engine — stat progression, the status rule, and natural decay.
  * Pure functions. No side effects. No Vue. No DOM.
  */
 
@@ -100,18 +100,16 @@ export const DECAY_CONFIG = {
 }
 
 /**
- * Calculates natural stat decay over time.
- * Returns status changes to apply (does NOT mutate state).
+ * How a status wears down over time: hunger and energy fall, mood drifts
+ * back toward its baseline. Returns the changes, not a new status; the
+ * caller applies them by the one status rule.
  *
- * @param {Object} player
- * @param {number} ticksElapsed
- * @param {Object} [config=DECAY_CONFIG] - override decay config if needed
- * @returns {Object<string, number>} - status deltas to apply
+ * @param {{ status: Object<string, number>, ticksElapsed: number, config?: Object }} input
+ * @returns {Object<string, number>} changes by status key
  */
-export function getStatDecayEffects(player, ticksElapsed, config = DECAY_CONFIG) {
+export function statusDecayChanges({ status = {}, ticksElapsed, config = DECAY_CONFIG }) {
   if (!ticksElapsed || ticksElapsed <= 0) return {}
 
-  const status = player.status || {}
   const changes = {}
 
   // Hunger — simple linear decay

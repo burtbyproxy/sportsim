@@ -15,10 +15,10 @@ import { numberClamp } from '../utils/number.js'
 
 /**
  * Rolls a d20. Returns a value from 1 to 20.
- * @param {(() => number)} [rng=Math.random]
+ * @param {{ rng?: (() => number) }} input
  * @returns {number}
  */
-export function rollD20(rng = Math.random) {
+export function diceD20({ rng = Math.random } = {}) {
   return randomInt({ min: 1, max: 20, rng })
 }
 
@@ -117,33 +117,32 @@ export function checkModifier({ player, statName }) {
 
 /**
  * Returns true if the natural roll is a critical success.
- * @param {number} natural
+ * @param {{ natural: number }} input
  * @returns {boolean}
  */
-export function isCriticalSuccess(natural) {
+export function diceCriticalSuccess({ natural }) {
   return natural === 20
 }
 
 /**
  * Returns true if the natural roll is a critical failure.
- * @param {number} natural
+ * @param {{ natural: number }} input
  * @returns {boolean}
  */
-export function isCriticalFailure(natural) {
+export function diceCriticalFailure({ natural }) {
   return natural === 1
 }
 
 /**
  * Rolls a stat check against a difficulty class.
- * @param {Object} player
- * @param {string} statName - which stat to check
- * @param {number[]} modifiers - additional flat modifiers (situational bonuses/penalties)
- * @param {number} dc - difficulty class
- * @param {(() => number)} [rng=Math.random]
+ * @param {{ player: Object, statName: string, modifiers: number[], dc: number, rng?: (() => number) }} input
+ *   statName — which stat to check
+ *   modifiers — additional flat modifiers (situational bonuses/penalties)
+ *   dc — difficulty class
  * @returns {DiceResult}
  */
-export function rollCheck(player, statName, modifiers, dc, rng = Math.random) {
-  const natural = rollD20(rng)
+export function checkRoll({ player, statName, modifiers, dc, rng = Math.random }) {
+  const natural = diceD20({ rng })
   const statModifier = checkModifier({ player, statName })
   const extraModifiers = modifiers.reduce((sum, m) => sum + m, 0)
   const totalModifier = statModifier + extraModifiers
@@ -155,8 +154,8 @@ export function rollCheck(player, statName, modifiers, dc, rng = Math.random) {
     total,
     dc,
     success: total >= dc,
-    criticalSuccess: isCriticalSuccess(natural),
-    criticalFailure: isCriticalFailure(natural),
+    criticalSuccess: diceCriticalSuccess({ natural }),
+    criticalFailure: diceCriticalFailure({ natural }),
     stat: statName,
     // Everything behind the stat, itemized, plus each situational modifier.
     modifierItems: [
@@ -166,39 +165,26 @@ export function rollCheck(player, statName, modifiers, dc, rng = Math.random) {
   }
 }
 
+/** Who took a contest. */
+export const CONTEST_WINNERS = Object.freeze({ FIRST: 'first', SECOND: 'second', TIE: 'tie' })
+
 /**
- * Resolves a contested roll between two combatants.
- * @param {Object} player1 - Player or NPC
- * @param {number[]} modifiers1
- * @param {string} stat1
- * @param {Object} player2 - Player or NPC
- * @param {number[]} modifiers2
- * @param {string} stat2
- * @param {(() => number)} [rng=Math.random]
- * @returns {{ winner: 1|2|'tie', result1: DiceResult, result2: DiceResult }}
+ * Two sides roll against each other; the higher total takes it.
+ * @param {{
+ *   first: { player: Object, statName: string, modifiers?: number[] },
+ *   second: { player: Object, statName: string, modifiers?: number[] },
+ *   rng?: (() => number),
+ * }} input
+ * @returns {{ winner: string, first: Object, second: Object }} winner is a CONTEST_WINNERS value
  */
-export function rollContested(
-  player1,
-  modifiers1,
-  stat1,
-  player2,
-  modifiers2,
-  stat2,
-  rng = Math.random
-) {
-  // Use an arbitrarily high DC so we can compare totals directly
-  const DUMMY_DC = 0
-  const result1 = rollCheck(player1, stat1, modifiers1, DUMMY_DC, rng)
-  const result2 = rollCheck(player2, stat2, modifiers2, DUMMY_DC, rng)
-
-  let winner
-  if (result1.total > result2.total) {
-    winner = 1
-  } else if (result2.total > result1.total) {
-    winner = 2
-  } else {
-    winner = 'tie'
-  }
-
-  return { winner, result1, result2 }
+export function checkContestedRoll({ first, second, rng = Math.random }) {
+  // A contest has no target to beat, only the other side, so neither roll has a DC.
+  const side = ({ player, statName, modifiers = [] }) =>
+    checkRoll({ player, statName, modifiers, dc: 0, rng })
+  const rolledFirst = side(first)
+  const rolledSecond = side(second)
+  let winner = CONTEST_WINNERS.TIE
+  if (rolledFirst.total > rolledSecond.total) winner = CONTEST_WINNERS.FIRST
+  if (rolledSecond.total > rolledFirst.total) winner = CONTEST_WINNERS.SECOND
+  return { winner, first: rolledFirst, second: rolledSecond }
 }

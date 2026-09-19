@@ -16,8 +16,8 @@ import { createPlayer, addModifier, tickModifiers } from '../../src/models/playe
 import { statEffective } from '../../src/engine/dice.js'
 import { createLocation } from '../../src/models/location.js'
 import { actionsAvailable, actionResolve } from '../../src/engine/actions.js'
-import { getStatDecayEffects } from '../../src/engine/stats.js'
-import { seededRandom } from '../../src/utils/random.js'
+import { statusDecayChanges } from '../../src/engine/stats.js'
+import { randomSeeded } from '../../src/utils/random.js'
 
 // ---------------------------------------------------------------------------
 // Load content from content/ (same approach as content-validation.test.js)
@@ -394,7 +394,7 @@ describe('actionResolve — real Kenton action data', () => {
       action: kentonActions.raid_fridge,
       gameTime: makeGameTime(),
       characters: [],
-      rng: seededRandom(1),
+      rng: randomSeeded({ seed: 1 }),
     })
     expect(result.success).toBe(true)
     expect(result.diceResult).toBeNull()
@@ -410,7 +410,7 @@ describe('actionResolve — real Kenton action data', () => {
       action: kentonActions.order_beer_parrot,
       gameTime: makeGameTime(14),
       characters: [],
-      rng: seededRandom(1),
+      rng: randomSeeded({ seed: 1 }),
     })
     expect(result.success).toBe(true)
     expect(result.outcome.moneyChange).toBe(-3)
@@ -460,7 +460,7 @@ describe('actionResolve — real Kenton action data', () => {
       action: kentonActions.shoplift_plaid,
       gameTime: makeGameTime(),
       characters: [],
-      rng: seededRandom(1),
+      rng: randomSeeded({ seed: 1 }),
     })
     expect(result.requirementFailure).toBeTruthy()
     expect(result.outcome).toBeNull()
@@ -475,7 +475,7 @@ describe('actionResolve — full pipeline', () => {
       action: DRINK_ACTION,
       gameTime: makeGameTime(),
       characters: [],
-      rng: seededRandom(1),
+      rng: randomSeeded({ seed: 1 }),
     })
 
     expect(result.success).toBe(true)
@@ -496,7 +496,7 @@ describe('actionResolve — full pipeline', () => {
       action: CHARM_CHECK_ACTION,
       gameTime: makeGameTime(),
       characters: [],
-      rng: seededRandom(42),
+      rng: randomSeeded({ seed: 42 }),
     })
 
     expect(result.diceResult).not.toBeNull()
@@ -551,7 +551,7 @@ describe('actionResolve — full pipeline', () => {
       action: gatedAction,
       gameTime: makeGameTime(),
       characters: [],
-      rng: seededRandom(1),
+      rng: randomSeeded({ seed: 1 }),
     })
 
     expect(result.requirementFailure).toBeTruthy()
@@ -568,14 +568,14 @@ describe('actionResolve — full pipeline', () => {
       action: CHARM_CHECK_ACTION,
       gameTime: makeGameTime(),
       characters: [],
-      rng: seededRandom(100),
+      rng: randomSeeded({ seed: 100 }),
     })
     const result2 = actionResolve({
       player,
       action: CHARM_CHECK_ACTION,
       gameTime: makeGameTime(),
       characters: [],
-      rng: seededRandom(100),
+      rng: randomSeeded({ seed: 100 }),
     })
 
     expect(result1.success).toBe(result2.success)
@@ -588,13 +588,13 @@ describe('actionResolve — full pipeline', () => {
 // Stat decay over realistic tick counts
 // ---------------------------------------------------------------------------
 
-describe('getStatDecayEffects — realistic tick counts', () => {
+describe('statusDecayChanges — realistic tick counts', () => {
   it('1 hour (4 ticks) produces sensible decay', () => {
     const player = createPlayer('Test')
     player.status.hunger = 60
     player.status.energy = 80
 
-    const changes = getStatDecayEffects(player, 4)
+    const changes = statusDecayChanges({ status: player.status, ticksElapsed: 4 })
 
     // 4 ticks = 1 hour
     expect(changes.hunger).toBe(-4) // -1 per tick
@@ -607,7 +607,7 @@ describe('getStatDecayEffects — realistic tick counts', () => {
     player.status.hunger = 80
     player.status.energy = 100
 
-    const changes = getStatDecayEffects(player, 32)
+    const changes = statusDecayChanges({ status: player.status, ticksElapsed: 32 })
 
     expect(changes.hunger).toBe(-32)
     expect(changes.energy).toBe(-16)
@@ -617,7 +617,7 @@ describe('getStatDecayEffects — realistic tick counts', () => {
     const player = createPlayer('Test')
     player.status.hunger = 3
 
-    const changes = getStatDecayEffects(player, 100)
+    const changes = statusDecayChanges({ status: player.status, ticksElapsed: 100 })
     expect(player.status.hunger + changes.hunger).toBe(0)
   })
 
@@ -625,13 +625,13 @@ describe('getStatDecayEffects — realistic tick counts', () => {
     const player = createPlayer('Test')
     player.status.energy = 2
 
-    const changes = getStatDecayEffects(player, 100)
+    const changes = statusDecayChanges({ status: player.status, ticksElapsed: 100 })
     expect(player.status.energy + changes.energy).toBeGreaterThanOrEqual(0)
   })
 
   it('0 ticks returns empty object', () => {
     const player = createPlayer('Test')
-    expect(getStatDecayEffects(player, 0)).toEqual({})
+    expect(statusDecayChanges({ status: player.status, ticksElapsed: 0 })).toEqual({})
   })
 })
 

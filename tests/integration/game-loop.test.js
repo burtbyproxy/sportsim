@@ -233,7 +233,7 @@ const kentonEvents = ['street', 'moms_house', 'bars', 'park', 'market'].flatMap(
   JSON.parse(readFileSync(resolve(`content/maps/kenton/events/${name}.json`), 'utf-8'))
 )
 const eventById = (id) => kentonEvents.find((e) => e.id === id)
-const always = () => 0 // chance(p) is rng() < p, so 0 fires anything with p > 0
+const always = () => 0 // randomChance({ probability: p }) is rng() < p, so 0 fires anything with p > 0
 const never = () => 0.999
 
 describe('useGameLoop → events', () => {

@@ -32,7 +32,7 @@ function getPeriod(hour) {
  * Create a fresh clock at game start (Monday 8:00 AM, tick 0).
  * @returns {GameTime}
  */
-export function createClock() {
+export function clockCreate() {
   return ticksToGameTime(0)
 }
 
@@ -64,20 +64,19 @@ function ticksToGameTime(tick) {
 
 /**
  * Advance a GameTime by N ticks.
- * @param {GameTime} gameTime
- * @param {number} ticks
+ * @param {{ gameTime: GameTime, ticks: number }} input
  * @returns {GameTime}
  */
-export function advanceClock(gameTime, ticks) {
+export function clockAdvance({ gameTime, ticks }) {
   return ticksToGameTime(gameTime.tick + ticks)
 }
 
 /**
  * Format GameTime as a human-readable string.
- * @param {GameTime} gameTime
+ * @param {{ gameTime: GameTime }} input
  * @returns {string} e.g. "Monday 8:00 AM"
  */
-export function formatTime(gameTime) {
+export function clockFormat({ gameTime }) {
   const { hour, minute, dayOfWeek } = gameTime
   const h = hour % 12 || 12
   const m = String(minute).padStart(2, '0')

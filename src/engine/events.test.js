@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { checkRandomEvents, checkTriggeredEvents, resolveEvent } from './events.js'
-import { seededRandom } from '../utils/random.js'
+import { randomSeeded } from '../utils/random.js'
 
 function makePlayer(statusOverrides = {}) {
   return {
@@ -46,7 +46,7 @@ describe('checkRandomEvents', () => {
       makeGameTime(),
       [event],
       [],
-      seededRandom(1)
+      randomSeeded({ seed: 1 })
     )
     expect(result).toHaveLength(1)
     expect(result[0].id).toBe('test_event')
@@ -60,7 +60,7 @@ describe('checkRandomEvents', () => {
       makeGameTime(),
       [event],
       [],
-      seededRandom(1)
+      randomSeeded({ seed: 1 })
     )
     expect(result).toHaveLength(0)
   })
@@ -73,7 +73,7 @@ describe('checkRandomEvents', () => {
       makeGameTime(),
       [event],
       [],
-      seededRandom(1)
+      randomSeeded({ seed: 1 })
     )
     expect(result).toHaveLength(0)
   })
@@ -86,7 +86,7 @@ describe('checkRandomEvents', () => {
       makeGameTime(),
       [event],
       ['test_event'],
-      seededRandom(1)
+      randomSeeded({ seed: 1 })
     )
     expect(result).toHaveLength(0)
   })
@@ -99,7 +99,7 @@ describe('checkRandomEvents', () => {
       makeGameTime(),
       [event],
       [],
-      seededRandom(1)
+      randomSeeded({ seed: 1 })
     )
     expect(result).toHaveLength(1)
   })
@@ -115,7 +115,7 @@ describe('checkRandomEvents', () => {
       makeGameTime(),
       [event],
       [],
-      seededRandom(1)
+      randomSeeded({ seed: 1 })
     )
     const rightResult = checkRandomEvents(
       makePlayer(),
@@ -123,7 +123,7 @@ describe('checkRandomEvents', () => {
       makeGameTime(),
       [event],
       [],
-      seededRandom(1)
+      randomSeeded({ seed: 1 })
     )
 
     expect(wrongResult).toHaveLength(0)
@@ -138,7 +138,7 @@ describe('checkRandomEvents', () => {
       makeGameTime(14),
       [event],
       [],
-      seededRandom(1)
+      randomSeeded({ seed: 1 })
     )
     const nightResult = checkRandomEvents(
       makePlayer(),
@@ -146,7 +146,7 @@ describe('checkRandomEvents', () => {
       makeGameTime(21),
       [event],
       [],
-      seededRandom(1)
+      randomSeeded({ seed: 1 })
     )
     expect(daytimeResult).toHaveLength(0)
     expect(nightResult).toHaveLength(1)
@@ -161,10 +161,24 @@ describe('checkRandomEvents', () => {
     const drunkPlayer = makePlayer({ sobriety: 15 })
 
     expect(
-      checkRandomEvents(soberPlayer, makeLocation(), makeGameTime(), [event], [], seededRandom(1))
+      checkRandomEvents(
+        soberPlayer,
+        makeLocation(),
+        makeGameTime(),
+        [event],
+        [],
+        randomSeeded({ seed: 1 })
+      )
     ).toHaveLength(0)
     expect(
-      checkRandomEvents(drunkPlayer, makeLocation(), makeGameTime(), [event], [], seededRandom(1))
+      checkRandomEvents(
+        drunkPlayer,
+        makeLocation(),
+        makeGameTime(),
+        [event],
+        [],
+        randomSeeded({ seed: 1 })
+      )
     ).toHaveLength(1)
   })
 })
@@ -245,7 +259,7 @@ describe('resolveEvent', () => {
         },
       ],
     })
-    const { outcome, diceResult } = resolveEvent(event, player, 0, seededRandom(1))
+    const { outcome, diceResult } = resolveEvent(event, player, 0, randomSeeded({ seed: 1 }))
     expect(outcome).toBe(choiceOutcome)
     expect(diceResult).toBeTruthy()
     expect(diceResult.stat).toBe('charm')
@@ -285,13 +299,23 @@ describe('resolveEvent — checked choice with a failure outcome', () => {
     })
 
   it('a passed check yields the choice outcome', () => {
-    const { outcome, diceResult } = resolveEvent(eventWith(1), makePlayer(), 0, seededRandom(1))
+    const { outcome, diceResult } = resolveEvent(
+      eventWith(1),
+      makePlayer(),
+      0,
+      randomSeeded({ seed: 1 })
+    )
     expect(diceResult.success).toBe(true)
     expect(outcome).toBe(win)
   })
 
   it('a failed check yields the failure outcome', () => {
-    const { outcome, diceResult } = resolveEvent(eventWith(999), makePlayer(), 0, seededRandom(1))
+    const { outcome, diceResult } = resolveEvent(
+      eventWith(999),
+      makePlayer(),
+      0,
+      randomSeeded({ seed: 1 })
+    )
     expect(diceResult.success).toBe(false)
     expect(outcome).toBe(lose)
   })
@@ -300,7 +324,7 @@ describe('resolveEvent — checked choice with a failure outcome', () => {
     const event = makeEvent({
       choices: [{ label: 'Try', check: { stat: 'charm', dc: 999 }, outcome: win }],
     })
-    const { outcome } = resolveEvent(event, makePlayer(), 0, seededRandom(1))
+    const { outcome } = resolveEvent(event, makePlayer(), 0, randomSeeded({ seed: 1 }))
     expect(outcome).toBe(win)
   })
 })

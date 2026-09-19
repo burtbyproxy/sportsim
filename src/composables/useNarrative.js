@@ -1,7 +1,7 @@
 import { ref, readonly } from 'vue'
 import { blendSober } from '../engine/blend.js'
 import { inspirationActive } from '../engine/inspiration.js'
-import { template, pickVariant, toNarrativeText } from '../utils/text.js'
+import { textFill, textVariantPick, narrativeTextCreate } from '../utils/text.js'
 import { randomInt } from '../utils/random.js'
 
 /**
@@ -422,15 +422,18 @@ function _buildNarrativeContext(player, gameTime, location) {
  */
 export function generateLocationNarrative(location, player, gameTime) {
   const context = _buildNarrativeContext(player, gameTime, location)
-  let text = pickVariant(location.descriptions || {}, context)
-  text = template(text, {
-    location: location.display || '',
-    playerName: player.name || 'you',
-    day: gameTime?.day ?? 1,
-    hour: gameTime?.hour ?? 0,
+  let text = textVariantPick({ variants: location.descriptions || {}, context })
+  text = textFill({
+    text,
+    params: {
+      location: location.display || '',
+      playerName: player.name || 'you',
+      day: gameTime?.day ?? 1,
+      hour: gameTime?.hour ?? 0,
+    },
   })
   text = _applyPerceptionFilters(text, player.psyche?.insanities)
-  return toNarrativeText(text)
+  return narrativeTextCreate({ text })
 }
 
 /**
@@ -441,12 +444,12 @@ export function generateLocationNarrative(location, player, gameTime) {
  */
 export function generateActionNarrative(actionResult) {
   // Why not is the loop's to say, in somebody's voice. There is no outcome to narrate.
-  if (actionResult.requirementFailure) return toNarrativeText('')
+  if (actionResult.requirementFailure) return narrativeTextCreate({ text: '' })
   const outcome = actionResult.outcome
-  if (!outcome) return toNarrativeText('')
+  if (!outcome) return narrativeTextCreate({ text: '' })
   if (outcome.narrative?.tokens) return outcome.narrative
-  if (typeof outcome.narrative === 'string') return toNarrativeText(outcome.narrative)
-  return toNarrativeText('')
+  if (typeof outcome.narrative === 'string') return narrativeTextCreate({ text: outcome.narrative })
+  return narrativeTextCreate({ text: '' })
 }
 
 /**
@@ -457,7 +460,7 @@ export function generateActionNarrative(actionResult) {
  * @returns {NarrativeText}
  */
 export function generateEventNarrative(event, player) {
-  if (!event.narrative) return toNarrativeText('')
+  if (!event.narrative) return narrativeTextCreate({ text: '' })
   if (event.narrative.tokens) {
     const insanities = player.psyche?.insanities ?? []
     if (insanities.length === 0) return event.narrative
@@ -469,10 +472,10 @@ export function generateEventNarrative(event, player) {
   }
   if (typeof event.narrative === 'string') {
     const filtered = _applyPerceptionFilters(
-      template(event.narrative, { playerName: player.name || 'you' }),
+      textFill({ text: event.narrative, params: { playerName: player.name || 'you' } }),
       player.psyche?.insanities
     )
-    return toNarrativeText(filtered)
+    return narrativeTextCreate({ text: filtered })
   }
-  return toNarrativeText('')
+  return narrativeTextCreate({ text: '' })
 }

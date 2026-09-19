@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { createClock, advanceClock, formatTime, durationFormat } from './clock.js'
+import { clockCreate, clockAdvance, clockFormat, durationFormat } from './clock.js'
 
-describe('createClock', () => {
+describe('clockCreate', () => {
   it('starts Monday at 8:00 in the morning, tick zero, day one', () => {
-    expect(createClock()).toEqual({
+    expect(clockCreate()).toEqual({
       tick: 0,
       day: 1,
       hour: 8,
@@ -14,15 +14,25 @@ describe('createClock', () => {
   })
 })
 
-describe('advanceClock', () => {
+describe('clockAdvance', () => {
   it('a tick is fifteen minutes', () => {
-    expect(advanceClock(createClock(), 1)).toMatchObject({ tick: 1, hour: 8, minute: 15 })
-    expect(advanceClock(createClock(), 3)).toMatchObject({ hour: 8, minute: 45 })
-    expect(advanceClock(createClock(), 4)).toMatchObject({ hour: 9, minute: 0 })
+    expect(clockAdvance({ gameTime: clockCreate(), ticks: 1 })).toMatchObject({
+      tick: 1,
+      hour: 8,
+      minute: 15,
+    })
+    expect(clockAdvance({ gameTime: clockCreate(), ticks: 3 })).toMatchObject({
+      hour: 8,
+      minute: 45,
+    })
+    expect(clockAdvance({ gameTime: clockCreate(), ticks: 4 })).toMatchObject({
+      hour: 9,
+      minute: 0,
+    })
   })
 
   it('names the period of the day', () => {
-    const at = (ticks) => advanceClock(createClock(), ticks).period
+    const at = (ticks) => clockAdvance({ gameTime: clockCreate(), ticks }).period
     expect(at(0)).toBe('morning') // 8:00
     expect(at(16)).toBe('afternoon') // 12:00
     expect(at(36)).toBe('evening') // 17:00
@@ -32,12 +42,12 @@ describe('advanceClock', () => {
   })
 
   it('rolls over midnight into the next day and the next weekday', () => {
-    const midnight = advanceClock(createClock(), 64)
+    const midnight = clockAdvance({ gameTime: clockCreate(), ticks: 64 })
     expect(midnight).toMatchObject({ hour: 0, minute: 0, day: 2, dayOfWeek: 'tuesday' })
   })
 
   it('wraps the week: seven days on it is Monday again', () => {
-    expect(advanceClock(createClock(), 96 * 7)).toMatchObject({
+    expect(clockAdvance({ gameTime: clockCreate(), ticks: 96 * 7 })).toMatchObject({
       day: 8,
       dayOfWeek: 'monday',
       hour: 8,
@@ -45,18 +55,24 @@ describe('advanceClock', () => {
   })
 
   it('does not mutate the time it was given', () => {
-    const start = createClock()
-    advanceClock(start, 10)
+    const start = clockCreate()
+    clockAdvance({ gameTime: start, ticks: 10 })
     expect(start.tick).toBe(0)
   })
 })
 
-describe('formatTime', () => {
+describe('clockFormat', () => {
   it('reads like a clock on a wall', () => {
-    expect(formatTime(createClock())).toBe('Monday 8:00 AM')
-    expect(formatTime(advanceClock(createClock(), 17))).toBe('Monday 12:15 PM')
-    expect(formatTime(advanceClock(createClock(), 64))).toBe('Tuesday 12:00 AM')
-    expect(formatTime(advanceClock(createClock(), 61))).toBe('Monday 11:15 PM')
+    expect(clockFormat({ gameTime: clockCreate() })).toBe('Monday 8:00 AM')
+    expect(clockFormat({ gameTime: clockAdvance({ gameTime: clockCreate(), ticks: 17 }) })).toBe(
+      'Monday 12:15 PM'
+    )
+    expect(clockFormat({ gameTime: clockAdvance({ gameTime: clockCreate(), ticks: 64 }) })).toBe(
+      'Tuesday 12:00 AM'
+    )
+    expect(clockFormat({ gameTime: clockAdvance({ gameTime: clockCreate(), ticks: 61 }) })).toBe(
+      'Monday 11:15 PM'
+    )
   })
 })
 

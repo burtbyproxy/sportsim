@@ -24,7 +24,7 @@
  * result struct out.
  */
 
-import { weightedPick, shuffle, randomInt } from '../utils/random.js'
+import { randomPickWeighted, randomShuffle, randomInt } from '../utils/random.js'
 import { resultOk, resultFail } from './result.js'
 import { numberClamp } from '../utils/number.js'
 
@@ -165,15 +165,8 @@ function _wordsOffer({ game, state, round, personaId, rng }) {
   const lean = game.params.personaLean?.[personaId] ?? null
   // The persona in charge leans on the draw: two of the three come from its register.
   const slots = lean
-    ? [
-        lean,
-        lean,
-        ...shuffle(
-          registers.filter((r) => r !== lean),
-          rng
-        ),
-      ]
-    : shuffle(registers, rng)
+    ? [lean, lean, ...randomShuffle({ items: registers.filter((r) => r !== lean), rng })]
+    : randomShuffle({ items: registers, rng })
   const picks = []
   for (const register of slots) {
     if (picks.length === game.params.picksPerRound) break
@@ -250,7 +243,7 @@ const _readRoom = {
       }
     }
     const move = game.params.transitions[state.crowd][choiceId]
-    const crowd = weightedPick(move.to, (t) => t.weight, rng).crowd
+    const crowd = randomPickWeighted({ items: move.to, weightOf: (t) => t.weight, rng }).crowd
     const round = state.offer.round + 1
     return {
       state: {

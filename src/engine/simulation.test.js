@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { simulateTick } from './simulation.js'
-import { seededRandom } from '../utils/random.js'
-import { advanceClock, createClock } from './clock.js'
+import { randomSeeded } from '../utils/random.js'
+import { clockAdvance, clockCreate } from './clock.js'
 
 // --- Helpers ---
 
@@ -83,7 +83,7 @@ describe('simulateTick — fixed tier', () => {
   it('places character at scheduled location during scheduled hours', () => {
     const char = makeFixed('bartender')
     const gameTime = makeGameTime(20) // 8pm — inside 16:00-02:00 shift
-    const alwaysPresent = () => 0 // chance(0.x, rng) where rng < probability → true
+    const alwaysPresent = () => 0 // randomChance({ probability: 0.x, rng }) where rng < probability → true
     const updates = simulateTick([char], gameTime, alwaysPresent)
     expect(updates[0].locationId).toBe('blue_parrot')
   })
@@ -91,7 +91,7 @@ describe('simulateTick — fixed tier', () => {
   it('places character off-map outside scheduled hours', () => {
     const char = makeFixed('bartender')
     const gameTime = makeGameTime(10) // 10am — outside shift
-    const updates = simulateTick([char], gameTime, seededRandom(1))
+    const updates = simulateTick([char], gameTime, randomSeeded({ seed: 1 }))
     expect(updates[0].locationId).toBeNull()
   })
 
@@ -105,13 +105,13 @@ describe('simulateTick — fixed tier', () => {
 
   it('never returns statusChanges for fixed tier', () => {
     const char = makeFixed('bartender')
-    const updates = simulateTick([char], makeGameTime(20), seededRandom(1))
+    const updates = simulateTick([char], makeGameTime(20), randomSeeded({ seed: 1 }))
     expect(updates[0].statusChanges).toBeUndefined()
   })
 
   it('returns correct id', () => {
     const char = makeFixed('my_bartender')
-    const updates = simulateTick([char], makeGameTime(20), seededRandom(1))
+    const updates = simulateTick([char], makeGameTime(20), randomSeeded({ seed: 1 }))
     expect(updates[0].id).toBe('my_bartender')
   })
 })
@@ -131,7 +131,7 @@ describe('simulateTick — routine tier', () => {
     const char = makeRoutine('carl')
     // At 17:15, work shift ended (endHour=17) and carl is heading to bar
     const gameTime = makeGameTime(17, 15)
-    const updates = simulateTick([char], gameTime, seededRandom(1))
+    const updates = simulateTick([char], gameTime, randomSeeded({ seed: 1 }))
     expect(updates[0].locationId).toBe('bar') // transit destination
   })
 
@@ -147,7 +147,7 @@ describe('simulateTick — routine tier', () => {
 
   it('does not return statusChanges for routine tier', () => {
     const char = makeRoutine('carl')
-    const updates = simulateTick([char], makeGameTime(10), seededRandom(1))
+    const updates = simulateTick([char], makeGameTime(10), randomSeeded({ seed: 1 }))
     expect(updates[0].statusChanges).toBeUndefined()
   })
 })
@@ -165,7 +165,7 @@ describe('simulateTick — full tier', () => {
 
   it('returns statusChanges for full tier', () => {
     const char = makeFull('protagonist')
-    const updates = simulateTick([char], makeGameTime(3), seededRandom(1))
+    const updates = simulateTick([char], makeGameTime(3), randomSeeded({ seed: 1 }))
     expect(updates[0].statusChanges).toBeDefined()
     // hunger should decrease
     expect(updates[0].statusChanges.hunger).toBe(-1)
@@ -193,7 +193,7 @@ describe('simulateTick — full tier', () => {
 
   it('full-sim character with no status tracks no decay', () => {
     const char = { ...makeFull('ghost'), status: null }
-    const updates = simulateTick([char], makeGameTime(3), seededRandom(1))
+    const updates = simulateTick([char], makeGameTime(3), randomSeeded({ seed: 1 }))
     expect(updates[0].statusChanges).toBeUndefined()
   })
 })
@@ -204,7 +204,7 @@ describe('simulateTick — multiple characters', () => {
   it('handles all three tiers in one call', () => {
     const chars = [makeFixed('bartender'), makeRoutine('carl'), makeFull('protagonist')]
     const gameTime = makeGameTime(20)
-    const updates = simulateTick(chars, gameTime, seededRandom(42))
+    const updates = simulateTick(chars, gameTime, randomSeeded({ seed: 42 }))
     expect(updates).toHaveLength(3)
     expect(updates.map((u) => u.id)).toEqual(['bartender', 'carl', 'protagonist'])
   })
@@ -212,8 +212,8 @@ describe('simulateTick — multiple characters', () => {
   it('is reproducible with seeded RNG', () => {
     const chars = [makeFixed('a'), makeFixed('b'), makeFixed('c')]
     const gameTime = makeGameTime(20)
-    const run1 = simulateTick(chars, gameTime, seededRandom(99))
-    const run2 = simulateTick(chars, gameTime, seededRandom(99))
+    const run1 = simulateTick(chars, gameTime, randomSeeded({ seed: 99 }))
+    const run2 = simulateTick(chars, gameTime, randomSeeded({ seed: 99 }))
     expect(run1.map((u) => u.locationId)).toEqual(run2.map((u) => u.locationId))
   })
 })
@@ -223,15 +223,15 @@ describe('simulateTick — multiple characters', () => {
 describe('simulateTick — 24-hour integration (96 ticks)', () => {
   it('carl moves through his schedule over a full day', () => {
     const carl = makeRoutine('carl')
-    const rng = seededRandom(7)
-    let clock = createClock() // Monday 8:00 AM, tick 0
+    const rng = randomSeeded({ seed: 7 })
+    let clock = clockCreate() // Monday 8:00 AM, tick 0
 
     const locationLog = []
 
     for (let i = 0; i < 96; i++) {
       const updates = simulateTick([carl], clock, rng)
       locationLog.push(updates[0].locationId)
-      clock = advanceClock(clock, 1)
+      clock = clockAdvance({ gameTime: clock, ticks: 1 })
     }
 
     // Carl should have visited work (9-17), bar (17-23), and home (23-9) over the day
@@ -252,7 +252,7 @@ describe('simulateTick — performance', () => {
       ...Array.from({ length: 2 }, (_, i) => makeFull(`full_${i}`)),
     ]
     const gameTime = makeGameTime(20)
-    const rng = seededRandom(1)
+    const rng = randomSeeded({ seed: 1 })
 
     const start = performance.now()
     simulateTick(chars, gameTime, rng)

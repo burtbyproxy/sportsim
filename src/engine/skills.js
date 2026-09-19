@@ -15,10 +15,10 @@
 import { SOBER_PERSONA_ID, blendSober } from './blend.js'
 import {
   checkModifier,
-  rollD20,
+  diceD20,
   statModifierItems,
-  isCriticalSuccess,
-  isCriticalFailure,
+  diceCriticalSuccess,
+  diceCriticalFailure,
 } from './dice.js'
 import { statXpApply } from './stats.js'
 import { resultOk, resultFail } from './result.js'
@@ -215,7 +215,7 @@ export function skillCheckRoll({
   const skillModifier = Math.floor(numberClamp({ value: skill.value, min: 0, max: 100 }) / 10)
   const statModifier = checkModifier({ player, statName: medium.stat })
   const situational = modifiers.reduce((sum, m) => sum + m.value, 0)
-  const natural = rollD20(rng)
+  const natural = diceD20({ rng })
   const modifier = skillModifier + statModifier + situational
   const total = natural + modifier
 
@@ -239,8 +239,8 @@ export function skillCheckRoll({
     total,
     dc,
     success: total >= dc,
-    criticalSuccess: isCriticalSuccess(natural),
-    criticalFailure: isCriticalFailure(natural),
+    criticalSuccess: diceCriticalSuccess({ natural }),
+    criticalFailure: diceCriticalFailure({ natural }),
     mediumId,
     stat: medium.stat,
     skillValue: skill.value,

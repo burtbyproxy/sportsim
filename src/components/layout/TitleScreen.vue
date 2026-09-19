@@ -55,6 +55,7 @@ import { useBoot } from '../../composables/useBoot.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
 import { useKeyboardNav } from '../../composables/useKeyboardNav.js'
 import { shortcutLabelParts } from '../../utils/menu.js'
+import { textFill } from '../../utils/text.js'
 import { version } from '../../../package.json'
 
 const router = useRouter()
@@ -76,7 +77,9 @@ onMounted(() => {
   menuEl.value?.focus()
 })
 
-const bootLines = (config?.bootLines ?? []).map((line) => line.replace('{version}', version))
+const bootLines = (config?.bootLines ?? []).map((line) =>
+  textFill({ text: line, params: { version } })
+)
 
 function startNewGame() {
   const started = boot.gameNew()

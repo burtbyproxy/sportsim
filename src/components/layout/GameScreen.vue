@@ -159,7 +159,7 @@ import { useNarrative, narrativeSkipBindings } from '../../composables/useNarrat
 import { useGameLoop } from '../../composables/useGameLoop.js'
 import { useSave } from '../../composables/useSave.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
-import { formatTime } from '../../engine/clock.js'
+import { clockFormat } from '../../engine/clock.js'
 import GameHeader from './GameHeader.vue'
 import GameFooter from './GameFooter.vue'
 import LocationView from '../game/LocationView.vue'
@@ -203,7 +203,7 @@ const activeTab = ref('status')
 
 // === Status sidebar data ===
 
-const formattedTime = computed(() => formatTime(game.time))
+const formattedTime = computed(() => clockFormat({ gameTime: game.time }))
 const money = computed(() => game.playerMoney)
 const formattedMoney = computed(() => {
   const m = money.value

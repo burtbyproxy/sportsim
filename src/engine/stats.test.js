@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getStatDecayEffects, statXpApply, DECAY_CONFIG, statusChangesApply } from './stats.js'
+import { statusDecayChanges, statXpApply, DECAY_CONFIG, statusChangesApply } from './stats.js'
 
 function makePlayer(overrides = {}) {
   return {
@@ -67,9 +67,9 @@ describe('DECAY_CONFIG', () => {
   })
 })
 
-// --- getStatDecayEffects ---
+// --- statusDecayChanges ---
 
-describe('getStatDecayEffects', () => {
+describe('statusDecayChanges', () => {
   it('reports clean cents, not floating-point dust, whatever the rates are', () => {
     const config = {
       hunger: { ratePerTick: -0.1, min: 0, max: 100 },
@@ -77,7 +77,7 @@ describe('getStatDecayEffects', () => {
       mood: { ratePerTick: -0.1, baseline: 40, min: 0, max: 100 },
     }
     const player = { status: { hunger: 50.3, energy: 50.3, mood: 40.3 } }
-    expect(getStatDecayEffects(player, 1, config)).toEqual({
+    expect(statusDecayChanges({ status: player.status, ticksElapsed: 1, config })).toEqual({
       hunger: -0.1,
       energy: -0.1,
       mood: -0.1,
@@ -85,14 +85,14 @@ describe('getStatDecayEffects', () => {
   })
 
   it('returns empty object for 0 ticks', () => {
-    expect(getStatDecayEffects(makePlayer(), 0)).toEqual({})
+    expect(statusDecayChanges({ status: makePlayer().status, ticksElapsed: 0 })).toEqual({})
   })
 
   it('decreases hunger each tick', () => {
     const player = makePlayer({
       status: { hunger: 50, sobriety: 80, energy: 80, mood: 40, health: 100, money: 0 },
     })
-    const changes = getStatDecayEffects(player, 1)
+    const changes = statusDecayChanges({ status: player.status, ticksElapsed: 1 })
     expect(changes.hunger).toBe(-1)
   })
 
@@ -100,7 +100,7 @@ describe('getStatDecayEffects', () => {
     const player = makePlayer({
       status: { hunger: 50, sobriety: 80, energy: 80, mood: 40, health: 100, money: 0 },
     })
-    const changes = getStatDecayEffects(player, 2)
+    const changes = statusDecayChanges({ status: player.status, ticksElapsed: 2 })
     expect(changes.energy).toBe(-1) // -0.5 * 2
   })
 
@@ -108,7 +108,7 @@ describe('getStatDecayEffects', () => {
     const player = makePlayer({
       status: { hunger: 1, sobriety: 80, energy: 80, mood: 40, health: 100, money: 0 },
     })
-    const changes = getStatDecayEffects(player, 5)
+    const changes = statusDecayChanges({ status: player.status, ticksElapsed: 5 })
     expect(player.status.hunger + changes.hunger).toBeGreaterThanOrEqual(0)
   })
 
@@ -116,7 +116,7 @@ describe('getStatDecayEffects', () => {
     const player = makePlayer({
       status: { hunger: 50, sobriety: 60, energy: 80, mood: 40, health: 100, money: 0 },
     })
-    const changes = getStatDecayEffects(player, 10)
+    const changes = statusDecayChanges({ status: player.status, ticksElapsed: 10 })
     expect(changes.sobriety).toBeUndefined()
   })
 
@@ -124,7 +124,7 @@ describe('getStatDecayEffects', () => {
     const player = makePlayer({
       status: { hunger: 50, sobriety: 80, energy: 80, mood: 80, health: 100, money: 0 },
     })
-    const changes = getStatDecayEffects(player, 4)
+    const changes = statusDecayChanges({ status: player.status, ticksElapsed: 4 })
     expect(changes.mood).toBe(-1) // -0.25 * 4
   })
 
@@ -132,7 +132,7 @@ describe('getStatDecayEffects', () => {
     const player = makePlayer({
       status: { hunger: 50, sobriety: 80, energy: 80, mood: 10, health: 100, money: 0 },
     })
-    const changes = getStatDecayEffects(player, 4)
+    const changes = statusDecayChanges({ status: player.status, ticksElapsed: 4 })
     expect(changes.mood).toBe(1) // +0.25 * 4
   })
 
@@ -140,7 +140,7 @@ describe('getStatDecayEffects', () => {
     const player = makePlayer({
       status: { hunger: 50, sobriety: 80, energy: 80, mood: 40, health: 100, money: 0 },
     })
-    const changes = getStatDecayEffects(player, 1)
+    const changes = statusDecayChanges({ status: player.status, ticksElapsed: 1 })
     expect(changes.mood).toBeUndefined()
   })
 
@@ -148,7 +148,7 @@ describe('getStatDecayEffects', () => {
     const player = makePlayer({
       status: { hunger: 50, sobriety: 80, energy: 80, mood: 41, health: 100, money: 0 },
     })
-    const changes = getStatDecayEffects(player, 100)
+    const changes = statusDecayChanges({ status: player.status, ticksElapsed: 100 })
     expect(41 + (changes.mood ?? 0)).toBeGreaterThanOrEqual(40)
   })
 
@@ -157,7 +157,11 @@ describe('getStatDecayEffects', () => {
       status: { hunger: 50, sobriety: 80, energy: 80, mood: 40, health: 100, money: 0 },
     })
     const customConfig = { ...DECAY_CONFIG, hunger: { ratePerTick: -2, min: 0, max: 100 } }
-    const changes = getStatDecayEffects(player, 1, customConfig)
+    const changes = statusDecayChanges({
+      status: player.status,
+      ticksElapsed: 1,
+      config: customConfig,
+    })
     expect(changes.hunger).toBe(-2)
   })
 })

@@ -18,7 +18,7 @@ import {
   PUNCTUATION_PAUSE,
 } from '../src/composables/useNarrative.js'
 import { useKeyboard } from '../src/composables/useKeyboard.js'
-import { toNarrativeText } from '../src/utils/text.js'
+import { narrativeTextCreate } from '../src/utils/text.js'
 
 const SAMPLE_PROSE =
   'The basement has a cot, a space heater that smells like burning dust, and a window ' +
@@ -32,8 +32,8 @@ describe('useNarrative clearLog', () => {
 
   it('drops the in-flight render and everything queued, keeping only what comes after', async () => {
     const narrative = useNarrative()
-    narrative.enqueue(toNarrativeText('Old scene, first paragraph.'))
-    narrative.enqueue(toNarrativeText('Old scene, second paragraph.'))
+    narrative.enqueue(narrativeTextCreate({ text: 'Old scene, first paragraph.' }))
+    narrative.enqueue(narrativeTextCreate({ text: 'Old scene, second paragraph.' }))
 
     // Let a few characters of the first paragraph land
     await vi.advanceTimersByTimeAsync(40)
@@ -41,7 +41,7 @@ describe('useNarrative clearLog', () => {
     expect(narrative.queue.value.length).toBe(1)
 
     narrative.clearLog()
-    narrative.enqueue(toNarrativeText('New scene.'))
+    narrative.enqueue(narrativeTextCreate({ text: 'New scene.' }))
 
     await vi.advanceTimersByTimeAsync(5000)
 
@@ -52,7 +52,7 @@ describe('useNarrative clearLog', () => {
 
   it('leaves no partial token text behind', async () => {
     const narrative = useNarrative()
-    narrative.enqueue(toNarrativeText('Some prose that gets cut off.'))
+    narrative.enqueue(narrativeTextCreate({ text: 'Some prose that gets cut off.' }))
     await vi.advanceTimersByTimeAsync(40)
     expect(narrative.currentTokenProgress.value.length).toBeGreaterThan(0)
 
@@ -67,7 +67,7 @@ describe('useNarrative clearLog', () => {
     const completed = vi.fn()
     narrative.on('animation-complete', completed)
 
-    narrative.enqueue(toNarrativeText('Cleared before it finishes.'))
+    narrative.enqueue(narrativeTextCreate({ text: 'Cleared before it finishes.' }))
     await vi.advanceTimersByTimeAsync(40)
     narrative.clearLog()
     await vi.advanceTimersByTimeAsync(5000)
@@ -128,7 +128,7 @@ describe('narrativeSkipBindings', () => {
     const narrative = useNarrative()
     const wrapper = mountWithBindings(narrativeSkipBindings({ narrative }))
 
-    narrative.enqueue(toNarrativeText(SAMPLE_PROSE))
+    narrative.enqueue(narrativeTextCreate({ text: SAMPLE_PROSE }))
     await vi.advanceTimersByTimeAsync(40)
     expect(narrative.isAnimating.value).toBe(true)
 

@@ -22,7 +22,7 @@ import {
   actionApplies,
 } from '../engine/actions.js'
 import {
-  getStatDecayEffects,
+  statusDecayChanges,
   STAT_XP_CHECK_SUCCESS,
   STAT_XP_CHECK_FAILURE,
 } from '../engine/stats.js'
@@ -46,7 +46,7 @@ import {
   generateEventNarrative,
   generateLocationNarrative,
 } from './useNarrative.js'
-import { toNarrativeText } from '../utils/text.js'
+import { narrativeTextCreate } from '../utils/text.js'
 import { sim } from '../workers/simulation-api.js'
 import { moneyFormat } from '../utils/money.js'
 
@@ -103,7 +103,7 @@ export function useGameLoop({
     game.advanceTime(ticks)
 
     // 2. Apply stat decay
-    const decayChanges = getStatDecayEffects(game.player, ticks)
+    const decayChanges = statusDecayChanges({ status: game.player.status, ticksElapsed: ticks })
     if (Object.keys(decayChanges).length > 0) {
       game.applyStatusChanges(decayChanges)
     }
@@ -247,7 +247,7 @@ export function useGameLoop({
     if (outcome.narrative) {
       const text =
         typeof outcome.narrative === 'string'
-          ? toNarrativeText(outcome.narrative)
+          ? narrativeTextCreate({ text: outcome.narrative })
           : outcome.narrative
       _narrativeEnqueue(text)
     }
@@ -289,7 +289,7 @@ export function useGameLoop({
   function _voiceEnqueue({ code, params = {} }) {
     if (!narrative) return
     const text = game.voiceLine({ code, params })
-    if (text) _narrativeEnqueue(toNarrativeText(text))
+    if (text) _narrativeEnqueue(narrativeTextCreate({ text }))
   }
 
   /**
@@ -308,7 +308,7 @@ export function useGameLoop({
 
   /** Prose that is already in somebody's voice: a piece's own words. */
   function _voiceLiteralEnqueue(text) {
-    if (narrative && text) _narrativeEnqueue(toNarrativeText(text))
+    if (narrative && text) _narrativeEnqueue(narrativeTextCreate({ text }))
   }
 
   /**
@@ -620,7 +620,8 @@ export function useGameLoop({
     if (!result.success && result.requirementFailure) {
       // Requirements not met — shouldn't happen if the menu is correct, but say why.
       const why = game.requirementReason(result.requirementFailure)
-      if (narrative && why) _narrativeEnqueue(toNarrativeText(why, { style: 'italic' }))
+      if (narrative && why)
+        _narrativeEnqueue(narrativeTextCreate({ text: why, style: { style: 'italic' } }))
       return
     }
 

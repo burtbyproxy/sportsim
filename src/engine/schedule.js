@@ -13,11 +13,12 @@
  *
  * endHour is exclusive: a window ending at 2 expires at 02:00 (i.e. hour must be < 2).
  *
- * @param {Object} entry - ScheduleEntry
- * @param {number} hour - 0-23
+ * @param {{ entry: Object, hour: number }} input
+ *   entry — ScheduleEntry
+ *   hour — 0-23
  * @returns {boolean}
  */
-export function isHourInWindow(entry, hour) {
+export function scheduleEntryCoversHour({ entry, hour }) {
   const { startHour, endHour } = entry
   if (startHour === endHour) return false // zero-length window
   if (startHour < endHour) {
@@ -31,11 +32,12 @@ export function isHourInWindow(entry, hour) {
 
 /**
  * Returns true if the schedule entry applies to a given day of week.
- * @param {Object} entry - ScheduleEntry
- * @param {string} dayOfWeek - "monday" through "sunday"
+ * @param {{ entry: Object, dayOfWeek: string }} input
+ *   entry — ScheduleEntry
+ *   dayOfWeek — "monday" through "sunday"
  * @returns {boolean}
  */
-export function entryMatchesDay(entry, dayOfWeek) {
+export function scheduleEntryCoversDay({ entry, dayOfWeek }) {
   if (!entry.days || entry.days.length === 0) return false
   return entry.days.includes('all') || entry.days.includes(dayOfWeek)
 }
@@ -45,15 +47,15 @@ export function entryMatchesDay(entry, dayOfWeek) {
  * Returns the first matching entry (entries should not overlap; first match wins).
  * Returns null if no entry matches.
  *
- * @param {Object} schedule - CharacterSchedule ({ entries: ScheduleEntry[] })
- * @param {number} hour - 0-23
- * @param {string} dayOfWeek
+ * @param {{ schedule: Object, hour: number, dayOfWeek: string }} input
+ *   schedule — CharacterSchedule ({ entries: ScheduleEntry[] })
+ *   hour — 0-23
  * @returns {Object|null} - ScheduleEntry or null
  */
-export function resolveSchedule(schedule, hour, dayOfWeek) {
+export function scheduleEntryResolve({ schedule, hour, dayOfWeek }) {
   if (!schedule || !schedule.entries || schedule.entries.length === 0) return null
   for (const entry of schedule.entries) {
-    if (entryMatchesDay(entry, dayOfWeek) && isHourInWindow(entry, hour)) {
+    if (scheduleEntryCoversDay({ entry, dayOfWeek }) && scheduleEntryCoversHour({ entry, hour })) {
       return entry
     }
   }
@@ -67,12 +69,13 @@ export function resolveSchedule(schedule, hour, dayOfWeek) {
  *
  * For routine and full simulation only — fixed characters are either there or not.
  *
- * @param {Object} schedule - CharacterSchedule
- * @param {number} hour - 0-23
- * @param {number} minute - 0-45
+ * @param {{ schedule: Object, hour: number, minute: number }} input
+ *   schedule — CharacterSchedule
+ *   hour — 0-23
+ *   minute — 0-45
  * @returns {boolean}
  */
-export function isInTransit(schedule, hour, minute) {
+export function scheduleTransitActive({ schedule, hour, minute }) {
   if (!schedule || !schedule.entries || schedule.entries.length < 2) return false
 
   // Find the entry that just ended
@@ -89,12 +92,11 @@ export function isInTransit(schedule, hour, minute) {
  * Returns the destination of a character currently in transit.
  * Finds the next schedule stop after the one that just ended.
  *
- * @param {Object} schedule - CharacterSchedule
- * @param {number} hour
- * @param {number} minute
+ * @param {{ schedule: Object, hour: number, minute: number }} input
+ *   schedule — CharacterSchedule
  * @returns {string|null} - locationId of destination, or null
  */
-export function getTransitDestination(schedule, hour, minute) {
+export function scheduleTransitDestination({ schedule, hour, minute }) {
   if (!schedule || !schedule.entries || schedule.entries.length < 2) return null
 
   const entries = schedule.entries

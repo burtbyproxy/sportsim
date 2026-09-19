@@ -3,7 +3,7 @@
  * Pure functions. Does NOT mutate player state. Returns changes for the store to apply.
  */
 
-import { rollCheck, rollContested } from './dice.js'
+import { checkRoll, checkContestedRoll, CONTEST_WINNERS } from './dice.js'
 import { inspirationActive } from './inspiration.js'
 import { inventoryHas } from './items.js'
 import { moneyFormat } from '../utils/money.js'
@@ -275,18 +275,14 @@ export function actionResolve({
       }
     }
 
-    const { winner, result1 } = rollContested(
-      player,
-      [],
-      check.stat,
-      npc,
-      [],
-      check.opposedStat,
-      rng
-    )
+    const contest = checkContestedRoll({
+      first: { player, statName: check.stat },
+      second: { player: npc, statName: check.opposedStat },
+      rng,
+    })
 
-    const playerWon = winner === 1
-    const diceResult = { ...result1, success: playerWon }
+    const playerWon = contest.winner === CONTEST_WINNERS.FIRST
+    const diceResult = { ...contest.first, success: playerWon }
     const outcome = _selectOutcome(action, diceResult)
 
     return {
@@ -298,7 +294,7 @@ export function actionResolve({
   }
 
   // Standard check
-  const diceResult = rollCheck(player, check.stat, [], check.dc, rng)
+  const diceResult = checkRoll({ player, statName: check.stat, modifiers: [], dc: check.dc, rng })
   const outcome = _selectOutcome(action, diceResult)
 
   return {

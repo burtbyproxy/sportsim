@@ -9,7 +9,7 @@ import {
   dosesApply,
   sobrietyDerive,
 } from './blend.js'
-import { seededRandom } from '../utils/random.js'
+import { randomSeeded } from '../utils/random.js'
 
 // --- Fixtures ---
 
@@ -495,7 +495,9 @@ describe('dosesApply', () => {
     const run = () =>
       Array.from(
         { length: 20 },
-        () => dosesApply({ player: makePlayer(), substances, doses, rng: seededRandom(7) }).data
+        () =>
+          dosesApply({ player: makePlayer(), substances, doses, rng: randomSeeded({ seed: 7 }) })
+            .data
       )
     expect(run()).toEqual(run())
   })

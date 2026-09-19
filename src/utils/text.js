@@ -3,16 +3,16 @@
  */
 
 /**
- * Simple {{var}} template replacement.
- * Unknown keys are left as-is.
- * @param {string} str
- * @param {Object<string, *>} vars
+ * Fill {name} placeholders from params: the one placeholder syntax content
+ * uses, in voices, descriptions, and the title screen alike. A name with no
+ * value (missing, null, undefined) stays as it is, so a gap shows.
+ * @param {{ text: string, params: Object<string, *> }} input
  * @returns {string}
  */
-export function template(str, vars) {
-  return str.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-    return key in vars ? String(vars[key]) : match
-  })
+export function textFill({ text, params }) {
+  return text.replace(/\{(\w+)\}/g, (token, name) =>
+    params[name] === undefined || params[name] === null ? token : String(params[name])
+  )
 }
 
 /**
@@ -20,15 +20,16 @@ export function template(str, vars) {
  * Most specific match wins — context keys are checked in order, first match wins.
  * Falls back to "default" if no context key matches.
  *
- * @param {Object<string, string>} variants - e.g. { default: "...", night: "...", drunk: "..." }
- * @param {Object<string, *>} context - e.g. { period: "night", sobriety: 20 }
+ * @param {{ variants: Object<string, string>, context?: Object<string, *> }} input
+ *   variants — e.g. { default: "...", night: "...", drunk: "..." }
+ *   context — e.g. { period: "night", sobriety: 20 }
  *   Special context keys checked (in priority order):
  *     - context keys whose names directly match variant keys (e.g. "drunk", "exhausted")
  *     - "period" value (e.g. "night")
  *     - "repeat" if context.visitCount > 1
  * @returns {string}
  */
-export function pickVariant(variants, context = {}) {
+export function textVariantPick({ variants, context = {} }) {
   if (!variants) return ''
 
   // Direct context key match — check each context key to see if it's a variant name
@@ -54,15 +55,15 @@ export function pickVariant(variants, context = {}) {
 
 /**
  * Converts a plain string into a NarrativeText object with default token settings.
- * @param {string} str
- * @param {Partial<NarrativeToken>} [style] - token overrides
+ * @param {{ text: string, style?: Partial<NarrativeToken> }} input
+ *   style — token overrides
  * @returns {NarrativeText}
  */
-export function toNarrativeText(str, style = {}) {
+export function narrativeTextCreate({ text, style = {} }) {
   return {
     tokens: [
       {
-        text: str,
+        text,
         style: style.style || 'normal',
         color: style.color || null,
         speed: style.speed || 'normal',

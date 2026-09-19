@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { requirementsMeet, actionsAvailable, actionResolve, actionApplies } from './actions.js'
-import { seededRandom } from '../utils/random.js'
+import { randomSeeded } from '../utils/random.js'
 
 function makePlayer(overrides = {}) {
   return {
@@ -288,7 +288,7 @@ describe('actionResolve', () => {
       action,
       gameTime: makeGameTime(),
       characters: [],
-      rng: seededRandom(1),
+      rng: randomSeeded({ seed: 1 }),
     })
     expect(result.requirementFailure).toBeTruthy()
     expect(result.outcome).toBeNull()
@@ -301,7 +301,7 @@ describe('actionResolve', () => {
       action,
       gameTime: makeGameTime(),
       characters: [],
-      rng: seededRandom(1),
+      rng: randomSeeded({ seed: 1 }),
     })
     expect(result.success).toBe(true)
     expect(result.outcome).toBe(action.success)
@@ -318,7 +318,7 @@ describe('actionResolve', () => {
       action,
       gameTime: makeGameTime(),
       characters: [],
-      rng: seededRandom(1),
+      rng: randomSeeded({ seed: 1 }),
     })
     expect(result.diceResult).toBeTruthy()
     // Result depends on roll but dc=1, charm=10, should almost always succeed
@@ -337,7 +337,7 @@ describe('actionResolve', () => {
       action,
       gameTime: makeGameTime(),
       characters: [],
-      rng: seededRandom(1),
+      rng: randomSeeded({ seed: 1 }),
     })
     // Only a natural 1 is a crit fail, otherwise just failure
     expect(result.success).toBe(false)
@@ -393,7 +393,7 @@ describe('actionResolve', () => {
       action,
       gameTime: makeGameTime(),
       characters: [npc],
-      rng: seededRandom(1),
+      rng: randomSeeded({ seed: 1 }),
     })
     expect(result.diceResult).toBeTruthy()
     expect(result.outcome).toBeTruthy()
@@ -408,7 +408,7 @@ describe('actionResolve', () => {
       action,
       gameTime: makeGameTime(),
       characters: [],
-      rng: seededRandom(1),
+      rng: randomSeeded({ seed: 1 }),
     })
     expect(result.success).toBe(true)
     expect(result.diceResult).toBeNull()
