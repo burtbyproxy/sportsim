@@ -2,18 +2,50 @@
   "id": "tyler",
   "name": "Tyler",
   "description": "Looks nineteen. Might be nineteen. Might be seventeen. Nobody has asked and nobody is going to. Tyler has the kind of face that could be any age between sixteen and twenty-two depending on the lighting, and the Mouse Trap's lighting is not helping. He wears a backwards cap and a hoodie under his bar apron, which is not standard bartender attire, but nothing about the Mouse Trap is standard. He pours like he learned from watching someone pour.",
-  "habit": "Checks his pager. Constantly. Whatever's on that pager is more interesting than the Mouse Trap, which is a low bar, but still.",
+  "habit": "Checks his pager. Constantly. Whatever's on that pager is more interesting than this bar, which is a low bar, but still.",
   "voice": "Says 'dude' a lot. Asks if things are 'cool' in a way that suggests he needs them to be cool. Ends statements like they're questions? Talks about bands you've never heard of with total authority.",
   "simulation": "fixed",
   "stats": {
-    "stamina": { "base": 55, "modifiers": [], "xp": 0 },
-    "toughness": { "base": 30, "modifiers": [], "xp": 0 },
-    "wits": { "base": 35, "modifiers": [], "xp": 0 },
-    "creativity": { "base": 40, "modifiers": [], "xp": 0 },
-    "charm": { "base": 35, "modifiers": [], "xp": 0 },
-    "reputation": { "base": 10, "modifiers": [], "xp": 0 },
-    "luck": { "base": 45, "modifiers": [], "xp": 0 },
-    "karma": { "base": 45, "modifiers": [], "xp": 0 }
+    "stamina": {
+      "base": 55,
+      "modifiers": [],
+      "xp": 0
+    },
+    "toughness": {
+      "base": 30,
+      "modifiers": [],
+      "xp": 0
+    },
+    "wits": {
+      "base": 35,
+      "modifiers": [],
+      "xp": 0
+    },
+    "creativity": {
+      "base": 40,
+      "modifiers": [],
+      "xp": 0
+    },
+    "charm": {
+      "base": 35,
+      "modifiers": [],
+      "xp": 0
+    },
+    "reputation": {
+      "base": 10,
+      "modifiers": [],
+      "xp": 0
+    },
+    "luck": {
+      "base": 45,
+      "modifiers": [],
+      "xp": 0
+    },
+    "karma": {
+      "base": 45,
+      "modifiers": [],
+      "xp": 0
+    }
   },
   "status": null,
   "psyche": {

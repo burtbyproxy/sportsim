@@ -2,18 +2,50 @@
   "id": "greg",
   "name": "Greg",
   "description": "Thin, dark hair, goatee that he thinks looks better than it does. Greg wears black t-shirts tucked into black jeans and has the energy of a man who has accepted responsibility for a building he does not own. He checks the camera monitor behind the bar the way other people check their watch. His eyes move to the door every time it opens. He is always working.",
-  "habit": "Checks the security camera feed. The Blue Parrot has cameras out back on the smoke porch, which is the only professional piece of infrastructure in the entire building. Greg watches that monitor like it owes him money.",
+  "habit": "Checks the security camera feed. The bar has cameras out back on the smoke porch, which is the only professional piece of infrastructure in the entire building. Greg watches that monitor like it owes him money.",
   "voice": "Direct. Doesn't waste words. 'What are you having.' Not a question. 'Time to go.' Not a suggestion. When he has to deal with something — a fight, a fake ID, someone in the basement — he handles it with the flat calm of a man who has done this exact thing forty times.",
   "simulation": "fixed",
   "stats": {
-    "stamina": { "base": 55, "modifiers": [], "xp": 0 },
-    "toughness": { "base": 50, "modifiers": [], "xp": 0 },
-    "wits": { "base": 60, "modifiers": [], "xp": 0 },
-    "creativity": { "base": 20, "modifiers": [], "xp": 0 },
-    "charm": { "base": 40, "modifiers": [], "xp": 0 },
-    "reputation": { "base": 45, "modifiers": [], "xp": 0 },
-    "luck": { "base": 35, "modifiers": [], "xp": 0 },
-    "karma": { "base": 55, "modifiers": [], "xp": 0 }
+    "stamina": {
+      "base": 55,
+      "modifiers": [],
+      "xp": 0
+    },
+    "toughness": {
+      "base": 50,
+      "modifiers": [],
+      "xp": 0
+    },
+    "wits": {
+      "base": 60,
+      "modifiers": [],
+      "xp": 0
+    },
+    "creativity": {
+      "base": 20,
+      "modifiers": [],
+      "xp": 0
+    },
+    "charm": {
+      "base": 40,
+      "modifiers": [],
+      "xp": 0
+    },
+    "reputation": {
+      "base": 45,
+      "modifiers": [],
+      "xp": 0
+    },
+    "luck": {
+      "base": 35,
+      "modifiers": [],
+      "xp": 0
+    },
+    "karma": {
+      "base": 55,
+      "modifiers": [],
+      "xp": 0
+    }
   },
   "status": null,
   "psyche": {
