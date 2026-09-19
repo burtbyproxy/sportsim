@@ -185,6 +185,10 @@ export function saveMigrate({ save }) {
       }
     }
     for (const location of locations) delete location.discovered
+    // Nobody had been hit on the head yet: confusion is derived on load.
+    for (const subject of [migrated.player, ...Object.values(migrated.characters ?? {})]) {
+      if (subject) subject.dazed = 0
+    }
     migrated.version = 8
   }
   return migrated

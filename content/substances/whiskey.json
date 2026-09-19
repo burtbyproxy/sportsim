@@ -2,6 +2,7 @@
   "id": "whiskey",
   "display": "Whiskey",
   "family": "alcohol",
+  "confusionFactor": 0.4,
   "persona": {
     "id": "priest",
     "display": "The priest",
@@ -19,28 +20,61 @@
       "compulsion": "Get to a bar. Any bar."
     },
     "modifiers": [
-      { "stat": "toughness", "value": -3 },
-      { "stat": "charm", "value": -2 },
-      { "stat": "creativity", "value": 3 }
+      {
+        "stat": "toughness",
+        "value": -3
+      },
+      {
+        "stat": "charm",
+        "value": -2
+      },
+      {
+        "stat": "creativity",
+        "value": 3
+      }
     ]
   },
   "bands": [
     {
       "atLeast": 15,
       "modifiers": [
-        { "stat": "charm", "value": 3 },
-        { "stat": "creativity", "value": 2 },
-        { "stat": "wits", "value": -3 }
+        {
+          "stat": "charm",
+          "value": 3
+        },
+        {
+          "stat": "creativity",
+          "value": 2
+        },
+        {
+          "stat": "wits",
+          "value": -3
+        }
       ]
     },
     {
       "atLeast": 50,
       "modifiers": [
-        { "stat": "toughness", "value": 5 },
-        { "stat": "karma", "value": 2 },
-        { "stat": "charm", "value": 2 },
-        { "stat": "wits", "value": -8 },
-        { "stat": "luck", "value": -3 }
+        {
+          "stat": "toughness",
+          "value": 5
+        },
+        {
+          "stat": "karma",
+          "value": 2
+        },
+        {
+          "stat": "charm",
+          "value": 2
+        },
+        {
+          "stat": "wits",
+          "value": -8
+        },
+        {
+          "stat": "luck",
+          "value": -3
+        }
       ]
     }
   ]

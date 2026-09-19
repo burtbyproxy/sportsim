@@ -1,16 +1,29 @@
 {
   "id": "elated",
   "display": "Elated",
-  "source": { "status": "mood", "above": 80 },
+  "source": {
+    "status": "mood",
+    "above": 80
+  },
   "weight": 0.2,
+  "confusion": 5,
   "persona": {
     "id": "golden",
     "display": "Golden",
     "compulsion": "Everyone is a friend. Every idea is worth saying out loud."
   },
   "modifiers": [
-    { "stat": "charm", "value": 3 },
-    { "stat": "luck", "value": 2 },
-    { "stat": "wits", "value": -1 }
+    {
+      "stat": "charm",
+      "value": 3
+    },
+    {
+      "stat": "luck",
+      "value": 2
+    },
+    {
+      "stat": "wits",
+      "value": -1
+    }
   ]
 }

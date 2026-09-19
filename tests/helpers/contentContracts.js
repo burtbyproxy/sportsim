@@ -141,6 +141,10 @@ export function validateCharacter({ data, file }) {
       data.status.sobriety,
       `${file}: status.sobriety is derived from intoxications — declare intoxications instead`
     ).toBeUndefined()
+    expect(
+      data.status.confusion,
+      `${file}: status.confusion is derived — it comes from what is in them and what they are going through`
+    ).toBeUndefined()
   }
 
   // Intoxications / habituations: per-substance levels 0-100 (ids cross-checked below)
@@ -246,6 +250,9 @@ export function validateLocation({ data, file }) {
     expect(exit, `${file}: exit missing label`).toHaveProperty('label')
     expect(exit, `${file}: exit missing travelTime`).toHaveProperty('travelTime')
     expect(exit.travelTime, `${file}: travelTime must be >= 1`).toBeGreaterThanOrEqual(1)
+    expect(exit.locationId, `${file}: an exit never leads back to where it starts`).not.toBe(
+      data.id
+    )
     // A way out names where it goes the way the player sees it: never by a name they do not know.
     expect(
       exit.label,
@@ -352,6 +359,11 @@ export function validateOutcome({ outcome, label }) {
     ).toBeUndefined()
   }
   validateDoses({ doses: outcome.doses, label })
+  // A knock to the head: how dazed it leaves you, and it wears off.
+  if (outcome.dazed !== undefined && outcome.dazed !== null) {
+    expect(outcome.dazed, `${label}: dazed must be 1-100`).toBeGreaterThanOrEqual(1)
+    expect(outcome.dazed, `${label}: dazed must be 1-100`).toBeLessThanOrEqual(100)
+  }
   // Nothing in the game can grant a trauma yet; a non-null value would be silently ignored.
   expect(
     outcome.traumaGained ?? null,
@@ -617,6 +629,7 @@ export const SUBSTANCE_REQUIRED_FIELDS = [
   'id',
   'display',
   'family',
+  'confusionFactor',
   'persona',
   'decayPerTick',
   'habituationRate',
@@ -633,6 +646,9 @@ export function validateSubstance({ data, file }) {
     data.family
   )
   validatePersona({ persona: data.persona, label: file })
+  // How much of what's in you jumbles what you see: a share of the intoxication.
+  expect(data.confusionFactor, `${file}: confusionFactor must be 0-1`).toBeGreaterThanOrEqual(0)
+  expect(data.confusionFactor, `${file}: confusionFactor must be 0-1`).toBeLessThanOrEqual(1)
   expect(data.decayPerTick, `${file}: decayPerTick must be > 0`).toBeGreaterThan(0)
   expect(data.habituationRate, `${file}: habituationRate must be 0-1`).toBeGreaterThanOrEqual(0)
   expect(data.habituationRate, `${file}: habituationRate must be 0-1`).toBeLessThanOrEqual(1)
@@ -750,6 +766,7 @@ export const CONDITION_REQUIRED_FIELDS = [
   'display',
   'source',
   'weight',
+  'confusion',
   'persona',
   'modifiers',
 ]
@@ -767,6 +784,8 @@ export function validateCondition({ data, file }) {
   expect(hasBelow !== hasAbove, `${file}: source needs exactly one of below / above`).toBe(true)
   expect(data.weight, `${file}: weight must be in (0, 1]`).toBeGreaterThan(0)
   expect(data.weight, `${file}: weight must be in (0, 1]`).toBeLessThanOrEqual(1)
+  expect(data.confusion, `${file}: confusion must be 0-100`).toBeGreaterThanOrEqual(0)
+  expect(data.confusion, `${file}: confusion must be 0-100`).toBeLessThanOrEqual(100)
   validatePersona({ persona: data.persona, label: file })
   validateModifiers({ modifiers: data.modifiers, label: file })
 }

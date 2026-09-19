@@ -13,6 +13,7 @@
     "making.started": "You throw up a sign at the thing you're about to make. Neither of you knows what it means.",
     "piece.artist.solid": "Done: {work}. That's real. That's the realest thing anyone from your mom's neighbourhood has ever made.",
     "requirement.money": "That's {cost}. You have {money}. You're rich in other ways. You can't name one.",
-    "location.return": "Back at {place}. Your block. You run this. Nobody here has been told."
+    "location.return": "Back at {place}. Your block. You run this. Nobody here has been told.",
+    "perception.misfire": "You come in hard for business that doesn't exist here. This is {place}. Everybody saw."
   }
 }

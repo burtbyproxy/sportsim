@@ -6,10 +6,12 @@
  *   2. the player's vitals decay
  *   3. stat modifiers expire
  *   4. the characters move (the simulation) and their vitals decay
- *   4b. what is in everyone wears off, and blends are recomputed
+ *   4b. what is in everyone wears off, a knock to the head too, and blends
+ *       are recomputed
  *   4c. the inspiration clock runs down
  *   4d. whoever is in charge may get an urge
  *   5. the player moves, if they are travelling, and the new scene starts
+ *   5b. a change in how confused the player is changes what they get wrong
  *   6. at most one event happens
  *   6b. work whose idea died dies with it
  *   7. failures nobody was told about are told
@@ -42,6 +44,7 @@ import {
 } from '../models/player.js'
 import { MAKING_SURFACE_KINDS, ARTIFACT_STATUSES, makingOptions } from '../engine/making.js'
 import { eventsRandomCheck, eventsTriggeredCheck, eventResolve } from '../engine/events.js'
+import { actionMisperceived, locationKnown } from '../engine/perception.js'
 import { narrativeAction, narrativeEvent, narrativeLocation } from './useNarrative.js'
 import { narrativeTextCreate, textFill } from '../utils/text.js'
 import { sim } from '../workers/simulation-api.js'
@@ -139,6 +142,8 @@ export function useGameLoop({
     // 4b. Substances wear off — player and characters alike — and the blend
     // snapshot every roll reads is recomputed.
     game.blendDecayApply({ ticksElapsed: ticks })
+    const daze = game.playerDazedDecayApply({ ticksElapsed: ticks })
+    if (!daze.ok) failureShow(daze)
 
     // 4c. The inspiration clock runs down. An idea that ran out says so.
     const clock = game.inspirationTickApply({ ticksElapsed: ticks })
@@ -155,6 +160,9 @@ export function useGameLoop({
       game.playerMove({ locationId })
       locationEnter()
     }
+
+    // 5b. Drink enough, or sober up enough, and the scene is seen afresh.
+    perceptionRefresh({ force: false })
 
     // 6. The world happens to the player: at most one event per tick.
     // After decay and after the move, so thresholds and the new place are
@@ -177,6 +185,7 @@ export function useGameLoop({
    * event is still waiting on them (say, after a load), put it back in front.
    */
   function locationEnter() {
+    perceptionRefresh({ force: true })
     if (narrative && game.currentLocation && game.player) {
       narrative.clearLog()
       sceneDescribe({ closer: false })
@@ -190,6 +199,22 @@ export function useGameLoop({
       }
     }
     refreshActions()
+  }
+
+  /**
+   * Roll what the player gets wrong about the scene: always for a new scene,
+   * and in one already under way whenever their band of confusion changes.
+   * If that puts them somewhere else, they look up and see where.
+   * @param {{ force: boolean }} input
+   */
+  function perceptionRefresh({ force }) {
+    if (!game.player || !game.currentLocation) return
+    const before = game.scene?.place.locationId
+    const rolled = game.perceptionRollApply({ rng, force })
+    if (!rolled.ok) return failureShow(rolled)
+    if (!force && rolled.data.rolled && game.scene.place.locationId !== before) {
+      sceneDescribe({ closer: true })
+    }
   }
 
   /**
@@ -664,7 +689,21 @@ export function useGameLoop({
       return
     }
 
+    // The player took the place, or the face, for something it isn't. What
+    // they reached for is not here; the act runs into what is, and reality
+    // gets through.
     const characters = game.charactersAtCurrentLocation
+    if (actionMisperceived({ action, location: game.currentLocation, characters })) {
+      const here = game.locationDisplay({
+        locationId: game.currentLocationId,
+        known: locationKnown({ player: game.player, locationId: game.currentLocationId }),
+      })
+      voiceEnqueue({ code: 'perception.misfire', params: { place: here.displayInline } })
+      game.perceptionClear()
+      await tick({ ticks: action.timeCost || 1 })
+      return
+    }
+
     const result = actionResolve({
       tuning: game.tuning,
       player: game.player,
@@ -751,6 +790,11 @@ export function useGameLoop({
     // Doses — what went into the player. Hidden doses roll here.
     if (outcome.doses?.length > 0) {
       game.playerDosesApply({ doses: outcome.doses, rng })
+    }
+
+    // A knock to the head. What the player sees catches up on the next tick.
+    if (outcome.dazed) {
+      game.playerDazedApply({ amount: outcome.dazed })
     }
 
     // Inspiration — the world strikes. Snapshots the blend as it is now,

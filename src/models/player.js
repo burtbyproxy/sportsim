@@ -54,6 +54,8 @@ export function playerCreate({ name, start = PLAYER_START_DEFAULTS, rng = Math.r
     status: {
       hunger: begin.status.hunger,
       sobriety: sobrietyDerive({ intoxications: {} }),
+      // Derived like sobriety: see engine/perception.js confusionDerive.
+      confusion: 0,
       energy: begin.status.energy,
       mood: begin.status.mood,
       health: begin.status.health,
@@ -63,6 +65,8 @@ export function playerCreate({ name, start = PLAYER_START_DEFAULTS, rng = Math.r
     intoxications: {},
     /** Per-substance habituation, 0–100. Past a substance's threshold, its absence is a condition. */
     habituations: {},
+    /** A knock to the head, 0–100, wearing off. One of the things confusion is made of. */
+    dazed: 0,
     /** Engine-written snapshot of every persona acting on the player. See engine/blend.js. */
     blend: blendSober(),
     /** The skill grid: skills[mediumId][personaId] = { base, modifiers, xp }. See engine/skills.js. */

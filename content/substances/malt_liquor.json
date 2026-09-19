@@ -2,6 +2,7 @@
   "id": "malt_liquor",
   "display": "Malt liquor",
   "family": "alcohol",
+  "confusionFactor": 0.35,
   "persona": {
     "id": "suburban_gangster",
     "display": "The suburban gangster",

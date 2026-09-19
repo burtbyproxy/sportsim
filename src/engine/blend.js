@@ -120,7 +120,10 @@ function modifiersAdd({ totals, sources, modifiers, personaId, source, sourceId 
  *   modifiers: Object<string, number>,
  *   modifierSources: { personaId: string, source: string, sourceId: string, stat: string, value: number }[],
  *   families: Object<string, number>,
+ *   confusion: number,
  * }}
+ *   confusion — how much the substances and conditions acting on the player
+ *   jumble what they see, before anything else adds to it (engine/perception.js)
  */
 export function blendSober() {
   return {
@@ -130,6 +133,7 @@ export function blendSober() {
     modifiers: {},
     modifierSources: [],
     families: {},
+    confusion: 0,
   }
 }
 
@@ -152,7 +156,9 @@ export function sobrietyDerive({ intoxications }) {
  * active condition contributes its declared weight. Sober takes whatever
  * remains; when the total passes one, everything is normalised and sober is
  * zero. Modifiers are the sum of the highest active band per substance, the
- * active withdrawals, and the active conditions.
+ * active withdrawals, and the active conditions. Confusion is each
+ * substance's intoxication times its confusionFactor, plus each active
+ * condition's confusion.
  *
  * @param {{
  *   player: Object,
@@ -181,12 +187,14 @@ export function blendCompute({ player, substances = {}, conditions = {} }) {
   const modifiers = {}
   const modifierSources = []
   const raw = []
+  let confusion = 0
 
   for (const substance of Object.values(substances)) {
     const intoxication = intoxications[substance.id] ?? 0
     const habituation = habituations[substance.id] ?? 0
 
     if (intoxication > 0) {
+      confusion += intoxication * substance.confusionFactor
       raw.push({
         personaId: substance.persona.id,
         weight: intoxication / 100,
@@ -228,6 +236,7 @@ export function blendCompute({ player, substances = {}, conditions = {} }) {
 
   for (const condition of Object.values(conditions)) {
     if (!conditionActive({ condition, status: player.status })) continue
+    confusion += condition.confusion
     raw.push({
       personaId: condition.persona.id,
       weight: condition.weight,
@@ -270,7 +279,15 @@ export function blendCompute({ player, substances = {}, conditions = {} }) {
   const dominantPersonaId =
     heaviest && heaviest.weight > soberWeight ? heaviest.personaId : SOBER_PERSONA_ID
 
-  return resultOk({ weights, dominantPersonaId, soberWeight, modifiers, modifierSources, families })
+  return resultOk({
+    weights,
+    dominantPersonaId,
+    soberWeight,
+    modifiers,
+    modifierSources,
+    families,
+    confusion: numberRound({ value: confusion, places: 2 }),
+  })
 }
 
 /**

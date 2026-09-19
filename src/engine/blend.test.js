@@ -17,6 +17,7 @@ const whiskey = {
   id: 'whiskey',
   display: 'Whiskey',
   family: 'alcohol',
+  confusionFactor: 0.4,
   persona: { id: 'priest', display: 'The priest' },
   decayPerTick: 2,
   habituationRate: 0.1,
@@ -52,6 +53,7 @@ const weed = {
   id: 'weed',
   display: 'Weed',
   family: 'cannabis',
+  confusionFactor: 0.5,
   persona: { id: 'telepath', display: 'The telepath' },
   decayPerTick: 3,
   habituationRate: 0,
@@ -73,6 +75,7 @@ const starving = {
   display: 'Starving',
   source: { status: 'hunger', below: 15 },
   weight: 0.3,
+  confusion: 10,
   persona: { id: 'hollow', display: 'Hollow' },
   modifiers: [
     { stat: 'wits', value: -3 },
@@ -85,6 +88,7 @@ const elated = {
   display: 'Elated',
   source: { status: 'mood', above: 80 },
   weight: 0.2,
+  confusion: 0,
   persona: { id: 'golden', display: 'Golden' },
   modifiers: [
     { stat: 'charm', value: 3 },
@@ -114,6 +118,7 @@ describe('blendSober', () => {
       modifiers: {},
       modifierSources: [],
       families: {},
+      confusion: 0,
     })
   })
 })
@@ -133,6 +138,23 @@ describe('sobrietyDerive', () => {
 })
 
 // --- blendCompute ---
+
+describe('blendCompute — confusion', () => {
+  const confusionOf = (player) => blendCompute({ player, substances, conditions }).data.confusion
+
+  it('is nothing with nothing acting on the player', () => {
+    expect(confusionOf(makePlayer())).toBe(0)
+  })
+
+  it("is each substance's intoxication times its factor", () => {
+    expect(confusionOf(makePlayer({ intoxications: { whiskey: 50, weed: 20 } }))).toBe(30)
+  })
+
+  it("adds each active condition's confusion, and only active ones", () => {
+    expect(confusionOf(makePlayer({ status: { hunger: 10 } }))).toBe(10)
+    expect(confusionOf(makePlayer({ status: { hunger: 20 } }))).toBe(0)
+  })
+})
 
 describe('blendCompute', () => {
   it('rejects a missing player with PLAYER_MISSING', () => {

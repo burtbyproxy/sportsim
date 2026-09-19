@@ -26,9 +26,10 @@
  * @property {string} id
  * @property {string} name
  * @property {Object<string, Stat>} stats - by stat id (content/vocabulary.json)
- * @property {Object<string, number>} status - hunger, sobriety (derived), energy, mood, health, money
+ * @property {Object<string, number>} status - hunger, sobriety and confusion (derived), energy, mood, health, money
  * @property {Object<string, number>} intoxications - by substance id, 0–100
  * @property {Object<string, number>} habituations - by substance id, 0–100
+ * @property {number} dazed - a knock to the head, 0–100, wearing off
  * @property {Object} blend - who is in charge; see engine/blend.js
  * @property {Object<string, Object<string, Stat>>} skills - skills[mediumId][personaId]
  * @property {Object[]} inspirations - see engine/inspiration.js

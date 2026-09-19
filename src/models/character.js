@@ -37,6 +37,7 @@ function defaultStatus() {
   return {
     hunger: 50,
     sobriety: sobrietyDerive({ intoxications: {} }),
+    confusion: 0,
     energy: 70,
     mood: 50,
     health: 100,
@@ -84,6 +85,7 @@ export function characterCreate(data) {
     status,
     intoxications,
     habituations,
+    dazed: data.dazed ?? 0,
     blend: data.blend ?? blendSober(),
     skills: data.skills ? JSON.parse(JSON.stringify(data.skills)) : {},
     inspirations: data.inspirations ? JSON.parse(JSON.stringify(data.inspirations)) : [],

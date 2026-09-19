@@ -2,6 +2,7 @@
   "id": "beer",
   "display": "Beer",
   "family": "alcohol",
+  "confusionFactor": 0.3,
   "persona": {
     "id": "one_of_the_guys",
     "display": "One of the guys",
@@ -19,28 +20,61 @@
       "compulsion": "Get to a bar. Any bar."
     },
     "modifiers": [
-      { "stat": "toughness", "value": -3 },
-      { "stat": "charm", "value": -2 },
-      { "stat": "creativity", "value": 3 }
+      {
+        "stat": "toughness",
+        "value": -3
+      },
+      {
+        "stat": "charm",
+        "value": -2
+      },
+      {
+        "stat": "creativity",
+        "value": 3
+      }
     ]
   },
   "bands": [
     {
       "atLeast": 15,
       "modifiers": [
-        { "stat": "charm", "value": 3 },
-        { "stat": "luck", "value": 1 },
-        { "stat": "stamina", "value": -2 },
-        { "stat": "wits", "value": -2 }
+        {
+          "stat": "charm",
+          "value": 3
+        },
+        {
+          "stat": "luck",
+          "value": 1
+        },
+        {
+          "stat": "stamina",
+          "value": -2
+        },
+        {
+          "stat": "wits",
+          "value": -2
+        }
       ]
     },
     {
       "atLeast": 50,
       "modifiers": [
-        { "stat": "charm", "value": 4 },
-        { "stat": "toughness", "value": 2 },
-        { "stat": "stamina", "value": -5 },
-        { "stat": "wits", "value": -6 }
+        {
+          "stat": "charm",
+          "value": 4
+        },
+        {
+          "stat": "toughness",
+          "value": 2
+        },
+        {
+          "stat": "stamina",
+          "value": -5
+        },
+        {
+          "stat": "wits",
+          "value": -6
+        }
       ]
     }
   ]

@@ -731,7 +731,7 @@ describe('saveMigrate', () => {
     expect(migrated.player).not.toHaveProperty('level')
     expect(migrated.player).not.toHaveProperty('xp')
     expect(migrated.player.counters).toEqual(Object.fromEntries([['hoops_sessions', 3]]))
-    expect(migrated.characters.tina).toEqual({ id: 'tina', want: 'To be liked.' })
+    expect(migrated.characters.tina).toEqual({ id: 'tina', want: 'To be liked.', dazed: 0 })
     expect(migrated.locations.blue_parrot).toEqual({ id: 'blue_parrot', visitCount: 4 })
   })
 

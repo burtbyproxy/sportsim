@@ -174,7 +174,8 @@ describe('scavenge pipeline', () => {
     await loop.resolvePlayerAction(scavengeAction)
     const entries = await narrativeSettle({ narrative })
 
-    expect(entries.at(-1)).toBe(
+    // That much weed also jumbles the scene, so the find is not the last word.
+    expect(entries).toContain(
       voiceLineOf({ personaId: 'telepath', code: 'scavenge.found' }).replace(
         '{item}',
         itemById('cardboard').foundAs

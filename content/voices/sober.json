@@ -84,6 +84,7 @@
     "menu.making.place": "right here",
     "menu.making.plan": "{medium}: {tool}, {surface}",
     "menu.making.plan.bare": "{medium}: {surface}",
-    "location.return": "Back at {place}. It's still here. So are you."
+    "location.return": "Back at {place}. It's still here. So are you.",
+    "perception.misfire": "You reach for it, and it isn't there. It was never there. This is {place}, and it always has been."
   }
 }

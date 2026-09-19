@@ -13,6 +13,7 @@
     "piece.artist.rough": "Done: {work}. It's not perfect. Nothing is, son. You forgive it, and you mean it.",
     "game.karaoke.pushed": "You testify. You find the biggest man in the room and you sing it directly to him.",
     "game.words.picked": "{word}. Amen to that one.",
-    "location.return": "Back at {place}, my child. Everybody comes back. That's the whole trouble with everybody."
+    "location.return": "Back at {place}, my child. Everybody comes back. That's the whole trouble with everybody.",
+    "perception.misfire": "You go to bless the wrong house, my child. This is {place}. Forgive yourself. They won't."
   }
 }

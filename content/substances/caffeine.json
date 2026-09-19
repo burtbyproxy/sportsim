@@ -2,6 +2,7 @@
   "id": "caffeine",
   "display": "Caffeine",
   "family": "stimulant",
+  "confusionFactor": 0,
   "persona": {
     "id": "yeller",
     "display": "The yeller",
@@ -19,28 +20,61 @@
       "compulsion": "Find coffee. Speak to no one until then."
     },
     "modifiers": [
-      { "stat": "stamina", "value": -3 },
-      { "stat": "wits", "value": -2 },
-      { "stat": "toughness", "value": 1 }
+      {
+        "stat": "stamina",
+        "value": -3
+      },
+      {
+        "stat": "wits",
+        "value": -2
+      },
+      {
+        "stat": "toughness",
+        "value": 1
+      }
     ]
   },
   "bands": [
     {
       "atLeast": 15,
       "modifiers": [
-        { "stat": "stamina", "value": 3 },
-        { "stat": "wits", "value": 2 },
-        { "stat": "charm", "value": -2 }
+        {
+          "stat": "stamina",
+          "value": 3
+        },
+        {
+          "stat": "wits",
+          "value": 2
+        },
+        {
+          "stat": "charm",
+          "value": -2
+        }
       ]
     },
     {
       "atLeast": 50,
       "modifiers": [
-        { "stat": "stamina", "value": 5 },
-        { "stat": "wits", "value": 2 },
-        { "stat": "charm", "value": -5 },
-        { "stat": "creativity", "value": -2 },
-        { "stat": "toughness", "value": -1 }
+        {
+          "stat": "stamina",
+          "value": 5
+        },
+        {
+          "stat": "wits",
+          "value": 2
+        },
+        {
+          "stat": "charm",
+          "value": -5
+        },
+        {
+          "stat": "creativity",
+          "value": -2
+        },
+        {
+          "stat": "toughness",
+          "value": -1
+        }
       ]
     }
   ]

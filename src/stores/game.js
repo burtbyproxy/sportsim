@@ -11,7 +11,14 @@ import {
   inspirationUrge,
 } from '../engine/inspiration.js'
 import { voiceLine } from '../engine/voice.js'
-import { locationLearn, perceptionView } from '../engine/perception.js'
+import {
+  confusionBand,
+  confusionDerive,
+  dazedDecay,
+  locationLearn,
+  perceptionRoll,
+  perceptionView,
+} from '../engine/perception.js'
 import { scavengeSearch, scavengedCounterName } from '../engine/scavenge.js'
 import {
   MAKING_SURFACE_KINDS,
@@ -36,7 +43,7 @@ import { textFill } from '../utils/text.js'
 import { statXpApply, statusChangesApply } from '../engine/stats.js'
 import { statusBarFillClass } from '../utils/statusBar.js'
 import { resultOk, resultFail } from '../engine/result.js'
-import { numberRound } from '../utils/number.js'
+import { numberClamp, numberRound } from '../utils/number.js'
 
 /** Enumerated error codes for the store's own refusals. Engine results pass through with theirs. */
 export const STORE_ERROR_CODES = Object.freeze({
@@ -143,6 +150,14 @@ export const useGameStore = defineStore('game', {
     /** This place's exits, each with available and unavailableReason. The loop fills it. */
     availableExits: [],
 
+    /**
+     * What the player is getting wrong about the scene they are in: the
+     * distortions rolled for it (engine/perception.js perceptionRoll), which
+     * place they were rolled at, and the band of confusion they were rolled
+     * in. Held for the scene so the world does not flicker. Not saved.
+     */
+    perception: { locationId: null, band: 0, distortions: [] },
+
     /** The character the player has picked out to deal with, or null. */
     characterSelectedId: null,
 
@@ -171,11 +186,13 @@ export const useGameStore = defineStore('game', {
      */
     scene() {
       if (!this.player || !this.currentLocation) return null
+      const held = this.perception.locationId === this.currentLocationId
       const view = perceptionView({
         player: this.player,
         location: this.currentLocation,
         locations: this.locations,
         characters: this.charactersAtCurrentLocation,
+        distortions: held ? this.perception.distortions : [],
       })
       return view.ok ? view.data : null
     },
@@ -375,6 +392,7 @@ export const useGameStore = defineStore('game', {
       this.availableExits = []
       this.characterSelectedId = null
       this.makingPicker = null
+      this.perception = { locationId: null, band: 0, distortions: [] }
       this.isRunning = true
       this.blendRefresh()
       // Note: items registry persists across game reset — item definitions don't change per-run
@@ -454,6 +472,7 @@ export const useGameStore = defineStore('game', {
         }
         subject.blend = result.data
         subject.status.sobriety = sobrietyDerive({ intoxications: subject.intoxications ?? {} })
+        subject.status.confusion = confusionDerive({ blend: result.data, dazed: subject.dazed })
       }
     },
 
@@ -501,6 +520,78 @@ export const useGameStore = defineStore('game', {
         levelsApply({ levels: subject.habituations, changes: result.data.habituationChanges })
       }
       this.blendRefresh()
+    },
+
+    /**
+     * A knock to the head wears off, over elapsed ticks.
+     * @param {{ ticksElapsed: number }} input
+     * @returns {{ ok: boolean, data: { dazed: number }|null, error: Object|null }} the perception engine's result
+     */
+    playerDazedDecayApply({ ticksElapsed }) {
+      if (!this.player) {
+        return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
+      }
+      const result = dazedDecay({ tuning: this.tuning, dazed: this.player.dazed, ticksElapsed })
+      if (!result.ok) {
+        return result
+      }
+      this.player.dazed = result.data.dazed
+      this.blendRefresh()
+      return result
+    },
+
+    /**
+     * A knock to the head. It adds up, to 100, and it wears off.
+     * @param {{ amount: number }} input
+     */
+    playerDazedApply({ amount }) {
+      if (!this.player) return
+      this.player.dazed = numberClamp({ value: this.player.dazed + amount, min: 0, max: 100 })
+      this.blendRefresh()
+    },
+
+    /**
+     * See the scene afresh when it is a new scene, when the player's band of
+     * confusion has changed, or when asked to (`force`). Otherwise what they
+     * are getting wrong holds.
+     * @param {{ rng?: () => number, force?: boolean }} input
+     * @returns {{ ok: boolean, data: { rolled: boolean }|null, error: Object|null }}
+     */
+    perceptionRollApply({ rng = Math.random, force = false }) {
+      if (!this.player) {
+        return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
+      }
+      const confusion = this.player.status.confusion
+      const band = confusionBand({ tuning: this.tuning, confusion })
+      const same =
+        this.perception.locationId === this.currentLocationId && this.perception.band === band
+      if (same && !force) return resultOk({ rolled: false })
+      const result = perceptionRoll({
+        tuning: this.tuning,
+        confusion,
+        location: this.currentLocation,
+        locations: this.locations,
+        characters: this.charactersAtCurrentLocation,
+        roster: this.characters,
+        rng,
+      })
+      if (!result.ok) {
+        return result
+      }
+      this.perception = {
+        locationId: this.currentLocationId,
+        band,
+        distortions: result.data.distortions,
+      }
+      return resultOk({ rolled: true })
+    },
+
+    /**
+     * Reality gets through: the scene is seen as it is, until the band
+     * changes or the player moves on.
+     */
+    perceptionClear() {
+      this.perception = { ...this.perception, distortions: [] }
     },
 
     /**
@@ -1213,6 +1304,7 @@ export const useGameStore = defineStore('game', {
       this.firedEventIds = save.firedEventIds
       this.activeEvent = save.activeEvent ?? null
       this.makingPicker = null
+      this.perception = { locationId: null, band: 0, distortions: [] }
       this.isRunning = true
       this.blendRefresh()
       // Definitions (items, substances, actions...) are not in the save; boot
@@ -1230,6 +1322,7 @@ export const useGameStore = defineStore('game', {
       this.availableExits = []
       this.characterSelectedId = null
       this.makingPicker = null
+      this.perception = { locationId: null, band: 0, distortions: [] }
       this.isRunning = false
       this.time = null
     },
