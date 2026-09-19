@@ -1,7 +1,7 @@
 /**
- * Player model — pure JS, no Vue dependencies.
- * All functions are either pure (returning new state) or explicitly mutative.
- * Safe for JSON serialization (localStorage saves).
+ * Player model — plain JS, no Vue. playerCreate builds a new player; the
+ * other functions change the player they are given, in place, and say so.
+ * A player is plain data, safe to serialize for saves.
  */
 
 import { v4 as uuidv4 } from 'uuid'

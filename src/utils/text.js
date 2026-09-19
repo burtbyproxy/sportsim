@@ -60,6 +60,12 @@ export function textVariantPick({ variants, context = {} }) {
 }
 
 /**
+ * Text the narrative log renders: tokens, each with how it looks and how it types.
+ * @typedef {Object} NarrativeText
+ * @property {Array<{ text: string, style: string, color: string|null, speed: string, pauseAfter: number, effect: string }>} tokens
+ */
+
+/**
  * Converts a plain string into a NarrativeText object with default token settings.
  * @param {{ text: string, style?: Partial<NarrativeToken> }} input
  *   style — token overrides

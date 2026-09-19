@@ -63,9 +63,8 @@ export function scheduleEntryResolve({ schedule, hour, dayOfWeek }) {
 }
 
 /**
- * Returns true if a character is between schedule stops (in transit).
- * A character is in transit when the current time is past their current stop's endHour
- * but within the travel window before their next stop's startHour.
+ * Whether a character is between schedule stops (in transit): during the
+ * hour one of their stops ends, once that hour is under way (minute > 0).
  *
  * For routine and full simulation only — fixed characters are either there or not.
  *
@@ -78,12 +77,8 @@ export function scheduleEntryResolve({ schedule, hour, dayOfWeek }) {
 export function scheduleTransitActive({ schedule, hour, minute }) {
   if (!schedule || !schedule.entries || schedule.entries.length < 2) return false
 
-  // Find the entry that just ended
-  const justEnded = schedule.entries.find((entry) => {
-    // The entry ends at exactly this hour and the minute is past the boundary
-    // OR the current time is between this entry's end and the next entry's start
-    return entry.endHour === hour && minute > 0
-  })
+  // A stop that ends this hour, with the hour under way.
+  const justEnded = schedule.entries.find((entry) => entry.endHour === hour && minute > 0)
 
   return !!justEnded
 }

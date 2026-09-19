@@ -119,7 +119,7 @@ export function useNarrative({ tuning }) {
 
   /**
    * Queue a NarrativeText for rendering.
-   * @param {import('../engine/narrative-types.js').NarrativeText} narrativeText
+   * @param {import('../utils/text.js').NarrativeText} narrativeText
    */
   function enqueue(narrativeText) {
     queue.value.push(narrativeText)

@@ -45,3 +45,28 @@ From this point you can venture out looking for work, make some art, build some 
 
 2. Isn't this all a bit of an exaggeration?  
    **Listen here, millenial, I was THERE alright? I lived this shit. I realize that in the modern, insulated, cookie cutter world we live in today, the events that take place within this simulation are difficult to believe. I get it, I understand how life is now. That doesn't change the fact that back in those days, in that town, all you had to do was hang around somewhere long enough and shit would get crazy. This was all before Portlandia, and the migration that followed, remember. There were so many parking spots. So many stools open at every bar... and so many opportunities to become worshipped as a locally famous artist.**
+
+## Running it
+
+You need Node (the exact version is in `.nvmrc`) and, for the conformance gate, Go (the version is in `tools/go.mod`).
+
+```sh
+npm ci              # install
+npm run dev         # play it at the address Vite prints
+npm run build       # the static site, in dist/
+```
+
+### The gates
+
+Nothing merges without all four passing. The pre-commit hook runs them, and so does CI.
+
+```sh
+npm run lint                            # ESLint with the Boundary-First Development preset
+npm run format:check                    # Prettier
+npm run test:run                        # every test, once
+"$(go -C tools tool -n bfd)" conform    # bfd conform, pinned in tools/go.mod
+```
+
+### Where the game lives
+
+Everything the player reads or meets is content, under `content/`: the map and its places, actions and events, the people, items, substances, voices, and the numbers the engines run on (`content/tuning.json`). Adding to the game means adding content; the tests under `tests/content/` check every file against its contract.

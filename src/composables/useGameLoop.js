@@ -1,17 +1,24 @@
 /**
- * useGameLoop — central game loop composable.
+ * useGameLoop — the game loop: time passing, and the player acting.
  *
- * Orchestrates what happens each tick:
- *   1. Advance clock
- *   2. Apply stat decay
- *   3. Expire modifiers
- *   4. Re-evaluate available actions at current location
+ * Everything that involves time passing flows through tick(), in this order:
+ *   1. the clock advances
+ *   2. the player's vitals decay
+ *   3. stat modifiers expire
+ *   4. the characters move (the simulation) and their vitals decay
+ *   4b. what is in everyone wears off, and blends are recomputed
+ *   4c. the inspiration clock runs down
+ *   4d. whoever is in charge may get an urge
+ *   5. the player moves, if they are travelling, and the new scene starts
+ *   6. at most one event happens
+ *   6b. work whose idea died dies with it
+ *   7. failures nobody was told about are told
+ *   8. the menu is rebuilt
  *
- * Also handles action resolution, applying outcomes to the store,
- * and feeding narrative results to the renderer.
- *
- * Everything that involves time passing flows through tick().
- * Everything that involves resolving player actions flows through actionResolve({ tuning: game.tuning }).
+ * The player's own acts (actions, travel, items, event choices, making)
+ * resolve through the engines, apply to the store, and speak through the
+ * narrative renderer. The loop decides what the player may do; the
+ * components only show it.
  */
 
 import { useGameStore } from '../stores/game.js'
