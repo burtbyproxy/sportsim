@@ -12,9 +12,9 @@ import { readFileSync, readdirSync } from 'fs'
 import { resolve } from 'path'
 import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '../../src/stores/game.js'
-import { createPlayer } from '../../src/models/player.js'
-import { createCharacter } from '../../src/models/character.js'
-import { createLocation } from '../../src/models/location.js'
+import { playerCreate } from '../../src/models/player.js'
+import { characterCreate } from '../../src/models/character.js'
+import { locationCreate } from '../../src/models/location.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
 import { statEffective } from '../../src/engine/dice.js'
 import { SOBER_PERSONA_ID, PERSONA_SOURCES } from '../../src/engine/blend.js'
@@ -42,9 +42,9 @@ function startGame({ at = 'moms_house' } = {}) {
   const game = useGameStore()
   for (const substance of substances) game.registerSubstance({ substance })
   for (const condition of conditions) game.registerCondition({ condition })
-  game.registerLocation(createLocation(momsHouse))
-  game.registerLocation(createLocation(blueParrot))
-  game.startNewGame(createPlayer('Tester'), at)
+  game.registerLocation(locationCreate(momsHouse))
+  game.registerLocation(locationCreate(blueParrot))
+  game.startNewGame(playerCreate({ name: 'Tester' }), at)
   return game
 }
 
@@ -201,7 +201,7 @@ describe('blend pipeline', () => {
 
   it('characters carry the same blend: Maurice arrives forty points into a beer and sobers up', async () => {
     const game = startGame()
-    game.registerCharacter(createCharacter(maurice))
+    game.registerCharacter(characterCreate(maurice))
     game.blendRefresh()
     expect(game.characters.maurice.status.sobriety).toBe(60)
     expect(game.characters.maurice.blend.weights[0].personaId).toBe('one_of_the_guys')

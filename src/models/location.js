@@ -15,7 +15,7 @@ import { requirementsMeet } from '../engine/actions.js'
  * @param {Object} data - raw location data
  * @returns {import('./types').Location}
  */
-export function createLocation(data) {
+export function locationCreate(data) {
   return {
     id: data.id,
     type: data.type,
@@ -53,8 +53,8 @@ export function createLocation(data) {
  * @returns {import('./types').Location}
  */
 export function locationRestore({ definition, saved }) {
-  if (!saved) return createLocation(definition)
-  return createLocation({
+  if (!saved) return locationCreate(definition)
+  return locationCreate({
     ...definition,
     discovered: saved.discovered ?? definition.discovered,
     visitCount: saved.visitCount,
@@ -71,7 +71,7 @@ export function locationRestore({ definition, saved }) {
  *   location — where the player is standing.
  * @returns {{ meets: boolean, reasonCode: string|null, reasonParams: Object<string, string> }}
  */
-export function exitMeetsRequirements({ exit, player, gameTime, location }) {
+export function exitRequirementsMeet({ exit, player, gameTime, location }) {
   if (!exit.requirements) return { meets: true, reasonCode: null, reasonParams: {} }
   return requirementsMeet({
     player,
@@ -87,11 +87,11 @@ export function exitMeetsRequirements({ exit, player, gameTime, location }) {
  *
  * Handles overnight windows (e.g. openHour=20, closeHour=2).
  *
- * @param {import('./types').Location} location
- * @param {number} hour - 0 to 23
+ * @param {{ location: import('./types').Location, hour: number }} input
+ *   hour — 0 to 23
  * @returns {boolean}
  */
-export function isOpen(location, hour) {
+export function locationOpen({ location, hour }) {
   const { openHour, closeHour } = location.availability
   if (openHour === 0 && closeHour === 23) return true // always open
   if (openHour <= closeHour) {
@@ -105,9 +105,9 @@ export function isOpen(location, hour) {
  * Increment the visit count for a location.
  * Mutates location in place.
  *
- * @param {import('./types').Location} location
+ * @param {{ location: import('./types').Location }} input
  * @returns {void}
  */
-export function incrementVisitCount(location) {
+export function locationVisitAdd({ location }) {
   location.visitCount = (location.visitCount ?? 0) + 1
 }

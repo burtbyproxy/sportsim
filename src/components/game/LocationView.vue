@@ -24,7 +24,7 @@
 <script setup>
 import { computed, inject, watch, onMounted } from 'vue'
 import { useGameStore } from '../../stores/game.js'
-import { isOpen, exitMeetsRequirements } from '../../models/location.js'
+import { locationOpen, exitRequirementsMeet } from '../../models/location.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
 
 const game = useGameStore()
@@ -50,9 +50,9 @@ function canTravel(exit) {
   const dest = game.locations[exit.locationId]
   if (!dest) return false
   // Delegate availability check to the model — single source of truth
-  if (!isOpen(dest, game.time.hour)) return false
+  if (!locationOpen({ location: dest, hour: game.time.hour })) return false
   // Honor exit requirements — same vocabulary as action requirements
-  return exitMeetsRequirements({
+  return exitRequirementsMeet({
     exit,
     player: game.player,
     gameTime: game.time,

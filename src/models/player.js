@@ -9,19 +9,11 @@ import { blendSober, sobrietyDerive } from '../engine/blend.js'
 import { STAT_IDS_DEFAULT } from './defaults.js'
 import { numberClamp } from '../utils/number.js'
 import { randomInt } from '../utils/random.js'
+import { statCreate } from '../engine/stats.js'
 
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
-
-/**
- * Create a blank Stat object.
- * @param {number} base
- * @returns {import('./types').Stat}
- */
-function createStat(base) {
-  return { base, modifiers: [], xp: 0 }
-}
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -46,14 +38,14 @@ export const START_MONEY = PLAYER_START_DEFAULTS.money
  * Create a new Player with default starting values.
  * Stats are randomized slightly around starting ranges.
  *
- * @param {string} name
- * @param {{ statIds?: string[], locationId?: string, money?: number, statRoll?: { min: number, max: number }, status?: Object<string, number> }} [start]
+ * @param {{ name: string, start?: { statIds?: string[], locationId?: string, money?: number, statRoll?: { min: number, max: number }, status?: Object<string, number> }, rng?: (() => number) }} input
  *   where, and with what, the player begins (content/game.json `start`)
  * @returns {import('./types').Player}
  */
-export function createPlayer(name, start = PLAYER_START_DEFAULTS) {
+export function playerCreate({ name, start = PLAYER_START_DEFAULTS, rng = Math.random }) {
   const begin = { ...PLAYER_START_DEFAULTS, ...start }
-  const roll = () => createStat(randomInt({ min: begin.statRoll.min, max: begin.statRoll.max }))
+  const roll = () =>
+    statCreate({ base: randomInt({ min: begin.statRoll.min, max: begin.statRoll.max, rng }) })
   return {
     id: uuidv4(),
     name,
@@ -99,10 +91,10 @@ export function createPlayer(name, start = PLAYER_START_DEFAULTS) {
  * Decrement all modifier durations, remove expired ones.
  * Mutates player in place. Called every game tick.
  *
- * @param {import('./types').Player} player
+ * @param {{ player: import('./types').Player }} input
  * @returns {void}
  */
-export function tickModifiers(player) {
+export function modifiersTick({ player }) {
   for (const statName of Object.keys(player.stats)) {
     const stat = player.stats[statName]
     stat.modifiers = stat.modifiers
@@ -118,12 +110,10 @@ export function tickModifiers(player) {
  * Add a temporary (or permanent) modifier to a stat.
  * Mutates player in place.
  *
- * @param {import('./types').Player} player
- * @param {string} statName
- * @param {import('./types').Modifier} modifier
+ * @param {{ player: import('./types').Player, statName: string, modifier: import('./types').Modifier }} input
  * @returns {void}
  */
-export function addModifier(player, statName, modifier) {
+export function modifierAdd({ player, statName, modifier }) {
   const stat = player.stats[statName]
   if (!stat) return
   stat.modifiers.push({ ...modifier })
@@ -134,11 +124,10 @@ export function addModifier(player, statName, modifier) {
  * Handles stacking for stackable items.
  * Mutates player in place.
  *
- * @param {import('./types').Player} player
- * @param {import('./types').Item} item
+ * @param {{ player: import('./types').Player, item: import('./types').Item }} input
  * @returns {void}
  */
-export function addItem(player, item) {
+export function inventoryAdd({ player, item }) {
   if (item.stackable) {
     const existing = player.inventory.find((i) => i.id === item.id)
     if (existing) {
@@ -153,11 +142,10 @@ export function addItem(player, item) {
  * Remove an item from the player's inventory by ID.
  * Mutates player in place.
  *
- * @param {import('./types').Player} player
- * @param {string} itemId
+ * @param {{ player: import('./types').Player, itemId: string }} input
  * @returns {void}
  */
-export function removeItem(player, itemId) {
+export function inventoryRemove({ player, itemId }) {
   const idx = player.inventory.findIndex((i) => i.id === itemId)
   if (idx === -1) return
   const item = player.inventory[idx]
@@ -173,11 +161,10 @@ export function removeItem(player, itemId) {
  * Can go negative (debt). No clamping.
  * Mutates player in place.
  *
- * @param {import('./types').Player} player
- * @param {number} delta
+ * @param {{ player: import('./types').Player, delta: number }} input
  * @returns {void}
  */
-export function adjustMoney(player, delta) {
+export function moneyAdjust({ player, delta }) {
   player.status.money += delta
 }
 
@@ -186,12 +173,10 @@ export function adjustMoney(player, delta) {
  * If the obsession doesn't exist in psyche, this is a no-op.
  * Mutates player in place.
  *
- * @param {import('./types').Player} player
- * @param {string} obsessionId
- * @param {number} amount
+ * @param {{ player: import('./types').Player, obsessionId: string, amount: number }} input
  * @returns {void}
  */
-export function feedObsession(player, obsessionId, amount) {
+export function obsessionFeed({ player, obsessionId, amount }) {
   const obs = player.psyche.obsessions.find((o) => o.id === obsessionId)
   if (!obs) return
   obs.strength = numberClamp({ value: obs.strength + amount, min: 0, max: 100 })
@@ -202,12 +187,10 @@ export function feedObsession(player, obsessionId, amount) {
  * Creates the entry if it doesn't exist.
  * Mutates player in place.
  *
- * @param {import('./types').Player} player
- * @param {string} archetypeId
- * @param {number} delta
+ * @param {{ player: import('./types').Player, archetypeId: string, delta: number }} input
  * @returns {void}
  */
-export function updateArchetypeScore(player, archetypeId, delta) {
+export function archetypeScoreAdd({ player, archetypeId, delta }) {
   if (!(archetypeId in player.archetypeScores)) {
     player.archetypeScores[archetypeId] = 0
   }
@@ -219,12 +202,10 @@ export function updateArchetypeScore(player, archetypeId, delta) {
  * Creates the counter if it doesn't exist.
  * Mutates player in place.
  *
- * @param {import('./types').Player} player
- * @param {string} counterName
- * @param {number} [delta=1]
+ * @param {{ player: import('./types').Player, counterName: string, delta?: number }} input
  * @returns {void}
  */
-export function incrementCounter(player, counterName, delta = 1) {
+export function counterAdd({ player, counterName, delta = 1 }) {
   if (!(counterName in player.counters)) {
     player.counters[counterName] = 0
   }

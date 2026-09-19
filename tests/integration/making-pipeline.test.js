@@ -14,9 +14,9 @@ import { readFileSync, readdirSync } from 'fs'
 import { resolve } from 'path'
 import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '../../src/stores/game.js'
-import { createPlayer } from '../../src/models/player.js'
-import { createLocation } from '../../src/models/location.js'
-import { createItem } from '../../src/models/item.js'
+import { playerCreate } from '../../src/models/player.js'
+import { locationCreate } from '../../src/models/location.js'
+import { itemCreate } from '../../src/models/item.js'
 import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
 import { useSave, saveMigrate, SAVE_VERSION } from '../../src/composables/useSave.js'
@@ -58,15 +58,15 @@ function startGame({
 } = {}) {
   setActivePinia(createPinia())
   const game = useGameStore()
-  for (const item of items) game.registerItem(createItem(item))
+  for (const item of items) game.registerItem(itemCreate(item))
   for (const v of voices) game.registerVoice({ voice: v })
   for (const m of mediumsUsed) game.registerMedium({ medium: m })
   for (const g of games) game.registerGame({ game: g })
   game.registerVocabulary({ vocabulary })
   for (const substance of substances) game.registerSubstance({ substance })
   for (const condition of conditions) game.registerCondition({ condition })
-  for (const location of locations) game.registerLocation(createLocation(location))
-  const player = createPlayer('Tester')
+  for (const location of locations) game.registerLocation(locationCreate(location))
+  const player = playerCreate({ name: 'Tester' })
   for (const stat of Object.values(player.stats)) stat.base = 10
   game.startNewGame(player, at)
   for (const itemId of carrying) game.player.inventory.push({ ...game.getItem(itemId) })
@@ -461,7 +461,7 @@ describe('making pipeline', () => {
 
     setActivePinia(createPinia())
     const restored = useGameStore()
-    for (const item of items) restored.registerItem(createItem(item))
+    for (const item of items) restored.registerItem(itemCreate(item))
     for (const v of voices) restored.registerVoice({ voice: v })
     for (const m of mediums) restored.registerMedium({ medium: m })
     for (const g of games) restored.registerGame({ game: g })
@@ -486,7 +486,7 @@ describe('making pipeline', () => {
       timestamp: 1,
       version: 4,
       player: {
-        ...createPlayer('Old'),
+        ...playerCreate({ name: 'Old' }),
         makings: undefined,
         experiences: undefined,
         portfolio: undefined,
@@ -806,7 +806,7 @@ describe('making pipeline', () => {
       },
     })
     game.registerItem(
-      createItem({
+      itemCreate({
         id: 'white_gloves',
         name: 'White Gloves',
         type: 'tool',
@@ -1018,19 +1018,22 @@ describe('making pipeline', () => {
 
   it('a new game is what content/game.json says it is', () => {
     const config = JSON.parse(readFileSync(resolve('content/game.json'), 'utf-8'))
-    const player = createPlayer(config.start.playerName, {
-      ...config.start,
-      money: 11,
-      locationId: 'blue_parrot',
-      statRoll: { min: 33, max: 33 },
-      status: { hunger: 1, energy: 2, mood: 3, health: 4 },
+    const player = playerCreate({
+      name: config.start.playerName,
+      start: {
+        ...config.start,
+        money: 11,
+        locationId: 'blue_parrot',
+        statRoll: { min: 33, max: 33 },
+        status: { hunger: 1, energy: 2, mood: 3, health: 4 },
+      },
     })
     expect(player.name).toBe(config.start.playerName)
     expect(player.status).toMatchObject({ money: 11, hunger: 1, energy: 2, mood: 3, health: 4 })
     expect(player.currentLocationId).toBe('blue_parrot')
     expect(Object.values(player.stats).every((stat) => stat.base === 33)).toBe(true)
     // And the file itself is the basement with a couple of bucks.
-    const shipped = createPlayer(config.start.playerName, config.start)
+    const shipped = playerCreate({ name: config.start.playerName, start: config.start })
     expect(shipped.status.money).toBe(config.start.money)
     expect(shipped.currentLocationId).toBe(config.start.locationId)
   })
@@ -1054,8 +1057,11 @@ describe('making pipeline', () => {
   })
 
   it('a stat the vocabulary adds is a stat the player has; a vital it marks writable is one an item can move', () => {
-    const player = createPlayer('Wider', {
-      statIds: [...vocabulary.stats.map((stat) => stat.id), 'legend'],
+    const player = playerCreate({
+      name: 'Wider',
+      start: {
+        statIds: [...vocabulary.stats.map((stat) => stat.id), 'legend'],
+      },
     })
     expect(Object.keys(player.stats)).toHaveLength(vocabulary.stats.length + 1)
     expect(player.stats.legend.base).toBeGreaterThanOrEqual(10)
@@ -1124,7 +1130,7 @@ describe('making pipeline', () => {
   })
 
   it('work caught mid-stroke by an older save is abandoned on load, not left unplayable', () => {
-    const player = createPlayer('Old')
+    const player = playerCreate({ name: 'Old' })
     player.makings = [
       {
         id: 'm1',

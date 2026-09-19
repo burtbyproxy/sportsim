@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { createCharacter } from '../src/models/character.js'
+import { characterCreate } from '../src/models/character.js'
 
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
 
 function makeFixedCharacter(overrides = {}) {
-  return createCharacter({
+  return characterCreate({
     id: 'bartender_parrot',
     name: 'The Bartender',
     description: 'A woman with a face like she has heard every story twice.',
@@ -26,7 +26,7 @@ function makeFixedCharacter(overrides = {}) {
 }
 
 function makeRoutineCharacter(overrides = {}) {
-  return createCharacter({
+  return characterCreate({
     id: 'carl',
     name: 'Carl',
     description: 'A man shaped like a question mark.',
@@ -52,7 +52,7 @@ function makeRoutineCharacter(overrides = {}) {
 }
 
 function makeFullCharacter(overrides = {}) {
-  return createCharacter({
+  return characterCreate({
     id: 'rival',
     name: 'The Rival',
     description: 'You know them. They know you.',
@@ -71,10 +71,10 @@ function makeFullCharacter(overrides = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// createCharacter
+// characterCreate
 // ---------------------------------------------------------------------------
 
-describe('createCharacter', () => {
+describe('characterCreate', () => {
   it('maps all fields for a fixed character', () => {
     const c = makeFixedCharacter()
     expect(c.id).toBe('bartender_parrot')
@@ -104,7 +104,7 @@ describe('createCharacter', () => {
   })
 
   it('full tier gets default status when not provided', () => {
-    const c = createCharacter({ name: 'X', simulation: 'full' })
+    const c = characterCreate({ name: 'X', simulation: 'full' })
     expect(c.status).not.toBeNull()
   })
 
@@ -121,22 +121,22 @@ describe('createCharacter', () => {
   })
 
   it('invalid simulation tier defaults to fixed', () => {
-    const c = createCharacter({ name: 'X', simulation: 'turbo' })
+    const c = characterCreate({ name: 'X', simulation: 'turbo' })
     expect(c.simulation).toBe('fixed')
   })
 
   it('missing simulation defaults to fixed', () => {
-    const c = createCharacter({ name: 'X' })
+    const c = characterCreate({ name: 'X' })
     expect(c.simulation).toBe('fixed')
   })
 
   it('generates id when not provided', () => {
-    const c = createCharacter({ name: 'X' })
+    const c = characterCreate({ name: 'X' })
     expect(c.id).toBeTruthy()
   })
 
   it('applies default stat values when stats not provided', () => {
-    const c = createCharacter({ name: 'X' })
+    const c = characterCreate({ name: 'X' })
     expect(c.stats.charm.base).toBe(10)
     expect(c.stats.stamina.modifiers).toEqual([])
   })
@@ -148,7 +148,7 @@ describe('createCharacter', () => {
         entries: [{ locationId: 'y', startHour: 0, endHour: 24, probability: 1, days: ['all'] }],
       },
     }
-    const c = createCharacter(raw)
+    const c = characterCreate(raw)
     c.schedule.entries[0].locationId = 'CHANGED'
     expect(raw.schedule.entries[0].locationId).toBe('y')
   })

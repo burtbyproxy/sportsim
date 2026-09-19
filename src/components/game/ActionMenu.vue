@@ -86,7 +86,7 @@ import { useGameStore } from '../../stores/game.js'
 import { requirementsMeet, REQUIREMENT_CODES } from '../../engine/actions.js'
 import { useKeyboard } from '../../composables/useKeyboard.js'
 import { useKeyboardNav } from '../../composables/useKeyboardNav.js'
-import { isOpen, exitMeetsRequirements } from '../../models/location.js'
+import { locationOpen, exitRequirementsMeet } from '../../models/location.js'
 import { menuEntriesBuild, exitKeyFor } from '../../utils/menu.js'
 import { durationFormat } from '../../engine/clock.js'
 
@@ -140,8 +140,8 @@ function canTravel(exit) {
   if (!exit || game.makingActive) return false
   const dest = game.locations[exit.locationId]
   if (!dest) return false
-  if (!isOpen(dest, game.time.hour)) return false
-  return exitMeetsRequirements({
+  if (!locationOpen({ location: dest, hour: game.time.hour })) return false
+  return exitRequirementsMeet({
     exit,
     player: game.player,
     gameTime: game.time,
@@ -153,12 +153,12 @@ function travelBlockReason(exit) {
   if (game.makingActive) return game.requirementReason({ code: REQUIREMENT_CODES.BUSY })
   const dest = game.locations[exit.locationId]
   if (!dest) return ''
-  if (!isOpen(dest, game.time.hour)) {
+  if (!locationOpen({ location: dest, hour: game.time.hour })) {
     return (
       dest.availability?.closedMessage || game.requirementReason({ code: REQUIREMENT_CODES.CLOSED })
     )
   }
-  const { meets, reasonCode, reasonParams } = exitMeetsRequirements({
+  const { meets, reasonCode, reasonParams } = exitRequirementsMeet({
     exit,
     player: game.player,
     gameTime: game.time,

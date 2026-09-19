@@ -6,15 +6,15 @@
  *   actionsAvailable() with real Kenton location data (from content/)
  *   actionResolve() with a real action fixture
  *   Stat decay over realistic tick counts
- *   tickModifiers() expiry over N ticks
+ *   modifiersTick() expiry over N ticks
  */
 
 import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync, existsSync } from 'fs'
 import { join, resolve } from 'path'
-import { createPlayer, addModifier, tickModifiers } from '../../src/models/player.js'
+import { playerCreate, modifierAdd, modifiersTick } from '../../src/models/player.js'
 import { statEffective } from '../../src/engine/dice.js'
-import { createLocation } from '../../src/models/location.js'
+import { locationCreate } from '../../src/models/location.js'
 import { actionsAvailable, actionResolve } from '../../src/engine/actions.js'
 import { statusDecayChanges } from '../../src/engine/stats.js'
 import { randomSeeded } from '../../src/utils/random.js'
@@ -172,8 +172,8 @@ const CHARM_CHECK_ACTION = {
 
 describe('actionsAvailable — real Kenton location data', () => {
   it('mouse_trap returns its own wired actions alongside "any" actions', () => {
-    const location = createLocation(kentonLocations.mouse_trap)
-    const player = createPlayer('Test')
+    const location = locationCreate(kentonLocations.mouse_trap)
+    const player = playerCreate({ name: 'Test' })
     const result = actionsAvailable({
       player,
       location,
@@ -190,8 +190,8 @@ describe('actionsAvailable — real Kenton location data', () => {
   })
 
   it('returns real actions at blue_parrot with real action registry', () => {
-    const location = createLocation(kentonLocations.blue_parrot)
-    const player = createPlayer('Test')
+    const location = locationCreate(kentonLocations.blue_parrot)
+    const player = playerCreate({ name: 'Test' })
     player.status.money = 10
     // Blue Parrot is open at 14:00 (minHour: 11)
     const result = actionsAvailable({
@@ -205,10 +205,10 @@ describe('actionsAvailable — real Kenton location data', () => {
   })
 
   it('the regulars can be talked to at blue_parrot when they are in, and not when they are out', () => {
-    const location = createLocation(kentonLocations.blue_parrot)
+    const location = locationCreate(kentonLocations.blue_parrot)
     const available = (characters) =>
       actionsAvailable({
-        player: createPlayer('Test'),
+        player: playerCreate({ name: 'Test' }),
         location,
         characters,
         gameTime: makeGameTime(14),
@@ -223,8 +223,8 @@ describe('actionsAvailable — real Kenton location data', () => {
   })
 
   it('blue_parrot location actions are filtered before 11am (time-restricted)', () => {
-    const location = createLocation(kentonLocations.blue_parrot)
-    const player = createPlayer('Test')
+    const location = locationCreate(kentonLocations.blue_parrot)
+    const player = playerCreate({ name: 'Test' })
     // Bar actions require minHour: 11 — time-restricted actions should be absent at 9am
     const result = actionsAvailable({
       player,
@@ -238,8 +238,8 @@ describe('actionsAvailable — real Kenton location data', () => {
   })
 
   it('returns real actions at moms_house with real action registry', () => {
-    const location = createLocation(kentonLocations.moms_house)
-    const player = createPlayer('Test')
+    const location = locationCreate(kentonLocations.moms_house)
+    const player = playerCreate({ name: 'Test' })
     // At 14:00, sleep requires minHour: 21 so raid_fridge and stare_at_ceiling available
     const result = actionsAvailable({
       player,
@@ -255,8 +255,8 @@ describe('actionsAvailable — real Kenton location data', () => {
   })
 
   it('sleep is available at moms_house after 9pm', () => {
-    const location = createLocation(kentonLocations.moms_house)
-    const player = createPlayer('Test')
+    const location = locationCreate(kentonLocations.moms_house)
+    const player = playerCreate({ name: 'Test' })
     const result = actionsAvailable({
       player,
       location,
@@ -268,8 +268,8 @@ describe('actionsAvailable — real Kenton location data', () => {
   })
 
   it('shoplift_plaid is filtered when player is too drunk (sobriety < 50)', () => {
-    const location = createLocation(kentonLocations.ainsworth_plaid)
-    const player = createPlayer('Test')
+    const location = locationCreate(kentonLocations.ainsworth_plaid)
+    const player = playerCreate({ name: 'Test' })
     player.status.money = 10
     player.status.sobriety = 30 // below minSobriety: 50
     const result = actionsAvailable({
@@ -285,8 +285,8 @@ describe('actionsAvailable — real Kenton location data', () => {
   })
 
   it('look_for_change not available at night (maxHour: 22)', () => {
-    const location = createLocation(kentonLocations.columbia_park)
-    const player = createPlayer('Test')
+    const location = locationCreate(kentonLocations.columbia_park)
+    const player = playerCreate({ name: 'Test' })
     const result = actionsAvailable({
       player,
       location,
@@ -298,8 +298,8 @@ describe('actionsAvailable — real Kenton location data', () => {
   })
 
   it('highest-weight location actions appear first at moms_house', () => {
-    const location = createLocation(kentonLocations.moms_house)
-    const player = createPlayer('Test')
+    const location = locationCreate(kentonLocations.moms_house)
+    const player = playerCreate({ name: 'Test' })
     const result = actionsAvailable({
       player,
       location,
@@ -315,8 +315,8 @@ describe('actionsAvailable — real Kenton location data', () => {
   })
 
   it('always returns "any" location actions', () => {
-    const location = createLocation(kentonLocations.columbia_park)
-    const player = createPlayer('Test')
+    const location = locationCreate(kentonLocations.columbia_park)
+    const player = playerCreate({ name: 'Test' })
     const anyAction = { ...DRINK_ACTION, id: 'look_around', locationId: 'any', weight: 1 }
 
     const result = actionsAvailable({
@@ -330,8 +330,8 @@ describe('actionsAvailable — real Kenton location data', () => {
   })
 
   it('filters actions by time-of-day requirements', () => {
-    const location = createLocation(kentonLocations.blue_parrot)
-    const player = createPlayer('Test')
+    const location = locationCreate(kentonLocations.blue_parrot)
+    const player = playerCreate({ name: 'Test' })
     const earlyAction = { ...DRINK_ACTION, requirements: { minHour: 20 } }
 
     // It's 14:00, action requires hour >= 20 — should be filtered out
@@ -346,8 +346,8 @@ describe('actionsAvailable — real Kenton location data', () => {
   })
 
   it('filters actions by stat requirements', () => {
-    const location = createLocation(kentonLocations.blue_parrot)
-    const player = createPlayer('Test')
+    const location = locationCreate(kentonLocations.blue_parrot)
+    const player = playerCreate({ name: 'Test' })
     player.stats.charm.base = 5
 
     const eliteAction = {
@@ -366,8 +366,8 @@ describe('actionsAvailable — real Kenton location data', () => {
   })
 
   it('sorts available actions by descending weight', () => {
-    const location = createLocation(kentonLocations.blue_parrot)
-    const player = createPlayer('Test')
+    const location = locationCreate(kentonLocations.blue_parrot)
+    const player = playerCreate({ name: 'Test' })
 
     const result = actionsAvailable({
       player,
@@ -388,7 +388,7 @@ describe('actionsAvailable — real Kenton location data', () => {
 
 describe('actionResolve — real Kenton action data', () => {
   it('raid_fridge auto-succeeds and returns hunger gain', () => {
-    const player = createPlayer('Test')
+    const player = playerCreate({ name: 'Test' })
     const result = actionResolve({
       player,
       action: kentonActions.raid_fridge,
@@ -403,7 +403,7 @@ describe('actionResolve — real Kenton action data', () => {
   })
 
   it('order_beer_parrot auto-succeeds, costs money, and doses beer', () => {
-    const player = createPlayer('Test')
+    const player = playerCreate({ name: 'Test' })
     player.status.money = 10
     const result = actionResolve({
       player,
@@ -420,7 +420,7 @@ describe('actionResolve — real Kenton action data', () => {
   })
 
   it('look_for_change critical success yields $20 on natural 20', () => {
-    const player = createPlayer('Test')
+    const player = playerCreate({ name: 'Test' })
     const alwaysMax = () => 0.9999 // natural 20
     const result = actionResolve({
       player,
@@ -435,7 +435,7 @@ describe('actionResolve — real Kenton action data', () => {
   })
 
   it('look_for_change critical failure on natural 1 — crit outcome selected regardless of success', () => {
-    const player = createPlayer('Test')
+    const player = playerCreate({ name: 'Test' })
     const alwaysMin = () => 0 // natural 1 = criticalFailure
     const result = actionResolve({
       player,
@@ -453,7 +453,7 @@ describe('actionResolve — real Kenton action data', () => {
   })
 
   it('shoplift_plaid blocked when sobriety below requirement', () => {
-    const player = createPlayer('Test')
+    const player = playerCreate({ name: 'Test' })
     player.status.sobriety = 30
     const result = actionResolve({
       player,
@@ -469,7 +469,7 @@ describe('actionResolve — real Kenton action data', () => {
 
 describe('actionResolve — full pipeline', () => {
   it('auto-success action returns correct outcome without a dice roll', () => {
-    const player = createPlayer('Test')
+    const player = playerCreate({ name: 'Test' })
     const result = actionResolve({
       player,
       action: DRINK_ACTION,
@@ -488,7 +488,7 @@ describe('actionResolve — full pipeline', () => {
   })
 
   it('dice check action returns a valid DiceResult', () => {
-    const player = createPlayer('Test')
+    const player = playerCreate({ name: 'Test' })
     player.stats.charm.base = 15
 
     const result = actionResolve({
@@ -508,7 +508,7 @@ describe('actionResolve — full pipeline', () => {
   })
 
   it('success outcome applied when check passes (forced)', () => {
-    const player = createPlayer('Test')
+    const player = playerCreate({ name: 'Test' })
     player.stats.charm.base = 15
 
     const alwaysMax = () => 0.9999 // natural 20 = always success
@@ -525,7 +525,7 @@ describe('actionResolve — full pipeline', () => {
   })
 
   it('failure outcome applied when check fails (forced)', () => {
-    const player = createPlayer('Test')
+    const player = playerCreate({ name: 'Test' })
     player.stats.charm.base = 1
 
     const alwaysMin = () => 0 // natural 1 = always failure
@@ -542,7 +542,7 @@ describe('actionResolve — full pipeline', () => {
   })
 
   it('requirement failure blocks action before dice roll', () => {
-    const player = createPlayer('Test')
+    const player = playerCreate({ name: 'Test' })
     player.stats.charm.base = 5
 
     const gatedAction = { ...CHARM_CHECK_ACTION, requirements: { minStats: { charm: 50 } } }
@@ -560,7 +560,7 @@ describe('actionResolve — full pipeline', () => {
   })
 
   it('outcome is deterministic with seeded RNG', () => {
-    const player = createPlayer('Test')
+    const player = playerCreate({ name: 'Test' })
     player.stats.charm.base = 15
 
     const result1 = actionResolve({
@@ -590,7 +590,7 @@ describe('actionResolve — full pipeline', () => {
 
 describe('statusDecayChanges — realistic tick counts', () => {
   it('1 hour (4 ticks) produces sensible decay', () => {
-    const player = createPlayer('Test')
+    const player = playerCreate({ name: 'Test' })
     player.status.hunger = 60
     player.status.energy = 80
 
@@ -603,7 +603,7 @@ describe('statusDecayChanges — realistic tick counts', () => {
   })
 
   it('8 hours (32 ticks) — a whole night — produces correct values', () => {
-    const player = createPlayer('Test')
+    const player = playerCreate({ name: 'Test' })
     player.status.hunger = 80
     player.status.energy = 100
 
@@ -614,7 +614,7 @@ describe('statusDecayChanges — realistic tick counts', () => {
   })
 
   it('hunger cannot go below 0 regardless of ticks', () => {
-    const player = createPlayer('Test')
+    const player = playerCreate({ name: 'Test' })
     player.status.hunger = 3
 
     const changes = statusDecayChanges({ status: player.status, ticksElapsed: 100 })
@@ -622,7 +622,7 @@ describe('statusDecayChanges — realistic tick counts', () => {
   })
 
   it('energy cannot go below 0 regardless of ticks', () => {
-    const player = createPlayer('Test')
+    const player = playerCreate({ name: 'Test' })
     player.status.energy = 2
 
     const changes = statusDecayChanges({ status: player.status, ticksElapsed: 100 })
@@ -630,63 +630,75 @@ describe('statusDecayChanges — realistic tick counts', () => {
   })
 
   it('0 ticks returns empty object', () => {
-    const player = createPlayer('Test')
+    const player = playerCreate({ name: 'Test' })
     expect(statusDecayChanges({ status: player.status, ticksElapsed: 0 })).toEqual({})
   })
 })
 
 // ---------------------------------------------------------------------------
-// tickModifiers — expiry over N ticks
+// modifiersTick — expiry over N ticks
 // ---------------------------------------------------------------------------
 
-describe('tickModifiers — multi-tick expiry', () => {
+describe('modifiersTick — multi-tick expiry', () => {
   it('modifier expires after exactly its duration ticks', () => {
-    const player = createPlayer('Test')
-    addModifier(player, 'stamina', { source: 'coffee', value: 8, duration: 5 })
+    const player = playerCreate({ name: 'Test' })
+    modifierAdd({
+      player,
+      statName: 'stamina',
+      modifier: { source: 'coffee', value: 8, duration: 5 },
+    })
 
     for (let i = 0; i < 4; i++) {
-      tickModifiers(player)
+      modifiersTick({ player })
       expect(player.stats.stamina.modifiers).toHaveLength(1)
     }
-    tickModifiers(player) // 5th tick — expires
+    modifiersTick({ player }) // 5th tick — expires
     expect(player.stats.stamina.modifiers).toHaveLength(0)
   })
 
   it('effective stat returns to baseline after modifier expires', () => {
-    const player = createPlayer('Test')
+    const player = playerCreate({ name: 'Test' })
     player.stats.charm.base = 12
-    addModifier(player, 'charm', { source: 'liquid_courage', value: 6, duration: 3 })
+    modifierAdd({
+      player,
+      statName: 'charm',
+      modifier: { source: 'liquid_courage', value: 6, duration: 3 },
+    })
 
     expect(statEffective({ player, statName: 'charm' })).toBe(18)
 
-    tickModifiers(player)
-    tickModifiers(player)
-    tickModifiers(player) // expired
+    modifiersTick({ player })
+    modifiersTick({ player })
+    modifiersTick({ player }) // expired
 
     expect(statEffective({ player, statName: 'charm' })).toBe(12)
   })
 
   it('multiple modifiers with different durations expire independently', () => {
-    const player = createPlayer('Test')
-    addModifier(player, 'wits', { source: 'coffee', value: 3, duration: 2 })
-    addModifier(player, 'wits', { source: 'sugar', value: 2, duration: 4 })
+    const player = playerCreate({ name: 'Test' })
+    modifierAdd({ player, statName: 'wits', modifier: { source: 'coffee', value: 3, duration: 2 } })
+    modifierAdd({ player, statName: 'wits', modifier: { source: 'sugar', value: 2, duration: 4 } })
 
-    tickModifiers(player)
-    tickModifiers(player) // coffee expires
+    modifiersTick({ player })
+    modifiersTick({ player }) // coffee expires
     expect(player.stats.wits.modifiers).toHaveLength(1)
     expect(player.stats.wits.modifiers[0].source).toBe('sugar')
 
-    tickModifiers(player)
-    tickModifiers(player) // sugar expires
+    modifiersTick({ player })
+    modifiersTick({ player }) // sugar expires
     expect(player.stats.wits.modifiers).toHaveLength(0)
   })
 
   it('permanent modifiers (null duration) never expire across many ticks', () => {
-    const player = createPlayer('Test')
-    addModifier(player, 'karma', { source: 'bad_vibes', value: -5, duration: null })
+    const player = playerCreate({ name: 'Test' })
+    modifierAdd({
+      player,
+      statName: 'karma',
+      modifier: { source: 'bad_vibes', value: -5, duration: null },
+    })
 
     for (let i = 0; i < 100; i++) {
-      tickModifiers(player)
+      modifiersTick({ player })
     }
 
     expect(player.stats.karma.modifiers).toHaveLength(1)

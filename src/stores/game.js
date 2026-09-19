@@ -26,8 +26,8 @@ import {
 import { pieceDescribe } from '../engine/describer.js'
 import { gameStart, gameRoundResolve, gameScore } from '../engine/minigame.js'
 import { skillEffective } from '../engine/skills.js'
-import { addItem, removeItem, addModifier, incrementCounter } from '../models/player.js'
-import { incrementVisitCount, locationRestore } from '../models/location.js'
+import { inventoryAdd, inventoryRemove, modifierAdd, counterAdd } from '../models/player.js'
+import { locationVisitAdd, locationRestore } from '../models/location.js'
 import { itemUseResolve } from '../engine/items.js'
 import { statXpApply, statusChangesApply } from '../engine/stats.js'
 import { statusBarFillClass } from '../utils/statusBar.js'
@@ -309,7 +309,7 @@ export const useGameStore = defineStore('game', {
         this.player.currentLocationId = locationId
       }
       if (this.locations[locationId]) {
-        incrementVisitCount(this.locations[locationId])
+        locationVisitAdd({ location: this.locations[locationId] })
       }
     },
 
@@ -475,10 +475,10 @@ export const useGameStore = defineStore('game', {
       }
       const { statusChanges, statModifiers, doses } = result.data
       for (const { statName, modifier } of statModifiers) {
-        addModifier(this.player, statName, modifier)
+        modifierAdd({ player: this.player, statName, modifier })
       }
       if (doses.length > 0) this.applyDoses({ doses, rng })
-      removeItem(this.player, itemId)
+      inventoryRemove({ player: this.player, itemId })
       this.applyStatusChanges(statusChanges)
       return result
     },
@@ -662,8 +662,11 @@ export const useGameStore = defineStore('game', {
       }
       this.currentLocation.scavenge = result.data.scavenge
       if (result.data.itemId) {
-        addItem(this.player, this.items[result.data.itemId])
-        incrementCounter(this.player, scavengedCounterName({ itemId: result.data.itemId }))
+        inventoryAdd({ player: this.player, item: this.items[result.data.itemId] })
+        counterAdd({
+          player: this.player,
+          counterName: scavengedCounterName({ itemId: result.data.itemId }),
+        })
       }
       return result
     },
@@ -869,7 +872,8 @@ export const useGameStore = defineStore('game', {
         return result
       }
       this.player.makings = result.data.makings
-      for (const itemId of result.data.itemIdsConsumed) removeItem(this.player, itemId)
+      for (const itemId of result.data.itemIdsConsumed)
+        inventoryRemove({ player: this.player, itemId })
       if (result.data.moneyCost > 0) this.adjustMoney(-result.data.moneyCost)
       return { ...result, data: { ...result.data, promptCode: dealt.data.promptCode } }
     },

@@ -20,7 +20,7 @@ import {
   diceCriticalSuccess,
   diceCriticalFailure,
 } from './dice.js'
-import { statXpApply } from './stats.js'
+import { statCreate, statXpApply } from './stats.js'
 import { resultOk, resultFail } from './result.js'
 import { numberClamp, numberRound } from '../utils/number.js'
 
@@ -71,7 +71,7 @@ function _cellValue(cell) {
  * @returns {{ base: number, modifiers: Object[], xp: number }}
  */
 export function skillCellCreate() {
-  return { base: 0, modifiers: [], xp: 0 }
+  return statCreate({ base: 0 })
 }
 
 /**

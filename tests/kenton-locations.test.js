@@ -2,8 +2,8 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync, existsSync } from 'fs'
 import { join, resolve } from 'path'
-import { createLocation, isOpen } from '../src/models/location.js'
-import { createPlayer } from '../src/models/player.js'
+import { locationCreate, locationOpen } from '../src/models/location.js'
+import { playerCreate } from '../src/models/player.js'
 import { generateLocationNarrative } from '../src/composables/useNarrative.js'
 
 // Load Kenton locations from content/ (keyed by ID)
@@ -119,8 +119,8 @@ describe('kentonLocations data integrity', () => {
   it('bars are not open at 6am', () => {
     const bars = ['blue_parrot', 'mocks_crest', 'mouse_trap', 'dancin_bare']
     for (const id of bars) {
-      const loc = createLocation(kentonLocations[id])
-      expect(isOpen(loc, 6), `${id} should be closed at 6am`).toBe(false)
+      const loc = locationCreate(kentonLocations[id])
+      expect(locationOpen({ location: loc, hour: 6 }), `${id} should be closed at 6am`).toBe(false)
     }
   })
 
@@ -132,19 +132,19 @@ describe('kentonLocations data integrity', () => {
     expect(loc.availability.closeHour).toBe(23)
   })
 
-  it('all locations serialize cleanly through createLocation', () => {
+  it('all locations serialize cleanly through locationCreate', () => {
     for (const id of EXPECTED_IDS) {
-      const loc = createLocation(kentonLocations[id])
+      const loc = locationCreate(kentonLocations[id])
       const serialized = JSON.parse(JSON.stringify(loc))
       expect(serialized.id).toBe(id)
     }
   })
 
   it('every location narrates its own default description to a fresh arrival', () => {
-    const player = createPlayer('Test')
+    const player = playerCreate({ name: 'Test' })
     const morning = { period: 'morning', hour: 9 }
     for (const id of EXPECTED_IDS) {
-      const loc = createLocation(kentonLocations[id])
+      const loc = locationCreate(kentonLocations[id])
       const text = generateLocationNarrative(loc, player, morning)
         .tokens.map((t) => t.text)
         .join('')

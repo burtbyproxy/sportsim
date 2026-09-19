@@ -6,7 +6,7 @@
 import { numberClamp, numberRound } from '../utils/number.js'
 
 /**
- * Status that changes only through its own door: money through adjustMoney,
+ * Status that changes only through its own door: money through moneyAdjust,
  * sobriety derived from what is in you. Everything else holds 0-100.
  */
 const STATUS_IDS_NOT_WRITABLE = Object.freeze(['money', 'sobriety'])
@@ -26,6 +26,15 @@ export function statusChangesApply({ status, changes }) {
     next[key] = numberClamp({ value: next[key] + delta, min: 0, max: 100 })
   }
   return next
+}
+
+/**
+ * A stat nobody has worked on yet: the shape of every stat and every skill cell.
+ * @param {{ base: number }} input
+ * @returns {{ base: number, modifiers: Object[], xp: number }}
+ */
+export function statCreate({ base }) {
+  return { base, modifiers: [], xp: 0 }
 }
 
 /** A rolled check trains the stat it rolled on. You learn more when it works. */

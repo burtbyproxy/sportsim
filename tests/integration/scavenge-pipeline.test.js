@@ -13,7 +13,7 @@ import { readFileSync, readdirSync } from 'fs'
 import { resolve } from 'path'
 import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '../../src/stores/game.js'
-import { createPlayer } from '../../src/models/player.js'
+import { playerCreate } from '../../src/models/player.js'
 import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
 import { actionsAvailable } from '../../src/engine/actions.js'
@@ -47,7 +47,7 @@ function startGame({ at = 'moms_house' } = {}) {
   for (const substance of substances) game.registerSubstance({ substance })
   // Registered the way the title screen does it: the raw content object.
   for (const location of locations) game.registerLocation({ ...location })
-  const player = createPlayer('Tester')
+  const player = playerCreate({ name: 'Tester' })
   player.stats.luck.base = 15
   player.stats.wits.base = 15
   game.startNewGame(player, at)

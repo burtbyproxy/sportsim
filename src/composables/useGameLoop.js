@@ -27,12 +27,12 @@ import {
   STAT_XP_CHECK_FAILURE,
 } from '../engine/stats.js'
 import {
-  tickModifiers,
-  addItem,
-  removeItem,
-  feedObsession,
-  updateArchetypeScore,
-  incrementCounter,
+  modifiersTick,
+  inventoryAdd,
+  inventoryRemove,
+  obsessionFeed,
+  archetypeScoreAdd,
+  counterAdd,
 } from '../models/player.js'
 import {
   MAKING_FOCUS_EVENT_FACTOR,
@@ -108,8 +108,8 @@ export function useGameLoop({
       game.applyStatusChanges(decayChanges)
     }
 
-    // 3. Expire modifiers — tickModifiers mutates player in place
-    tickModifiers(game.player)
+    // 3. Expire modifiers — modifiersTick mutates player in place
+    modifiersTick({ player: game.player })
 
     // 4. Run simulation worker — move characters, apply full-sim status decay
     // We await so character positions update before action refresh,
@@ -692,12 +692,12 @@ export function useGameLoop({
     }
 
     // Grant items — itemsGained is string[] (item IDs per contract)
-    // Look up each ID in the item registry before passing to addItem
+    // Look up each ID in the item registry before passing to inventoryAdd
     if (outcome.itemsGained?.length > 0) {
       for (const itemId of outcome.itemsGained) {
         const itemDef = game.getItem(itemId)
         if (itemDef) {
-          addItem(game.player, itemDef)
+          inventoryAdd({ player: game.player, item: itemDef })
         } else {
           _failureShow({ error: { code: LOOP_ERROR_CODES.ITEM_UNKNOWN, params: { itemId } } })
         }
@@ -707,27 +707,27 @@ export function useGameLoop({
     // Remove items
     if (outcome.itemsLost?.length > 0) {
       for (const itemId of outcome.itemsLost) {
-        removeItem(game.player, itemId)
+        inventoryRemove({ player: game.player, itemId })
       }
     }
 
     // Archetype changes
     if (outcome.archetypeChanges) {
       for (const [archetypeId, delta] of Object.entries(outcome.archetypeChanges)) {
-        updateArchetypeScore(game.player, archetypeId, delta)
+        archetypeScoreAdd({ player: game.player, archetypeId, delta })
       }
     }
 
     // Counter changes
     if (outcome.counterChanges) {
       for (const [key, delta] of Object.entries(outcome.counterChanges)) {
-        incrementCounter(game.player, key, delta)
+        counterAdd({ player: game.player, counterName: key, delta })
       }
     }
 
     // Obsession feeding
     if (outcome.obsessionFed) {
-      feedObsession(game.player, outcome.obsessionFed, 5)
+      obsessionFeed({ player: game.player, obsessionId: outcome.obsessionFed, amount: 5 })
     }
 
     // Mark one-time events

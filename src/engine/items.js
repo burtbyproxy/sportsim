@@ -9,7 +9,7 @@
  * change; the store applies it.
  */
 
-import { applyEffects } from '../models/item.js'
+import { itemEffectsCopy } from '../models/item.js'
 import { STATUS_IDS_WRITABLE_DEFAULT } from '../models/defaults.js'
 import { resultOk, resultFail } from './result.js'
 
@@ -66,7 +66,7 @@ export function itemUseResolve({ player, itemId, statusIds = ITEM_EFFECT_STATUSE
 
   const statusChanges = {}
   const statModifiers = []
-  for (const effect of applyEffects(item)) {
+  for (const effect of itemEffectsCopy({ item })) {
     if (statusIds.includes(effect.target)) {
       statusChanges[effect.target] = (statusChanges[effect.target] ?? 0) + effect.value
     } else if (player.stats?.[effect.target]) {

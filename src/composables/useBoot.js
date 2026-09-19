@@ -9,10 +9,10 @@ import { useGameStore } from '../stores/game.js'
 import { useSave, SAVE_ERROR_CODES } from './useSave.js'
 import { contentLoad, CONTENT_KINDS } from '../data/loader.js'
 import { resultOk, resultFail } from '../engine/result.js'
-import { createPlayer } from '../models/player.js'
-import { createCharacter } from '../models/character.js'
-import { createLocation } from '../models/location.js'
-import { createItem } from '../models/item.js'
+import { playerCreate } from '../models/player.js'
+import { characterCreate } from '../models/character.js'
+import { locationCreate } from '../models/location.js'
+import { itemCreate } from '../models/item.js'
 
 /**
  * Load several kinds of content, stopping at the first that fails.
@@ -68,7 +68,7 @@ export function useBoot({ load = contentLoad } = {}) {
     game.registerConfig({ config: config.data })
     game.registerVocabulary({ vocabulary: content[CONTENT_KINDS.VOCABULARY] })
     for (const item of Object.values(content[CONTENT_KINDS.ITEMS])) {
-      game.registerItem(createItem(item))
+      game.registerItem(itemCreate(item))
     }
     for (const substance of Object.values(content[CONTENT_KINDS.SUBSTANCES])) {
       game.registerSubstance({ substance })
@@ -110,16 +110,19 @@ export function useBoot({ load = contentLoad } = {}) {
       kinds: [CONTENT_KINDS.LOCATIONS, CONTENT_KINDS.CHARACTERS],
     })
     if (!world.ok) return world
-    const player = createPlayer(config.start.playerName, {
-      ...config.start,
-      statIds: vocabulary.stats.map((stat) => stat.id),
+    const player = playerCreate({
+      name: config.start.playerName,
+      start: {
+        ...config.start,
+        statIds: vocabulary.stats.map((stat) => stat.id),
+      },
     })
     game.startNewGame(player, config.start.locationId)
     for (const location of Object.values(world.data[CONTENT_KINDS.LOCATIONS])) {
-      game.registerLocation(createLocation(location))
+      game.registerLocation(locationCreate(location))
     }
     for (const character of Object.values(world.data[CONTENT_KINDS.CHARACTERS])) {
-      game.registerCharacter(createCharacter(character))
+      game.registerCharacter(characterCreate(character))
     }
     return resultOk({ locationId: config.start.locationId })
   }

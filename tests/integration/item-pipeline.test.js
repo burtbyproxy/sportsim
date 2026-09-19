@@ -11,10 +11,10 @@ import { readFileSync, readdirSync } from 'fs'
 import { resolve } from 'path'
 import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '../../src/stores/game.js'
-import { createPlayer } from '../../src/models/player.js'
-import { createItem } from '../../src/models/item.js'
-import { createLocation } from '../../src/models/location.js'
-import { createCharacter } from '../../src/models/character.js'
+import { playerCreate } from '../../src/models/player.js'
+import { itemCreate } from '../../src/models/item.js'
+import { locationCreate } from '../../src/models/location.js'
+import { characterCreate } from '../../src/models/character.js'
 import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
 import { simulationLocal } from '../../src/workers/simulation-local.js'
@@ -45,20 +45,20 @@ const voice = (personaId, code) => voices.find((v) => v.id === personaId).lines[
 function startGame({ at = 'moms_house' } = {}) {
   setActivePinia(createPinia())
   const game = useGameStore()
-  for (const item of items) game.registerItem(createItem(item))
+  for (const item of items) game.registerItem(itemCreate(item))
   for (const substance of substances) game.registerSubstance({ substance })
   for (const condition of conditions) game.registerCondition({ condition })
   for (const v of voices) game.registerVoice({ voice: v })
   for (const table of tables) game.registerScavengeTable({ table })
-  for (const location of locations) game.registerLocation(createLocation(location))
-  game.startNewGame(createPlayer('Tester'), at)
+  for (const location of locations) game.registerLocation(locationCreate(location))
+  game.startNewGame(playerCreate({ name: 'Tester' }), at)
   return game
 }
 
 /** Put n of a real content item in the player's hands, the way an outcome does. */
 function give(game, itemId, n = 1) {
   for (let i = 0; i < n; i++) game.player.inventory.push({ ...game.getItem(itemId) })
-  // stackables arrive one at a time through addItem in play; collapse them the same way
+  // stackables arrive one at a time through inventoryAdd in play; collapse them the same way
   const first = game.player.inventory.find((i) => i.id === itemId)
   if (first.stackable) {
     first.quantity = n
@@ -140,7 +140,7 @@ describe('item pipeline', () => {
   it('an effect that names a stat becomes a modifier the dice read, and it wears off', async () => {
     const game = startGame()
     game.registerItem(
-      createItem({
+      itemCreate({
         id: 'test_tonic',
         name: 'Tonic',
         type: 'consumable',
@@ -225,7 +225,7 @@ describe('failures are shown in play, never swallowed', () => {
 
   it('a simulation that falls over says so, and the world waits a tick', async () => {
     const game = startGame()
-    game.registerCharacter(createCharacter(maurice))
+    game.registerCharacter(characterCreate(maurice))
     const narrative = useNarrative()
     const broken = {
       tick: () => {
@@ -242,7 +242,7 @@ describe('failures are shown in play, never swallowed', () => {
 
   it('a character whose blend cannot be worked out is reported by name, after the tick', async () => {
     const game = startGame()
-    game.registerCharacter(createCharacter({ ...maurice, intoxications: { moonshine_x: 40 } }))
+    game.registerCharacter(characterCreate({ ...maurice, intoxications: { moonshine_x: 40 } }))
     const narrative = useNarrative()
     const loop = useGameLoop({ narrative, simulation: simulationLocal })
 
@@ -254,7 +254,7 @@ describe('failures are shown in play, never swallowed', () => {
 
   it('the store keeps the fault, with who it was about, until the loop takes it', () => {
     const game = startGame()
-    game.registerCharacter(createCharacter({ ...maurice, intoxications: { moonshine_x: 40 } }))
+    game.registerCharacter(characterCreate({ ...maurice, intoxications: { moonshine_x: 40 } }))
     game.blendRefresh()
     expect(game.faults[0]).toMatchObject({
       code: 'SUBSTANCE_UNKNOWN',
@@ -266,7 +266,7 @@ describe('failures are shown in play, never swallowed', () => {
 
   it('wearing off counts as its own failure, beside working out the blend', () => {
     const game = startGame()
-    game.registerCharacter(createCharacter({ ...maurice, intoxications: { moonshine_x: 40 } }))
+    game.registerCharacter(characterCreate({ ...maurice, intoxications: { moonshine_x: 40 } }))
     game.faultsDrain()
     game.applyBlendDecay({ ticksElapsed: 1 })
     // One from the decay, one from the blend it refreshes after.
@@ -312,7 +312,7 @@ describe('the store keeps statuses in bounds', () => {
 
   it("a character's status follows the same rule as the player's, and their conditions follow it", () => {
     const game = startGame()
-    game.registerCharacter(createCharacter(maurice))
+    game.registerCharacter(characterCreate(maurice))
     const before = { ...game.characters.maurice.status }
 
     game.charactersStatusApply({
@@ -328,7 +328,7 @@ describe('the store keeps statuses in bounds', () => {
 
   it('time passing wears on the characters too, by the same rule', async () => {
     const game = startGame()
-    game.registerCharacter(createCharacter(maurice))
+    game.registerCharacter(characterCreate(maurice))
     const before = { ...game.characters.maurice.status }
     const loop = useGameLoop({ simulation: simulationLocal })
 

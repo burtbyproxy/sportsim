@@ -18,7 +18,7 @@ import TitleScreen from '../src/components/layout/TitleScreen.vue'
 import GameScreen from '../src/components/layout/GameScreen.vue'
 import { useBoot } from '../src/composables/useBoot.js'
 import { useGameStore } from '../src/stores/game.js'
-import { createPlayer } from '../src/models/player.js'
+import { playerCreate } from '../src/models/player.js'
 
 const contentIds = (dir) =>
   readdirSync(resolve(dir))
@@ -52,7 +52,7 @@ describe('GameFooter', () => {
 
   it('documents number keys for actions, letters for exits, and space to skip', () => {
     const game = useGameStore()
-    game.startNewGame(createPlayer('Tester'), 'moms_house')
+    game.startNewGame(playerCreate({ name: 'Tester' }), 'moms_house')
     const text = mount(GameFooter).text()
     expect(text).toContain('1–9 actions')
     expect(text).toContain('a–z go')

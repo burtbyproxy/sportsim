@@ -13,8 +13,8 @@ import { readFileSync, readdirSync } from 'fs'
 import { resolve } from 'path'
 import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '../../src/stores/game.js'
-import { createPlayer } from '../../src/models/player.js'
-import { createLocation } from '../../src/models/location.js'
+import { playerCreate } from '../../src/models/player.js'
+import { locationCreate } from '../../src/models/location.js'
 import { skillEffective, skillCheckRoll } from '../../src/engine/skills.js'
 import { saveMigrate, SAVE_VERSION } from '../../src/composables/useSave.js'
 
@@ -36,8 +36,8 @@ function startGame() {
   for (const substance of substances) game.registerSubstance({ substance })
   for (const condition of conditions) game.registerCondition({ condition })
   for (const medium of mediums) game.registerMedium({ medium })
-  game.registerLocation(createLocation(momsHouse))
-  game.startNewGame(createPlayer('Tester'), 'moms_house')
+  game.registerLocation(locationCreate(momsHouse))
+  game.startNewGame(playerCreate({ name: 'Tester' }), 'moms_house')
   return game
 }
 

@@ -14,9 +14,9 @@ import { readFileSync, readdirSync } from 'fs'
 import { resolve } from 'path'
 import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '../../src/stores/game.js'
-import { createPlayer } from '../../src/models/player.js'
-import { createLocation } from '../../src/models/location.js'
-import { createCharacter } from '../../src/models/character.js'
+import { playerCreate } from '../../src/models/player.js'
+import { locationCreate } from '../../src/models/location.js'
+import { characterCreate } from '../../src/models/character.js'
 import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
 
@@ -44,9 +44,9 @@ const substances = readdirSync(resolve('content/substances')).map((file) =>
 function startGame() {
   setActivePinia(createPinia())
   const game = useGameStore()
-  game.registerLocation(createLocation(momsHouse))
+  game.registerLocation(locationCreate(momsHouse))
   for (const substance of substances) game.registerSubstance({ substance })
-  game.startNewGame(createPlayer('Tester'), 'moms_house')
+  game.startNewGame(playerCreate({ name: 'Tester' }), 'moms_house')
   return game
 }
 
@@ -149,7 +149,7 @@ describe('useGameLoop → auto-save', () => {
 
   it('arriving somewhere writes the auto-save slot with the new location and time', async () => {
     const game = startGame()
-    game.registerLocation(createLocation(columbiaPark))
+    game.registerLocation(locationCreate(columbiaPark))
     const save = useSave()
     const loop = useGameLoop({ actionRegistry: momsHouseActions, save })
 
@@ -167,7 +167,7 @@ describe('useGameLoop → auto-save', () => {
 
   it('the auto-save slot is replaced, not accumulated', async () => {
     const game = startGame()
-    game.registerLocation(createLocation(columbiaPark))
+    game.registerLocation(locationCreate(columbiaPark))
     const save = useSave()
     const loop = useGameLoop({ actionRegistry: momsHouseActions, save })
 
@@ -181,7 +181,7 @@ describe('useGameLoop → auto-save', () => {
 
   it('a fresh store restored from the auto-save resumes where the player was', async () => {
     const game = startGame()
-    game.registerLocation(createLocation(columbiaPark))
+    game.registerLocation(locationCreate(columbiaPark))
     const save = useSave()
     const loop = useGameLoop({ actionRegistry: momsHouseActions, save })
     await loop.resolvePlayerAction(byId('raid_fridge'))
@@ -202,7 +202,7 @@ describe('useGameLoop → auto-save', () => {
 
   it('a save that cannot be written is said out loud, not swallowed', async () => {
     const game = startGame()
-    game.registerLocation(createLocation(columbiaPark))
+    game.registerLocation(locationCreate(columbiaPark))
     for (const voice of voices) game.registerVoice({ voice })
     globalThis.localStorage.setItem = () => {
       throw new Error('QuotaExceededError')
@@ -334,7 +334,7 @@ describe('useGameLoop → events', () => {
   it('a checked choice that fails applies the failure outcome', async () => {
     const game = startGame()
     // The cruiser works the street, so be on it.
-    game.registerLocation(createLocation(columbiaPark))
+    game.registerLocation(locationCreate(columbiaPark))
     game.moveTo('columbia_park')
     const narrative = useNarrative()
     // A low roll botches every check. Force the event by type so the roll only governs the check.
@@ -360,7 +360,7 @@ describe('useGameLoop → events', () => {
 
   it('the pending event survives the auto-save round trip', async () => {
     const game = startGame()
-    const columbia = createLocation(columbiaPark)
+    const columbia = locationCreate(columbiaPark)
     game.registerLocation(columbia)
     installLocalStorage()
     const save = useSave()
@@ -390,7 +390,7 @@ describe('useGameLoop → scene order on arrival', () => {
 
   it('the new place is described first and an arrival event lands beneath it', async () => {
     const game = startGame()
-    game.registerLocation(createLocation(columbiaPark))
+    game.registerLocation(locationCreate(columbiaPark))
     const narrative = useNarrative()
     const loop = useGameLoop({
       actionRegistry: momsHouseActions,
@@ -430,12 +430,12 @@ describe('useGameLoop → visits and company', () => {
   function startAtTheBar({ visits, daleIn }) {
     setActivePinia(createPinia())
     const game = useGameStore()
-    game.registerLocation(createLocation(momsHouse))
-    game.registerLocation(createLocation(mocksCrest))
+    game.registerLocation(locationCreate(momsHouse))
+    game.registerLocation(locationCreate(mocksCrest))
     for (const substance of substances) game.registerSubstance({ substance })
     for (const voice of voices) game.registerVoice({ voice })
-    game.startNewGame(createPlayer('Tester'), 'moms_house')
-    game.registerCharacter(createCharacter(dale))
+    game.startNewGame(playerCreate({ name: 'Tester' }), 'moms_house')
+    game.registerCharacter(characterCreate(dale))
     for (let n = 0; n < visits; n++) {
       game.moveTo('mocks_crest')
       if (n < visits - 1) game.moveTo('moms_house')

@@ -26,7 +26,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { blendSober } from './blend.js'
 import { inspirationActive } from './inspiration.js'
 import { skillCheckRoll } from './skills.js'
-import { isOpen } from '../models/location.js'
+import { locationOpen } from '../models/location.js'
 import { resultOk, resultFail } from './result.js'
 
 /** Enumerated error codes for every making result. The code is the contract. */
@@ -153,7 +153,7 @@ function _takesMedium({ thing, mediumId }) {
 /** A surface the place only offers at certain hours: the karaoke machine, say. */
 function _surfaceOpen({ surface, gameTime }) {
   if (!surface.hours) return true
-  return isOpen({ availability: surface.hours }, gameTime?.hour ?? 0)
+  return locationOpen({ location: { availability: surface.hours }, hour: gameTime?.hour ?? 0 })
 }
 
 function _surfaceFind({ player, location, items, surfaceKind, surfaceId, gameTime }) {

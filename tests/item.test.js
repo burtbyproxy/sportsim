@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { createItem, applyEffects } from '../src/models/item.js'
+import { itemCreate, itemEffectsCopy } from '../src/models/item.js'
 
 // ---------------------------------------------------------------------------
-// createItem
+// itemCreate
 // ---------------------------------------------------------------------------
 
-describe('createItem', () => {
+describe('itemCreate', () => {
   const raw = {
     id: 'pabst',
     name: 'Pabst Blue Ribbon',
@@ -19,7 +19,7 @@ describe('createItem', () => {
   }
 
   it('maps all fields correctly', () => {
-    const item = createItem(raw)
+    const item = itemCreate(raw)
     expect(item.id).toBe('pabst')
     expect(item.name).toBe('Pabst Blue Ribbon')
     expect(item.description).toBe('A can of PBR. Cold. Technically.')
@@ -32,12 +32,12 @@ describe('createItem', () => {
   })
 
   it('defaults doses to an empty array', () => {
-    const item = createItem({ id: 'rock', name: 'Rock' })
+    const item = itemCreate({ id: 'rock', name: 'Rock' })
     expect(item.doses).toEqual([])
   })
 
   it('carries the mediums a tool or surface works in, and how it reads when found', () => {
-    const sharpie = createItem({
+    const sharpie = itemCreate({
       id: 'sharpie',
       name: 'Sharpie',
       type: 'tool',
@@ -49,23 +49,23 @@ describe('createItem', () => {
   })
 
   it('defaults mediumIds to empty and foundAs to null, and copies the array', () => {
-    const rock = createItem({ id: 'rock', name: 'Rock' })
+    const rock = itemCreate({ id: 'rock', name: 'Rock' })
     expect(rock.mediumIds).toEqual([])
     expect(rock.foundAs).toBeNull()
     const source = { id: 'x', name: 'X', mediumIds: ['painting'] }
-    const item = createItem(source)
+    const item = itemCreate(source)
     item.mediumIds.push('carving')
     expect(source.mediumIds).toEqual(['painting'])
   })
 
   it('does not share the doses array reference with source', () => {
-    const item = createItem(raw)
+    const item = itemCreate(raw)
     item.doses[0].value = 99
     expect(raw.doses[0].value).toBe(10)
   })
 
   it('applies defaults for missing optional fields', () => {
-    const item = createItem({ id: 'rock', name: 'Rock' })
+    const item = itemCreate({ id: 'rock', name: 'Rock' })
     expect(item.description).toBe('')
     expect(item.type).toBe('junk')
     expect(item.value).toBe(0)
@@ -75,13 +75,13 @@ describe('createItem', () => {
   })
 
   it('does not share effects array reference with source', () => {
-    const item = createItem(raw)
+    const item = itemCreate(raw)
     item.effects[0].value = 99
     expect(raw.effects[0].value).toBe(5)
   })
 
   it('serializes cleanly to JSON', () => {
-    const item = createItem(raw)
+    const item = itemCreate(raw)
     const serialized = JSON.parse(JSON.stringify(item))
     expect(serialized.name).toBe('Pabst Blue Ribbon')
     expect(serialized.effects).toHaveLength(1)
@@ -90,11 +90,11 @@ describe('createItem', () => {
 })
 
 // ---------------------------------------------------------------------------
-// applyEffects
+// itemEffectsCopy
 // ---------------------------------------------------------------------------
 
-describe('applyEffects', () => {
-  const item = createItem({
+describe('itemEffectsCopy', () => {
+  const item = itemCreate({
     id: 'pabst',
     name: 'Pabst Blue Ribbon',
     type: 'consumable',
@@ -105,26 +105,26 @@ describe('applyEffects', () => {
   })
 
   it('returns a copy of all effects', () => {
-    const effects = applyEffects(item)
+    const effects = itemEffectsCopy({ item })
     expect(effects).toHaveLength(1)
     expect(effects[0].target).toBe('mood')
     expect(effects[0].value).toBe(5)
   })
 
   it('does not mutate the item', () => {
-    const effects = applyEffects(item)
+    const effects = itemEffectsCopy({ item })
     effects[0].value = 999
     expect(item.effects[0].value).toBe(5)
   })
 
   it('returns empty array for item with no effects', () => {
-    const noEffect = createItem({ id: 'rock', name: 'Rock' })
-    expect(applyEffects(noEffect)).toEqual([])
+    const noEffect = itemCreate({ id: 'rock', name: 'Rock' })
+    expect(itemEffectsCopy({ item: noEffect })).toEqual([])
   })
 
   it('does not mutate the player argument', () => {
     const player = { status: { sobriety: 80 } }
-    applyEffects(item)
+    itemEffectsCopy({ item })
     expect(player.status.sobriety).toBe(80)
   })
 })

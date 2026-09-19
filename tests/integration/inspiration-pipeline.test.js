@@ -13,8 +13,8 @@ import { readFileSync, readdirSync } from 'fs'
 import { resolve } from 'path'
 import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '../../src/stores/game.js'
-import { createPlayer } from '../../src/models/player.js'
-import { createLocation } from '../../src/models/location.js'
+import { playerCreate } from '../../src/models/player.js'
+import { locationCreate } from '../../src/models/location.js'
 import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
 import { requirementsMeet } from '../../src/engine/actions.js'
@@ -47,8 +47,8 @@ function startGame() {
   for (const condition of conditions) game.registerCondition({ condition })
   for (const medium of mediums) game.registerMedium({ medium })
   for (const v of voices) game.registerVoice({ voice: v })
-  game.registerLocation(createLocation(momsHouse))
-  game.startNewGame(createPlayer('Tester'), 'moms_house')
+  game.registerLocation(locationCreate(momsHouse))
+  game.startNewGame(playerCreate({ name: 'Tester' }), 'moms_house')
   return game
 }
 

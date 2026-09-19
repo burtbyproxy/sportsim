@@ -14,26 +14,18 @@
 import { v4 as uuidv4 } from 'uuid'
 import { blendSober, sobrietyDerive } from '../engine/blend.js'
 import { STAT_IDS_DEFAULT, SIMULATION_TIERS_DEFAULT } from './defaults.js'
+import { statCreate } from '../engine/stats.js'
 
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
 
 /**
- * Create a blank Stat object.
- * @param {number} base
- * @returns {Object}
- */
-function createStat(base) {
-  return { base, modifiers: [], xp: 0 }
-}
-
-/**
  * Default stats for a character — every stat at base 10.
  * @returns {Object}
  */
 function defaultStats() {
-  return Object.fromEntries(STAT_IDS_DEFAULT.map((statId) => [statId, createStat(10)]))
+  return Object.fromEntries(STAT_IDS_DEFAULT.map((statId) => [statId, statCreate({ base: 10 })]))
 }
 
 /**
@@ -67,7 +59,7 @@ const VALID_SIMULATION_TIERS = SIMULATION_TIERS_DEFAULT
  * @param {Object} data - raw character data
  * @returns {Object} Character per data contract
  */
-export function createCharacter(data) {
+export function characterCreate(data) {
   const simulation = VALID_SIMULATION_TIERS.includes(data.simulation) ? data.simulation : 'fixed'
 
   // Status: null for fixed-tier characters unless explicitly provided
