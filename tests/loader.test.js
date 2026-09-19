@@ -5,15 +5,9 @@
  * @vitest-environment node
  */
 import { describe, it, expect } from 'vitest'
-import { readdirSync } from 'fs'
-import { resolve } from 'path'
-import { contentMerge, contentLoad, CONTENT_KINDS, LOADER_ERROR_CODES } from '../src/data/loader.js'
 
-const contentIds = (dir) =>
-  readdirSync(resolve(dir))
-    .filter((f) => f.endsWith('.json'))
-    .map((f) => f.replace('.json', ''))
-    .sort()
+import { contentMerge, contentLoad, CONTENT_KINDS, LOADER_ERROR_CODES } from '../src/data/loader.js'
+import { contentIds } from './helpers/content.js'
 
 describe('contentMerge', () => {
   it('keys entries by id, from files holding one entry or a list', () => {
@@ -68,13 +62,15 @@ describe('contentLoad — the real content', () => {
     ]) {
       const loaded = contentLoad({ kind })
       expect(loaded.ok, kind).toBe(true)
-      expect(Object.keys(loaded.data).sort(), kind).toEqual(contentIds(dir))
+      expect(Object.keys(loaded.data).sort(), kind).toEqual(contentIds({ dir }))
     }
   })
 
   it('loads a map by its id, and nothing for a map that is not there', () => {
     const kenton = contentLoad({ kind: CONTENT_KINDS.LOCATIONS, mapId: 'kenton' })
-    expect(Object.keys(kenton.data).sort()).toEqual(contentIds('content/maps/kenton/locations'))
+    expect(Object.keys(kenton.data).sort()).toEqual(
+      contentIds({ dir: 'content/maps/kenton/locations' })
+    )
     expect(
       contentLoad({ kind: CONTENT_KINDS.ACTIONS, mapId: 'kenton' }).data.raid_fridge
     ).toBeDefined()

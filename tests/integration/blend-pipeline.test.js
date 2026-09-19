@@ -8,7 +8,7 @@
  * @vitest-environment node
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { readFileSync, readdirSync } from 'fs'
+import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '../../src/stores/game.js'
@@ -18,14 +18,10 @@ import { locationCreate } from '../../src/models/location.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
 import { statEffective } from '../../src/engine/dice.js'
 import { SOBER_PERSONA_ID, PERSONA_SOURCES } from '../../src/engine/blend.js'
+import { contentDir } from '../helpers/content.js'
 
-const loadDir = (dir) =>
-  readdirSync(resolve(dir))
-    .filter((f) => f.endsWith('.json'))
-    .map((f) => JSON.parse(readFileSync(resolve(dir, f), 'utf-8')))
-
-const substances = loadDir('content/substances')
-const conditions = loadDir('content/conditions')
+const substances = contentDir({ dir: 'content/substances' })
+const conditions = contentDir({ dir: 'content/conditions' })
 const momsHouse = JSON.parse(
   readFileSync(resolve('content/maps/kenton/locations/moms_house.json'), 'utf-8')
 )

@@ -10,37 +10,18 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createMemoryHistory } from 'vue-router'
-import { readdirSync, readFileSync } from 'fs'
+import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import GameFooter from '../src/components/layout/GameFooter.vue'
 import NarrativeLog from '../src/components/game/NarrativeLog.vue'
 import TitleScreen from '../src/components/layout/TitleScreen.vue'
 import GameScreen from '../src/components/layout/GameScreen.vue'
 import { useBoot } from '../src/composables/useBoot.js'
+import { characterCreate } from '../src/models/character.js'
 import { useGameStore } from '../src/stores/game.js'
 import { playerCreate } from '../src/models/player.js'
-
-const contentIds = (dir) =>
-  readdirSync(resolve(dir))
-    .filter((f) => f.endsWith('.json'))
-    .map((f) => f.replace('.json', ''))
-    .sort()
-
-function installLocalStorage(initial = {}) {
-  let store = { ...initial }
-  globalThis.localStorage = {
-    getItem: (key) => store[key] ?? null,
-    setItem: (key, value) => {
-      store[key] = String(value)
-    },
-    removeItem: (key) => {
-      delete store[key]
-    },
-    clear: () => {
-      store = {}
-    },
-  }
-}
+import { contentFile, contentIds } from './helpers/content.js'
+import { storageInstall } from './helpers/storage.js'
 
 describe('GameFooter', () => {
   const vocabulary = JSON.parse(readFileSync(resolve('content/vocabulary.json'), 'utf-8'))
@@ -93,7 +74,7 @@ describe('NarrativeLog', () => {
 
 describe('TitleScreen', () => {
   async function mountTitle({ saves = {} } = {}) {
-    installLocalStorage(saves)
+    storageInstall({ initial: saves })
     const pinia = createPinia()
     setActivePinia(pinia)
     const router = createRouter({
@@ -123,11 +104,11 @@ describe('TitleScreen', () => {
 
   it('registers every definition in content before anyone presses anything', async () => {
     const { game } = await mountTitle()
-    expect(Object.keys(game.substances).sort()).toEqual(contentIds('content/substances'))
-    expect(Object.keys(game.conditions).sort()).toEqual(contentIds('content/conditions'))
-    expect(Object.keys(game.mediums).sort()).toEqual(contentIds('content/mediums'))
-    expect(Object.keys(game.voices).sort()).toEqual(contentIds('content/voices'))
-    expect(Object.keys(game.scavengeTables).sort()).toEqual(contentIds('content/scavenge'))
+    expect(Object.keys(game.substances).sort()).toEqual(contentIds({ dir: 'content/substances' }))
+    expect(Object.keys(game.conditions).sort()).toEqual(contentIds({ dir: 'content/conditions' }))
+    expect(Object.keys(game.mediums).sort()).toEqual(contentIds({ dir: 'content/mediums' }))
+    expect(Object.keys(game.voices).sort()).toEqual(contentIds({ dir: 'content/voices' }))
+    expect(Object.keys(game.scavengeTables).sort()).toEqual(contentIds({ dir: 'content/scavenge' }))
     expect(game.items.sharpie).toMatchObject({ type: 'tool', mediumIds: expect.any(Array) })
     expect(game.items.tallboy_oly.doses).toEqual([{ substanceId: 'beer', value: 20 }])
     // The map's actions and events are registered too; the game screen reads them from the store.
@@ -145,8 +126,10 @@ describe('TitleScreen', () => {
     expect(game.currentLocationId).toBe('moms_house')
     expect(game.player.status.sobriety).toBe(100)
     expect(router.currentRoute.value.path).toBe('/game')
-    expect(Object.keys(game.locations).sort()).toEqual(contentIds('content/maps/kenton/locations'))
-    expect(Object.keys(game.characters).sort()).toEqual(contentIds('content/characters'))
+    expect(Object.keys(game.locations).sort()).toEqual(
+      contentIds({ dir: 'content/maps/kenton/locations' })
+    )
+    expect(Object.keys(game.characters).sort()).toEqual(contentIds({ dir: 'content/characters' }))
     // Locations come through the model factory: unworked, with a table to draw from.
     expect(game.locations.moms_house.scavenge).toEqual({ depletion: 0, updatedAtTick: 0 })
     expect(game.locations.moms_house.scavengeTableId).toBe('basement')
@@ -157,7 +140,7 @@ describe('TitleScreen', () => {
 
 describe('TitleScreen — picking up a save', () => {
   async function mountTitle({ saves = {} } = {}) {
-    installLocalStorage(saves)
+    storageInstall({ initial: saves })
     const pinia = createPinia()
     setActivePinia(pinia)
     const router = createRouter({
@@ -227,7 +210,7 @@ describe('TitleScreen — picking up a save', () => {
 
 describe('GameScreen', () => {
   it("offers the place's actions from what boot registered, straight away", async () => {
-    installLocalStorage()
+    storageInstall()
     const pinia = createPinia()
     setActivePinia(pinia)
     const boot = useBoot()
@@ -261,5 +244,56 @@ describe('GameScreen', () => {
     expect(game.currentLocationId).toBe('columbia_park')
     // Money reads as money.
     expect(wrapper.find('.status-money__amount').text()).toBe(game.playerMoneyText)
+  })
+})
+
+const dale = contentFile({ path: 'content/characters/dale.json' })
+
+describe('LocationView on the game screen', () => {
+  async function mountGame() {
+    storageInstall()
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const boot = useBoot()
+    boot.gameBoot()
+    boot.gameNew()
+    const game = useGameStore()
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: { template: '<div>title</div>' } },
+        { path: '/game', component: GameScreen },
+      ],
+    })
+    router.push('/game')
+    await router.isReady()
+    const wrapper = mount(GameScreen, {
+      global: { plugins: [pinia, router] },
+      attachTo: document.body,
+    })
+    await flushPromises()
+    return { wrapper, game }
+  }
+
+  it('a letter key leaves by the exit with that letter', async () => {
+    const { wrapper, game } = await mountGame()
+    const toPark = game.menuEntries.find((e) => e.exit?.locationId === 'columbia_park')
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: toPark.key }))
+    await flushPromises()
+    expect(game.currentLocationId).toBe('columbia_park')
+    wrapper.unmount()
+  })
+
+  it('picking someone out puts their name over the menu, and picking them again lets go', async () => {
+    const { wrapper, game } = await mountGame()
+    game.characterRegister({ character: characterCreate(dale) })
+    game.characterLocationSet({ characterId: 'dale', locationId: game.currentLocationId })
+    await flushPromises()
+    const person = wrapper.findAll('.scene-person').find((b) => b.text().includes(dale.name))
+    await person.trigger('click')
+    expect(wrapper.find('.action-menu__label').text()).toBe(dale.name)
+    await person.trigger('click')
+    expect(wrapper.find('.action-menu__label').text()).toBe(game.ui.menu.title)
+    wrapper.unmount()
   })
 })

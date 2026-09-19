@@ -10,34 +10,20 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { readFileSync, readdirSync, existsSync } from 'fs'
-import { join, resolve } from 'path'
 import { playerCreate, modifierAdd, modifiersTick } from '../../src/models/player.js'
 import { statEffective } from '../../src/engine/dice.js'
 import { locationCreate } from '../../src/models/location.js'
 import { actionsAvailable, actionResolve } from '../../src/engine/actions.js'
 import { statusDecayChanges } from '../../src/engine/stats.js'
 import { randomSeeded } from '../../src/utils/random.js'
-
-// ---------------------------------------------------------------------------
-// Load content from content/ (same approach as content-validation.test.js)
-// ---------------------------------------------------------------------------
-
-const CONTENT_ROOT = resolve('content')
-
-function loadJsonFiles(dirPath) {
-  if (!existsSync(dirPath)) return []
-  return readdirSync(dirPath)
-    .filter((f) => f.endsWith('.json'))
-    .map((f) => JSON.parse(readFileSync(join(dirPath, f), 'utf-8')))
-}
+import { contentDir } from '../helpers/content.js'
 
 // Load all Kenton locations keyed by ID
-const kentonLocationFiles = loadJsonFiles(join(CONTENT_ROOT, 'maps/kenton/locations'))
+const kentonLocationFiles = contentDir({ dir: 'content/maps/kenton/locations' })
 const kentonLocations = Object.fromEntries(kentonLocationFiles.map((l) => [l.id, l]))
 
 // Load all Kenton actions keyed by ID (files may contain arrays)
-const kentonActionFiles = loadJsonFiles(join(CONTENT_ROOT, 'maps/kenton/actions'))
+const kentonActionFiles = contentDir({ dir: 'content/maps/kenton/actions' })
 const kentonActionsFlat = kentonActionFiles.flatMap((f) =>
   Array.isArray(f) ? f : Object.values(f)
 )

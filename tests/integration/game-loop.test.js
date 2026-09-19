@@ -10,8 +10,6 @@
  * @vitest-environment node
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { readFileSync, readdirSync } from 'fs'
-import { resolve } from 'path'
 import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '../../src/stores/game.js'
 import { playerCreate } from '../../src/models/player.js'
@@ -20,26 +18,16 @@ import { characterCreate } from '../../src/models/character.js'
 import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
 
-const momsHouse = JSON.parse(
-  readFileSync(resolve('content/maps/kenton/locations/moms_house.json'), 'utf-8')
-)
-const momsHouseActions = JSON.parse(
-  readFileSync(resolve('content/maps/kenton/actions/moms_house.json'), 'utf-8')
-)
+const momsHouse = contentFile({ path: 'content/maps/kenton/locations/moms_house.json' })
+const momsHouseActions = contentFile({ path: 'content/maps/kenton/actions/moms_house.json' })
 const byId = (id) => momsHouseActions.find((a) => a.id === id)
-const mocksCrest = JSON.parse(
-  readFileSync(resolve('content/maps/kenton/locations/mocks_crest.json'), 'utf-8')
+const mocksCrest = contentFile({ path: 'content/maps/kenton/locations/mocks_crest.json' })
+const talkToDale = contentFile({ path: 'content/maps/kenton/actions/npc_interactions.json' }).find(
+  (a) => a.id === 'talk_to_dale'
 )
-const talkToDale = JSON.parse(
-  readFileSync(resolve('content/maps/kenton/actions/npc_interactions.json'), 'utf-8')
-).find((a) => a.id === 'talk_to_dale')
-const dale = JSON.parse(readFileSync(resolve('content/characters/dale.json'), 'utf-8'))
-const voices = readdirSync(resolve('content/voices')).map((file) =>
-  JSON.parse(readFileSync(resolve('content/voices', file), 'utf-8'))
-)
-const substances = readdirSync(resolve('content/substances')).map((file) =>
-  JSON.parse(readFileSync(resolve('content/substances', file), 'utf-8'))
-)
+const dale = contentFile({ path: 'content/characters/dale.json' })
+const voices = contentDir({ dir: 'content/voices' })
+const substances = contentDir({ dir: 'content/substances' })
 
 function startGame() {
   setActivePinia(createPinia())
@@ -48,11 +36,6 @@ function startGame() {
   for (const substance of substances) game.substanceRegister({ substance })
   game.runStart({ player: playerCreate({ name: 'Tester' }), locationId: 'moms_house' })
   return game
-}
-
-async function settle(narrative) {
-  await vi.advanceTimersByTimeAsync(20000)
-  return narrative.log.value.map((entry) => entry.tokens.map((t) => t.rendered).join(''))
 }
 
 describe('useGameLoop → narrative', () => {
@@ -67,7 +50,7 @@ describe('useGameLoop → narrative', () => {
     const tickBefore = game.time.tick
 
     await loop.resolvePlayerAction(byId('raid_fridge'))
-    const entries = await settle(narrative)
+    const entries = await narrativeSettle({ narrative })
 
     expect(entries).toHaveLength(1)
     expect(entries[0]).toContain('You eat the cheese.')
@@ -81,7 +64,7 @@ describe('useGameLoop → narrative', () => {
     const loop = useGameLoop({ actionRegistry: momsHouseActions, narrative })
 
     await loop.resolvePlayerAction(byId('stare_at_ceiling'))
-    const entries = await settle(narrative)
+    const entries = await narrativeSettle({ narrative })
 
     const expected = byId('stare_at_ceiling')
       .success.narrative.tokens.map((t) => t.text)
@@ -96,7 +79,7 @@ describe('useGameLoop → narrative', () => {
 
     await loop.resolvePlayerAction(byId('raid_fridge'))
     await loop.resolvePlayerAction(byId('stare_at_ceiling'))
-    const entries = await settle(narrative)
+    const entries = await narrativeSettle({ narrative })
 
     expect(entries).toHaveLength(2)
     expect(entries[0]).toContain('cheese')
@@ -116,31 +99,16 @@ describe('useGameLoop → narrative', () => {
 // ---------------------------------------------------------------------------
 
 import { useSave, AUTO_SAVE_NAME } from '../../src/composables/useSave.js'
+import { storageInstall } from '../helpers/storage.js'
+import { narrativeSettle } from '../helpers/narrative.js'
+import { contentDir, contentFile } from '../helpers/content.js'
 
-const columbiaPark = JSON.parse(
-  readFileSync(resolve('content/maps/kenton/locations/columbia_park.json'), 'utf-8')
-)
-
-function installLocalStorage() {
-  let store = {}
-  globalThis.localStorage = {
-    getItem: (key) => store[key] ?? null,
-    setItem: (key, value) => {
-      store[key] = String(value)
-    },
-    removeItem: (key) => {
-      delete store[key]
-    },
-    clear: () => {
-      store = {}
-    },
-  }
-}
+const columbiaPark = contentFile({ path: 'content/maps/kenton/locations/columbia_park.json' })
 
 describe('useGameLoop → auto-save', () => {
   beforeEach(() => {
     vi.useFakeTimers()
-    installLocalStorage()
+    storageInstall()
   })
   afterEach(() => {
     vi.useRealTimers()
@@ -214,7 +182,7 @@ describe('useGameLoop → auto-save', () => {
     const loop = useGameLoop({ actionRegistry: momsHouseActions, narrative, save: useSave() })
 
     await loop.travel({ locationId: 'columbia_park' })
-    const entries = await settle(narrative)
+    const entries = await narrativeSettle({ narrative })
 
     expect(entries).toContain(voices.find((v) => v.id === 'sober').lines['save.failed'])
   })
@@ -233,7 +201,7 @@ describe('useGameLoop → auto-save', () => {
 // ---------------------------------------------------------------------------
 
 const kentonEvents = ['street', 'moms_house', 'bars', 'park', 'market'].flatMap((name) =>
-  JSON.parse(readFileSync(resolve(`content/maps/kenton/events/${name}.json`), 'utf-8'))
+  contentFile({ path: `content/maps/kenton/events/${name}.json` })
 )
 const eventById = (id) => kentonEvents.find((e) => e.id === id)
 const always = () => 0 // randomChance({ probability: p }) is rng() < p, so 0 fires anything with p > 0
@@ -255,7 +223,7 @@ describe('useGameLoop → events', () => {
     const moneyBefore = game.player.status.money
 
     await loop.tick({ ticks: 1 })
-    const entries = await settle(narrative)
+    const entries = await narrativeSettle({ narrative })
 
     expect(entries).toHaveLength(1)
     expect(entries[0]).toContain('money on the ground')
@@ -273,7 +241,7 @@ describe('useGameLoop → events', () => {
       rng: never,
     })
     await loop.tick({ ticks: 1 })
-    expect(await settle(narrative)).toHaveLength(0)
+    expect(await narrativeSettle({ narrative })).toHaveLength(0)
     expect(game.activeEvent).toBeNull()
   })
 
@@ -292,7 +260,7 @@ describe('useGameLoop → events', () => {
     await loop.tick({ ticks: 1 })
     await loop.tick({ ticks: 1 })
 
-    expect(await settle(narrative)).toHaveLength(1)
+    expect(await narrativeSettle({ narrative })).toHaveLength(1)
     expect(game.firedEventIds).toEqual(['first_starving'])
     expect(game.player.counters.times_starving).toBe(1)
   })
@@ -311,7 +279,7 @@ describe('useGameLoop → events', () => {
     const hungerBefore = game.player.status.hunger
 
     loop.resolveEventChoice({ choiceIndex: 1 })
-    const entries = await settle(narrative)
+    const entries = await narrativeSettle({ narrative })
 
     expect(game.activeEvent).toBeNull()
     expect(entries).toHaveLength(2)
@@ -355,7 +323,7 @@ describe('useGameLoop → events', () => {
     await loop.tick({ ticks: 1 })
     expect(game.activeEvent?.id).toBe('cop_hassle')
     loop.resolveEventChoice({ choiceIndex: 1 })
-    const entries = await settle(narrative)
+    const entries = await narrativeSettle({ narrative })
 
     expect(entries[1]).toContain('spotlight')
     expect(game.player.counters.times_detained).toBe(1)
@@ -365,7 +333,7 @@ describe('useGameLoop → events', () => {
     const game = startGame()
     const columbia = locationCreate(columbiaPark)
     game.locationRegister({ location: columbia })
-    installLocalStorage()
+    storageInstall()
     const save = useSave()
     const loop = useGameLoop({
       actionRegistry: momsHouseActions,
@@ -403,7 +371,7 @@ describe('useGameLoop → scene order on arrival', () => {
     })
 
     await loop.travel({ locationId: 'columbia_park' })
-    const entries = await settle(narrative)
+    const entries = await narrativeSettle({ narrative })
 
     expect(entries).toHaveLength(2)
     expect(entries[0]).toContain('Columbia Park')
@@ -417,7 +385,7 @@ describe('useGameLoop → scene order on arrival', () => {
     const loop = useGameLoop({ actionRegistry: momsHouseActions, narrative })
 
     loop.onLocationEntered()
-    const entries = await settle(narrative)
+    const entries = await narrativeSettle({ narrative })
 
     expect(entries).toHaveLength(2)
     expect(entries[1]).toContain('You okay down there')
@@ -467,7 +435,7 @@ describe('useGameLoop → visits and company', () => {
 
     expect(onTheMenu(game).available).toBe(false)
     await loop.resolvePlayerAction(talkToDale)
-    const entries = await settle(narrative)
+    const entries = await narrativeSettle({ narrative })
 
     expect(entries.at(-1)).toBe(voices.find((v) => v.id === 'sober').lines['requirement.visits'])
   })
@@ -480,7 +448,7 @@ describe('useGameLoop → visits and company', () => {
 
     expect(onTheMenu(game).available).toBe(true)
     await loop.resolvePlayerAction(talkToDale)
-    const entries = await settle(narrative)
+    const entries = await narrativeSettle({ narrative })
 
     expect(entries.join('')).toContain(talkToDale.success.narrative.tokens[1].text)
   })

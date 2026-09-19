@@ -10,7 +10,7 @@
  * @vitest-environment node
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { readFileSync, readdirSync } from 'fs'
+import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '../../src/stores/game.js'
@@ -22,37 +22,30 @@ import { useGameLoop } from '../../src/composables/useGameLoop.js'
 import { useSave, saveMigrate, SAVE_VERSION } from '../../src/composables/useSave.js'
 import { eventsRandomCheck } from '../../src/engine/events.js'
 import { itemUseResolve } from '../../src/engine/items.js'
+import { contentDir, voiceLineOf } from '../helpers/content.js'
+import { narrativeSettle } from '../helpers/narrative.js'
+import { rngForNatural, rngSequence } from '../helpers/rng.js'
 
-const loadDir = (dir) =>
-  readdirSync(resolve(dir))
-    .filter((f) => f.endsWith('.json'))
-    .map((f) => JSON.parse(readFileSync(resolve(dir, f), 'utf-8')))
-
-const items = loadDir('content/items').flat()
-const voices = loadDir('content/voices')
-const mediums = loadDir('content/mediums')
-const substances = loadDir('content/substances')
-const conditions = loadDir('content/conditions')
-const locations = loadDir('content/maps/kenton/locations')
-const actions = loadDir('content/maps/kenton/actions').flat()
-const games = loadDir('content/games')
+const items = contentDir({ dir: 'content/items' }).flat()
+const voices = contentDir({ dir: 'content/voices' })
+const mediums = contentDir({ dir: 'content/mediums' })
+const substances = contentDir({ dir: 'content/substances' })
+const conditions = contentDir({ dir: 'content/conditions' })
+const locations = contentDir({ dir: 'content/maps/kenton/locations' })
+const actions = contentDir({ dir: 'content/maps/kenton/actions' }).flat()
+const games = contentDir({ dir: 'content/games' })
 const vocabulary = JSON.parse(readFileSync(resolve('content/vocabulary.json'), 'utf-8'))
-const events = loadDir('content/maps/kenton/events').flat()
+const events = contentDir({ dir: 'content/maps/kenton/events' }).flat()
 
-const voice = (personaId, code) => voices.find((v) => v.id === personaId).lines[code]
 const medium = (id) => mediums.find((m) => m.id === id)
 
 /** An rng that cycles, so every die in a run is accounted for. */
-function sequence(...values) {
-  let i = 0
-  return () => values[i++ % values.length]
-}
-const die = (face) => (face - 1) / 20
+const die = (face) => rngForNatural({ natural: face })
 
 function startGame({
   at = 'moms_house',
   carrying = [],
-  rng = sequence(die(15)),
+  rng = rngSequence({ values: [die(15)] }),
   events = [],
   mediumsUsed = mediums,
 } = {}) {
@@ -94,10 +87,7 @@ async function pick({ game, loop }, text) {
 }
 const labels = (game) => game.availableActions.map((a) => a.label).join(' | ')
 
-async function logOf(narrative) {
-  await vi.advanceTimersByTimeAsync(120000)
-  return narrative.log.value.map((entry) => entry.tokens.map((t) => t.rendered).join('')).join('\n')
-}
+const logOf = async (narrative) => (await narrativeSettle({ narrative })).join('\n')
 
 describe('making pipeline', () => {
   beforeEach(() => vi.useFakeTimers())
@@ -120,7 +110,9 @@ describe('making pipeline', () => {
     ctx.loop.onLocationEntered()
     const tickBefore = ctx.game.time.tick
     await pick(ctx, 'Make something')
-    expect(await logOf(ctx.narrative)).toContain(voice('sober', 'making.nothing_to_work_with'))
+    expect(await logOf(ctx.narrative)).toContain(
+      voiceLineOf({ personaId: 'sober', code: 'making.nothing_to_work_with' })
+    )
     expect(ctx.game.makingPicker).toBeNull()
     expect(ctx.game.time.tick).toBe(tickBefore)
   })
@@ -170,7 +162,10 @@ describe('making pipeline', () => {
     expect(piece.workText).toBe("a painting, your grandmother's watercolours on a cabinet door")
     expect(await logOf(ctx.narrative)).toContain(piece.artistText)
     expect(piece.artistText).toBe(
-      voice('sober', 'piece.artist.solid').replace('{work}', piece.workText)
+      voiceLineOf({ personaId: 'sober', code: 'piece.artist.solid' }).replace(
+        '{work}',
+        piece.workText
+      )
     )
 
     // Practice landed on the sober painter, and the ordinary menu is back.
@@ -178,7 +173,7 @@ describe('making pipeline', () => {
     expect(labels(game)).toContain('Make something')
     expect(game.playerWorks[0]).toMatchObject({
       workText: piece.workText,
-      whereabouts: voice('sober', 'work.whereabouts.carried'),
+      whereabouts: voiceLineOf({ personaId: 'sober', code: 'work.whereabouts.carried' }),
     })
   })
 
@@ -215,7 +210,10 @@ describe('making pipeline', () => {
     expect(game.playerInventory.map((i) => i.id)).toEqual(['sharpie'])
 
     ctx.loop.onLocationEntered()
-    const still = voice('sober', 'mark.still_here').replace('{work}', wall()[0].workText)
+    const still = voiceLineOf({ personaId: 'sober', code: 'mark.still_here' }).replace(
+      '{work}',
+      wall()[0].workText
+    )
     expect(await logOf(ctx.narrative)).toContain(still)
 
     strike(game, { mediumId: 'tagging' })
@@ -226,10 +224,18 @@ describe('making pipeline', () => {
     await pick(ctx, "That's enough")
     expect(wall().map((m) => m.status)).toEqual(['covered', 'fresh'])
     expect(wall()[0].endedBy).toEqual({ kind: 'mark', id: wall()[1].id })
-    expect(await logOf(ctx.narrative)).toContain(voice('sober', 'making.covered'))
+    expect(await logOf(ctx.narrative)).toContain(
+      voiceLineOf({ personaId: 'sober', code: 'making.covered' })
+    )
     expect(game.playerWorks.map((w) => w.whereabouts)).toEqual([
-      voice('sober', 'work.whereabouts.fresh').replace('{place}', 'Lombard Dental'),
-      voice('sober', 'work.whereabouts.covered').replace('{place}', 'Lombard Dental'),
+      voiceLineOf({ personaId: 'sober', code: 'work.whereabouts.fresh' }).replace(
+        '{place}',
+        'Lombard Dental'
+      ),
+      voiceLineOf({ personaId: 'sober', code: 'work.whereabouts.covered' }).replace(
+        '{place}',
+        'Lombard Dental'
+      ),
     ])
   })
 
@@ -245,7 +251,7 @@ describe('making pipeline', () => {
     const crowds = [room.params.crowdStart, ctx.game.makingActive.game.state.crowd]
     const log = await logOf(ctx.narrative)
     for (const crowd of new Set(crowds)) {
-      const line = voice('sober', room.lines.crowd[crowd])
+      const line = voiceLineOf({ personaId: 'sober', code: room.lines.crowd[crowd] })
       expect(log.split(line).length - 1, `'${crowd}' line`).toBe(
         crowds.filter((c) => c === crowd).length
       )
@@ -254,12 +260,17 @@ describe('making pipeline', () => {
     expect(ctx.game.player.portfolio).toHaveLength(0)
     expect(ctx.game.locations.blue_parrot.marks).toHaveLength(0)
     expect(ctx.game.player.experiences).toHaveLength(1)
-    expect(ctx.game.playerWorks[0].whereabouts).toBe(voice('sober', 'work.whereabouts.none'))
+    expect(ctx.game.playerWorks[0].whereabouts).toBe(
+      voiceLineOf({ personaId: 'sober', code: 'work.whereabouts.none' })
+    )
     expect(ctx.game.player.skills.performance.sober.xp).toBeGreaterThan(0)
   })
 
   it('a natural 1 ruins it: the door is gone, there is no piece, and the artist knows', async () => {
-    const ctx = startGame({ carrying: ['golf_pencil', 'pizza_box'], rng: sequence(die(1)) })
+    const ctx = startGame({
+      carrying: ['golf_pencil', 'pizza_box'],
+      rng: rngSequence({ values: [die(1)] }),
+    })
     strike(ctx.game, { mediumId: 'drawing' })
     ctx.loop.onLocationEntered()
     await pick(ctx, 'Make something')
@@ -270,12 +281,15 @@ describe('making pipeline', () => {
     expect(ctx.game.player.experiences[0].tier).toBe('botched')
     const work = 'a drawing, golf pencil on the lid of a pizza box'
     expect(await logOf(ctx.narrative)).toContain(
-      voice('sober', 'piece.artist.botched').replace('{work}', work)
+      voiceLineOf({ personaId: 'sober', code: 'piece.artist.botched' }).replace('{work}', work)
     )
   })
 
   it('whoever is holding the brush signs the piece: stoned, a rough one is genius', async () => {
-    const ctx = startGame({ carrying: ['golf_pencil', 'coaster'], rng: sequence(die(3)) })
+    const ctx = startGame({
+      carrying: ['golf_pencil', 'coaster'],
+      rng: rngSequence({ values: [die(3)] }),
+    })
     const { game } = ctx
     game.playerDosesApply({ doses: [{ substanceId: 'weed', value: 80 }] })
     expect(game.personaInCharge).toBe('telepath')
@@ -287,7 +301,10 @@ describe('making pipeline', () => {
     const piece = game.player.portfolio[0]
     expect(piece.tier).toBe('rough')
     expect(piece.artistText).toBe(
-      voice('telepath', 'piece.artist.rough').replace('{work}', piece.workText)
+      voiceLineOf({ personaId: 'telepath', code: 'piece.artist.rough' }).replace(
+        '{work}',
+        piece.workText
+      )
     )
     expect(game.player.experiences[0].dominantPersonaId).toBe('telepath')
     // The telepath did the practising, so the telepath did most of the learning.
@@ -342,7 +359,9 @@ describe('making pipeline', () => {
     expect(making.endedBy).toEqual({ kind: 'event', id: 'test_barge' })
     expect(game.player.portfolio).toHaveLength(0)
     expect(game.playerInventory.map((i) => i.id)).toEqual(['grandmas_paints'])
-    expect(await logOf(ctx.narrative)).toContain(voice('sober', 'making.abandoned.lost'))
+    expect(await logOf(ctx.narrative)).toContain(
+      voiceLineOf({ personaId: 'sober', code: 'making.abandoned.lost' })
+    )
     expect(labels(game)).not.toContain('Keep at it')
   })
 
@@ -409,7 +428,9 @@ describe('making pipeline', () => {
 
     await ctx.loop.travel({ locationId: 'columbia_park' })
     expect(game.currentLocationId).toBe('moms_house')
-    expect(await logOf(ctx.narrative)).toContain(voice('sober', 'requirement.busy'))
+    expect(await logOf(ctx.narrative)).toContain(
+      voiceLineOf({ personaId: 'sober', code: 'requirement.busy' })
+    )
 
     await pick(ctx, 'Walk away')
     expect(game.player.makings[0]).toMatchObject({
@@ -418,7 +439,9 @@ describe('making pipeline', () => {
     })
     // The idea is still there. The door is not.
     expect(game.inspirationActive).not.toBeNull()
-    expect(await logOf(ctx.narrative)).toContain(voice('sober', 'making.abandoned.walked_away'))
+    expect(await logOf(ctx.narrative)).toContain(
+      voiceLineOf({ personaId: 'sober', code: 'making.abandoned.walked_away' })
+    )
     await ctx.loop.travel({ locationId: 'columbia_park' })
     expect(game.currentLocationId).toBe('columbia_park')
   })
@@ -471,7 +494,11 @@ describe('making pipeline', () => {
 
     expect(restored.locations.lombard_dental.marks).toHaveLength(1)
     expect(restored.makingActive).toMatchObject({ mediumId: 'painting', ticksDone: 2 })
-    const loop = useGameLoop({ actionRegistry: actions, eventRegistry: [], rng: sequence(die(15)) })
+    const loop = useGameLoop({
+      actionRegistry: actions,
+      eventRegistry: [],
+      rng: rngSequence({ values: [die(15)] }),
+    })
     loop.onLocationEntered()
     const again = { game: restored, loop }
     await pick(again, 'Keep at it')
@@ -535,14 +562,18 @@ describe('making pipeline', () => {
     await pick(ctx, 'Tagging: Sharpie, the back wall')
     await pick(ctx, 'Keep going')
     await pick(ctx, 'Keep going')
-    expect(await logOf(ctx.narrative)).toContain(voice('sober', 'game.nerve.pressed'))
+    expect(await logOf(ctx.narrative)).toContain(
+      voiceLineOf({ personaId: 'sober', code: 'game.nerve.pressed' })
+    )
     await pick(ctx, "That's enough")
 
     // Three beats, three quarter hours — not the four the medium allows.
     expect(game.time.tick).toBe(tickBefore + 3)
     const played = game.player.experiences[0].check.modifierItems.find((m) => m.sourceId === 'game')
     expect(played.value).toBe(2)
-    expect(await logOf(ctx.narrative)).toContain(voice('sober', 'game.nerve.stopped'))
+    expect(await logOf(ctx.narrative)).toContain(
+      voiceLineOf({ personaId: 'sober', code: 'game.nerve.stopped' })
+    )
   })
 
   it('headlights: a bust ends the tag where it stands and the check pays for it', async () => {
@@ -550,7 +581,7 @@ describe('making pipeline', () => {
     const ctx = startGame({
       at: 'lombard_dental',
       carrying: ['sharpie'],
-      rng: sequence(0.99, 0.0, die(15)),
+      rng: rngSequence({ values: [0.99, 0.0, die(15)] }),
     })
     const { game } = ctx
     strike(game, { mediumId: 'tagging' })
@@ -560,7 +591,9 @@ describe('making pipeline', () => {
     await pick(ctx, 'Keep going')
     await pick(ctx, 'Keep going')
 
-    expect(await logOf(ctx.narrative)).toContain(voice('sober', 'game.nerve.busted'))
+    expect(await logOf(ctx.narrative)).toContain(
+      voiceLineOf({ personaId: 'sober', code: 'game.nerve.busted' })
+    )
     expect(game.makingActive).toBeNull()
     const experience = game.player.experiences[0]
     const played = experience.check.modifierItems.find((m) => m.sourceId === 'game')
@@ -577,7 +610,7 @@ describe('making pipeline', () => {
       const ctx = startGame({
         at: 'lombard_dental',
         carrying: ['sharpie'],
-        rng: sequence(roll, die(15)),
+        rng: rngSequence({ values: [roll, die(15)] }),
       })
       if (practised) {
         ctx.game.player.skills = { tagging: { sober: { base: 40, modifiers: [], xp: 0 } } }
@@ -631,15 +664,15 @@ describe('making pipeline', () => {
     const piece = game.player.portfolio[0]
     expect(piece.words).toEqual(picked)
     expect(piece.artistText).toContain(
-      voice('sober', 'piece.words').replace('{words}', picked.join(', '))
+      voiceLineOf({ personaId: 'sober', code: 'piece.words' }).replace('{words}', picked.join(', '))
     )
     expect(await logOf(ctx.narrative)).toContain(
-      voice('sober', 'game.words.picked').replace('{word}', picked[1])
+      voiceLineOf({ personaId: 'sober', code: 'game.words.picked' }).replace('{word}', picked[1])
     )
   })
 
   /** At the Blue Parrot at nine on karaoke night, moved to sing, with this in you and this in your pocket. */
-  function karaokeNight({ doses = [], money = 0, rng = sequence(die(15)) } = {}) {
+  function karaokeNight({ doses = [], money = 0, rng = rngSequence({ values: [die(15)] }) } = {}) {
     const ctx = startGame({ at: 'blue_parrot', rng })
     ctx.game.timeAdvance({ ticks: 13 * 4 })
     ctx.game.player.status.money = money
@@ -724,13 +757,15 @@ describe('making pipeline', () => {
     }
     const vodka = await heard('vodka')
     expect(vodka.persona).toBe('host')
-    expect(vodka.log).toContain(voice('host', 'game.karaoke.pushed'))
+    expect(vodka.log).toContain(voiceLineOf({ personaId: 'host', code: 'game.karaoke.pushed' }))
     const beer = await heard('beer')
     expect(beer.persona).toBe('one_of_the_guys')
-    expect(beer.log).toContain(voice('one_of_the_guys', 'game.karaoke.pushed'))
+    expect(beer.log).toContain(
+      voiceLineOf({ personaId: 'one_of_the_guys', code: 'game.karaoke.pushed' })
+    )
     const coffee = await heard('caffeine')
     expect(coffee.persona).toBe('yeller')
-    expect(coffee.log).toContain(voice('yeller', 'game.karaoke.pushed'))
+    expect(coffee.log).toContain(voiceLineOf({ personaId: 'yeller', code: 'game.karaoke.pushed' }))
     expect(new Set([vodka.log, beer.log, coffee.log]).size).toBe(3)
   })
 
@@ -773,7 +808,10 @@ describe('making pipeline', () => {
     const played = experience.check.modifierItems.find((m) => m.sourceId === 'game')
     expect(played.value).toBe(rhymes.params.voiceCap)
     expect(await logOf(ctx.narrative)).toContain(
-      voice('suburban_gangster', 'game.rhymes.picked').replace('{word}', picked[0])
+      voiceLineOf({ personaId: 'suburban_gangster', code: 'game.rhymes.picked' }).replace(
+        '{word}',
+        picked[0]
+      )
     )
     expect(game.player.skills.freestyle.suburban_gangster.xp).toBeGreaterThan(0)
   })
@@ -878,7 +916,9 @@ describe('making pipeline', () => {
       sourceId: 'suburban_gangster',
       dominantPersonaId: 'suburban_gangster',
     })
-    expect(await logOf(ctx.narrative)).toContain(voice('suburban_gangster', 'inspiration.urge'))
+    expect(await logOf(ctx.narrative)).toContain(
+      voiceLineOf({ personaId: 'suburban_gangster', code: 'inspiration.urge' })
+    )
 
     // Sober, the same roll moves nobody.
     const sober = startGame({ rng: () => urge.chancePerTick / 2 })
@@ -918,7 +958,9 @@ describe('making pipeline', () => {
       sourceId: first.id,
       strength: encore.strength,
     })
-    expect(await logOf(again.narrative)).toContain(voice('sober', 'making.encore'))
+    expect(await logOf(again.narrative)).toContain(
+      voiceLineOf({ personaId: 'sober', code: 'making.encore' })
+    )
     // And it can be acted on straight away.
     expect(labels(again.game)).toContain('Make something')
     await pick(again, 'Make something')
@@ -990,7 +1032,10 @@ describe('making pipeline', () => {
       params: { itemId: 'grandmas_paints' },
     })
     expect(needsPaints).toBe(
-      voice('sober', 'requirement.item').replace('{item}', "Grandma's Watercolours")
+      voiceLineOf({ personaId: 'sober', code: 'requirement.item' }).replace(
+        '{item}',
+        "Grandma's Watercolours"
+      )
     )
     expect(needsPaints).not.toContain('grandmas_paints')
 
@@ -998,7 +1043,9 @@ describe('making pipeline', () => {
     const malt = karaokeNight({ doses: [{ substanceId: 'vodka', value: 80 }], money: 2 })
     await pick(malt, 'Make something')
     expect(entry(malt.game, 'tape rolling').unavailableReason).toBe(
-      voice('sober', 'requirement.money').replace('{cost}', '$5.00').replace('{money}', '$2.00')
+      voiceLineOf({ personaId: 'sober', code: 'requirement.money' })
+        .replace('{cost}', '$5.00')
+        .replace('{money}', '$2.00')
     )
     const gangster = startGame({ at: 'lombard_dental' })
     gangster.game.playerDosesApply({ doses: [{ substanceId: 'malt_liquor', value: 80 }] })
@@ -1008,7 +1055,7 @@ describe('making pipeline', () => {
         params: { cost: '$5.00', money: '$2.00' },
       })
     ).toBe(
-      voice('suburban_gangster', 'requirement.money')
+      voiceLineOf({ personaId: 'suburban_gangster', code: 'requirement.money' })
         .replace('{cost}', '$5.00')
         .replace('{money}', '$2.00')
     )
@@ -1019,7 +1066,9 @@ describe('making pipeline', () => {
     const make = ctx.game.availableActions.find((a) => a.id === 'make_something')
     expect(make.available).toBe(false)
     await ctx.loop.resolvePlayerAction(make)
-    expect(await logOf(ctx.narrative)).toContain(voice('sober', 'requirement.inspiration'))
+    expect(await logOf(ctx.narrative)).toContain(
+      voiceLineOf({ personaId: 'sober', code: 'requirement.inspiration' })
+    )
     expect(ctx.game.makingPicker).toBeNull()
   })
 

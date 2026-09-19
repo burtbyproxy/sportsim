@@ -9,6 +9,7 @@ import {
   scavengeSearch,
 } from './scavenge.js'
 import { blendSober } from './blend.js'
+import { rngForNatural, rngSequence } from '../../tests/helpers/rng.js'
 
 // --- Fixtures ---
 
@@ -64,12 +65,8 @@ const basement = () => ({ id: 'moms_house', scavengeTableId: 'basement' })
 const at = (tick) => ({ tick })
 
 /** An rng that returns the given values in order, then repeats the last. */
-function sequence(...values) {
-  let i = 0
-  return () => values[Math.min(i++, values.length - 1)]
-}
-const HIGH_DIE = 0.7 // natural 15
-const LOW_DIE = 0.1 // natural 3
+const HIGH_DIE = rngForNatural({ natural: 15 })
+const LOW_DIE = rngForNatural({ natural: 3 })
 const MAX_DIE = 0.9999 // natural 20
 
 // --- scavengedCounterName ---
@@ -156,7 +153,7 @@ describe('scavengeSearch', () => {
       tables,
       items,
       gameTime: at(20),
-      rng: sequence(LOW_DIE),
+      rng: rngSequence({ values: [LOW_DIE], repeatLast: true }),
     })
     expect(data.itemId).toBeNull()
     expect(data.entry).toBeNull()
@@ -173,7 +170,7 @@ describe('scavengeSearch', () => {
       tables,
       items,
       gameTime: at(33),
-      rng: sequence(HIGH_DIE, 0.0),
+      rng: rngSequence({ values: [HIGH_DIE, 0.0], repeatLast: true }),
     })
     expect(data.itemId).toBe('cardboard')
     expect(data.entry).toMatchObject({ itemId: 'cardboard', weight: 30 })
@@ -188,7 +185,7 @@ describe('scavengeSearch', () => {
       tables,
       items,
       gameTime: at(0),
-      rng: sequence(HIGH_DIE, 0.999),
+      rng: rngSequence({ values: [HIGH_DIE, 0.999], repeatLast: true }),
     })
     expect(data.itemId).toBe('sharpie')
   })
@@ -200,7 +197,7 @@ describe('scavengeSearch', () => {
       tables,
       items,
       gameTime: at(0),
-      rng: sequence(MAX_DIE, 0.0),
+      rng: rngSequence({ values: [MAX_DIE, 0.0], repeatLast: true }),
     })
     expect(data.check.criticalSuccess).toBe(true)
     expect(data.itemId).toBe('sharpie')
@@ -213,7 +210,7 @@ describe('scavengeSearch', () => {
       tables,
       items,
       gameTime: at(0),
-      rng: sequence(MAX_DIE, 0.0),
+      rng: rngSequence({ values: [MAX_DIE, 0.0], repeatLast: true }),
     })
     expect(data.itemId).toBe('nice_piece_of_wood')
   })
@@ -226,7 +223,7 @@ describe('scavengeSearch', () => {
       tables,
       items,
       gameTime: at(0),
-      rng: sequence(LOW_DIE, 0.0),
+      rng: rngSequence({ values: [LOW_DIE, 0.0], repeatLast: true }),
     })
     // die 3 + wits mod 4 = 7 < 8
     expect(data.check.stat).toBe('wits')
@@ -242,7 +239,7 @@ describe('scavengeSearch', () => {
       tables,
       items,
       gameTime: at(1),
-      rng: sequence(0.45, 0.0), // natural 10
+      rng: rngSequence({ values: [0.45, 0.0], repeatLast: true }), // natural 10
     })
     // 10 + 1 - 4 = 7 < 10
     expect(data.check.modifier).toBe(1 - 2 * SCAVENGE_DEPLETION_PENALTY)
@@ -262,7 +259,7 @@ describe('scavengeSearch', () => {
       tables,
       items,
       gameTime: at(1),
-      rng: sequence(LOW_DIE),
+      rng: rngSequence({ values: [LOW_DIE], repeatLast: true }),
     })
     expect(data.pickedClean).toBe(true)
   })
@@ -275,7 +272,7 @@ describe('scavengeSearch', () => {
       tables,
       items,
       gameTime: at(1),
-      rng: sequence(MAX_DIE, 0.0),
+      rng: rngSequence({ values: [MAX_DIE, 0.0], repeatLast: true }),
     })
     expect(data.itemId).not.toBeNull()
     expect(data.scavenge.depletion).toBe(SCAVENGE_DEPLETION_MAX)
@@ -289,7 +286,7 @@ describe('scavengeSearch', () => {
       tables,
       items,
       gameTime: at(SCAVENGE_TICKS_PER_RESTOCK * 2),
-      rng: sequence(HIGH_DIE, 0.0),
+      rng: rngSequence({ values: [HIGH_DIE, 0.0], repeatLast: true }),
     })
     expect(data.depletionBefore).toBe(1)
     expect(data.scavenge).toEqual({ depletion: 2, updatedAtTick: SCAVENGE_TICKS_PER_RESTOCK * 2 })
@@ -302,7 +299,7 @@ describe('scavengeSearch', () => {
       tables,
       items,
       gameTime: at(0),
-      rng: sequence(HIGH_DIE, 0.0),
+      rng: rngSequence({ values: [HIGH_DIE, 0.0], repeatLast: true }),
     })
     expect(first.data.itemId).toBe('nice_piece_of_wood')
     expect(first.data.entry.inspiration).toEqual({
@@ -317,7 +314,7 @@ describe('scavengeSearch', () => {
       tables,
       items,
       gameTime: at(0),
-      rng: sequence(HIGH_DIE, 0.0),
+      rng: rngSequence({ values: [HIGH_DIE, 0.0], repeatLast: true }),
     })
     expect(again.data.itemId).toBe('cardboard')
   })
@@ -332,7 +329,7 @@ describe('scavengeSearch', () => {
       tables,
       items,
       gameTime: at(5),
-      rng: sequence(HIGH_DIE, 0.0),
+      rng: rngSequence({ values: [HIGH_DIE, 0.0], repeatLast: true }),
     })
     expect(JSON.stringify({ player, location })).toBe(before)
   })

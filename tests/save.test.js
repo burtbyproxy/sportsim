@@ -7,7 +7,7 @@
  * installed. The composable and the store are the real ones.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import {
   useSave,
@@ -19,31 +19,11 @@ import {
 } from '../src/composables/useSave.js'
 import { useGameStore } from '../src/stores/game.js'
 import { blendSober } from '../src/engine/blend.js'
+import { storageInstall } from './helpers/storage.js'
 
 // ---------------------------------------------------------------------------
 // localStorage mock
 // ---------------------------------------------------------------------------
-
-function createLocalStorageMock() {
-  let store = {}
-  return {
-    getItem: vi.fn((key) => store[key] ?? null),
-    setItem: vi.fn((key, value) => {
-      store[key] = String(value)
-    }),
-    removeItem: vi.fn((key) => {
-      delete store[key]
-    }),
-    clear: vi.fn(() => {
-      store = {}
-    }),
-    key: vi.fn((i) => Object.keys(store)[i] ?? null),
-    get length() {
-      return Object.keys(store).length
-    },
-    _store: () => store,
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Minimal valid save factory
@@ -193,15 +173,15 @@ function buildSaveSystem(lsMock, gameState = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// save() and load() — round trip
+// saveWrite() and saveRead() — round trip
 // ---------------------------------------------------------------------------
 
-describe('save() and load() — round trip', () => {
+describe('saveWrite() and saveRead() — round trip', () => {
   let ls
   let sys
 
   beforeEach(() => {
-    ls = createLocalStorageMock()
+    ls = storageInstall()
     sys = buildSaveSystem(ls, {
       player: {
         id: 'p1',
@@ -221,13 +201,13 @@ describe('save() and load() — round trip', () => {
     })
   })
 
-  it('save() returns a non-null ID', () => {
+  it('saveWrite() returns a non-null ID', () => {
     const id = sys.saveWrite({ name: 'My Save' }).data.id
     expect(id).not.toBeNull()
     expect(typeof id).toBe('string')
   })
 
-  it('load() returns valid save data after save()', () => {
+  it('saveRead() returns valid save data after saveWrite()', () => {
     const id = sys.saveWrite({ name: 'My Save' }).data.id
     const data = sys.saveRead({ id }).data
     expect(data).not.toBeNull()
@@ -256,16 +236,16 @@ describe('save() and load() — round trip', () => {
     expect(data.player.counters).toBeDefined()
   })
 
-  it('load() returns null for an unknown ID', () => {
+  it('saveRead() fails NOT_FOUND for an unknown ID', () => {
     expect(sys.saveRead({ id: 'does-not-exist' }).error.code).toBe(SAVE_ERROR_CODES.NOT_FOUND)
   })
 
-  it('load() returns null for a corrupted (non-JSON) save', () => {
+  it('saveRead() fails UNREADABLE for a corrupted (non-JSON) save', () => {
     ls.setItem('sportsim_save_bad', 'not json at all {{{{')
     expect(sys.saveRead({ id: 'bad' }).error.code).toBe(SAVE_ERROR_CODES.UNREADABLE)
   })
 
-  it('load() returns null for a save missing required fields', () => {
+  it('saveRead() fails FIELD_MISSING for a save missing required fields', () => {
     const partial = { id: 'x', name: 'X', timestamp: 1, version: 1 } // missing player, time, etc.
     ls.setItem('sportsim_save_x', JSON.stringify(partial))
     expect(sys.saveRead({ id: 'x' }).error).toMatchObject({
@@ -274,7 +254,7 @@ describe('save() and load() — round trip', () => {
     })
   })
 
-  it('load() returns null for a save with version 0', () => {
+  it('saveRead() fails VERSION_INVALID for a save with version 0', () => {
     const bad = makeValidSave({ version: 0 })
     ls.setItem('sportsim_save_bad', JSON.stringify(bad))
     expect(sys.saveRead({ id: 'bad' }).error.code).toBe(SAVE_ERROR_CODES.VERSION_INVALID)
@@ -288,28 +268,28 @@ describe('save() and load() — round trip', () => {
 })
 
 // ---------------------------------------------------------------------------
-// listSaves() and deleteSave()
+// savesList() and saveDelete()
 // ---------------------------------------------------------------------------
 
-describe('listSaves() and deleteSave()', () => {
+describe('savesList() and saveDelete()', () => {
   let ls
   let sys
 
   beforeEach(() => {
-    ls = createLocalStorageMock()
+    ls = storageInstall()
     sys = buildSaveSystem(ls)
   })
 
-  it('listSaves() returns empty array when no saves exist', () => {
+  it('savesList() returns empty array when no saves exist', () => {
     expect(sys.savesList().data).toEqual([])
   })
 
-  it('listSaves() returns one entry after save()', () => {
+  it('savesList() returns one entry after save()', () => {
     sys.saveWrite({ name: 'First' })
     expect(sys.savesList().data).toHaveLength(1)
   })
 
-  it('listSaves() index entry has id, name, timestamp', () => {
+  it('savesList() index entry has id, name, timestamp', () => {
     sys.saveWrite({ name: 'Named Save' })
     const [entry] = sys.savesList().data
     expect(entry.id).toBeTruthy()
@@ -317,26 +297,26 @@ describe('listSaves() and deleteSave()', () => {
     expect(typeof entry.timestamp).toBe('number')
   })
 
-  it('listSaves() grows with each save', () => {
+  it('savesList() grows with each save', () => {
     sys.saveWrite({ name: 'A' })
     sys.saveWrite({ name: 'B' })
     sys.saveWrite({ name: 'C' })
     expect(sys.savesList().data).toHaveLength(3)
   })
 
-  it('deleteSave() removes the entry from the index', () => {
+  it('saveDelete() removes the entry from the index', () => {
     const id = sys.saveWrite({ name: 'ToDelete' }).data.id
     sys.saveDelete({ id })
     expect(sys.savesList().data).toHaveLength(0)
   })
 
-  it('deleteSave() means load() returns null for that ID', () => {
+  it('saveDelete() means saveRead() finds nothing for that ID', () => {
     const id = sys.saveWrite({ name: 'ToDelete' }).data.id
     sys.saveDelete({ id })
     expect(sys.saveRead({ id }).error.code).toBe(SAVE_ERROR_CODES.NOT_FOUND)
   })
 
-  it('deleteSave() does not affect other saves', () => {
+  it('saveDelete() does not affect other saves', () => {
     const id1 = sys.saveWrite({ name: 'Keep' }).data.id
     const id2 = sys.saveWrite({ name: 'Delete' }).data.id
     sys.saveDelete({ id: id2 })
@@ -344,7 +324,7 @@ describe('listSaves() and deleteSave()', () => {
     expect(sys.savesList().data[0].id).toBe(id1)
   })
 
-  it('deleteSave() is a no-op for unknown ID', () => {
+  it('saveDelete() is a no-op for unknown ID', () => {
     sys.saveWrite({ name: 'Safe' })
     expect(sys.saveDelete({ id: 'ghost' }).ok).toBe(true)
     expect(sys.savesList().data).toHaveLength(1)
@@ -352,15 +332,15 @@ describe('listSaves() and deleteSave()', () => {
 })
 
 // ---------------------------------------------------------------------------
-// autoSave()
+// saveAuto()
 // ---------------------------------------------------------------------------
 
-describe('autoSave()', () => {
+describe('saveAuto()', () => {
   let ls
   let sys
 
   beforeEach(() => {
-    ls = createLocalStorageMock()
+    ls = storageInstall()
     sys = buildSaveSystem(ls)
   })
 
@@ -371,7 +351,7 @@ describe('autoSave()', () => {
     expect(saves[0].name).toBe('auto')
   })
 
-  it('calling autoSave() twice still results in only one auto save', () => {
+  it('calling saveAuto() twice still results in only one auto save', () => {
     sys.saveAuto()
     sys.saveAuto()
     const saves = sys.savesList().data
@@ -379,7 +359,7 @@ describe('autoSave()', () => {
     expect(saves[0].name).toBe('auto')
   })
 
-  it('autoSave() does not delete manual saves', () => {
+  it('saveAuto() does not delete manual saves', () => {
     sys.saveWrite({ name: 'Manual' })
     sys.saveAuto()
     sys.saveAuto()
@@ -399,7 +379,7 @@ describe('MAX_SAVES limit', () => {
   let sys
 
   beforeEach(() => {
-    ls = createLocalStorageMock()
+    ls = storageInstall()
     sys = buildSaveSystem(ls)
   })
 
@@ -435,15 +415,15 @@ describe('MAX_SAVES limit', () => {
 })
 
 // ---------------------------------------------------------------------------
-// exportSave()
+// saveExport()
 // ---------------------------------------------------------------------------
 
-describe('exportSave()', () => {
+describe('saveExport()', () => {
   let ls
   let sys
 
   beforeEach(() => {
-    ls = createLocalStorageMock()
+    ls = storageInstall()
     sys = buildSaveSystem(ls, {
       player: {
         id: 'p1',
@@ -493,15 +473,15 @@ describe('exportSave()', () => {
 })
 
 // ---------------------------------------------------------------------------
-// importSave()
+// saveImport()
 // ---------------------------------------------------------------------------
 
-describe('importSave()', () => {
+describe('saveImport()', () => {
   let ls
   let sys
 
   beforeEach(() => {
-    ls = createLocalStorageMock()
+    ls = storageInstall()
     sys = buildSaveSystem(ls, {
       player: {
         id: 'p1',
@@ -536,7 +516,7 @@ describe('importSave()', () => {
     expect(loaded.name).toBe('Imported Save')
   })
 
-  it('imported save appears in listSaves()', () => {
+  it('imported save appears in savesList()', () => {
     sys.saveImport({ json: JSON.stringify(makeValidSave({ name: 'From File' })) })
     const saves = sys.savesList().data
     expect(saves).toHaveLength(1)
@@ -602,7 +582,7 @@ describe('resilience — corrupted index', () => {
   let sys
 
   beforeEach(() => {
-    ls = createLocalStorageMock()
+    ls = storageInstall()
     sys = buildSaveSystem(ls)
   })
 
@@ -754,12 +734,12 @@ describe('saveMigrate', () => {
 // Old saves on disk, and imports, through the real load path
 // ---------------------------------------------------------------------------
 
-describe('load() and importSave() — old saves and fresh ids', () => {
+describe('saveRead() and saveImport() — old saves and fresh ids', () => {
   let ls
   let sys
 
   beforeEach(() => {
-    ls = createLocalStorageMock()
+    ls = storageInstall()
     sys = buildSaveSystem(ls)
   })
 

@@ -9,7 +9,7 @@
  * @vitest-environment node
  */
 import { describe, it, expect } from 'vitest'
-import { readFileSync, readdirSync } from 'fs'
+import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '../../src/stores/game.js'
@@ -17,15 +17,11 @@ import { playerCreate } from '../../src/models/player.js'
 import { locationCreate } from '../../src/models/location.js'
 import { skillEffective, skillCheckRoll } from '../../src/engine/skills.js'
 import { saveMigrate, SAVE_VERSION } from '../../src/composables/useSave.js'
+import { contentDir, contentIds } from '../helpers/content.js'
 
-const loadDir = (dir) =>
-  readdirSync(resolve(dir))
-    .filter((f) => f.endsWith('.json'))
-    .map((f) => JSON.parse(readFileSync(resolve(dir, f), 'utf-8')))
-
-const substances = loadDir('content/substances')
-const conditions = loadDir('content/conditions')
-const mediums = loadDir('content/mediums')
+const substances = contentDir({ dir: 'content/substances' })
+const conditions = contentDir({ dir: 'content/conditions' })
+const mediums = contentDir({ dir: 'content/mediums' })
 const momsHouse = JSON.parse(
   readFileSync(resolve('content/maps/kenton/locations/moms_house.json'), 'utf-8')
 )
@@ -48,9 +44,7 @@ describe('skills pipeline', () => {
   it('every medium in content is registered and a new player has an empty grid', () => {
     const game = startGame()
     // One file per medium, named for it: adding a form is adding a file.
-    const mediumIdsInContent = readdirSync(resolve('content/mediums'))
-      .filter((f) => f.endsWith('.json'))
-      .map((f) => f.replace('.json', ''))
+    const mediumIdsInContent = contentIds({ dir: 'content/mediums' })
     expect(mediumIdsInContent.length).toBeGreaterThan(0)
     expect(Object.keys(game.mediums).sort()).toEqual(mediumIdsInContent.sort())
     expect(game.player.skills).toEqual({})

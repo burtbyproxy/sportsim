@@ -1,7 +1,5 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'fs'
-import { resolve } from 'path'
 import {
   GAME_ERROR_CODES,
   GAME_MODIFIER_SOURCE_ID,
@@ -9,20 +7,17 @@ import {
   gameRoundResolve,
   gameScore,
 } from './minigame.js'
+import { rngSequence } from '../../tests/helpers/rng.js'
+import { contentFile } from '../../tests/helpers/content.js'
 
 // The shapes are the code; the games are content. These play the real ones.
-const load = (id) => JSON.parse(readFileSync(resolve(`content/games/${id}.json`), 'utf-8'))
+const load = (id) => contentFile({ path: `content/games/${id}.json` })
 const nerve = load('nerve')
 const words = load('words')
 const room = load('room')
 const steady = load('steady')
 
 const always = (value) => () => value
-function sequence(...values) {
-  let i = 0
-  return () => values[i++ % values.length]
-}
-
 /** Play choices in order; returns every round's result and the final state. */
 function play({ game, choices, personaId = 'sober', rng = always(0.99), skillValue = 0 }) {
   let state = gameStart({ game, personaId, rng }).data.state
@@ -108,7 +103,7 @@ describe('push_luck — nerve', () => {
     const { state, rounds } = play({
       game: nerve,
       choices: ['press', 'press'],
-      rng: sequence(0.99, 0.0),
+      rng: rngSequence({ values: [0.99, 0.0] }),
     })
     expect(rounds[1].data.workDone).toBe(true)
     expect(rounds[1].data.lineCode).toBe(nerve.lines.busted)
@@ -189,8 +184,11 @@ describe('word_pick — words', () => {
     Object.entries(words.params.registers).find(([, list]) => list.includes(word))[0]
 
   it('offers one word from each of three registers, and never a word already used', () => {
-    let state = gameStart({ game: words, personaId: 'sober', rng: sequence(0.1, 0.5, 0.9) }).data
-      .state
+    let state = gameStart({
+      game: words,
+      personaId: 'sober',
+      rng: rngSequence({ values: [0.1, 0.5, 0.9] }),
+    }).data.state
     const seen = []
     for (let i = 0; i < 6; i++) {
       const offered = state.offer.choices.map((c) => c.id)
@@ -203,14 +201,17 @@ describe('word_pick — words', () => {
         state,
         choiceId: offered[0],
         personaId: 'sober',
-        rng: sequence(0.1, 0.5, 0.9),
+        rng: rngSequence({ values: [0.1, 0.5, 0.9] }),
       }).data.state
     }
   })
 
   it('the persona in charge leans on the draw: the priest keeps being handed the holy ones', () => {
-    const state = gameStart({ game: words, personaId: 'priest', rng: sequence(0.2, 0.7, 0.4) }).data
-      .state
+    const state = gameStart({
+      game: words,
+      personaId: 'priest',
+      rng: rngSequence({ values: [0.2, 0.7, 0.4] }),
+    }).data.state
     const holy = state.offer.choices.filter((c) => registerOf(c.id) === 'holy')
     expect(holy).toHaveLength(2)
   })
@@ -236,8 +237,11 @@ describe('word_pick — words', () => {
 
   it('words that belong together are a voice; one of everything is mush', () => {
     const pickBy = (wanted) => {
-      let state = gameStart({ game: words, personaId: 'priest', rng: sequence(0.2, 0.6, 0.8) }).data
-        .state
+      let state = gameStart({
+        game: words,
+        personaId: 'priest',
+        rng: rngSequence({ values: [0.2, 0.6, 0.8] }),
+      }).data.state
       for (const register of wanted) {
         const choice =
           state.offer.choices.find((c) => registerOf(c.id) === register) ?? state.offer.choices[0]
@@ -246,7 +250,7 @@ describe('word_pick — words', () => {
           state,
           choiceId: choice.id,
           personaId: 'priest',
-          rng: sequence(0.2, 0.6, 0.8),
+          rng: rngSequence({ values: [0.2, 0.6, 0.8] }),
         }).data.state
       }
       return { state, registers: state.words.map((w) => w.register) }

@@ -11,23 +11,7 @@ import { useGameStore } from '../src/stores/game.js'
 import { contentLoad, CONTENT_KINDS, LOADER_ERROR_CODES } from '../src/data/loader.js'
 import { SAVE_ERROR_CODES } from '../src/composables/useSave.js'
 import { resultFail } from '../src/engine/result.js'
-
-function installLocalStorage() {
-  let store = {}
-  globalThis.localStorage = {
-    getItem: (key) => store[key] ?? null,
-    setItem: (key, value) => {
-      store[key] = String(value)
-    },
-    removeItem: (key) => {
-      delete store[key]
-    },
-    key: (i) => Object.keys(store)[i] ?? null,
-    get length() {
-      return Object.keys(store).length
-    },
-  }
-}
+import { storageInstall } from './helpers/storage.js'
 
 /** Real content, except one kind that will not load. */
 const brokenAt = (brokenKind) => (input) =>
@@ -41,7 +25,7 @@ const brokenAt = (brokenKind) => (input) =>
 
 describe('useBoot', () => {
   beforeEach(() => {
-    installLocalStorage()
+    storageInstall()
     setActivePinia(createPinia())
   })
 

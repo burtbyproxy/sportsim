@@ -4,7 +4,7 @@
  * The vocabulary is content (content/vocabulary.json): which stats exist,
  * which vitals, which simulation tiers. A running game reads it from there.
  * These lists exist so a model can be built with nothing loaded (tests,
- * workers), and tests/content-validation.test.js fails if they ever drift
+ * workers), and tests/content/vocabulary.test.js fails if they ever drift
  * from the content file. Change the content; then change these to match.
  */
 

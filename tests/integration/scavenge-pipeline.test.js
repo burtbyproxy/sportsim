@@ -9,8 +9,7 @@
  * @vitest-environment node
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { readFileSync, readdirSync } from 'fs'
-import { resolve } from 'path'
+
 import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '../../src/stores/game.js'
 import { playerCreate } from '../../src/models/player.js'
@@ -18,23 +17,19 @@ import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
 import { actionsAvailable } from '../../src/engine/actions.js'
 import { SCAVENGE_TICKS_PER_RESTOCK, scavengeDepletion } from '../../src/engine/scavenge.js'
+import { contentDir, contentFile, voiceLineOf } from '../helpers/content.js'
+import { narrativeSettle } from '../helpers/narrative.js'
+import { rngForNatural, rngSequence } from '../helpers/rng.js'
 
-const loadDir = (dir) =>
-  readdirSync(resolve(dir))
-    .filter((f) => f.endsWith('.json'))
-    .map((f) => JSON.parse(readFileSync(resolve(dir, f), 'utf-8')))
-const loadFile = (path) => JSON.parse(readFileSync(resolve(path), 'utf-8'))
+const items = contentDir({ dir: 'content/items' }).flat()
+const tables = contentDir({ dir: 'content/scavenge' })
+const voices = contentDir({ dir: 'content/voices' })
+const mediums = contentDir({ dir: 'content/mediums' })
+const substances = contentDir({ dir: 'content/substances' })
+const locations = contentDir({ dir: 'content/maps/kenton/locations' })
+const scavengeAction = contentFile({ path: 'content/maps/kenton/actions/scavenge.json' })[0]
+const momsHouseEvents = contentFile({ path: 'content/maps/kenton/events/moms_house.json' })
 
-const items = loadDir('content/items').flat()
-const tables = loadDir('content/scavenge')
-const voices = loadDir('content/voices')
-const mediums = loadDir('content/mediums')
-const substances = loadDir('content/substances')
-const locations = loadDir('content/maps/kenton/locations')
-const scavengeAction = loadFile('content/maps/kenton/actions/scavenge.json')[0]
-const momsHouseEvents = loadFile('content/maps/kenton/events/moms_house.json')
-
-const voice = (personaId, code) => voices.find((v) => v.id === personaId).lines[code]
 const itemById = (id) => items.find((i) => i.id === id)
 
 function startGame({ at = 'moms_house' } = {}) {
@@ -58,18 +53,9 @@ function startGame({ at = 'moms_house' } = {}) {
  * An rng that cycles through the given values. A search rolls the die and
  * then draws, so (die, draw) repeats cleanly across actions.
  */
-function sequence(...values) {
-  let i = 0
-  return () => values[i++ % values.length]
-}
-const HIGH_DIE = 0.7
-const LOW_DIE = 0.05
+const HIGH_DIE = rngForNatural({ natural: 15 })
+const LOW_DIE = rngForNatural({ natural: 2 })
 const MAX_DIE = 0.9999
-
-async function settle(narrative) {
-  await vi.advanceTimersByTimeAsync(60000)
-  return narrative.log.value.map((entry) => entry.tokens.map((t) => t.rendered).join(''))
-}
 
 describe('scavenge pipeline', () => {
   beforeEach(() => vi.useFakeTimers())
@@ -113,20 +99,23 @@ describe('scavenge pipeline', () => {
     const loop = useGameLoop({
       actionRegistry: [scavengeAction],
       narrative,
-      rng: sequence(HIGH_DIE, 0.0),
+      rng: rngSequence({ values: [HIGH_DIE, 0.0] }),
     })
 
     await loop.resolvePlayerAction(scavengeAction)
-    const entries = await settle(narrative)
+    const entries = await narrativeSettle({ narrative })
 
     expect(game.playerInventory.map((i) => i.id)).toEqual(['nice_piece_of_wood'])
     expect(game.player.counters.scavenged_nice_piece_of_wood).toBe(1)
     expect(game.player.counters.times_scavenged).toBe(1)
     expect(entries[0]).toContain('shop windows')
     expect(entries[1]).toBe(
-      voice('sober', 'scavenge.found').replace('{item}', itemById('nice_piece_of_wood').foundAs)
+      voiceLineOf({ personaId: 'sober', code: 'scavenge.found' }).replace(
+        '{item}',
+        itemById('nice_piece_of_wood').foundAs
+      )
     )
-    expect(entries[2]).toBe(voice('sober', 'inspiration.struck'))
+    expect(entries[2]).toBe(voiceLineOf({ personaId: 'sober', code: 'inspiration.struck' }))
     expect(game.inspirationActive).toMatchObject({
       sourceKind: 'item',
       sourceId: 'nice_piece_of_wood',
@@ -137,7 +126,10 @@ describe('scavenge pipeline', () => {
 
   it('the wood is found once; the basement keeps giving, but not that', async () => {
     const game = startGame()
-    const loop = useGameLoop({ actionRegistry: [scavengeAction], rng: sequence(HIGH_DIE, 0.0) })
+    const loop = useGameLoop({
+      actionRegistry: [scavengeAction],
+      rng: rngSequence({ values: [HIGH_DIE, 0.0] }),
+    })
 
     await loop.resolvePlayerAction(scavengeAction)
     await loop.resolvePlayerAction(scavengeAction)
@@ -153,14 +145,14 @@ describe('scavenge pipeline', () => {
     const loop = useGameLoop({
       actionRegistry: [scavengeAction],
       narrative,
-      rng: sequence(LOW_DIE),
+      rng: rngSequence({ values: [LOW_DIE] }),
     })
 
     await loop.resolvePlayerAction(scavengeAction)
-    const entries = await settle(narrative)
+    const entries = await narrativeSettle({ narrative })
 
     expect(game.playerInventory).toEqual([])
-    expect(entries.at(-1)).toBe(voice('sober', 'scavenge.nothing'))
+    expect(entries.at(-1)).toBe(voiceLineOf({ personaId: 'sober', code: 'scavenge.nothing' }))
     expect(game.time.tick).toBe(2)
   })
 
@@ -170,22 +162,28 @@ describe('scavenge pipeline', () => {
     const loop = useGameLoop({
       actionRegistry: [scavengeAction],
       narrative,
-      rng: sequence(HIGH_DIE, 0.0),
+      rng: rngSequence({ values: [HIGH_DIE, 0.0] }),
     })
     game.playerDosesApply({ doses: [{ substanceId: 'weed', value: 90 }] })
 
     await loop.resolvePlayerAction(scavengeAction)
-    const entries = await settle(narrative)
+    const entries = await narrativeSettle({ narrative })
 
     expect(entries.at(-1)).toBe(
-      voice('telepath', 'scavenge.found').replace('{item}', itemById('cardboard').foundAs)
+      voiceLineOf({ personaId: 'telepath', code: 'scavenge.found' }).replace(
+        '{item}',
+        itemById('cardboard').foundAs
+      )
     )
   })
 
   it('stackable junk stacks', async () => {
     const game = startGame({ at: 'toads_express' })
     game.player.stats.luck.base = 100
-    const loop = useGameLoop({ actionRegistry: [scavengeAction], rng: sequence(HIGH_DIE, 0.0) })
+    const loop = useGameLoop({
+      actionRegistry: [scavengeAction],
+      rng: rngSequence({ values: [HIGH_DIE, 0.0] }),
+    })
 
     await loop.resolvePlayerAction(scavengeAction)
     await loop.resolvePlayerAction(scavengeAction)
@@ -197,7 +195,10 @@ describe('scavenge pipeline', () => {
 
   it('a critical find at the lot is one of the rare things', async () => {
     const game = startGame({ at: 'toads_express' })
-    const loop = useGameLoop({ actionRegistry: [scavengeAction], rng: sequence(MAX_DIE, 0.0) })
+    const loop = useGameLoop({
+      actionRegistry: [scavengeAction],
+      rng: rngSequence({ values: [MAX_DIE, 0.0] }),
+    })
 
     await loop.resolvePlayerAction(scavengeAction)
 
@@ -210,7 +211,10 @@ describe('scavenge pipeline', () => {
     const game = startGame({ at: 'toads_express' })
     game.player.stats.luck.base = 100
     const narrative = useNarrative()
-    const find = useGameLoop({ actionRegistry: [scavengeAction], rng: sequence(HIGH_DIE, 0.0) })
+    const find = useGameLoop({
+      actionRegistry: [scavengeAction],
+      rng: rngSequence({ values: [HIGH_DIE, 0.0] }),
+    })
     for (let n = 0; n < 4; n++) await find.resolvePlayerAction(scavengeAction)
 
     const location = game.currentLocation
@@ -220,11 +224,11 @@ describe('scavenge pipeline', () => {
     const miss = useGameLoop({
       actionRegistry: [scavengeAction],
       narrative,
-      rng: sequence(LOW_DIE),
+      rng: rngSequence({ values: [LOW_DIE] }),
     })
     await miss.resolvePlayerAction(scavengeAction)
-    const entries = await settle(narrative)
-    expect(entries.at(-1)).toBe(voice('sober', 'scavenge.picked_clean'))
+    const entries = await narrativeSettle({ narrative })
+    expect(entries.at(-1)).toBe(voiceLineOf({ personaId: 'sober', code: 'scavenge.picked_clean' }))
 
     const later = { tick: game.time.tick + SCAVENGE_TICKS_PER_RESTOCK * 4 }
     expect(scavengeDepletion({ location, gameTime: later })).toBe(0)

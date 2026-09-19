@@ -6,8 +6,7 @@
  * @vitest-environment node
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { readFileSync, readdirSync } from 'fs'
-import { resolve } from 'path'
+
 import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '../../src/stores/game.js'
 import { playerCreate } from '../../src/models/player.js'
@@ -16,18 +15,15 @@ import { characterCreate } from '../../src/models/character.js'
 import { itemCreate } from '../../src/models/item.js'
 import { useNarrative } from '../../src/composables/useNarrative.js'
 import { useGameLoop } from '../../src/composables/useGameLoop.js'
+import { contentDir, contentFile } from '../helpers/content.js'
+import { narrativeSettle } from '../helpers/narrative.js'
 
-const load = (path) => JSON.parse(readFileSync(resolve(path), 'utf-8'))
-const loadDir = (dir) =>
-  readdirSync(resolve(dir))
-    .filter((f) => f.endsWith('.json'))
-    .map((f) => load(`${dir}/${f}`))
-const locations = loadDir('content/maps/kenton/locations')
-const momsHouseActions = load('content/maps/kenton/actions/moms_house.json')
-const voices = loadDir('content/voices')
-const items = loadDir('content/items').flat()
-const dale = load('content/characters/dale.json')
-const vocabulary = load('content/vocabulary.json')
+const locations = contentDir({ dir: 'content/maps/kenton/locations' })
+const momsHouseActions = contentFile({ path: 'content/maps/kenton/actions/moms_house.json' })
+const voices = contentDir({ dir: 'content/voices' })
+const items = contentDir({ dir: 'content/items' }).flat()
+const dale = contentFile({ path: 'content/characters/dale.json' })
+const vocabulary = contentFile({ path: 'content/vocabulary.json' })
 const sober = (code) => voices.find((v) => v.id === 'sober').lines[code]
 
 function startGame({ at = 'moms_house' } = {}) {
@@ -39,11 +35,6 @@ function startGame({ at = 'moms_house' } = {}) {
   game.vocabularyRegister({ vocabulary })
   game.runStart({ player: playerCreate({ name: 'Tester' }), locationId: at })
   return game
-}
-
-async function settle(narrative) {
-  await vi.advanceTimersByTimeAsync(60000)
-  return narrative.log.value.map((entry) => entry.tokens.map((t) => t.rendered).join(''))
 }
 
 describe('the menu', () => {
@@ -92,7 +83,9 @@ describe('the menu', () => {
     const loop = useGameLoop({ narrative })
     await loop.travel({ locationId: 'blue_parrot' })
     expect(game.currentLocationId).toBe('moms_house')
-    expect(await settle(narrative)).toContain(game.locations.blue_parrot.availability.closedMessage)
+    expect(await narrativeSettle({ narrative })).toContain(
+      game.locations.blue_parrot.availability.closedMessage
+    )
   })
 
   it('there is no walking to a place this one has no way to', async () => {
@@ -100,7 +93,7 @@ describe('the menu', () => {
     const narrative = useNarrative()
     await useGameLoop({ narrative }).travel({ locationId: 'arbys' })
     expect(game.currentLocationId).toBe('moms_house')
-    expect(await settle(narrative)).toContain('[EXIT_NONE]')
+    expect(await narrativeSettle({ narrative })).toContain('[EXIT_NONE]')
   })
 
   it('picking a greyed-out action says why instead of doing it', async () => {
@@ -112,7 +105,7 @@ describe('the menu', () => {
     const tickBefore = game.time.tick
     await loop.resolvePlayerAction(sleep)
     expect(game.time.tick).toBe(tickBefore)
-    expect(await settle(narrative)).toContain(sober('requirement.hour.early'))
+    expect(await narrativeSettle({ narrative })).toContain(sober('requirement.hour.early'))
   })
 
   it('picking someone out shows their actions; leaving lets them go', async () => {

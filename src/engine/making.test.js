@@ -16,6 +16,7 @@ import {
 } from './making.js'
 import { inspirationStrike } from './inspiration.js'
 import { blendSober } from './blend.js'
+import { rngForNatural, rngSequence } from '../../tests/helpers/rng.js'
 
 const mediums = {
   painting: {
@@ -123,7 +124,7 @@ const wallPlan = {
 }
 
 /** A die that lands on the given face. */
-const die = (face) => () => (face - 1) / 20
+const die = (face) => () => rngForNatural({ natural: face })
 
 function started({ player, plan, location = alley }) {
   const result = makingStart({
@@ -528,10 +529,7 @@ describe('encore', () => {
       ticksWorked: 1,
     })
   /** The die first, then the encore roll. */
-  const rolls = (...values) => {
-    let i = 0
-    return () => values[i++]
-  }
+  const rolls = (...values) => rngSequence({ values, repeatLast: true })
 
   it('a form that feeds itself can hand back the idea for the next one', () => {
     const result = makingFinish({

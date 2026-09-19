@@ -7,8 +7,7 @@
  * @vitest-environment node
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { readFileSync, readdirSync } from 'fs'
-import { resolve } from 'path'
+
 import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '../../src/stores/game.js'
 import { playerCreate } from '../../src/models/player.js'
@@ -20,27 +19,21 @@ import { useGameLoop } from '../../src/composables/useGameLoop.js'
 import { simulationLocal } from '../../src/workers/simulation-local.js'
 import { statEffective } from '../../src/engine/dice.js'
 import { STAT_XP_CHECK_SUCCESS, STAT_XP_CHECK_FAILURE } from '../../src/engine/stats.js'
+import { contentDir, contentFile, voiceLineOf } from '../helpers/content.js'
+import { narrativeSettle } from '../helpers/narrative.js'
 
-const loadDir = (dir) =>
-  readdirSync(resolve(dir))
-    .filter((f) => f.endsWith('.json'))
-    .map((f) => JSON.parse(readFileSync(resolve(dir, f), 'utf-8')))
-const loadFile = (path) => JSON.parse(readFileSync(resolve(path), 'utf-8'))
+const items = contentDir({ dir: 'content/items' }).flat()
+const substances = contentDir({ dir: 'content/substances' })
+const conditions = contentDir({ dir: 'content/conditions' })
+const voices = contentDir({ dir: 'content/voices' })
+const tables = contentDir({ dir: 'content/scavenge' })
+const locations = contentDir({ dir: 'content/maps/kenton/locations' })
+const parkActions = contentFile({ path: 'content/maps/kenton/actions/park.json' })
+const scavengeAction = contentFile({ path: 'content/maps/kenton/actions/scavenge.json' })[0]
 
-const items = loadDir('content/items').flat()
-const substances = loadDir('content/substances')
-const conditions = loadDir('content/conditions')
-const voices = loadDir('content/voices')
-const tables = loadDir('content/scavenge')
-const locations = loadDir('content/maps/kenton/locations')
-const parkActions = loadFile('content/maps/kenton/actions/park.json')
-const scavengeAction = loadFile('content/maps/kenton/actions/scavenge.json')[0]
-
-const maurice = loadFile('content/characters/maurice.json')
+const maurice = contentFile({ path: 'content/characters/maurice.json' })
 // Whoever takes over when you are starving, as content says.
 const hungerPersonaId = conditions.find((c) => c.source?.status === 'hunger').persona.id
-
-const voice = (personaId, code) => voices.find((v) => v.id === personaId).lines[code]
 
 function startGame({ at = 'moms_house' } = {}) {
   setActivePinia(createPinia())
@@ -66,11 +59,6 @@ function give(game, itemId, n = 1) {
   }
 }
 
-async function settle(narrative) {
-  await vi.advanceTimersByTimeAsync(60000)
-  return narrative.log.value.map((entry) => entry.tokens.map((t) => t.rendered).join(''))
-}
-
 describe('item pipeline', () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
@@ -83,7 +71,7 @@ describe('item pipeline', () => {
     const moodBefore = game.player.status.mood
 
     await loop.useItem({ itemId: 'tallboy_oly' })
-    const entries = await settle(narrative)
+    const entries = await narrativeSettle({ narrative })
 
     expect(game.player.intoxications.beer).toBe(18) // 20 in, 2 off over the tick
     expect(game.player.status.sobriety).toBe(82)
@@ -93,7 +81,10 @@ describe('item pipeline', () => {
     ])
     expect(game.time.tick).toBe(1)
     expect(entries.at(-1)).toBe(
-      voice('sober', 'item.used').replace('{item}', game.itemGet({ itemId: 'tallboy_oly' }).name)
+      voiceLineOf({ personaId: 'sober', code: 'item.used' }).replace(
+        '{item}',
+        game.itemGet({ itemId: 'tallboy_oly' }).name
+      )
     )
   })
 
@@ -129,7 +120,7 @@ describe('item pipeline', () => {
     await loop.useItem({ itemId: 'single_sock' })
     expect(game.time.tick).toBe(0)
     // Nobody wrote a line for it yet, so it shows as its code: seen, not swallowed.
-    expect(await settle(narrative)).toContain('[ITEM_NOT_CONSUMABLE]')
+    expect(await narrativeSettle({ narrative })).toContain('[ITEM_NOT_CONSUMABLE]')
   })
 
   it('using something you do not have is refused with a code', () => {
@@ -190,7 +181,7 @@ describe('learning by doing', () => {
   it('an action with no check trains nothing', async () => {
     const game = startGame()
     const before = JSON.stringify(game.player.stats)
-    const fridge = loadFile('content/maps/kenton/actions/moms_house.json').find(
+    const fridge = contentFile({ path: 'content/maps/kenton/actions/moms_house.json' }).find(
       (a) => a.id === 'raid_fridge'
     )
     await useGameLoop({ actionRegistry: [fridge] }).resolvePlayerAction(fridge)
@@ -238,7 +229,7 @@ describe('failures are shown in play, never swallowed', () => {
 
     await loop.tick({ ticks: 1 })
 
-    expect(await settle(narrative)).toContain('[SIMULATION_FAILED]')
+    expect(await narrativeSettle({ narrative })).toContain('[SIMULATION_FAILED]')
     expect(game.time.tick).toBe(1)
   })
 
@@ -252,7 +243,7 @@ describe('failures are shown in play, never swallowed', () => {
 
     await loop.tick({ ticks: 1 })
 
-    expect(await settle(narrative)).toContain('[SUBSTANCE_UNKNOWN]')
+    expect(await narrativeSettle({ narrative })).toContain('[SUBSTANCE_UNKNOWN]')
     expect(game.faults).toEqual([])
   })
 
@@ -306,7 +297,7 @@ describe('failures are shown in play, never swallowed', () => {
 
     await loop.resolvePlayerAction(gift)
 
-    expect(await settle(narrative)).toContain('[ITEM_UNKNOWN]')
+    expect(await narrativeSettle({ narrative })).toContain('[ITEM_UNKNOWN]')
   })
 })
 

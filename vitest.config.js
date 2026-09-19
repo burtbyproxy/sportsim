@@ -8,24 +8,13 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['tests/**/*.test.js', 'src/**/*.test.js'],
+    // Coverage is a map of what is untested, not a target (BFD-25): all of
+    // src is measured, and no number fails the run.
     coverage: {
       provider: 'v8',
-      include: [
-        'src/models/player.js',
-        'src/models/location.js',
-        'src/models/character.js',
-        'src/models/item.js',
-        'src/engine/**/*.js',
-        'src/utils/**/*.js',
-        'src/composables/useNarrative.js',
-      ],
+      include: ['src/**/*.{js,vue}'],
+      exclude: ['src/**/*.test.js'],
       reporter: ['text', 'html'],
-      thresholds: {
-        lines: 80,
-        functions: 80,
-        branches: 80,
-        statements: 80,
-      },
     },
   },
 })
