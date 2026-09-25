@@ -24,6 +24,7 @@ describe('content/tuning.json — the game numbers', () => {
       'perception',
       'simulation',
       'narrative',
+      'fight',
     ]) {
       expect(tuning, section).toHaveProperty(section)
     }
@@ -109,6 +110,36 @@ describe('content/tuning.json — the game numbers', () => {
         `${kind}: at full confusion still a chance, not past certain`
       ).toBeLessThanOrEqual(1)
     }
+  })
+
+  it('a fight is fast, and boring, and the first swing is bad', () => {
+    const { fight } = tuning
+    const stats = vocabulary.stats.map((s) => s.id)
+    const writable = vocabulary.statuses.filter((s) => s.writable).map((s) => s.id)
+    expect(fight.roundTicks).toBeGreaterThanOrEqual(1)
+    expect(fight.heatPerRound).toBeGreaterThan(0)
+    expect(fight.crackAt).toBeGreaterThan(fight.heatPerRound)
+    expect(fight.firstSwingModifier, 'throwing first is bad').toBeLessThan(0)
+    expect(stats).toContain(fight.swing.stat)
+    expect(stats).toContain(fight.ground.stat)
+    expect(fight.swing.dazedOnHit).toBeGreaterThan(0)
+    expect(fight.ground.dazedOnTop).toBeGreaterThan(0)
+    expect(fight.knockoutAt).toBeGreaterThan(0)
+    expect(fight.knockoutAt).toBeLessThanOrEqual(100)
+    expect(fight.ground.onTopAt).toBeGreaterThanOrEqual(1)
+    expect(fight.ground.pulledApartChancePerBystander).toBeGreaterThanOrEqual(0)
+    expect(fight.ground.pulledApartChancePerBystander).toBeLessThanOrEqual(1)
+    for (const side of ['winner', 'loser']) {
+      for (const key of Object.keys(fight[side].statusChanges)) {
+        expect(writable, `${side}.${key}`).toContain(key)
+      }
+    }
+    expect(stats).toContain(fight.trauma.save.stat)
+    expect(fight.trauma.save.dc).toBeGreaterThan(0)
+    expect(typeof fight.trauma.tableId).toBe('string')
+    expect(fight.knockout.hours).toBeGreaterThan(0)
+    expect(Array.isArray(fight.barred.locationTypes)).toBe(true)
+    expect(fight.barred.hours).toBeGreaterThan(0)
   })
 
   it('typing speeds and pauses are ranges, and every pause is one character', () => {

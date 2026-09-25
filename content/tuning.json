@@ -239,5 +239,48 @@
         "max": 50
       }
     ]
+  },
+  "fight": {
+    "roundTicks": 1,
+    "heatPerRound": 10,
+    "crackAt": 100,
+    "firstSwingModifier": -3,
+    "swing": {
+      "stat": "toughness",
+      "dazedOnHit": 40
+    },
+    "knockoutAt": 70,
+    "ground": {
+      "stat": "stamina",
+      "onTopAt": 2,
+      "pulledApartChancePerBystander": 0.25,
+      "dazedOnTop": 20
+    },
+    "winner": {
+      "statusChanges": {
+        "mood": 8,
+        "energy": -10
+      }
+    },
+    "loser": {
+      "statusChanges": {
+        "mood": -10,
+        "energy": -15
+      }
+    },
+    "trauma": {
+      "save": {
+        "stat": "toughness",
+        "dc": 12
+      },
+      "tableId": "trauma"
+    },
+    "knockout": {
+      "hours": 6
+    },
+    "barred": {
+      "locationTypes": ["bar"],
+      "hours": 72
+    }
   }
 }

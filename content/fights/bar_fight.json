@@ -1,0 +1,57 @@
+{
+  "id": "bar_fight",
+  "display": "A fight",
+  "jabs": [
+    {
+      "id": "needle",
+      "label": "Needle {name} about it",
+      "stat": "wits",
+      "opposedStat": "wits",
+      "heat": 25,
+      "lineWon": "fight.jab.needle.won",
+      "lineLost": "fight.jab.needle.lost"
+    },
+    {
+      "id": "loom",
+      "label": "Get in {name}'s face",
+      "stat": "toughness",
+      "opposedStat": "toughness",
+      "heat": 30,
+      "lineWon": "fight.jab.loom.won",
+      "lineLost": "fight.jab.loom.lost"
+    },
+    {
+      "id": "laugh",
+      "label": "Laugh at {name}",
+      "stat": "charm",
+      "opposedStat": "wits",
+      "heat": 20,
+      "lineWon": "fight.jab.laugh.won",
+      "lineLost": "fight.jab.laugh.lost"
+    }
+  ],
+  "swing": {
+    "label": "Swing first",
+    "lineCode": "fight.swing.first"
+  },
+  "walk": {
+    "label": "Walk away",
+    "lineCode": "fight.walked",
+    "statusChanges": {
+      "mood": -6
+    }
+  },
+  "lines": {
+    "started": "fight.started",
+    "crackedYou": "fight.cracked.you",
+    "crackedThem": "fight.cracked.them",
+    "landedYou": "fight.landed.you",
+    "landedThem": "fight.landed.them",
+    "onTopYou": "fight.ontop.you",
+    "onTopThem": "fight.ontop.them",
+    "pulledApart": "fight.pulled",
+    "knockoutYou": "fight.knockout.you",
+    "knockoutThem": "fight.knockout.them",
+    "barred": "fight.barred"
+  }
+}
