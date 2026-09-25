@@ -1,0 +1,23 @@
+{
+  "id": "flashback_stares",
+  "display": "The flashback takes them",
+  "author": {
+    "kind": "mark",
+    "id": "scar"
+  },
+  "trigger": null,
+  "to": "none",
+  "chancePerTick": 0.4,
+  "check": null,
+  "success": {
+    "outcome": null,
+    "outcomeAuthor": {
+      "statusChanges": {
+        "mood": -5
+      }
+    },
+    "lineCode": "act.flashback_stares",
+    "lineCodeOthers": null
+  },
+  "failure": null
+}

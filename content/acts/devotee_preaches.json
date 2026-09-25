@@ -1,0 +1,27 @@
+{
+  "id": "devotee_preaches",
+  "display": "The devotee preaches",
+  "author": {
+    "kind": "mark",
+    "id": "obsession_love"
+  },
+  "trigger": null,
+  "to": "anyone",
+  "chancePerTick": 0.3,
+  "check": null,
+  "success": {
+    "outcome": {
+      "statusChanges": {
+        "mood": -2
+      }
+    },
+    "outcomeAuthor": {
+      "statusChanges": {
+        "mood": 3
+      }
+    },
+    "lineCode": "act.devotee_preaches.you",
+    "lineCodeOthers": "act.devotee_preaches.them"
+  },
+  "failure": null
+}

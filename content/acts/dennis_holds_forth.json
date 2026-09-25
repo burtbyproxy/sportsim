@@ -1,0 +1,29 @@
+{
+  "id": "dennis_holds_forth",
+  "display": "Dennis tells you what",
+  "author": {
+    "kind": "character",
+    "id": "dennis"
+  },
+  "trigger": {
+    "kind": "company"
+  },
+  "to": "player",
+  "chancePerTick": 0.12,
+  "check": null,
+  "success": {
+    "outcome": {
+      "statusChanges": {
+        "mood": -2
+      }
+    },
+    "outcomeAuthor": {
+      "statusChanges": {
+        "mood": 3
+      }
+    },
+    "lineCode": "act.dennis_holds_forth",
+    "lineCodeOthers": null
+  },
+  "failure": null
+}

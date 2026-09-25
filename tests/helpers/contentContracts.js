@@ -8,6 +8,7 @@ import { expect } from 'vitest'
 import { readdirSync, readFileSync, existsSync } from 'fs'
 import { join, resolve } from 'path'
 import { FIT_TRIGGER_KINDS, MARK_KINDS, MARK_TARGET_KINDS } from '../../src/engine/psyche.js'
+import { ACT_AUTHOR_KINDS, ACT_RECIPIENT_KINDS } from '../../src/engine/acts.js'
 
 export const CONTENT_ROOT = resolve('content')
 // The game's words are content. This file reads them; it does not keep its own copy.
@@ -23,6 +24,9 @@ export const VALID_ACTION_KINDS = VOCABULARY.actionKinds
 export const VALID_MARK_TARGET_KINDS = Object.values(MARK_TARGET_KINDS)
 export const VALID_MARK_KINDS = Object.values(MARK_KINDS)
 export const VALID_FIT_TRIGGER_KINDS = Object.values(FIT_TRIGGER_KINDS)
+// Who can start something, and whom it can be done to: the engine's own lists.
+export const VALID_ACT_AUTHOR_KINDS = Object.values(ACT_AUTHOR_KINDS)
+export const VALID_ACT_RECIPIENT_KINDS = Object.values(ACT_RECIPIENT_KINDS)
 
 /**
  * Load all JSON files from a directory path (non-recursive).
@@ -993,6 +997,136 @@ export function validateEvent({ data, file }) {
         ).toBeTruthy()
       }
     }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Acts — what people start on their own
+// ---------------------------------------------------------------------------
+
+/** What an outcome can do to anybody's body and mind. The rest is the player's alone. */
+export const OUTCOME_FIELDS_SUBJECT = ['statusChanges', 'statChanges', 'doses', 'dazed', 'trauma']
+
+export const ACT_REQUIRED_FIELDS = [
+  'id',
+  'display',
+  'author',
+  'trigger',
+  'to',
+  'chancePerTick',
+  'check',
+  'success',
+  'failure',
+]
+
+/**
+ * An outcome that can land on a character carries only what a character
+ * has: no money, no things, no ideas, nothing the player counts.
+ */
+function expectOutcomeSubject({ outcome, label }) {
+  if (!outcome) return
+  for (const field of Object.keys(outcome)) {
+    expect(
+      OUTCOME_FIELDS_SUBJECT,
+      `${label}: '${field}' cannot land on a character; an act done to anyone carries only ${OUTCOME_FIELDS_SUBJECT.join(', ')}`
+    ).toContain(field)
+  }
+}
+
+/**
+ * A branch of an act (success or failure): what lands on whom, and the line
+ * for it. The line for the player (or nobody) and the line for somebody
+ * else are each required exactly when the act can be done to them.
+ */
+function validateActBranch({ act, branch, label }) {
+  expect(branch, `${label}: needs an outcome, an outcomeAuthor, a lineCode and a lineCodeOthers`)
+  for (const field of ['outcome', 'outcomeAuthor', 'lineCode', 'lineCodeOthers']) {
+    expect(branch, `${label}: missing field '${field}'`).toHaveProperty(field)
+  }
+  const { to } = act
+  const toPlayerOrNone = [ACT_RECIPIENT_KINDS.player, ACT_RECIPIENT_KINDS.none].includes(to)
+  const toOthers = [ACT_RECIPIENT_KINDS.target, ACT_RECIPIENT_KINDS.anyone].includes(to)
+  const lineNeeded = toPlayerOrNone || to === ACT_RECIPIENT_KINDS.anyone
+  if (lineNeeded) {
+    expect(typeof branch.lineCode, `${label}: lineCode must be a string`).toBe('string')
+  } else {
+    expect(
+      branch.lineCode,
+      `${label}: lineCode is for the player or nobody; to '${to}' has none`
+    ).toBeNull()
+  }
+  if (toOthers) {
+    expect(typeof branch.lineCodeOthers, `${label}: lineCodeOthers must be a string`).toBe('string')
+  } else {
+    expect(
+      branch.lineCodeOthers,
+      `${label}: lineCodeOthers is for somebody else; to '${to}' has none`
+    ).toBeNull()
+  }
+  if (to === ACT_RECIPIENT_KINDS.none) {
+    expect(branch.outcome, `${label}: done to nobody, so nothing lands on a recipient`).toBeNull()
+  }
+  validateOutcome({ outcome: branch.outcome, label: `${label} outcome` })
+  validateOutcome({ outcome: branch.outcomeAuthor, label: `${label} outcomeAuthor` })
+  if (toOthers) expectOutcomeSubject({ outcome: branch.outcome, label: `${label} outcome` })
+  expectOutcomeSubject({ outcome: branch.outcomeAuthor, label: `${label} outcomeAuthor` })
+}
+
+export function validateAct({ data, file }) {
+  for (const field of ACT_REQUIRED_FIELDS) {
+    expect(data, `${file}: missing field '${field}'`).toHaveProperty(field)
+  }
+  expect(typeof data.id, `${file}: id must be a string`).toBe('string')
+  expect(typeof data.display, `${file}: display must be a string`).toBe('string')
+  expect(VALID_ACT_AUTHOR_KINDS, `${file}: author.kind '${data.author?.kind}'`).toContain(
+    data.author?.kind
+  )
+  expect(typeof data.author.id, `${file}: author.id must be a string`).toBe('string')
+  expect(VALID_ACT_RECIPIENT_KINDS, `${file}: to '${data.to}'`).toContain(data.to)
+  if (data.to === ACT_RECIPIENT_KINDS.target) {
+    expect(data.author.kind, `${file}: only a mark has a target to do it to`).toBe(
+      ACT_AUTHOR_KINDS.mark
+    )
+  }
+  expect(data.chancePerTick, `${file}: chancePerTick must be in (0, 1]`).toBeGreaterThan(0)
+  expect(data.chancePerTick, `${file}: chancePerTick must be in (0, 1]`).toBeLessThanOrEqual(1)
+  if (data.trigger !== null) {
+    expect(VALID_FIT_TRIGGER_KINDS, `${file}: trigger.kind '${data.trigger.kind}'`).toContain(
+      data.trigger.kind
+    )
+    if (data.trigger.kind === FIT_TRIGGER_KINDS.target) {
+      expect(data.author.kind, `${file}: only a mark has a target to be set off by`).toBe(
+        ACT_AUTHOR_KINDS.mark
+      )
+    }
+    if (data.trigger.kind === FIT_TRIGGER_KINDS.status) {
+      expect(VALID_STATUS_KEYS, `${file}: trigger.status '${data.trigger.status}'`).toContain(
+        data.trigger.status
+      )
+      const bounds = [data.trigger.below, data.trigger.above].filter((n) => typeof n === 'number')
+      expect(bounds, `${file}: a status trigger is below or above, not both`).toHaveLength(1)
+    }
+    if (data.trigger.kind === FIT_TRIGGER_KINDS.condition) {
+      expect(typeof data.trigger.conditionId, `${file}: trigger.conditionId must be a string`).toBe(
+        'string'
+      )
+    }
+  }
+  if (data.check !== null) {
+    expect(
+      data.to,
+      `${file}: a check is against a recipient; done to nobody there is none`
+    ).not.toBe(ACT_RECIPIENT_KINDS.none)
+    expect(VALID_STATS, `${file}: check.stat '${data.check.stat}'`).toContain(data.check.stat)
+    expect(VALID_STATS, `${file}: check.opposedStat '${data.check.opposedStat}'`).toContain(
+      data.check.opposedStat
+    )
+  }
+  validateActBranch({ act: data, branch: data.success, label: `${file} success` })
+  if (data.check !== null) {
+    validateActBranch({ act: data, branch: data.failure, label: `${file} failure` })
+  } else {
+    expect(data.failure, `${file}: without a check nothing can fail`).toBeNull()
   }
 }
 

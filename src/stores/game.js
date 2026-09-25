@@ -33,6 +33,7 @@ import {
   psycheGrooveTick,
   psycheTrauma,
 } from '../engine/psyche.js'
+import { SUBJECT_KINDS } from '../engine/acts.js'
 import { scavengeSearch, scavengedCounterName } from '../engine/scavenge.js'
 import {
   MAKING_SURFACE_KINDS,
@@ -63,6 +64,7 @@ import { numberClamp, numberRound } from '../utils/number.js'
 export const STORE_ERROR_CODES = Object.freeze({
   noneInProgress: 'NONE_IN_PROGRESS',
   playerMissing: 'PLAYER_MISSING',
+  subjectUnknown: 'SUBJECT_UNKNOWN',
   statUnknown: 'STAT_UNKNOWN',
 })
 
@@ -126,6 +128,9 @@ export const useGameStore = defineStore('game', {
 
     /** The map's event definitions, keyed by id. Loaded at boot. */
     events: {},
+
+    /** What people start on their own, keyed by id. Loaded once at init from content/acts. */
+    acts: {},
 
     /** Condition definitions, keyed by id. Loaded once at init from content/conditions. */
     conditions: {},
@@ -384,6 +389,10 @@ export const useGameStore = defineStore('game', {
     /** The persona in charge of the prose right now. */
     personaInCharge: (state) => state.player?.blend?.dominantPersonaId ?? 'sober',
 
+    /** The player, as somebody an outcome can land on. Null before a run. */
+    playerWho: (state) =>
+      state.player ? { kind: SUBJECT_KINDS.player, id: state.player.id } : null,
+
     /**
      * What the sidebar says about the muse, in the voice of whoever is in
      * charge. Words, never a number.
@@ -448,6 +457,18 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
+     * Somebody an outcome can land on: the player, or a character by id.
+     * @param {{ who: { kind: string, id: string } }} input
+     * @returns {Object|null}
+     */
+    subjectFind({ who }) {
+      if (!who) return null
+      if (who.kind === SUBJECT_KINDS.player) return this.player
+      if (who.kind === SUBJECT_KINDS.character) return this.characters[who.id] ?? null
+      return null
+    },
+
+    /**
      * Apply status changes to the player.
      * Money is excluded — use playerMoneyAdjust for that. Sobriety is excluded — it
      * is derived from intoxications; use playerDosesApply. All other status values
@@ -456,7 +477,18 @@ export const useGameStore = defineStore('game', {
      */
     playerStatusApply({ changes }) {
       if (!this.player) return
-      this.player.status = statusChangesApply({ status: this.player.status, changes })
+      this.subjectStatusApply({ who: this.playerWho, changes })
+    },
+
+    /**
+     * Apply status changes to somebody, by the same rule as the player's.
+     * Somebody with no status (fixed tier) is left be.
+     * @param {{ who: { kind: string, id: string }, changes: Object<string, number> }} input
+     */
+    subjectStatusApply({ who, changes }) {
+      const subject = this.subjectFind({ who })
+      if (!subject?.status) return
+      subject.status = statusChangesApply({ status: subject.status, changes })
       this.blendRefresh()
     },
 
@@ -512,14 +544,31 @@ export const useGameStore = defineStore('game', {
     playerDosesApply({ doses, rng = Math.random }) {
       if (!this.player)
         return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
-      this.player.intoxications ??= {}
-      this.player.habituations ??= {}
-      const result = dosesApply({ player: this.player, substances: this.substances, doses, rng })
+      return this.subjectDosesApply({ who: this.playerWho, doses, rng })
+    },
+
+    /**
+     * Put substances into somebody: the player, or a character.
+     * @param {{ who: { kind: string, id: string }, doses: { substanceId: string, value: number, chance?: number }[], rng?: () => number }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the blend engine's result
+     */
+    subjectDosesApply({ who, doses, rng = Math.random }) {
+      const subject = this.subjectFind({ who })
+      if (!subject) {
+        return resultFail({
+          code: STORE_ERROR_CODES.subjectUnknown,
+          message: `Nobody to dose: ${who?.kind} '${who?.id}'`,
+          params: { kind: who?.kind ?? '', id: who?.id ?? '' },
+        })
+      }
+      subject.intoxications ??= {}
+      subject.habituations ??= {}
+      const result = dosesApply({ player: subject, substances: this.substances, doses, rng })
       if (!result.ok) {
         return result
       }
-      levelsApply({ levels: this.player.intoxications, changes: result.data.intoxicationChanges })
-      levelsApply({ levels: this.player.habituations, changes: result.data.habituationChanges })
+      levelsApply({ levels: subject.intoxications, changes: result.data.intoxicationChanges })
+      levelsApply({ levels: subject.habituations, changes: result.data.habituationChanges })
       this.blendRefresh()
       return result
     },
@@ -550,21 +599,28 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
-     * A knock to the head wears off, over elapsed ticks.
+     * A knock to the head wears off, over elapsed ticks, for the player and
+     * for everyone else who took one.
      * @param {{ ticksElapsed: number }} input
-     * @returns {{ ok: boolean, data: { dazed: number }|null, error: Object|null }} the perception engine's result
+     * @returns {{ ok: boolean, data: { dazed: number }|null, error: Object|null }}
+     *   the perception engine's result for the player
      */
-    playerDazedDecayApply({ ticksElapsed }) {
+    dazedDecayApply({ ticksElapsed }) {
       if (!this.player) {
         return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
       }
-      const result = dazedDecay({ tuning: this.tuning, dazed: this.player.dazed, ticksElapsed })
-      if (!result.ok) {
-        return result
+      const subjects = [this.player, ...Object.values(this.characters)]
+      let own = null
+      for (const subject of subjects) {
+        const result = dazedDecay({ tuning: this.tuning, dazed: subject.dazed, ticksElapsed })
+        if (!result.ok) {
+          return result
+        }
+        subject.dazed = result.data.dazed
+        if (subject === this.player) own = result
       }
-      this.player.dazed = result.data.dazed
       this.blendRefresh()
-      return result
+      return own
     },
 
     /**
@@ -573,7 +629,17 @@ export const useGameStore = defineStore('game', {
      */
     playerDazedApply({ amount }) {
       if (!this.player) return
-      this.player.dazed = numberClamp({ value: this.player.dazed + amount, min: 0, max: 100 })
+      this.subjectDazedApply({ who: this.playerWho, amount })
+    },
+
+    /**
+     * A knock to somebody's head: the player's, or a character's.
+     * @param {{ who: { kind: string, id: string }, amount: number }} input
+     */
+    subjectDazedApply({ who, amount }) {
+      const subject = this.subjectFind({ who })
+      if (!subject) return
+      subject.dazed = numberClamp({ value: subject.dazed + amount, min: 0, max: 100 })
       this.blendRefresh()
     },
 
@@ -636,12 +702,23 @@ export const useGameStore = defineStore('game', {
      */
     playerStatsApply({ changes }) {
       if (!this.player) return
+      this.subjectStatsApply({ who: this.playerWho, changes })
+    },
+
+    /**
+     * Apply stat changes to somebody. A stat they do not have is not changed.
+     * @param {{ who: { kind: string, id: string }, changes: Object<string, number> }} input
+     */
+    subjectStatsApply({ who, changes }) {
+      const subject = this.subjectFind({ who })
+      if (!subject) return
       for (const [stat, delta] of Object.entries(changes)) {
-        if (this.player.stats[stat]) {
-          this.player.stats[stat].base = Math.max(
-            1,
-            Math.min(100, this.player.stats[stat].base + delta)
-          )
+        if (subject.stats[stat]) {
+          subject.stats[stat].base = numberClamp({
+            value: subject.stats[stat].base + delta,
+            min: 1,
+            max: 100,
+          })
         }
       }
     },
@@ -785,6 +862,14 @@ export const useGameStore = defineStore('game', {
      */
     eventRegister({ event }) {
       this.events[event.id] = event
+    },
+
+    /**
+     * Register an act definition. Called at boot.
+     * @param {{ act: Object }} input
+     */
+    actRegister({ act }) {
+      this.acts[act.id] = act
     },
 
     /**
@@ -947,9 +1032,27 @@ export const useGameStore = defineStore('game', {
       if (!this.player) {
         return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
       }
+      return this.subjectTraumaApply({ who: this.playerWho, trauma, target, source, rng })
+    },
+
+    /**
+     * Something happened to somebody: the player, or a character. They
+     * save; fail, and it leaves a mark (engine/psyche.js psycheTrauma).
+     * @param {{ who: { kind: string, id: string }, trauma: { save: { stat: string, dc: number }, tableId: string }, target: { kind: string, id: string }|null, source: { kind: string, id: string }, rng?: () => number }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the psyche engine's result
+     */
+    subjectTraumaApply({ who, trauma, target, source, rng = Math.random }) {
+      const subject = this.subjectFind({ who })
+      if (!subject) {
+        return resultFail({
+          code: STORE_ERROR_CODES.subjectUnknown,
+          message: `Nobody to mark: ${who?.kind} '${who?.id}'`,
+          params: { kind: who?.kind ?? '', id: who?.id ?? '' },
+        })
+      }
       const result = psycheTrauma({
         tuning: this.tuning,
-        subject: this.player,
+        subject,
         marks: this.marks,
         tables: this.psycheTables,
         trauma,
@@ -961,9 +1064,92 @@ export const useGameStore = defineStore('game', {
       if (!result.ok) {
         return result
       }
-      this.player.psyche.marks = result.data.marks
+      subject.psyche.marks = result.data.marks
       this.blendRefresh()
       return result
+    },
+
+    /**
+     * What an outcome does to a body and a mind, whoever's: vitals, stats,
+     * doses, a knock to the head, and a save against what happened. The
+     * rest of the outcome contract (money, things, ideas, what the player
+     * counts) is the player's alone, and the loop's.
+     * @param {{
+     *   who: { kind: string, id: string },
+     *   outcome: Object,
+     *   traumaTarget: { kind: string, id: string }|null,
+     *   source: { kind: string, id: string },
+     *   rng?: () => number,
+     * }} input
+     *   traumaTarget — what a mark left by this would be about, when the outcome does not say
+     * @returns {{ ok: boolean, data: { trauma: Object|null }|null, error: Object|null }}
+     *   trauma — the save as it went, when the outcome had one
+     */
+    subjectOutcomeApply({ who, outcome, traumaTarget, source, rng = Math.random }) {
+      if (!this.subjectFind({ who })) {
+        return resultFail({
+          code: STORE_ERROR_CODES.subjectUnknown,
+          message: `Nobody for the outcome: ${who?.kind} '${who?.id}'`,
+          params: { kind: who?.kind ?? '', id: who?.id ?? '' },
+        })
+      }
+      if (outcome.statusChanges) this.subjectStatusApply({ who, changes: outcome.statusChanges })
+      if (outcome.statChanges) this.subjectStatsApply({ who, changes: outcome.statChanges })
+      if (outcome.doses?.length > 0) {
+        const dosed = this.subjectDosesApply({ who, doses: outcome.doses, rng })
+        if (!dosed.ok) return dosed
+      }
+      if (outcome.dazed) this.subjectDazedApply({ who, amount: outcome.dazed })
+      if (!outcome.trauma) return resultOk({ trauma: null })
+      const marked = this.subjectTraumaApply({
+        who,
+        trauma: outcome.trauma,
+        target: outcome.trauma.target ?? traumaTarget,
+        source,
+        rng,
+      })
+      if (!marked.ok) return marked
+      return resultOk({ trauma: marked.data })
+    },
+
+    /**
+     * Where somebody is and what is around them, as the psyche and the acts
+     * read it: who else is there (the player counted, and named), what they
+     * carry, what is in them, which conditions act on them, and what the
+     * talk is about. The talk around the player is the talk around everyone
+     * in the room with them.
+     * @param {{ who: { kind: string, id: string }, topicIds: string[] }} input
+     *   topicIds — what the talk around the player is about (the menu's topics)
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the scene
+     */
+    sceneOf({ who, topicIds }) {
+      const subject = this.subjectFind({ who })
+      if (!subject) {
+        return resultFail({
+          code: STORE_ERROR_CODES.subjectUnknown,
+          message: `Nobody to look around: ${who?.kind} '${who?.id}'`,
+          params: { kind: who?.kind ?? '', id: who?.id ?? '' },
+        })
+      }
+      const isPlayer = who.kind === SUBJECT_KINDS.player
+      const locationId = isPlayer ? this.currentLocationId : subject.currentLocationId
+      const withPlayer = !isPlayer && locationId !== null && locationId === this.currentLocationId
+      const characterIds = Object.values(this.characters)
+        .filter((c) => c !== subject && locationId && c.currentLocationId === locationId)
+        .map((c) => c.id)
+      if (withPlayer) characterIds.push(this.player.id)
+      return resultOk({
+        locationId,
+        characterIds,
+        playerId: withPlayer ? this.player.id : null,
+        inventory: subject.inventory ?? [],
+        intoxications: subject.intoxications ?? {},
+        conditionIds: (subject.blend?.weights ?? [])
+          .filter((w) => w.source === PERSONA_SOURCES.condition)
+          .map((w) => w.sourceId),
+        topicIds: isPlayer || withPlayer ? topicIds : [],
+        status: subject.status,
+      })
     },
 
     /**
@@ -986,23 +1172,15 @@ export const useGameStore = defineStore('game', {
       const report = { fitsStarted: [], grooves: [] }
       for (const subject of subjects) {
         const isPlayer = subject === this.player
-        const locationId = isPlayer ? this.currentLocationId : subject.currentLocationId
+        const scene = this.sceneOf({
+          who: isPlayer ? this.playerWho : { kind: SUBJECT_KINDS.character, id: subject.id },
+          topicIds,
+        })
+        if (!scene.ok) return scene
         const fits = psycheFitsTick({
           subject,
           marks: this.marks,
-          scene: {
-            locationId,
-            characterIds: Object.values(this.characters)
-              .filter((c) => c !== subject && locationId && c.currentLocationId === locationId)
-              .map((c) => c.id),
-            inventory: subject.inventory ?? [],
-            intoxications: subject.intoxications ?? {},
-            conditionIds: (subject.blend?.weights ?? [])
-              .filter((w) => w.source === PERSONA_SOURCES.condition)
-              .map((w) => w.sourceId),
-            topicIds: isPlayer ? topicIds : [],
-            status: subject.status,
-          },
+          scene: scene.data,
           ticksElapsed,
           gameTime: this.time,
           rng,

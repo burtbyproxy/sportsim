@@ -13,8 +13,9 @@
  *   4e. marks go off, and time in charge wears grooves
  *   5. the player moves, if they are travelling, and the new scene starts
  *   5b. a change in how confused the player is changes what they get wrong
- *   6. at most one event happens
- *   6b. work whose idea died dies with it
+ *   6. the people act: anyone, anywhere, may start something
+ *   6b. at most one event happens
+ *   6c. work whose idea died dies with it
  *   7. failures nobody was told about are told
  *   8. the menu is rebuilt
  *
@@ -46,6 +47,7 @@ import { MAKING_SURFACE_KINDS, ARTIFACT_STATUSES, makingOptions } from '../engin
 import { eventsRandomCheck, eventsTriggeredCheck, eventResolve } from '../engine/events.js'
 import { actionMisperceived, locationKnown } from '../engine/perception.js'
 import { MARK_TARGET_KINDS, psycheAvoids } from '../engine/psyche.js'
+import { SUBJECT_KINDS, actsRoll, actResolve } from '../engine/acts.js'
 import { narrativeAction, narrativeEvent, narrativeLocation } from './useNarrative.js'
 import { narrativeTextCreate, textFill } from '../utils/text.js'
 import { sim } from '../workers/simulation-api.js'
@@ -64,6 +66,7 @@ export const LOOP_ERROR_CODES = Object.freeze({
  * @param {{
  *   actionRegistry?: Object[],
  *   eventRegistry?: Object[],
+ *   actRegistry?: Object[],
  *   narrative?: ReturnType<import('./useNarrative.js').useNarrative>|null,
  *   save?: ReturnType<import('./useSave.js').useSave>|null,
  *   rng?: () => number,
@@ -71,6 +74,7 @@ export const LOOP_ERROR_CODES = Object.freeze({
  * }} input
  *   actionRegistry — array of Action objects to evaluate against
  *   eventRegistry — array of GameEvent objects; checked after every tick
+ *   actRegistry — array of Act objects; everyone rolls theirs after every tick
  *   rng — random source for event rolls; injectable so tests are deterministic
  *   simulation — moves the characters each tick: the worker by default, or
  *   simulation-local.js in-process, which is the same code behind the same contract
@@ -83,6 +87,7 @@ export const LOOP_ERROR_CODES = Object.freeze({
 export function useGameLoop({
   actionRegistry = [],
   eventRegistry = [],
+  actRegistry = [],
   narrative = null,
   save = null,
   rng = Math.random,
@@ -154,7 +159,7 @@ export function useGameLoop({
     // 4b. Substances wear off — player and characters alike — and the blend
     // snapshot every roll reads is recomputed.
     game.blendDecayApply({ ticksElapsed: ticks })
-    const daze = game.playerDazedDecayApply({ ticksElapsed: ticks })
+    const daze = game.dazedDecayApply({ ticksElapsed: ticks })
     if (!daze.ok) failureShow(daze)
 
     // 4c. The inspiration clock runs down. An idea that ran out says so.
@@ -194,12 +199,16 @@ export function useGameLoop({
     // 5b. Drink enough, or sober up enough, and the scene is seen afresh.
     perceptionRefresh({ force: false })
 
-    // 6. The world happens to the player: at most one event per tick.
+    // 6. The people act. After the move, so whoever is in the room with the
+    // player is, and after the scene text so it lands beneath it.
+    actsCheck({ ticksElapsed: ticks })
+
+    // 6b. The world happens to the player: at most one event per tick.
     // After decay and after the move, so thresholds and the new place are
     // visible, and after the scene text so the event lands beneath it.
     eventsCheck()
 
-    // 6b. If the idea died — ran out, got barged in on, got replaced — the
+    // 6c. If the idea died — ran out, got barged in on, got replaced — the
     // work on it dies too.
     makingReconcile()
 
@@ -269,6 +278,116 @@ export function useGameLoop({
         gameTime: game.time,
       })
     )
+  }
+
+  /**
+   * Everyone in the world, in their own scene, may start something
+   * (engine/acts.js). Whatever comes of it lands where it lands: on the
+   * player like any outcome, on anyone else on their body and mind. The
+   * player hears of it when they are in the room.
+   * @param {{ ticksElapsed: number }} input
+   */
+  function actsCheck({ ticksElapsed }) {
+    if (!game.player || actRegistry.length === 0) return
+    const topicIds = game.availableActions.flatMap((a) => a.topicIds ?? [])
+    for (const author of Object.values(game.characters)) {
+      if (!author.currentLocationId) continue
+      const scene = game.sceneOf({
+        who: { kind: SUBJECT_KINDS.character, id: author.id },
+        topicIds,
+      })
+      if (!scene.ok) {
+        failureShow(scene)
+        continue
+      }
+      const rolled = actsRoll({ acts: actRegistry, author, scene: scene.data, ticksElapsed, rng })
+      if (!rolled.ok) {
+        failureShow(rolled)
+        continue
+      }
+      const { act, mark, recipient } = rolled.data
+      if (!act) continue
+      const resolved = actResolve({
+        tuning: game.tuning,
+        act,
+        author,
+        recipient: recipient ? game.subjectFind({ who: recipient }) : null,
+        rng,
+      })
+      if (!resolved.ok) {
+        failureShow(resolved)
+        continue
+      }
+      actLand({
+        act,
+        mark,
+        author,
+        recipient,
+        resolved: resolved.data,
+        seen: scene.data.playerId !== null,
+      })
+    }
+  }
+
+  /**
+   * What an act comes to. The line first, when the player is there to hear
+   * it: one for what is done to them or to nobody, another for what is
+   * done to somebody else. Then what lands on the recipient, then on the
+   * author. A mark left on the recipient is about the author; one left on
+   * the author is about the recipient, or, when that was the player, the
+   * place. The player's side of a contest trains the stat it rolled.
+   * @param {{
+   *   act: Object,
+   *   mark: Object|null,
+   *   author: Object,
+   *   recipient: { kind: string, id: string }|null,
+   *   resolved: { succeeded: boolean, branch: Object, contest: Object|null },
+   *   seen: boolean,
+   * }} input
+   */
+  function actLand({ act, mark, author, recipient, resolved, seen }) {
+    const { branch, contest } = resolved
+    const source = { kind: 'act', id: act.id }
+    const toPlayer = recipient?.kind === SUBJECT_KINDS.player
+    const toOther = Boolean(recipient) && !toPlayer
+    // The player's side of a contest: a hold is a success, being taken is not.
+    if (toPlayer && contest) checkTrain({ ...contest.second, success: !resolved.succeeded })
+    if (seen) {
+      voiceEnqueue({
+        code: toOther ? branch.lineCodeOthers : branch.lineCode,
+        params: {
+          author: author.name,
+          recipient: toOther ? game.characters[recipient.id].name : '',
+          target: game.targetName({ target: mark?.target ?? null }),
+        },
+      })
+    }
+    const authorWho = { kind: SUBJECT_KINDS.character, id: author.id }
+    if (branch.outcome && toPlayer) {
+      outcomeApply({ outcome: branch.outcome, source, traumaTarget: authorWho })
+    }
+    if (branch.outcome && toOther) {
+      const landed = game.subjectOutcomeApply({
+        who: recipient,
+        outcome: branch.outcome,
+        traumaTarget: authorWho,
+        source,
+        rng,
+      })
+      if (!landed.ok) failureShow(landed)
+    }
+    if (branch.outcomeAuthor) {
+      const landed = game.subjectOutcomeApply({
+        who: authorWho,
+        outcome: branch.outcomeAuthor,
+        traumaTarget: toOther
+          ? recipient
+          : { kind: MARK_TARGET_KINDS.location, id: author.currentLocationId },
+        source,
+        rng,
+      })
+      if (!landed.ok) failureShow(landed)
+    }
   }
 
   /**
@@ -821,31 +940,37 @@ export function useGameLoop({
    * @param {Object} outcome
    * @param {{ kind: string, id: string }} source - what produced the outcome
    */
-  function outcomeApply({ outcome, source }) {
-    // Apply status changes
-    if (outcome.statusChanges) {
-      game.playerStatusApply({ changes: outcome.statusChanges })
-    }
-
-    // Apply stat changes
-    if (outcome.statChanges) {
-      game.playerStatsApply({ changes: outcome.statChanges })
-    }
-
+  /**
+   * An outcome lands on the player: the whole contract. What it does to a
+   * body and a mind goes through the store, the same as for anyone; the
+   * rest (money, things, ideas, what the player counts) is the player's alone.
+   * @param {{ outcome: Object, source: { kind: string, id: string }, traumaTarget?: { kind: string, id: string }|null }} input
+   *   traumaTarget — what a mark left by this is about, when the outcome does
+   *   not say; otherwise whoever the player was dealing with, or else the place
+   */
+  function outcomeApply({ outcome, source, traumaTarget = null }) {
     // Apply money change via store (keeps Pinia reactivity)
     if (outcome.moneyChange != null) {
       game.playerMoneyAdjust({ delta: outcome.moneyChange })
     }
 
-    // Doses — what went into the player. Hidden doses roll here.
-    if (outcome.doses?.length > 0) {
-      game.playerDosesApply({ doses: outcome.doses, rng })
-    }
-
-    // A knock to the head. What the player sees catches up on the next tick.
-    if (outcome.dazed) {
-      game.playerDazedApply({ amount: outcome.dazed })
-    }
+    // Vitals, stats, doses (hidden ones roll here), a knock to the head, and
+    // a save against what happened. What a mark it leaves is about: what
+    // content says, or else whoever the player was dealing with, or else
+    // the place it happened.
+    const landed = game.subjectOutcomeApply({
+      who: game.playerWho,
+      outcome,
+      traumaTarget:
+        traumaTarget ??
+        (actionOf({ source })?.characterId
+          ? { kind: MARK_TARGET_KINDS.character, id: actionOf({ source }).characterId }
+          : { kind: MARK_TARGET_KINDS.location, id: game.currentLocationId }),
+      source,
+      rng,
+    })
+    if (!landed.ok) failureShow(landed)
+    else if (landed.data.trauma) traumaSpeak({ result: landed.data.trauma, quietOnSave: false })
 
     // Inspiration — the world strikes. Snapshots the blend as it is now,
     // after the doses, because whoever you are right now owns the idea.
@@ -891,20 +1016,6 @@ export function useGameLoop({
       for (const [key, delta] of Object.entries(outcome.counterChanges)) {
         counterAdd({ player: game.player, counterName: key, delta })
       }
-    }
-
-    // Something that happened is the kind of thing that stays with you. What
-    // it leaves is about what content says, or else whoever the player was
-    // dealing with, or else the place it happened.
-    if (outcome.trauma) {
-      const target =
-        outcome.trauma.target ??
-        (actionOf({ source })?.characterId
-          ? { kind: MARK_TARGET_KINDS.character, id: actionOf({ source }).characterId }
-          : { kind: MARK_TARGET_KINDS.location, id: game.currentLocationId })
-      const marked = game.psycheTraumaApply({ trauma: outcome.trauma, target, source, rng })
-      if (!marked.ok) failureShow(marked)
-      else traumaSpeak({ result: marked.data, quietOnSave: false })
     }
 
     // Mark one-time events

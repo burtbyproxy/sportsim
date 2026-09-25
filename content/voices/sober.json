@@ -106,6 +106,16 @@
     "psyche.fit.watched": "They're looking. Keep your face normal. What does your face normally do?",
     "psyche.fit.committee": "The committee is in session. The motion is everything, all at once. It carries.",
     "psyche.fit.the_hole": "The floor gives. You go down to where it's quiet and nothing is worth it.",
-    "psyche.fit.the_rocket": "Everything is a good idea. All of them. Right now."
+    "psyche.fit.the_rocket": "Everything is a good idea. All of them. Right now.",
+    "act.grudge_snaps.you": "{author} has been waiting all night for somebody to bring up {target}, and you're the somebody. It isn't a conversation. It's sentencing.",
+    "act.grudge_snaps.you.held": "{author} starts in about {target}. You let it go past you like weather. Somewhere in there {author} hears it, and it isn't a good sound.",
+    "act.grudge_snaps.them": "{author} turns on {recipient} about {target}. {recipient} didn't bring it up. Nobody has to bring it up. It's always up.",
+    "act.grudge_snaps.them.held": "{author} goes at {recipient} about {target}. {recipient} looks back the way you'd look at a dog barking at a mailbox. It lands on {author} instead.",
+    "act.devotee_preaches.you": "{author} tells you about {target}. You didn't ask. {author} has never once needed anyone to ask.",
+    "act.devotee_preaches.them": "{author} is telling {recipient} about {target}. {recipient} nods in the places where a nod is cheapest.",
+    "act.flashback_stares": "Somebody says something, or nothing, and {author} is back at {target} for a second. You can watch the whole trip from here. There's nothing to do about it.",
+    "act.panic_shakes": "{author} clocks {target}, or thinks so, and every part of {author} that can leave, leaves. The rest stays and shakes.",
+    "act.hollow_asks": "{author} asks if you've got anything. You've got nothing. You say so, and the two of you stand there in the truth of it.",
+    "act.dennis_holds_forth": "Dennis tells you what. You didn't ask. Nobody has ever asked. Back in the day, apparently, things were different, and louder."
   }
 }

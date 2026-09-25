@@ -1,0 +1,29 @@
+{
+  "id": "hollow_asks",
+  "display": "The hollow asks",
+  "author": {
+    "kind": "persona",
+    "id": "hollow"
+  },
+  "trigger": {
+    "kind": "company"
+  },
+  "to": "player",
+  "chancePerTick": 0.12,
+  "check": null,
+  "success": {
+    "outcome": {
+      "statusChanges": {
+        "mood": -3
+      }
+    },
+    "outcomeAuthor": {
+      "statusChanges": {
+        "mood": -2
+      }
+    },
+    "lineCode": "act.hollow_asks",
+    "lineCodeOthers": null
+  },
+  "failure": null
+}
