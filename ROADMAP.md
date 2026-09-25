@@ -5,9 +5,25 @@ a framework that takes content over time: each item below lands as a generic
 mechanism plus content, never a one-off. What already shipped is in the git
 history and the release tags.
 
-## Next: the fight
+## Next: instigating
 
-The fight engine, step 2 of the battle plan below.
+Step 3 of the battle plan below: feeding the heat between two other
+people, and watching.
+
+## Shipped: 0.23.0 — the fight
+
+Real fights, as they actually go. Start something with whoever you have
+picked out and the menu becomes the squaring off: each round a jab
+(content, a contest of one stat against another) puts its heat on the
+loser, and everything gets hotter regardless. The side whose heat reaches
+the line cracks and swings first, at a penalty, because throwing first
+makes you reactive. Walk away while you can; swing first if you must. The
+swing and the ground are not chosen: one contest, a knock to the head,
+and past the line it is over where you fall; otherwise rolling around
+until somebody is on top enough, or whoever is there pulls you apart. The
+loser takes the toll and a save. A bar 86's you for a while, never cops.
+Knocked out, you always wake up at mom's: the basement, a bush, the front
+yard. You're a raccoon.
 
 ## Shipped: 0.22.0 — nothing happens in one sitting
 
@@ -69,26 +85,19 @@ In order:
    trauma save. The player hears of it only in the room. The talk around
    the player is now the talk around everyone in the room, which is the
    instigation lever.
-2. **The fight.** Three phases, each a small game:
-   - **Squaring off:** tit-for-tat that raises the heat. Whoever is in
-     charge sets your options, and the side that cracks swings.
-   - **The swing:** a contested roll with a big skill gap.
-   - **The ground:** rolling around until somebody is on top or gets
-     pulled off by whoever is there.
-
-   Getting knocked out is a knock to the head (`dazed`) past a threshold.
-   A bad fight is a trauma save.
+2. **The fight.** Shipped in 0.23.0 (`content/fights`, `tuning.fight`,
+   `game.json` `knockout.spots`). Squaring off is the only part with
+   choices; the swing and the ground follow at once. Knocked out is
+   `dazed` past a line; a bad fight is a trauma save.
 
 3. **Instigating.** Feeding the heat between two other people. Topics and
    fits are the levers (bring up Kiss to Dennis mid-grudge). Watching is a
    show, and a fight can be an inspiration.
 4. **Content.** Who fights, how each persona squares off, and the lines.
 
-Open questions:
-
-- Getting knocked out: where do you wake up, what time is it, and is
-  anything gone from your pockets?
-- After a fight: what does a bar do about you? Barred? Cops?
+Answered: knocked out, you always wake up at mom's, hours later; a bar
+86's you for a while; never cops. Nothing goes missing from your pockets
+until Steve says otherwise.
 
 ## Parked: the art system
 
