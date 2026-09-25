@@ -712,6 +712,32 @@ describe('saveMigrate', () => {
     expect(migrated.player.psyche.marks[0].status).toBe('active')
   })
 
+  it("a v9 save's cure counts become where the mark stands, last seen when the mark last changed", () => {
+    const v9 = makeValidSave({ version: 9 })
+    v9.player.psyche = {
+      marks: [
+        {
+          id: 'm1',
+          markId: 'scar',
+          target: null,
+          source: { kind: 'event', id: 'e' },
+          status: 'active',
+          fitTicksRemaining: 0,
+          cures: { therapy: 2 },
+          acquiredAtTick: 0,
+          updatedAtTick: 40,
+        },
+      ],
+      abilities: [],
+      grooves: {},
+    }
+    const migrated = saveMigrate({ save: v9 })
+    expect(migrated.version).toBe(SAVE_VERSION)
+    expect(migrated.player.psyche.marks[0].cures).toEqual({
+      therapy: { sessionsDone: 2, lastSessionTick: 40 },
+    })
+  })
+
   it('a v3 save keeps its skills and gains only the log', () => {
     const v3 = makeValidSave({ version: 3 })
     v3.player.skills = { painting: { sober: { base: 4, modifiers: [], xp: 2 } } }

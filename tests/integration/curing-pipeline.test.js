@@ -72,6 +72,17 @@ async function officeHours({ game, loop }) {
   while (game.time.hour < 9) await loop.tick({ ticks: 1 })
 }
 
+/** Tomorrow at nine, or as many mornings on as asked. */
+async function mornings({ game, loop, count = 1 }) {
+  for (let i = 0; i < count; i++) {
+    const day = game.time.day
+    while (game.time.day === day) await loop.tick({ ticks: 4 })
+    await officeHours({ game, loop })
+  }
+}
+
+const classicRock = { kind: 'topic', id: 'classic_rock' }
+
 /** A mark the player already carries; the menu is rebuilt to see it. */
 function marked({ game, loop, markId, target = null }) {
   const id = `${markId}:${target?.id ?? 'none'}`
@@ -176,7 +187,7 @@ describe('a session', () => {
     const entries = await narrativeSettle({ narrative })
 
     const scar = game.player.psyche.marks.find((m) => m.id === scarId)
-    expect(scar.cures).toEqual({ therapy: 1 })
+    expect(scar.cures).toEqual({ therapy: { sessionsDone: 1, lastSessionTick: before.tick } })
     expect(scar.status).toBe(MARK_STATUSES.active)
     expect(game.time.tick).toBe(before.tick + therapy.session.ticks)
     expect(game.player.stats[therapy.session.check.stat].xp).toBe(
@@ -205,10 +216,10 @@ describe('a session', () => {
       await loop.resolvePlayerAction(entry({ game, id: `cure_mark_${fearId}` }))
     }
     await session()
-    expect(fear().cures).toEqual({ [tape.id]: 1 })
+    expect(fear().cures[tape.id].sessionsDone).toBe(1)
     await session()
     const entries = await narrativeSettle({ narrative })
-    expect(fear().cures).toEqual({ [tape.id]: 1 - tape.setbackOnFailure })
+    expect(fear().cures[tape.id].sessionsDone).toBe(1 - tape.setbackOnFailure)
     expect(fear().status).toBe(MARK_STATUSES.active)
     expect(entries).toContain(
       textFill({
@@ -219,14 +230,115 @@ describe('a session', () => {
   })
 })
 
+describe('nothing happens in one sitting', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  it('a second session the same day is greyed and says why; tomorrow it is open', async () => {
+    const { game, loop } = startGame()
+    const scarId = marked({ game, loop, markId: 'scar', target: park })
+    await officeHours({ game, loop })
+    await loop.resolvePlayerAction(entry({ game, id: 'counsel_abundant_life' }))
+    await loop.resolvePlayerAction(entry({ game, id: `cure_mark_${scarId}` }))
+
+    await loop.resolvePlayerAction(entry({ game, id: 'counsel_abundant_life' }))
+    const again = entry({ game, id: `cure_mark_${scarId}` })
+    expect(again.available).toBe(false)
+    expect(again.unavailableReason).toBe(sober('requirement.cure.soon'))
+    await loop.resolvePlayerAction(entry({ game, id: 'cure_cancel' }))
+
+    await mornings({ game, loop })
+    await loop.resolvePlayerAction(entry({ game, id: 'counsel_abundant_life' }))
+    expect(entry({ game, id: `cure_mark_${scarId}` }).available).toBe(true)
+  })
+
+  it('six sessions take six days, not one afternoon', async () => {
+    const { game, loop } = startGame()
+    const scarId = marked({ game, loop, markId: 'scar', target: park })
+    await officeHours({ game, loop })
+    const dayStarted = game.time.day
+    const therapy = cureOf('therapy')
+    for (let i = 0; i < therapy.sessions; i++) {
+      if (i > 0) await mornings({ game, loop })
+      await loop.resolvePlayerAction(entry({ game, id: 'counsel_abundant_life' }))
+      await loop.resolvePlayerAction(entry({ game, id: `cure_mark_${scarId}` }))
+    }
+    expect(game.player.psyche.marks.find((m) => m.id === scarId).status).toBe(MARK_STATUSES.cured)
+    expect(game.time.day - dayStarted).toBe(therapy.sessions - 1)
+  })
+
+  it('let it go past the lapse and a session slides back, and the cure says so', async () => {
+    const therapy = cureOf('therapy')
+    const { game, narrative, loop } = startGame()
+    const scarId = marked({ game, loop, markId: 'scar', target: park })
+    const scar = () => game.player.psyche.marks.find((m) => m.id === scarId)
+    const session = async () => {
+      await loop.resolvePlayerAction(entry({ game, id: 'counsel_abundant_life' }))
+      await loop.resolvePlayerAction(entry({ game, id: `cure_mark_${scarId}` }))
+    }
+    await officeHours({ game, loop })
+    await session()
+    await mornings({ game, loop })
+    await session()
+    expect(scar().cures.therapy.sessionsDone).toBe(2)
+
+    // Past the lapse: the span after the last session, and a morning more.
+    await mornings({ game, loop, count: therapy.lapse.afterHours / 24 + 1 })
+    await session()
+    const entries = await narrativeSettle({ narrative })
+    expect(scar().cures.therapy.sessionsDone).toBe(2 + 1 - therapy.lapse.setback)
+    expect(entries).toContain(
+      textFill({
+        text: sober('cure.lapsed'),
+        params: { mark: markOf('scar').display, target: parkName(game) },
+      })
+    )
+  })
+
+  it('the tape has no cadence, and that is the trap: a slip can make you a different crazy, and nobody says so', async () => {
+    const tape = cureOf('self_hypnosis')
+    const { game, narrative, loop } = startGame({ values: [FAIL] })
+    inventoryAdd({ player: game.player, item: items.find((i) => i.id === 'self_hypnosis_tape') })
+    const hateId = marked({ game, loop, markId: 'obsession_hate', target: classicRock })
+    await loop.resolvePlayerAction(entry({ game, id: 'play_the_tape' }))
+    await loop.resolvePlayerAction(entry({ game, id: `cure_mark_${hateId}` }))
+    const entries = await narrativeSettle({ narrative })
+
+    // The session slipped, the save against the risk failed, and the table
+    // came down to the other obsession about the same thing.
+    const marks = game.player.psyche.marks
+    expect(marks).toHaveLength(2)
+    expect(marks[1]).toMatchObject({
+      markId: 'obsession_love',
+      target: classicRock,
+      source: { kind: 'cure', id: tape.id },
+      status: MARK_STATUSES.active,
+    })
+    expect(entries).toContain(
+      textFill({
+        text: sober(tape.lineCodes.slipped),
+        params: { mark: markOf('obsession_hate').display, target: 'classic rock' },
+      })
+    )
+    expect(entries).not.toContain(
+      textFill({
+        text: sober(markOf('obsession_love').lineCode),
+        params: { target: 'classic rock' },
+      })
+    )
+  })
+})
+
 describe('the cure', () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
 
+  /** One session a morning, as many mornings as the cure takes. */
   async function cured({ game, loop, markId, target }) {
     const id = marked({ game, loop, markId, target })
     const therapy = cureOf('therapy')
     for (let i = 0; i < therapy.sessions; i++) {
+      if (i > 0) await mornings({ game, loop })
       await loop.resolvePlayerAction(entry({ game, id: 'counsel_abundant_life' }))
       await loop.resolvePlayerAction(entry({ game, id: `cure_mark_${id}` }))
     }
