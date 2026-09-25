@@ -493,16 +493,31 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
-     * Apply the simulation's status changes to characters, by the same rule
-     * as the player's. A character with no status (fixed tier) is left be.
-     * Conditions depend on status, so the blend is refreshed once.
-     * @param {{ updates: Array<{ id: string, statusChanges?: Object<string, number> }> }} input
+     * Apply what the simulation's tick did to each character: the status
+     * changes by the same rule as the player's, and the doses through the
+     * same door. A character with no status (fixed tier) is left be. A dose
+     * that cannot go in is a fault with nobody to hand it to.
+     * @param {{ updates: Array<{ id: string, statusChanges?: Object<string, number>, doses?: Object[] }>, rng?: () => number }} input
      */
-    charactersStatusApply({ updates }) {
-      for (const { id, statusChanges } of updates) {
+    charactersUpdatesApply({ updates, rng = Math.random }) {
+      for (const { id, statusChanges, doses } of updates) {
         const character = this.characters[id]
-        if (!statusChanges || !character?.status) continue
-        character.status = statusChangesApply({ status: character.status, changes: statusChanges })
+        if (!character?.status) continue
+        if (statusChanges) {
+          character.status = statusChangesApply({
+            status: character.status,
+            changes: statusChanges,
+          })
+        }
+        if (doses?.length > 0) {
+          const who = { kind: SUBJECT_KINDS.character, id }
+          const dosed = this.subjectDosesApply({ who, doses, rng })
+          if (!dosed.ok) {
+            this.faultRecord({
+              error: { ...dosed.error, params: { ...dosed.error.params, subjectId: id } },
+            })
+          }
+        }
       }
       this.blendRefresh()
     },

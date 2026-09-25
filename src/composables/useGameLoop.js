@@ -5,7 +5,8 @@
  *   1. the clock advances
  *   2. the player's vitals decay
  *   3. stat modifiers expire
- *   4. the characters move (the simulation) and their vitals decay
+ *   4. the characters move (the simulation) and live their day: vitals
+ *      wear down, and each stop feeds, rests or doses them
  *   4b. what is in everyone wears off, a knock to the head too, and blends
  *       are recomputed
  *   4c. the inspiration clock runs down
@@ -124,15 +125,16 @@ export function useGameLoop({
     // 3. Expire modifiers — modifiersTick mutates player in place
     modifiersTick({ player: game.player })
 
-    // 4. Run simulation worker — move characters, apply full-sim status decay
-    // We await so character positions update before action refresh,
-    // but a worker failure must not crash the game loop.
+    // 4. Run the simulation — everyone lives the same ticks the player just
+    // spent, stop by stop. We await so character positions update before
+    // the action refresh, but a worker failure must not crash the game loop.
     try {
       const charactersArray = Object.values(game.characters)
       if (charactersArray.length > 0) {
         const simResult = await simulation.tick({
           tuning: game.tuning,
           gameTime: game.time,
+          ticksElapsed: ticks,
           characters: charactersArray,
         })
         for (const update of simResult.characters) {
@@ -149,7 +151,7 @@ export function useGameLoop({
             locationId: kept ? null : update.locationId,
           })
         }
-        game.charactersStatusApply({ updates: simResult.characters })
+        game.charactersUpdatesApply({ updates: simResult.characters, rng })
       }
     } catch {
       // The world stands still this tick; the player hears why.
