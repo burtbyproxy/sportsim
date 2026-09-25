@@ -120,7 +120,57 @@
         "below": 20,
         "weightKey": "low_energy"
       }
-    ]
+    ],
+    "awayStopType": "home",
+    "stops": {
+      "home": {
+        "statusChangesPerTick": {
+          "energy": 4,
+          "hunger": 2
+        },
+        "dosesPerTick": []
+      },
+      "work": {
+        "statusChangesPerTick": {},
+        "dosesPerTick": []
+      },
+      "bar": {
+        "statusChangesPerTick": {
+          "mood": 0.5
+        },
+        "dosesPerTick": [
+          {
+            "substanceId": "beer",
+            "value": 6
+          }
+        ]
+      },
+      "food": {
+        "statusChangesPerTick": {
+          "hunger": 15
+        },
+        "dosesPerTick": []
+      },
+      "park": {
+        "statusChangesPerTick": {
+          "mood": 0.5,
+          "energy": 0.5
+        },
+        "dosesPerTick": []
+      },
+      "alone": {
+        "statusChangesPerTick": {
+          "mood": 0.5
+        },
+        "dosesPerTick": []
+      },
+      "social": {
+        "statusChangesPerTick": {
+          "mood": 1
+        },
+        "dosesPerTick": []
+      }
+    }
   },
   "narrative": {
     "drunkBelowSobriety": 30,
@@ -179,12 +229,12 @@
         "max": 40
       },
       {
-        "char": "—",
+        "char": "\u2014",
         "min": 60,
         "max": 110
       },
       {
-        "char": "–",
+        "char": "\u2013",
         "min": 25,
         "max": 50
       }

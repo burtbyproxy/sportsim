@@ -13,6 +13,9 @@ import { ACT_AUTHOR_KINDS, ACT_RECIPIENT_KINDS } from '../../src/engine/acts.js'
 export const CONTENT_ROOT = resolve('content')
 // The game's words are content. This file reads them; it does not keep its own copy.
 export const VOCABULARY = JSON.parse(readFileSync(join(CONTENT_ROOT, 'vocabulary.json'), 'utf-8'))
+// The game's numbers are content too. What a schedule stop can be is what tuning gives a stop.
+export const TUNING = JSON.parse(readFileSync(join(CONTENT_ROOT, 'tuning.json'), 'utf-8'))
+export const VALID_STOP_TYPES = Object.keys(TUNING.simulation.stops)
 export const VALID_STATS = VOCABULARY.stats.map((s) => s.id)
 // sobriety is derived from intoxications — it is read, never written, by content.
 export const VALID_STATUS_KEYS = VOCABULARY.statuses.filter((s) => s.writable).map((s) => s.id)
@@ -102,6 +105,10 @@ export function validateCharacter({ data, file }) {
     expect(typeof entry.locationId, `${file}: schedule entry locationId must be string`).toBe(
       'string'
     )
+    // Every stop says what it is: that is what it does to whoever stands in it.
+    expect(VALID_STOP_TYPES, `${file}: stop '${entry.locationId}' type '${entry.type}'`).toContain(
+      entry.type
+    )
     expect(entry, `${file}: schedule entry missing startHour`).toHaveProperty('startHour')
     expect(entry, `${file}: schedule entry missing endHour`).toHaveProperty('endHour')
     expect(typeof entry.startHour, `${file}: startHour must be number`).toBe('number')
@@ -174,9 +181,10 @@ export function validateCharacter({ data, file }) {
       for (const key of ['low_sobriety', 'low_hunger', 'low_mood', 'low_energy']) {
         const entry = data.decisionWeights[key]
         if (entry !== null && entry !== undefined) {
-          expect(typeof entry.bias, `${file}: decisionWeights.${key}.bias must be string`).toBe(
-            'string'
-          )
+          expect(
+            VALID_STOP_TYPES,
+            `${file}: decisionWeights.${key}.bias '${entry.bias}'`
+          ).toContain(entry.bias)
           expect(typeof entry.weight, `${file}: decisionWeights.${key}.weight must be number`).toBe(
             'number'
           )

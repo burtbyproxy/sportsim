@@ -58,6 +58,7 @@
     "entries": [
       {
         "locationId": "mocks_crest",
+        "type": "work",
         "startHour": 11,
         "endHour": 23,
         "probability": 0.85,
@@ -65,6 +66,7 @@
       },
       {
         "locationId": "ainsworth_plaid",
+        "type": "food",
         "startHour": 23,
         "endHour": 0,
         "probability": 0.7,

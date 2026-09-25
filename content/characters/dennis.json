@@ -85,6 +85,7 @@
     "entries": [
       {
         "locationId": "mocks_crest",
+        "type": "bar",
         "startHour": 17,
         "endHour": 22,
         "probability": 0.7,
@@ -92,6 +93,7 @@
       },
       {
         "locationId": "mouse_trap",
+        "type": "bar",
         "startHour": 22,
         "endHour": 1,
         "probability": 0.5,
@@ -99,6 +101,7 @@
       },
       {
         "locationId": "arbys",
+        "type": "food",
         "startHour": 1,
         "endHour": 2,
         "probability": 0.4,

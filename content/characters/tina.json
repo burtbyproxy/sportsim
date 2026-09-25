@@ -6,14 +6,46 @@
   "voice": "Sweet. Uses 'totally' and 'oh my god' without irony. Asks questions she forgets she asked. Laughs at things that aren't jokes and misses things that are. Not dumb exactly — just somewhere else.",
   "simulation": "fixed",
   "stats": {
-    "stamina": { "base": 40, "modifiers": [], "xp": 0 },
-    "toughness": { "base": 20, "modifiers": [], "xp": 0 },
-    "wits": { "base": 25, "modifiers": [], "xp": 0 },
-    "creativity": { "base": 35, "modifiers": [], "xp": 0 },
-    "charm": { "base": 75, "modifiers": [], "xp": 0 },
-    "reputation": { "base": 20, "modifiers": [], "xp": 0 },
-    "luck": { "base": 60, "modifiers": [], "xp": 0 },
-    "karma": { "base": 65, "modifiers": [], "xp": 0 }
+    "stamina": {
+      "base": 40,
+      "modifiers": [],
+      "xp": 0
+    },
+    "toughness": {
+      "base": 20,
+      "modifiers": [],
+      "xp": 0
+    },
+    "wits": {
+      "base": 25,
+      "modifiers": [],
+      "xp": 0
+    },
+    "creativity": {
+      "base": 35,
+      "modifiers": [],
+      "xp": 0
+    },
+    "charm": {
+      "base": 75,
+      "modifiers": [],
+      "xp": 0
+    },
+    "reputation": {
+      "base": 20,
+      "modifiers": [],
+      "xp": 0
+    },
+    "luck": {
+      "base": 60,
+      "modifiers": [],
+      "xp": 0
+    },
+    "karma": {
+      "base": 65,
+      "modifiers": [],
+      "xp": 0
+    }
   },
   "status": null,
   "psyche": {
@@ -26,6 +58,7 @@
     "entries": [
       {
         "locationId": "blue_parrot",
+        "type": "work",
         "startHour": 11,
         "endHour": 19,
         "probability": 0.6,

@@ -69,6 +69,7 @@
     "entries": [
       {
         "locationId": "columbia_park",
+        "type": "park",
         "startHour": 7,
         "endHour": 19,
         "probability": 0.95,

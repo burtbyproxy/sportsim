@@ -58,6 +58,7 @@
     "entries": [
       {
         "locationId": "mouse_trap",
+        "type": "work",
         "startHour": 19,
         "endHour": 2,
         "probability": 0.8,
