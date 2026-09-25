@@ -712,6 +712,14 @@ describe('saveMigrate', () => {
     expect(migrated.player.psyche.marks[0].status).toBe('active')
   })
 
+  it('a v10 save gives the player a fight record with nothing in it', () => {
+    const v10 = makeValidSave({ version: 10 })
+    delete v10.player.fights
+    const migrated = saveMigrate({ save: v10 })
+    expect(migrated.version).toBe(SAVE_VERSION)
+    expect(migrated.player.fights).toEqual([])
+  })
+
   it("a v9 save's cure counts become where the mark stands, last seen when the mark last changed", () => {
     const v9 = makeValidSave({ version: 9 })
     v9.player.psyche = {
