@@ -325,7 +325,7 @@ describe('the store keeps statuses in bounds', () => {
     game.characterRegister({ character: characterCreate(maurice) })
     const before = { ...game.characters.maurice.status }
 
-    game.charactersStatusApply({
+    game.charactersUpdatesApply({
       updates: [{ id: 'maurice', statusChanges: { hunger: -500, sobriety: -50, mood: 500 } }],
     })
 
@@ -336,16 +336,20 @@ describe('the store keeps statuses in bounds', () => {
     expect(game.characters.maurice.blend.weights.map((w) => w.personaId)).toContain(hungerPersonaId)
   })
 
-  it('time passing wears on the characters too, by the same rule', async () => {
+  it('time passing works on the characters too, by the same rule: the day wears, the stop gives', async () => {
     const game = startGame()
     game.characterRegister({ character: characterCreate(maurice) })
     const before = { ...game.characters.maurice.status }
     const loop = useGameLoop({ simulation: simulationLocal })
+    // Until ten Maurice has nowhere to be, so he is at the away stop: home.
+    const home = tuning.simulation.stops[tuning.simulation.awayStopType]
 
-    await loop.tick({ ticks: 8 })
+    await loop.tick({ ticks: 7 })
 
     const after = game.characters.maurice.status
-    expect(after.hunger).toBeLessThan(before.hunger)
+    expect(after.hunger).toBe(
+      before.hunger + 7 * (tuning.decay.hunger.ratePerTick + home.statusChangesPerTick.hunger)
+    )
     // What he drank wears off, the way it does for the player.
     expect(after.sobriety).toBeGreaterThan(before.sobriety)
   })
