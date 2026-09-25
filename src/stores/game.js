@@ -1495,6 +1495,7 @@ export const useGameStore = defineStore('game', {
         return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
       }
       const result = cureSessionApply({
+        tuning: this.tuning,
         subject: this.player,
         marks: this.marks,
         cure: this.cures[cureId] ?? null,
