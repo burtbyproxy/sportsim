@@ -77,7 +77,7 @@
     }
   ],
   "itemTypes": ["consumable", "tool", "surface", "ingredient", "junk", "key", "weapon"],
-  "actionKinds": ["scavenge", "make", "look", "investigate", "cure"],
+  "actionKinds": ["scavenge", "make", "look", "investigate", "cure", "fight"],
   "simulationTiers": ["fixed", "routine", "full"],
   "substanceFamilies": ["alcohol", "cannabis", "stimulant", "nicotine"],
   "ui": {

@@ -32,5 +32,24 @@
       "mood": 40,
       "health": 100
     }
+  },
+  "knockout": {
+    "spots": [
+      {
+        "locationId": "moms_house",
+        "weight": 50,
+        "lineCode": "fight.wake.basement"
+      },
+      {
+        "locationId": "moms_house",
+        "weight": 30,
+        "lineCode": "fight.wake.bush"
+      },
+      {
+        "locationId": "moms_house",
+        "weight": 20,
+        "lineCode": "fight.wake.yard"
+      }
+    ]
   }
 }

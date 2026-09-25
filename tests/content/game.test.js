@@ -48,6 +48,22 @@ describe('content/game.json — what a new game is', () => {
     )
   })
 
+  it('says where the player wakes up after a knockout, on the map, with a line for each spot', () => {
+    const mapDir = join(CONTENT_ROOT, 'maps', config.mapId)
+    const locationIds = loadJsonFiles(join(mapDir, 'locations')).map(({ data }) => data.id)
+    const sober = loadJsonFiles(join(CONTENT_ROOT, 'voices')).find(
+      ({ data }) => data.id === 'sober'
+    )
+    expect(config.knockout?.spots?.length, 'game.json: knockout.spots').toBeGreaterThan(0)
+    for (const spot of config.knockout.spots) {
+      expect(locationIds, `game.json: wake spot '${spot.locationId}'`).toContain(spot.locationId)
+      expect(spot.weight, 'game.json: a wake spot has a weight').toBeGreaterThan(0)
+      expect(sober.data.lines, `game.json: no sober line '${spot.lineCode}'`).toHaveProperty([
+        spot.lineCode,
+      ])
+    }
+  })
+
   it('says who the player is and what they start with', () => {
     const { start } = config
     expect(typeof start.playerName).toBe('string')

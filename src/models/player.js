@@ -76,6 +76,8 @@ export function playerCreate({ name, start = PLAYER_START_DEFAULTS, rng = Math.r
     makings: [],
     /** What came of the work: one experience per finished making. */
     experiences: [],
+    /** Every fight ever started, at most one under way. See engine/fight.js. */
+    fights: [],
     /** The pieces the player can carry. Pieces left on walls live on the location. */
     portfolio: [],
     /**

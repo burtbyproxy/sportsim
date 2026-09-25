@@ -1,0 +1,53 @@
+[
+  {
+    "id": "start_something",
+    "label": "Start something with {name}",
+    "locationId": "any",
+    "characterId": "any",
+    "kind": "fight",
+    "fightId": "bar_fight",
+    "timeCost": 0,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": null,
+      "maxHour": null,
+      "minVisits": null,
+      "minMoney": null,
+      "requiredAbilities": null,
+      "requiredMarkIds": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You square up. Not all the way. Enough that the room notices, which is the point, and enough that you can't take it back, which is the other point.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": null,
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "fights_started": 1
+      }
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 10
+  }
+]

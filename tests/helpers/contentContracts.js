@@ -463,7 +463,15 @@ export function validateAction({ data, file }) {
     ).toBe(true)
     return
   }
-  if (data.kind === 'cure') {
+  if (data.kind === 'fight') {
+    // Squaring up is free; the rounds are what cost, and tuning says how much.
+    expect(data.timeCost, `${file} '${data.id}': a 'fight' action costs no time itself`).toBe(0)
+    expect(typeof data.fightId, `${file} '${data.id}': a 'fight' action names its fightId`).toBe(
+      'string'
+    )
+    expect(data.check, `${file} '${data.id}': the fight has the contests, not the door`).toBeNull()
+    expect(data.characterId, `${file} '${data.id}': a fight is with somebody`).toBeTruthy()
+  } else if (data.kind === 'cure') {
     // Walking in is free; the sessions are what cost, and the cure says how much.
     expect(data.timeCost, `${file} '${data.id}': a 'cure' action costs no time itself`).toBe(0)
     expect(typeof data.cureId, `${file} '${data.id}': a 'cure' action names its cureId`).toBe(
@@ -1224,6 +1232,54 @@ export function validateCure({ data, file }) {
       data.risk,
       `${file}: a cure with no cadence is a shortcut, and a shortcut carries a risk`
     ).not.toBeNull()
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Fights — how a fight goes
+// ---------------------------------------------------------------------------
+
+export const FIGHT_LINE_KEYS = [
+  'started',
+  'crackedYou',
+  'crackedThem',
+  'landedYou',
+  'landedThem',
+  'onTopYou',
+  'onTopThem',
+  'pulledApart',
+  'knockoutYou',
+  'knockoutThem',
+  'barred',
+]
+
+export function validateFight({ data, file }) {
+  for (const field of ['id', 'display', 'jabs', 'swing', 'walk', 'lines']) {
+    expect(data, `${file}: missing field '${field}'`).toHaveProperty(field)
+  }
+  expect(Array.isArray(data.jabs) && data.jabs.length > 0, `${file}: a fight needs jabs`).toBe(true)
+  const ids = new Set()
+  for (const jab of data.jabs) {
+    expect(typeof jab.id, `${file}: jab.id must be a string`).toBe('string')
+    expect(['swing', 'walk'], `${file}: jab '${jab.id}' shadows a choice`).not.toContain(jab.id)
+    expect(ids.has(jab.id), `${file}: jab '${jab.id}' twice`).toBe(false)
+    ids.add(jab.id)
+    expect(typeof jab.label, `${file}: jab '${jab.id}' needs a label`).toBe('string')
+    expect(VALID_STATS, `${file}: jab '${jab.id}' stat`).toContain(jab.stat)
+    expect(VALID_STATS, `${file}: jab '${jab.id}' opposedStat`).toContain(jab.opposedStat)
+    expect(jab.heat, `${file}: jab '${jab.id}' heat must be > 0`).toBeGreaterThan(0)
+    expect(typeof jab.lineWon, `${file}: jab '${jab.id}' lineWon`).toBe('string')
+    expect(typeof jab.lineLost, `${file}: jab '${jab.id}' lineLost`).toBe('string')
+  }
+  expect(typeof data.swing.label, `${file}: swing.label`).toBe('string')
+  expect(typeof data.swing.lineCode, `${file}: swing.lineCode`).toBe('string')
+  expect(typeof data.walk.label, `${file}: walk.label`).toBe('string')
+  expect(typeof data.walk.lineCode, `${file}: walk.lineCode`).toBe('string')
+  for (const key of Object.keys(data.walk.statusChanges ?? {})) {
+    expect(VALID_STATUS_KEYS, `${file}: walk.statusChanges.${key}`).toContain(key)
+  }
+  for (const key of FIGHT_LINE_KEYS) {
+    expect(typeof data.lines[key], `${file}: lines.${key} must be a string`).toBe('string')
   }
 }
 

@@ -68,6 +68,7 @@ export function useBoot({ load = contentLoad } = {}) {
         CONTENT_KINDS.events,
         CONTENT_KINDS.acts,
         CONTENT_KINDS.cures,
+        CONTENT_KINDS.fights,
       ],
     })
     if (!loaded.ok) return loaded
@@ -116,6 +117,9 @@ export function useBoot({ load = contentLoad } = {}) {
     }
     for (const cure of Object.values(content[CONTENT_KINDS.cures])) {
       game.cureRegister({ cure })
+    }
+    for (const fight of Object.values(content[CONTENT_KINDS.fights])) {
+      game.fightRegister({ fight })
     }
     return resultOk({ mapId: config.data.mapId })
   }

@@ -129,6 +129,22 @@ describe('cross-reference validation', () => {
   // Action itemsGained references real item IDs (string[] per contract)
   const actionFiles = mapDirs.flatMap((mapDir) => loadJsonFiles(join(mapDir, 'actions')))
 
+  // A fight action starts a fight that exists
+  const knownFightIds = new Set(
+    loadJsonFiles(join(CONTENT_ROOT, 'fights'))
+      .map(({ data }) => data.id)
+      .filter(Boolean)
+  )
+  for (const { file, data } of actionFiles) {
+    const actions = Array.isArray(data) ? data : Object.values(data)
+    for (const action of actions) {
+      if (action.kind !== 'fight') continue
+      it(`${file} action '${action.id}': fightId '${action.fightId}' exists in fight data`, () => {
+        expect(knownFightIds.has(action.fightId)).toBe(true)
+      })
+    }
+  }
+
   // A cure action opens a cure that exists
   const knownCureIds = new Set(
     loadJsonFiles(join(CONTENT_ROOT, 'cures'))
@@ -156,6 +172,8 @@ describe('cross-reference validation', () => {
         ).toBe(true)
       })
       if (action.characterId === undefined || action.characterId === null) continue
+      // 'any' is whoever the player has picked out.
+      if (action.characterId === 'any') continue
       it(`${file} action '${action.id}': characterId '${action.characterId}' exists in character data`, () => {
         expect(
           knownCharacterIds.has(action.characterId),

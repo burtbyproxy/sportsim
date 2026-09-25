@@ -32,6 +32,7 @@ export const REQUIREMENT_CODES = Object.freeze({
   busy: 'requirement.busy',
   closed: 'requirement.closed',
   cureNone: 'requirement.cure.none',
+  barred: 'requirement.barred',
 })
 
 const MET = Object.freeze({ meets: true, reasonCode: null, reasonParams: {} })
@@ -163,7 +164,12 @@ export const ACTION_KINDS = Object.freeze({
   investigate: 'investigate',
   // The door to a cure (content/cures): the menu becomes the marks it can work on.
   cure: 'cure',
+  // Starting something with somebody (content/fights): the menu becomes the squaring off.
+  fight: 'fight',
 })
+
+/** An action about whoever the player has picked out, not a named person. */
+export const CHARACTER_ANY = 'any'
 
 /**
  * Whether an action belongs on a location's menu at all, before any
@@ -182,6 +188,7 @@ export function actionApplies({ action, location, known, characters }) {
   if (!known && action.locationId !== 'any') return false
   if (action.kind === ACTION_KINDS.investigate && known) return false
   if (action.kind === ACTION_KINDS.scavenge && !location.scavengeTableId) return false
+  if (action.characterId === CHARACTER_ANY) return characters.length > 0
   if (action.characterId && !characters.some((c) => c.id === action.characterId)) return false
   return true
 }
