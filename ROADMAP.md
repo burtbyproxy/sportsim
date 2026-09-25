@@ -5,7 +5,7 @@ a framework that takes content over time: each item below lands as a generic
 mechanism plus content, never a one-off. What already shipped is in the git
 history and the release tags.
 
-## Next: 0.20.0 — curing
+## Next: 0.21.0 — curing
 
 Marks (0.18.0) never wear off on their own. Curing is how one ends.
 
@@ -13,6 +13,17 @@ Marks (0.18.0) never wear off on their own. Curing is how one ends.
 - Shortcuts (self-hypnosis, brainwashing yourself) open up only once you
   find the right information.
 - A cured mark changes status. It isn't deleted.
+
+## Shipped: 0.20.0 — NPC is PC lite
+
+Everyone with vitals lives the player's day. The schedule stands in for
+the menu: what the player does by choosing, a character does by standing
+somewhere. A stop's type is what it does per tick (`tuning.simulation.stops`):
+home rests and feeds, the bar puts beer in them, food feeds, the park and
+company lift the mood. Off the map is home. The wear is the player's own
+decay, at the player's rates, and what goes in wears off the way it does
+for the player. When the player spends two hours, everyone lives two hours,
+stop by stop. Routine and full tiers both live; fixed stays a post.
 
 ## Planned: battles
 

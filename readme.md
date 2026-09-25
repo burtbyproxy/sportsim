@@ -69,4 +69,4 @@ npm run test:run                        # every test, once
 
 ### Where the game lives
 
-Everything the player reads or meets is content, under `content/`: the map and its places, actions and events, the people and what they start on their own (`content/acts`), items, substances, voices, and the numbers the engines run on (`content/tuning.json`). Adding to the game means adding content; the tests under `tests/content/` check every file against its contract.
+Everything the player reads or meets is content, under `content/`: the map and its places, actions and events, the people, what they start on their own (`content/acts`) and what each stop of their day does to them (`content/tuning.json` `simulation.stops`), items, substances, voices, and the numbers the engines run on (`content/tuning.json`). Adding to the game means adding content; the tests under `tests/content/` check every file against its contract.

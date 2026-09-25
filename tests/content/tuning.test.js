@@ -1,7 +1,8 @@
 // @vitest-environment node
 // Content contract: content/tuning.json — the game's numbers.
 import { describe, it, expect } from 'vitest'
-import { contentFile, tuningContent } from '../helpers/content.js'
+import { contentFile, contentIds, tuningContent } from '../helpers/content.js'
+import { validateDoses } from '../helpers/contentContracts.js'
 import { listSortBy } from '../../src/utils/list.js'
 import { DISTORTION_KINDS } from '../../src/engine/perception.js'
 
@@ -63,6 +64,30 @@ describe('content/tuning.json — the game numbers', () => {
       expect(vitals, need.status).toContain(need.status)
       expect(isNumber(need.below), need.status).toBe(true)
     }
+  })
+
+  it('every stop says what it does per tick, in vitals that exist and substances that exist, and off the map is a stop', () => {
+    const { stops, awayStopType } = tuning.simulation
+    const writable = vocabulary.statuses.filter((s) => s.writable).map((s) => s.id)
+    const substanceIds = contentIds({ dir: 'content/substances' })
+    expect(Object.keys(stops).length).toBeGreaterThan(0)
+    expect(Object.keys(stops), 'awayStopType').toContain(awayStopType)
+    for (const [type, stop] of Object.entries(stops)) {
+      for (const [key, delta] of Object.entries(stop.statusChangesPerTick)) {
+        expect(writable, `${type}.statusChangesPerTick.${key}`).toContain(key)
+        expect(isNumber(delta), `${type}.statusChangesPerTick.${key}`).toBe(true)
+      }
+      validateDoses({ doses: stop.dosesPerTick, label: `stops.${type}.dosesPerTick` })
+      for (const dose of stop.dosesPerTick) {
+        expect(substanceIds, `${type}: dose '${dose.substanceId}'`).toContain(dose.substanceId)
+      }
+    }
+  })
+
+  it('a day at home makes up for a day out: the away stop restores faster than the day wears', () => {
+    const away = tuning.simulation.stops[tuning.simulation.awayStopType]
+    expect(away.statusChangesPerTick.hunger + tuning.decay.hunger.ratePerTick).toBeGreaterThan(0)
+    expect(away.statusChangesPerTick.energy + tuning.decay.energy.ratePerTick).toBeGreaterThan(0)
   })
 
   it('confusion wears off, its bands climb, and every kind of distortion has a chance', () => {

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { simulationTick } from './simulation.js'
+import { statusDecayChanges } from './stats.js'
 import { randomSeeded } from '../utils/random.js'
 import { clockAdvance, clockCreate } from './clock.js'
 import { tuningContent } from '../../tests/helpers/content.js'
@@ -168,7 +169,7 @@ describe('simulationTick — routine tier', () => {
     expect(updates[0].locationId).toBe('bar')
   })
 
-  it('does not return statusChanges for routine tier', () => {
+  it('a routine character with no vitals is only somewhere', () => {
     const char = makeRoutine('carl')
     const updates = simulationTick({
       tuning,
@@ -177,6 +178,100 @@ describe('simulationTick — routine tier', () => {
       rng: randomSeeded({ seed: 1 }),
     })
     expect(updates[0].statusChanges).toBeUndefined()
+    expect(updates[0].doses).toBeUndefined()
+  })
+
+  it("a routine character with vitals lives the day: the wear is the player's", () => {
+    const char = {
+      ...makeRoutine('carl'),
+      status: { hunger: 50, energy: 70, mood: 45, health: 90 },
+    }
+    const updates = simulationTick({
+      tuning,
+      characters: [char],
+      gameTime: makeGameTime({ hour: 10 }),
+      rng: () => 0,
+    })
+    expect(updates[0].statusChanges.hunger).toBe(tuning.decay.hunger.ratePerTick)
+    expect(updates[0].statusChanges.energy).toBe(tuning.decay.energy.ratePerTick)
+  })
+})
+
+// --- the stops: what standing somewhere does ---
+
+describe('simulationTick — every stop does what it does', () => {
+  const status = { hunger: 50, energy: 50, mood: 40, health: 90 }
+  const allDay = ({ locationId, type, probability = 1 }) => ({
+    id: 'person',
+    simulation: 'routine',
+    currentLocationId: null,
+    status,
+    schedule: makeSchedule([
+      { locationId, type, startHour: 0, endHour: 24, probability, days: ['all'] },
+    ]),
+  })
+  const tick = ({ character, rng = () => 0, gameTime = makeGameTime({ hour: 10 }) }) =>
+    simulationTick({ tuning, characters: [character], gameTime, rng })[0]
+
+  for (const [type, stop] of Object.entries(tuning.simulation.stops)) {
+    it(`at a '${type}' stop the wear and the stop's changes add up, and its doses go in`, () => {
+      const update = tick({ character: allDay({ locationId: 'somewhere', type }) })
+      const wear = statusDecayChanges({ tuning, status, ticksElapsed: 1 })
+      const keys = new Set([...Object.keys(wear), ...Object.keys(stop.statusChangesPerTick)])
+      // A change that comes to nothing is not reported.
+      for (const key of keys) {
+        expect(update.statusChanges[key] ?? 0, `${type}.${key}`).toBeCloseTo(
+          (wear[key] ?? 0) + (stop.statusChangesPerTick[key] ?? 0),
+          5
+        )
+      }
+      if (stop.dosesPerTick.length > 0) expect(update.doses).toEqual(stop.dosesPerTick)
+      else expect(update.doses).toBeUndefined()
+    })
+  }
+
+  it('off the map is the away stop: no entry, or a roll that keeps them away', () => {
+    const away = tuning.simulation.stops[tuning.simulation.awayStopType]
+    const noEntry = tick({
+      character: { ...allDay({ locationId: 'x', type: 'bar' }), schedule: makeSchedule([]) },
+    })
+    expect(noEntry.locationId).toBeNull()
+    const keptAway = tick({
+      character: allDay({ locationId: 'x', type: 'bar', probability: 0.5 }),
+      rng: () => 0.99,
+    })
+    expect(keptAway.locationId).toBeNull()
+    for (const update of [noEntry, keptAway]) {
+      for (const [key, delta] of Object.entries(away.statusChangesPerTick)) {
+        const wear = statusDecayChanges({ tuning, status, ticksElapsed: 1 })[key] ?? 0
+        expect(update.statusChanges[key], key).toBeCloseTo(wear + delta, 5)
+      }
+      expect(update.doses).toBeUndefined()
+    }
+  })
+
+  it('in transit there is no stop, only the wear', () => {
+    const carl = { ...makeRoutine('carl'), status }
+    const update = tick({ character: carl, gameTime: makeGameTime({ hour: 17, minute: 15 }) })
+    expect(update.locationId).toBe('bar')
+    expect(update.statusChanges).toEqual(statusDecayChanges({ tuning, status, ticksElapsed: 1 }))
+    expect(update.doses).toBeUndefined()
+  })
+
+  it('a stop of a kind tuning does not know gives nothing but the wear', () => {
+    const update = tick({ character: allDay({ locationId: 'x', type: 'moon' }) })
+    expect(update.statusChanges).toEqual(statusDecayChanges({ tuning, status, ticksElapsed: 1 }))
+  })
+
+  it("a need takes a full character to its stop, and that stop's kind is what works on them", () => {
+    const bar = tuning.simulation.stops.bar
+    const drunk = {
+      ...makeFull({ id: 'drunk', statusOverrides: { sobriety: 10 } }),
+      status: { ...status, sobriety: 10 },
+    }
+    const update = tick({ character: drunk, gameTime: makeGameTime({ hour: 9 }) })
+    expect(update.locationId).toBe('bar')
+    expect(update.doses).toEqual(bar.dosesPerTick)
   })
 })
 
@@ -304,6 +399,96 @@ describe('simulationTick — 24-hour integration (96 ticks)', () => {
     expect(locationsVisited.has('work')).toBe(true)
     expect(locationsVisited.has('bar')).toBe(true)
     expect(locationsVisited.has('home')).toBe(true)
+  })
+})
+
+// --- A span of ticks: everyone lives the time the player spent ---
+
+describe('simulationTick — a span of ticks ends where the time is', () => {
+  const status = { hunger: 50, energy: 50, mood: 41, health: 90 }
+  const carl = { ...makeRoutine('carl'), status }
+  const at = ({ hour, minute = 0 }) => {
+    // The absolute tick for a Monday time, so the walk back stays on the clock.
+    const tick = (hour - tuning.clock.startHour) * tuning.clock.ticksPerHour + minute / 15
+    return { ...makeGameTime({ hour, minute }), tick }
+  }
+
+  it('the position is where they are at the end, not where they started', () => {
+    // From 16:15 to 18:00 carl leaves work for the bar; at the end he is at the bar.
+    const [update] = simulationTick({
+      tuning,
+      characters: [carl],
+      gameTime: at({ hour: 18 }),
+      ticksElapsed: 7,
+      rng: () => 0,
+    })
+    expect(update.locationId).toBe('bar')
+  })
+
+  it('the wear adds up over the span, tick by tick', () => {
+    const [one] = simulationTick({
+      tuning,
+      characters: [carl],
+      gameTime: at({ hour: 12 }),
+      ticksElapsed: 1,
+      rng: () => 0,
+    })
+    const [eight] = simulationTick({
+      tuning,
+      characters: [carl],
+      gameTime: at({ hour: 12 }),
+      ticksElapsed: 8,
+      rng: () => 0,
+    })
+    expect(eight.statusChanges.hunger).toBeCloseTo(one.statusChanges.hunger * 8, 5)
+  })
+
+  it('mood drifts to its baseline and stops there, instead of sailing past it', () => {
+    const [update] = simulationTick({
+      tuning,
+      characters: [carl],
+      gameTime: at({ hour: 12 }),
+      ticksElapsed: 16,
+      rng: () => 0,
+    })
+    expect(status.mood + (update.statusChanges.mood ?? 0)).toBe(tuning.decay.mood.baseline)
+  })
+
+  it('the vitals are held to their bounds along the way, so the change never overshoots', () => {
+    const starving = { ...carl, status: { ...status, hunger: 3 } }
+    const [update] = simulationTick({
+      tuning,
+      characters: [starving],
+      gameTime: at({ hour: 12 }),
+      ticksElapsed: 8,
+      rng: () => 0,
+    })
+    expect(update.statusChanges.hunger).toBe(-3)
+  })
+
+  it('every stop on the way gives what it gives: doses from each bar tick', () => {
+    const bar = tuning.simulation.stops.bar
+    const regular = {
+      ...carl,
+      schedule: makeSchedule([
+        {
+          locationId: 'bar',
+          type: 'bar',
+          startHour: 0,
+          endHour: 24,
+          probability: 1,
+          days: ['all'],
+        },
+      ]),
+    }
+    const [update] = simulationTick({
+      tuning,
+      characters: [regular],
+      gameTime: at({ hour: 12 }),
+      ticksElapsed: 3,
+      rng: () => 0,
+    })
+    expect(update.doses).toEqual([...bar.dosesPerTick, ...bar.dosesPerTick, ...bar.dosesPerTick])
   })
 })
 

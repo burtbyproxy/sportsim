@@ -6,14 +6,46 @@
   "voice": "Flat. Monotone. Says 'yep' and 'that it?' and 'have a good one' in the exact same tone regardless of context. The only time his voice changes is when someone tries to talk to him about the book he's reading, at which point he becomes a different person entirely — animated, specific, passionate. This lasts until the conversation ends, at which point he returns to baseline.",
   "simulation": "fixed",
   "stats": {
-    "stamina": { "base": 35, "modifiers": [], "xp": 0 },
-    "toughness": { "base": 25, "modifiers": [], "xp": 0 },
-    "wits": { "base": 65, "modifiers": [], "xp": 0 },
-    "creativity": { "base": 45, "modifiers": [], "xp": 0 },
-    "charm": { "base": 20, "modifiers": [], "xp": 0 },
-    "reputation": { "base": 15, "modifiers": [], "xp": 0 },
-    "luck": { "base": 40, "modifiers": [], "xp": 0 },
-    "karma": { "base": 55, "modifiers": [], "xp": 0 }
+    "stamina": {
+      "base": 35,
+      "modifiers": [],
+      "xp": 0
+    },
+    "toughness": {
+      "base": 25,
+      "modifiers": [],
+      "xp": 0
+    },
+    "wits": {
+      "base": 65,
+      "modifiers": [],
+      "xp": 0
+    },
+    "creativity": {
+      "base": 45,
+      "modifiers": [],
+      "xp": 0
+    },
+    "charm": {
+      "base": 20,
+      "modifiers": [],
+      "xp": 0
+    },
+    "reputation": {
+      "base": 15,
+      "modifiers": [],
+      "xp": 0
+    },
+    "luck": {
+      "base": 40,
+      "modifiers": [],
+      "xp": 0
+    },
+    "karma": {
+      "base": 55,
+      "modifiers": [],
+      "xp": 0
+    }
   },
   "status": null,
   "psyche": {
@@ -24,7 +56,9 @@
         "name": "Science Fiction",
         "strength": 80,
         "relatedActions": ["talk_scifi_ray"],
-        "effects": { "actionWeightModifier": {} }
+        "effects": {
+          "actionWeightModifier": {}
+        }
       }
     ],
     "insanities": [],
@@ -34,6 +68,7 @@
     "entries": [
       {
         "locationId": "ainsworth_plaid",
+        "type": "work",
         "startHour": 22,
         "endHour": 6,
         "probability": 0.95,

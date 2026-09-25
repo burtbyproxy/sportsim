@@ -58,6 +58,7 @@
     "entries": [
       {
         "locationId": "blue_parrot",
+        "type": "work",
         "startHour": 18,
         "endHour": 2,
         "probability": 0.85,
