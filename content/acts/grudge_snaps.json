@@ -1,0 +1,39 @@
+{
+  "id": "grudge_snaps",
+  "display": "The grudge snaps",
+  "author": {
+    "kind": "mark",
+    "id": "obsession_hate"
+  },
+  "trigger": null,
+  "to": "anyone",
+  "chancePerTick": 0.35,
+  "check": {
+    "stat": "charm",
+    "opposedStat": "wits"
+  },
+  "success": {
+    "outcome": {
+      "statusChanges": {
+        "mood": -6
+      }
+    },
+    "outcomeAuthor": {
+      "statusChanges": {
+        "mood": 4
+      }
+    },
+    "lineCode": "act.grudge_snaps.you",
+    "lineCodeOthers": "act.grudge_snaps.them"
+  },
+  "failure": {
+    "outcome": null,
+    "outcomeAuthor": {
+      "statusChanges": {
+        "mood": -4
+      }
+    },
+    "lineCode": "act.grudge_snaps.you.held",
+    "lineCodeOthers": "act.grudge_snaps.them.held"
+  }
+}
