@@ -129,6 +129,22 @@ describe('cross-reference validation', () => {
   // Action itemsGained references real item IDs (string[] per contract)
   const actionFiles = mapDirs.flatMap((mapDir) => loadJsonFiles(join(mapDir, 'actions')))
 
+  // A cure action opens a cure that exists
+  const knownCureIds = new Set(
+    loadJsonFiles(join(CONTENT_ROOT, 'cures'))
+      .map(({ data }) => data.id)
+      .filter(Boolean)
+  )
+  for (const { file, data } of actionFiles) {
+    const actions = Array.isArray(data) ? data : Object.values(data)
+    for (const action of actions) {
+      if (action.kind !== 'cure') continue
+      it(`${file} action '${action.id}': cureId '${action.cureId}' exists in cure data`, () => {
+        expect(knownCureIds.has(action.cureId)).toBe(true)
+      })
+    }
+  }
+
   // Every action lives somewhere real, and anyone it involves exists
   for (const { file, data } of actionFiles) {
     const actions = Array.isArray(data) ? data : Object.values(data)

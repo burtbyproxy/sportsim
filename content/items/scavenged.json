@@ -379,5 +379,17 @@
     "quantity": 1,
     "effects": [],
     "foundAs": "a flyer about salvation, slightly used"
+  },
+  {
+    "id": "self_hypnosis_tape",
+    "name": "Self-Hypnosis Tape",
+    "description": "YOU CAN CHANGE YOUR LIFE IN 30 DAYS, in a font from 1978. Somebody's handwriting on the label says 'side B doesn't work'.",
+    "type": "junk",
+    "value": 1,
+    "stackable": false,
+    "quantity": 1,
+    "effects": [],
+    "foundAs": "a cassette in a cracked case",
+    "pieceAs": null
   }
 ]

@@ -1,0 +1,98 @@
+[
+  {
+    "id": "counsel_abundant_life",
+    "label": "Ask the pastor for a word",
+    "locationId": "abundant_life",
+    "kind": "cure",
+    "cureId": "therapy",
+    "timeCost": 0,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": 9,
+      "maxHour": 20,
+      "minVisits": null,
+      "minMoney": null,
+      "requiredAbilities": null,
+      "requiredMarkIds": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "The pastor has an office the size of a closet and a chair in it for you. He doesn't ask what's wrong. He asks what you'd like to talk about, which is worse.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": null,
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 40
+  },
+  {
+    "id": "play_the_tape",
+    "label": "Play the tape",
+    "locationId": "any",
+    "kind": "cure",
+    "cureId": "self_hypnosis",
+    "timeCost": 0,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": ["self_hypnosis_tape"],
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": null,
+      "maxHour": null,
+      "minVisits": null,
+      "minMoney": null,
+      "requiredAbilities": null,
+      "requiredMarkIds": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "Side A. A man with a voice like warm milk tells you that you are safe, that you are calm, that you are in control. You press play again to check.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": null,
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 30
+  }
+]

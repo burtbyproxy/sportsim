@@ -116,6 +116,16 @@
     "act.flashback_stares": "Somebody says something, or nothing, and {author} is back at {target} for a second. You can watch the whole trip from here. There's nothing to do about it.",
     "act.panic_shakes": "{author} clocks {target}, or thinks so, and every part of {author} that can leave, leaves. The rest stays and shakes.",
     "act.hollow_asks": "{author} asks if you've got anything. You've got nothing. You say so, and the two of you stand there in the truth of it.",
-    "act.dennis_holds_forth": "Dennis tells you what. You didn't ask. Nobody has ever asked. Back in the day, apparently, things were different, and louder."
+    "act.dennis_holds_forth": "Dennis tells you what. You didn't ask. Nobody has ever asked. Back in the day, apparently, things were different, and louder.",
+    "requirement.cure.none": "There's nothing in you that this would reach. Yet.",
+    "menu.cure.mark": "{mark}, about {target}",
+    "menu.cure.mark.bare": "{mark}",
+    "menu.cure.cancel": "Not today",
+    "cure.therapy.took": "You talk. He listens, which nobody does, and it costs you more than talking should. Something about {target} is a little smaller when you leave.",
+    "cure.therapy.slipped": "You get halfway into it and stop. He waits. You don't. An hour of two people looking at a carpet.",
+    "cure.therapy.cured": "You say the thing about {target} out loud, all the way through, and it stays said. It's still true. It just isn't running you.",
+    "cure.self_hypnosis.took": "You are calm. You are safe. You are in control. {target} comes up and, for once, you're the one who lets it go.",
+    "cure.self_hypnosis.slipped": "You are calm. You are safe. You are thinking about {target}. You are thinking about it worse. You rewind and it's still there.",
+    "cure.self_hypnosis.cured": "Side A, one more time, and something about {target} goes quiet. You did that to yourself. You'd like a witness."
   }
 }
