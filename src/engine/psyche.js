@@ -137,13 +137,15 @@ function targetPresent({ target, scene }) {
 }
 
 /**
- * Whether a fit's trigger holds for a mark in a scene.
- * @param {{ mark: Object, trigger: Object, scene: Object }} input
+ * Whether a trigger holds for a mark in a scene: the same triggers set off
+ * a mark's fit and an act (engine/acts.js). Only the target trigger reads
+ * the mark; the rest read the scene.
+ * @param {{ mark: { target: { kind: string, id: string }|null }|null, trigger: Object, scene: Object }} input
  * @returns {boolean}
  */
-function triggerHolds({ mark, trigger, scene }) {
+export function triggerHolds({ mark, trigger, scene }) {
   if (trigger.kind === FIT_TRIGGER_KINDS.target)
-    return targetPresent({ target: mark.target, scene })
+    return targetPresent({ target: mark?.target ?? null, scene })
   if (trigger.kind === FIT_TRIGGER_KINDS.status) {
     const value = scene.status?.[trigger.status]
     if (value === undefined || value === null) return false

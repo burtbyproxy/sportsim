@@ -66,6 +66,7 @@ export function useBoot({ load = contentLoad } = {}) {
         CONTENT_KINDS.topics,
         CONTENT_KINDS.actions,
         CONTENT_KINDS.events,
+        CONTENT_KINDS.acts,
       ],
     })
     if (!loaded.ok) return loaded
@@ -108,6 +109,9 @@ export function useBoot({ load = contentLoad } = {}) {
     }
     for (const event of Object.values(content[CONTENT_KINDS.events])) {
       game.eventRegister({ event })
+    }
+    for (const act of Object.values(content[CONTENT_KINDS.acts])) {
+      game.actRegister({ act })
     }
     return resultOk({ mapId: config.data.mapId })
   }

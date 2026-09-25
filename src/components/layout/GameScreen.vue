@@ -178,6 +178,7 @@ if (!game.isRunning) {
 // What can be done and what can happen here: registered at boot.
 const actionRegistry = Object.values(game.actions)
 const eventRegistry = Object.values(game.events)
+const actRegistry = Object.values(game.acts)
 
 const narrative = useNarrative({ tuning: game.tuning })
 provide('narrative', narrative)
@@ -186,7 +187,7 @@ provide('narrative', narrative)
 useKeyboard({ bindings: narrativeSkipBindings({ narrative }) })
 
 const save = useSave()
-const gameLoop = useGameLoop({ actionRegistry, eventRegistry, narrative, save })
+const gameLoop = useGameLoop({ actionRegistry, eventRegistry, actRegistry, narrative, save })
 provide('gameLoop', gameLoop)
 
 /** Live entry state — driven by the narrative composable itself */
