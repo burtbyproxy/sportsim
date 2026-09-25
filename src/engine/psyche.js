@@ -44,9 +44,13 @@ export const MARK_KINDS = Object.freeze({
   affective: 'affective',
 })
 
-/** A mark in play. Curing (0.19.0) is what will end one. */
+/**
+ * A mark in play, or ended. A cured mark (engine/curing.js) stays as what
+ * happened and does nothing: every reader of marks looks at active ones.
+ */
 export const MARK_STATUSES = Object.freeze({
   active: 'active',
+  cured: 'cured',
 })
 
 /** What a mark can be about. Each is an id in its own registry. */
@@ -325,6 +329,7 @@ export function psycheTrauma({
     source: { kind: source.kind, id: source.id },
     status: MARK_STATUSES.active,
     fitTicksRemaining: 0,
+    cures: {},
     acquiredAtTick: gameTime.tick,
     updatedAtTick: gameTime.tick,
   }

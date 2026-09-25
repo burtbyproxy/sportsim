@@ -52,8 +52,9 @@
  * @property {string} markId - a mark definition in content/marks
  * @property {{ kind: string, id: string }|null} target - what it is about
  * @property {{ kind: string, id: string }} source - what left it
- * @property {string} status - 'active'
+ * @property {string} status - 'active', or 'cured' (engine/curing.js)
  * @property {number} fitTicksRemaining - 0 when not in a fit
+ * @property {Object<string, number>} cures - sessions done, by cure id
  * @property {number} acquiredAtTick
  * @property {number} updatedAtTick
  */

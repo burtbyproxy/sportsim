@@ -100,6 +100,7 @@ export function characterCreate(data) {
         source: mark.source ? { ...mark.source } : { kind: 'character', id: data.id },
         status: mark.status ?? MARK_STATUSES.active,
         fitTicksRemaining: mark.fitTicksRemaining ?? 0,
+        cures: { ...(mark.cures ?? {}) },
         acquiredAtTick: mark.acquiredAtTick ?? 0,
         updatedAtTick: mark.updatedAtTick ?? 0,
       })),
