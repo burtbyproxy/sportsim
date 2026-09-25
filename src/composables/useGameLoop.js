@@ -50,6 +50,9 @@ import { actionMisperceived, locationKnown } from '../engine/perception.js'
 import { MARK_TARGET_KINDS, psycheAvoids } from '../engine/psyche.js'
 import { SUBJECT_KINDS, actsRoll, actResolve } from '../engine/acts.js'
 import { cureCandidates, cureSessionAllowed } from '../engine/curing.js'
+import { FIGHT_ENDINGS, FIGHT_PHASES, FIGHT_SIDES, fightOffer } from '../engine/fight.js'
+import { locationBarred } from '../models/location.js'
+import { randomPickWeighted } from '../utils/random.js'
 import { checkRoll } from '../engine/dice.js'
 import { narrativeAction, narrativeEvent, narrativeLocation } from './useNarrative.js'
 import { narrativeTextCreate, textFill } from '../utils/text.js'
@@ -104,11 +107,13 @@ export function useGameLoop({
    *
    * Async because the simulation worker call returns a Promise.
    *
-   * @param {{ ticks?: number, locationId?: string|null }} [input]
+   * @param {{ ticks?: number, locationId?: string|null, keepLog?: boolean }} [input]
    *   locationId — if set, move there after the tick
+   *   keepLog — arriving somewhere starts a fresh log, unless what was
+   *   just said is how the player got there (put out, or carried)
    * @returns {Promise<void>}
    */
-  async function tick({ ticks = 1, locationId = null } = {}) {
+  async function tick({ ticks = 1, locationId = null, keepLog = false } = {}) {
     if (!game.player) return
 
     // 1. Advance clock
@@ -197,7 +202,7 @@ export function useGameLoop({
     // 5. Move if requested — the new scene's prose goes into a fresh log
     if (locationId) {
       game.playerMove({ locationId })
-      locationEnter()
+      locationEnter({ keepLog })
     }
 
     // 5b. Drink enough, or sober up enough, and the scene is seen afresh.
@@ -224,13 +229,15 @@ export function useGameLoop({
   }
 
   /**
-   * Start a scene: clear the log, describe where the player is, and if an
-   * event is still waiting on them (say, after a load), put it back in front.
+   * Start a scene: clear the log (unless told to keep it), describe where
+   * the player is, and if an event is still waiting on them (say, after a
+   * load), put it back in front.
+   * @param {{ keepLog?: boolean }} [input]
    */
-  function locationEnter() {
+  function locationEnter({ keepLog = false } = {}) {
     perceptionRefresh({ force: true })
     if (narrative && game.currentLocation && game.player) {
-      narrative.clearLog()
+      if (!keepLog) narrative.clearLog()
       sceneDescribe({ closer: false })
       for (const mark of game.currentLocation.marks ?? []) {
         if (mark.status === ARTIFACT_STATUSES.fresh) {
@@ -759,6 +766,165 @@ export function useGameLoop({
    * is still there when the work is done, the piece is made.
    * @param {{ choiceId: string }} input
    */
+  // ── Fighting ───────────────────────────────────────────────────────────────
+
+  /** The other side of the player's fight. */
+  function fightOpponent() {
+    const fight = game.fightActive
+    return fight ? game.characters[fight.secondId] : null
+  }
+
+  /**
+   * The player starts something with somebody here.
+   * @param {{ fightId: string, opponentId: string }} input
+   */
+  function fightBegin({ fightId, opponentId }) {
+    const started = game.fightStartApply({ fightId, opponentId })
+    if (!started.ok) return failureShow(started)
+    // The fight is the menu now, not the person.
+    game.characterSelectionClear()
+    voiceEnqueue({
+      code: game.fights[fightId].lines.started,
+      params: { name: game.characters[opponentId].name },
+    })
+  }
+
+  /**
+   * The menu while the player is squaring off, or null: every jab, the
+   * swing, and the walk, each about the other side by name.
+   * @returns {Object[]|null}
+   */
+  function fightMenuBuild() {
+    const fight = game.fightActive
+    if (!fight || fight.phase !== FIGHT_PHASES.squaring) return null
+    const offer = fightOffer({ fightDef: game.fights[fight.fightId], fight })
+    if (!offer.ok) {
+      failureShow(offer)
+      return null
+    }
+    const name = fightOpponent()?.name ?? ''
+    return offer.data.choices.map((choice) =>
+      makingEntry({
+        id: `fight_choice_${choice.id}`,
+        label: textFill({ text: choice.label, params: { name } }),
+        kind: 'fight_choice',
+        timeCost: game.tuning.fight.roundTicks,
+        data: { choiceId: choice.id },
+      })
+    )
+  }
+
+  /**
+   * An entry on the fight menu: a round of squaring off, and, once
+   * somebody swings, the rest of it.
+   * @param {Object} entry
+   */
+  async function fightEntryResolve(entry) {
+    if (entry.kind !== 'fight_choice') return
+    const opponent = fightOpponent()
+    const name = opponent?.name ?? ''
+    const round = game.fightSquareRoundApply({ choiceId: entry.choiceId, rng })
+    if (!round.ok) return failureShow(round)
+    for (const line of round.data.lines) voiceEnqueue({ code: line.code, params: { name } })
+    const fightDef = game.fights[round.data.fight.fightId]
+    if (round.data.fight.ending === FIGHT_ENDINGS.walked && fightDef.walk.statusChanges) {
+      game.playerStatusApply({ changes: fightDef.walk.statusChanges })
+    }
+    if (round.data.fight.phase === FIGHT_PHASES.swinging) {
+      await fightFinish({ opponent })
+      return
+    }
+    await tick({ ticks: game.tuning.fight.roundTicks })
+  }
+
+  /**
+   * The frantic moment, the ground, and what comes of it. The loser takes
+   * the loser's toll and a save against it, about the other side (or, for
+   * the other side, about the place); the winner takes the winner's. A
+   * fight where the place is that kind of place gets the player 86'd. A
+   * player knocked out wakes up somewhere, hours later.
+   * @param {{ opponent: Object }} input
+   */
+  async function fightFinish({ opponent }) {
+    const resolved = game.fightResolveApply({ rng })
+    if (!resolved.ok) return failureShow(resolved)
+    const { fight, lines, loser } = resolved.data
+    const fightDef = game.fights[fight.fightId]
+    const name = opponent.name
+    for (const line of lines) voiceEnqueue({ code: line.code, params: { name } })
+    const { winner: winnerToll, loser: loserToll, trauma } = game.tuning.fight
+    const source = { kind: 'fight', id: fight.id }
+    if (loser === FIGHT_SIDES.first) {
+      game.playerStatusApply({ changes: loserToll.statusChanges })
+      game.subjectStatusApply({
+        who: { kind: SUBJECT_KINDS.character, id: opponent.id },
+        changes: winnerToll.statusChanges,
+      })
+      const marked = game.psycheTraumaApply({
+        trauma,
+        target: { kind: MARK_TARGET_KINDS.character, id: opponent.id },
+        source,
+        rng,
+      })
+      if (!marked.ok) failureShow(marked)
+      else traumaSpeak({ result: marked.data, quietOnSave: true })
+    } else if (loser === FIGHT_SIDES.second) {
+      game.playerStatusApply({ changes: winnerToll.statusChanges })
+      game.subjectStatusApply({
+        who: { kind: SUBJECT_KINDS.character, id: opponent.id },
+        changes: loserToll.statusChanges,
+      })
+      const marked = game.subjectTraumaApply({
+        who: { kind: SUBJECT_KINDS.character, id: opponent.id },
+        trauma,
+        target: { kind: MARK_TARGET_KINDS.location, id: game.currentLocationId },
+        source,
+        rng,
+      })
+      if (!marked.ok) failureShow(marked)
+    }
+    // 86'd: that kind of place does not want you back for a while.
+    const here = game.currentLocation
+    const { barred, knockout } = game.tuning.fight
+    const thrownOut = barred.locationTypes.includes(here.type)
+    if (thrownOut) {
+      game.locationBarApply({
+        locationId: here.id,
+        untilTick: game.time.tick + barred.hours * game.tuning.clock.ticksPerHour,
+      })
+      voiceEnqueue({
+        code: fightDef.lines.barred,
+        params: { place: game.scenePlace.displayInline },
+      })
+    }
+    if (fight.ending === FIGHT_ENDINGS.knockout && loser === FIGHT_SIDES.first) {
+      // And then nothing: hours later, somewhere, you always make it back.
+      const spot = randomPickWeighted({
+        items: game.config.knockout.spots,
+        weightOf: (s) => s.weight,
+        rng,
+      })
+      await tick({
+        ticks: knockout.hours * game.tuning.clock.ticksPerHour,
+        locationId: spot.locationId,
+        keepLog: true,
+      })
+      voiceEnqueue({ code: spot.lineCode })
+      return
+    }
+    if (thrownOut) {
+      // Out the door, whichever door is first.
+      const way = here.exits[0]
+      await tick({
+        ticks: game.tuning.fight.roundTicks,
+        locationId: way ? way.locationId : null,
+        keepLog: true,
+      })
+      return
+    }
+    await tick({ ticks: game.tuning.fight.roundTicks })
+  }
+
   // ── Curing ─────────────────────────────────────────────────────────────────
 
   /**
@@ -986,6 +1152,10 @@ export function useGameLoop({
       await cureEntryResolve(action)
       return
     }
+    if (action.kind?.startsWith('fight_')) {
+      await fightEntryResolve(action)
+      return
+    }
 
     // The player took the place, or the face, for something it isn't. What
     // they reached for is not here; the act runs into what is, and reality
@@ -1040,6 +1210,13 @@ export function useGameLoop({
     // Walking in costs no time: the menu becomes what the cure can work on.
     if (action.kind === ACTION_KINDS.cure) {
       game.curePickerSet({ picker: { actionId: action.id } })
+      refreshActions()
+      return
+    }
+
+    // Squaring up costs no time: the menu becomes the squaring off.
+    if (action.kind === ACTION_KINDS.fight) {
+      fightBegin({ fightId: action.fightId, opponentId: action.characterId })
       refreshActions()
       return
     }
@@ -1194,6 +1371,11 @@ export function useGameLoop({
       game.menuActionsSet({ actions: makingMenu })
       return
     }
+    const fightMenu = fightMenuBuild()
+    if (fightMenu) {
+      game.menuActionsSet({ actions: fightMenu })
+      return
+    }
     const cureMenu = cureMenuBuild()
     if (cureMenu) {
       game.menuActionsSet({ actions: cureMenu })
@@ -1280,6 +1462,15 @@ export function useGameLoop({
     const blocked = (unavailableReason) => ({ ...exit, available: false, unavailableReason })
     if (game.makingActive) {
       return blocked(game.requirementReason({ code: REQUIREMENT_CODES.busy }))
+    }
+    // 86'd: they can see the way, and the door is not theirs for a while, open or not.
+    if (locationBarred({ location: destination, gameTime: game.time })) {
+      return blocked(
+        game.requirementReason({
+          code: REQUIREMENT_CODES.barred,
+          params: { place: place.displayInline },
+        })
+      )
     }
     if (!locationOpen({ location: destination, hour: game.time.hour })) {
       // A place's own words about being shut name it: they are for a place

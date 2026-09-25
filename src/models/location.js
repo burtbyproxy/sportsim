@@ -47,6 +47,8 @@ export function locationCreate(data) {
       : [],
     // Everything the player ever left here, fresh or gone over. See engine/making.js.
     marks: Array.isArray(data.marks) ? data.marks.map((m) => ({ ...m })) : [],
+    // 86'd: the tick until which the player is not welcome back. 0 is welcome.
+    barredUntilTick: data.barredUntilTick ?? 0,
   }
 }
 
@@ -65,7 +67,17 @@ export function locationRestore({ definition, saved }) {
     visitCount: saved.visitCount,
     scavenge: saved.scavenge,
     marks: saved.marks,
+    barredUntilTick: saved.barredUntilTick ?? 0,
   })
+}
+
+/**
+ * Whether the player is 86'd from a place right now.
+ * @param {{ location: import('./types').Location, gameTime: { tick: number } }} input
+ * @returns {boolean}
+ */
+export function locationBarred({ location, gameTime }) {
+  return (location.barredUntilTick ?? 0) > gameTime.tick
 }
 
 /**

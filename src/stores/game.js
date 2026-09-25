@@ -35,6 +35,8 @@ import {
 } from '../engine/psyche.js'
 import { SUBJECT_KINDS } from '../engine/acts.js'
 import { cureSessionApply } from '../engine/curing.js'
+import { fightActive, fightStart, fightSquareRound, fightResolve } from '../engine/fight.js'
+import { CHARACTER_ANY } from '../engine/actions.js'
 import { scavengeSearch, scavengedCounterName } from '../engine/scavenge.js'
 import {
   MAKING_SURFACE_KINDS,
@@ -135,6 +137,9 @@ export const useGameStore = defineStore('game', {
 
     /** How a mark ends, keyed by id. Loaded once at init from content/cures. */
     cures: {},
+
+    /** How a fight goes, keyed by id. Loaded once at init from content/fights. */
+    fights: {},
 
     /** Condition definitions, keyed by id. Loaded once at init from content/conditions. */
     conditions: {},
@@ -282,12 +287,27 @@ export const useGameStore = defineStore('game', {
      * The actions the menu offers: a picked-out character's own, or, with
      * nobody picked out, the ones that are about the place.
      */
-    menuActions: (state) =>
-      state.availableActions.filter((action) =>
-        state.characterSelectedId
-          ? action.characterId === state.characterSelectedId
-          : !action.characterId
-      ),
+    menuActions: (state) => {
+      const selected = state.characters[state.characterSelectedId] ?? null
+      return state.availableActions
+        .filter((action) =>
+          selected
+            ? action.characterId === selected.id || action.characterId === CHARACTER_ANY
+            : !action.characterId
+        )
+        .map((action) =>
+          action.characterId === CHARACTER_ANY
+            ? {
+                ...action,
+                characterId: selected.id,
+                label: textFill({ text: action.label, params: { name: selected.name } }),
+              }
+            : action
+        )
+    },
+
+    /** The fight the player is in, or null. */
+    fightActive: (state) => (state.player ? fightActive({ subject: state.player }) : null),
 
     /** The one navigable list the menu shows: event choices, or actions then exits. */
     menuEntries() {
@@ -840,6 +860,11 @@ export const useGameStore = defineStore('game', {
       this.characterSelectedId = this.characterSelectedId === characterId ? null : characterId
     },
 
+    /** Let go of whoever was picked out. */
+    characterSelectionClear() {
+      this.characterSelectedId = null
+    },
+
     /**
      * Register a location in state (used when loading save or discovering).
      * @param {{ location: Object }} input
@@ -904,6 +929,117 @@ export const useGameStore = defineStore('game', {
      */
     cureRegister({ cure }) {
       this.cures[cure.id] = cure
+    },
+
+    /**
+     * Register a fight definition. Called at boot.
+     * @param {{ fight: Object }} input
+     */
+    fightRegister({ fight }) {
+      this.fights[fight.id] = fight
+    },
+
+    /**
+     * The player starts something with somebody here (engine/fight.js).
+     * @param {{ fightId: string, opponentId: string }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the fight engine's result
+     */
+    fightStartApply({ fightId, opponentId }) {
+      if (!this.player) {
+        return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
+      }
+      const result = fightStart({
+        fightDef: this.fights[fightId] ?? null,
+        first: this.player,
+        second: this.characters[opponentId] ?? null,
+        locationId: this.currentLocationId,
+        gameTime: this.time,
+      })
+      if (!result.ok) {
+        return result
+      }
+      this.player.fights = result.data.fights
+      return result
+    },
+
+    /**
+     * One round of the player's squaring off.
+     * @param {{ choiceId: string, rng?: () => number }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the fight engine's result
+     */
+    fightSquareRoundApply({ choiceId, rng = Math.random }) {
+      const fight = this.fightActive
+      if (!fight) {
+        return resultFail({ code: STORE_ERROR_CODES.noneInProgress, message: 'No fight' })
+      }
+      const result = fightSquareRound({
+        tuning: this.tuning,
+        fightDef: this.fights[fight.fightId],
+        fight,
+        first: this.player,
+        second: this.characters[fight.secondId],
+        choiceId,
+        gameTime: this.time,
+        rng,
+      })
+      if (!result.ok) {
+        return result
+      }
+      this.player.fights = this.player.fights.map((f) =>
+        f.id === fight.id ? result.data.fight : f
+      )
+      return result
+    },
+
+    /**
+     * The frantic moment and the ground, for the player's fight. The knocks
+     * land on both sides here; the rest is the loop's.
+     * @param {{ rng?: () => number }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the fight engine's result
+     */
+    fightResolveApply({ rng = Math.random } = {}) {
+      const fight = this.fightActive
+      if (!fight) {
+        return resultFail({ code: STORE_ERROR_CODES.noneInProgress, message: 'No fight' })
+      }
+      const opponent = this.characters[fight.secondId]
+      const bystanders = this.charactersAtCurrentLocation.filter(
+        (c) => c.id !== opponent?.id
+      ).length
+      const result = fightResolve({
+        tuning: this.tuning,
+        fightDef: this.fights[fight.fightId],
+        fight,
+        first: this.player,
+        second: opponent,
+        bystanders,
+        gameTime: this.time,
+        rng,
+      })
+      if (!result.ok) {
+        return result
+      }
+      this.player.fights = this.player.fights.map((f) =>
+        f.id === fight.id ? result.data.fight : f
+      )
+      if (result.data.dazed.first > 0) this.playerDazedApply({ amount: result.data.dazed.first })
+      if (result.data.dazed.second > 0) {
+        this.subjectDazedApply({
+          who: { kind: SUBJECT_KINDS.character, id: opponent.id },
+          amount: result.data.dazed.second,
+        })
+      }
+      return result
+    },
+
+    /**
+     * 86'd: the player is not welcome back here until a tick.
+     * @param {{ locationId: string, untilTick: number }} input
+     */
+    locationBarApply({ locationId, untilTick }) {
+      const location = this.locations[locationId]
+      if (!location) return
+      location.barredUntilTick = untilTick
     },
 
     /**

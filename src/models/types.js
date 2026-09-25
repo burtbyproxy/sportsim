@@ -34,6 +34,7 @@
  * @property {Object<string, Object<string, Stat>>} skills - skills[mediumId][personaId]
  * @property {Object[]} inspirations - see engine/inspiration.js
  * @property {Object[]} makings - see engine/making.js
+ * @property {Object[]} fights - every fight ever started, at most one under way; see engine/fight.js
  * @property {Object[]} experiences
  * @property {Object[]} portfolio
  * @property {{ marks: Mark[], abilities: Object[], grooves: Object<string, number> }} psyche
@@ -78,6 +79,7 @@
  * @property {{ depletion: number, updatedAtTick: number }} scavenge
  * @property {Object[]} surfaces
  * @property {Object[]} marks
+ * @property {number} barredUntilTick - 86'd until this tick; 0 is welcome
  */
 
 /**

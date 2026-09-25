@@ -227,6 +227,7 @@ export function actionMisperceived({ action, location, characters }) {
   if (action.locationId && action.locationId !== 'any' && action.locationId !== location.id) {
     return true
   }
+  if (action.characterId === 'any') return characters.length === 0
   if (action.characterId && !characters.some((c) => c.id === action.characterId)) return true
   return false
 }
