@@ -5,7 +5,7 @@ a framework that takes content over time: each item below lands as a generic
 mechanism plus content, never a one-off. What already shipped is in the git
 history and the release tags.
 
-## Next: 0.19.0 — curing
+## Next: 0.20.0 — curing
 
 Marks (0.18.0) never wear off on their own. Curing is how one ends.
 
@@ -13,8 +13,6 @@ Marks (0.18.0) never wear off on their own. Curing is how one ends.
 - Shortcuts (self-hypnosis, brainwashing yourself) open up only once you
   find the right information.
 - A cured mark changes status. It isn't deleted.
-
-Still open: whether NPC free will (below) goes ahead of curing.
 
 ## Planned: battles
 
@@ -31,11 +29,16 @@ rolling around on the ground. Fast, and boring.
 
 In order:
 
-1. **NPC free will.** People start things. An NPC act is an event with an
-   author: who does it (a character, or anyone with a persona or a mark in a
-   fit), when (the same triggers marks use), and what it does (the existing
-   outcome contract). Outcomes can land on characters, not only on the
-   player.
+1. **NPC free will.** Shipped in 0.19.0. People start things: an act
+   (`content/acts`) has an author (a character, anyone with a persona in
+   charge, anyone with a mark in a fit), goes off in the author's own scene
+   on the triggers marks use, and is done to the player, to the mark's
+   target, to anyone present, or to nobody. With a check it is a contest,
+   the author's stat against the recipient's. Outcomes land on characters
+   as well as the player: vitals, stats, doses, a knock to the head, a
+   trauma save. The player hears of it only in the room. The talk around
+   the player is now the talk around everyone in the room, which is the
+   instigation lever.
 2. **The fight.** Three phases, each a small game:
    - **Squaring off:** tit-for-tat that raises the heat. Whoever is in
      charge sets your options, and the side that cracks swings.
