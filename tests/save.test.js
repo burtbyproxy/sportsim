@@ -686,6 +686,32 @@ describe('saveMigrate', () => {
     expect(migrated.characters.maurice.inspirations).toEqual([])
   })
 
+  it('a v8 save gives every mark, on the player and on everyone else, a count of cures', () => {
+    const v8 = makeValidSave({ version: 8 })
+    const mark = {
+      id: 'm1',
+      markId: 'scar',
+      target: null,
+      source: { kind: 'event', id: 'e' },
+      status: 'active',
+      fitTicksRemaining: 0,
+      acquiredAtTick: 0,
+      updatedAtTick: 0,
+    }
+    v8.player.psyche = { marks: [{ ...mark }], abilities: [], grooves: {} }
+    v8.characters = {
+      dennis: {
+        id: 'dennis',
+        psyche: { marks: [{ ...mark, id: 'm2' }], abilities: [], grooves: {} },
+      },
+    }
+    const migrated = saveMigrate({ save: v8 })
+    expect(migrated.version).toBe(SAVE_VERSION)
+    expect(migrated.player.psyche.marks[0].cures).toEqual({})
+    expect(migrated.characters.dennis.psyche.marks[0].cures).toEqual({})
+    expect(migrated.player.psyche.marks[0].status).toBe('active')
+  })
+
   it('a v3 save keeps its skills and gains only the log', () => {
     const v3 = makeValidSave({ version: 3 })
     v3.player.skills = { painting: { sober: { base: 4, modifiers: [], xp: 2 } } }
