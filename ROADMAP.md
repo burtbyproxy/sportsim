@@ -9,6 +9,14 @@ history and the release tags.
 
 The fight engine, step 2 of the battle plan below.
 
+## Shipped: 0.22.0 — nothing happens in one sitting
+
+A cure has a cadence and a lapse. Therapy is one session a day; let three
+days go by and a session slides back. The shortcut has no cadence, and
+that is the trap: a session that slips on the tape is a save against the
+insanity table, and what it leaves is not announced. You can make
+yourself a different crazy and not know it.
+
 ## Shipped: 0.21.0 — curing
 
 Marks never wear off on their own. A cure (`content/cures`) is how one

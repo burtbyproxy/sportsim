@@ -20,5 +20,13 @@
     "took": "cure.therapy.took",
     "slipped": "cure.therapy.slipped",
     "cured": "cure.therapy.cured"
-  }
+  },
+  "cadence": {
+    "everyHours": 24
+  },
+  "lapse": {
+    "afterHours": 72,
+    "setback": 1
+  },
+  "risk": null
 }

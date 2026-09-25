@@ -49,7 +49,7 @@ import { eventsRandomCheck, eventsTriggeredCheck, eventResolve } from '../engine
 import { actionMisperceived, locationKnown } from '../engine/perception.js'
 import { MARK_TARGET_KINDS, psycheAvoids } from '../engine/psyche.js'
 import { SUBJECT_KINDS, actsRoll, actResolve } from '../engine/acts.js'
-import { cureCandidates } from '../engine/curing.js'
+import { cureCandidates, cureSessionAllowed } from '../engine/curing.js'
 import { checkRoll } from '../engine/dice.js'
 import { narrativeAction, narrativeEvent, narrativeLocation } from './useNarrative.js'
 import { narrativeTextCreate, textFill } from '../utils/text.js'
@@ -792,8 +792,11 @@ export function useGameLoop({
         })
       : null
     return [
-      ...candidates.map(({ mark, definition }) =>
-        makingEntry({
+      ...candidates.map(({ mark, definition }) => {
+        // Not so fast: a cure with a cadence takes one session per its span.
+        const soon = cureSessionAllowed({ tuning: game.tuning, cure, mark, gameTime: game.time })
+        const why = broke ? reason : soon.allowed ? null : game.voiceLine({ code: soon.reasonCode })
+        return makingEntry({
           id: `cure_mark_${mark.id}`,
           label: game.voiceLine({
             code: mark.target ? 'menu.cure.mark' : 'menu.cure.mark.bare',
@@ -801,11 +804,11 @@ export function useGameLoop({
           }),
           kind: 'cure_mark',
           timeCost: cure.session.ticks,
-          available: !broke,
-          reason,
+          available: why === null,
+          reason: why,
           data: { cureId: cure.id, markInstanceId: mark.id },
         })
-      ),
+      }),
       makingEntry({
         id: 'cure_cancel',
         label: game.voiceLine({ code: 'menu.cure.cancel' }),
@@ -829,8 +832,11 @@ export function useGameLoop({
 
   /**
    * A session: the check is rolled and trains its stat, the session takes
-   * its price and its toll, the count moves, and the cure says how it went
-   * about what the mark is about. One session a visit; the menu closes.
+   * its price and its toll, the count moves (after any lapse), and the cure
+   * says how it went about what the mark is about. A session gone wrong on
+   * a cure with a risk is a save against the risk's table, and what that
+   * leaves is not announced: you can make yourself a different crazy and
+   * not know it. One session a visit; the menu closes.
    * @param {{ cureId: string, markInstanceId: string }} input
    */
   async function cureSession({ cureId, markInstanceId }) {
@@ -849,19 +855,28 @@ export function useGameLoop({
     const result = game.cureSessionApply({ cureId, markInstanceId, succeeded: roll.success })
     game.curePickerSet({ picker: null })
     if (!result.ok) return failureShow(result)
-    const { mark, cured } = result.data
+    const { mark, cured, lapsed } = result.data
+    const params = {
+      mark: game.marks[mark.markId].display,
+      target: game.targetName({ target: mark.target }),
+    }
+    if (lapsed > 0) voiceEnqueue({ code: 'cure.lapsed', params })
     const code = cured
       ? cure.lineCodes.cured
       : roll.success
         ? cure.lineCodes.took
         : cure.lineCodes.slipped
-    voiceEnqueue({
-      code,
-      params: {
-        mark: game.marks[mark.markId].display,
-        target: game.targetName({ target: mark.target }),
-      },
-    })
+    voiceEnqueue({ code, params })
+    if (!roll.success && cure.risk) {
+      const risked = game.psycheTraumaApply({
+        trauma: cure.risk,
+        target: mark.target,
+        source: { kind: 'cure', id: cure.id },
+        rng,
+      })
+      if (!risked.ok) failureShow(risked)
+      else checkTrain(risked.data.check)
+    }
     await tick({ ticks: cure.session.ticks })
   }
 

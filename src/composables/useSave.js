@@ -10,7 +10,7 @@ const SAVE_INDEX_KEY = 'sportsim_saves'
  * Current save format version.
  * Bump this whenever the save shape changes in a breaking way.
  */
-export const SAVE_VERSION = 9
+export const SAVE_VERSION = 10
 
 /**
  * Maximum number of save slots.
@@ -207,6 +207,25 @@ export function saveMigrate({ save }) {
       for (const mark of subject.psyche?.marks ?? []) mark.cures = mark.cures ?? {}
     }
     migrated.version = 9
+  }
+  if (migrated.version < 10) {
+    // A cure's count became where the mark stands with it: the sessions
+    // done and when the last was. Nothing had a last, so the mark's own
+    // last change stands in.
+    for (const subject of [migrated.player, ...Object.values(migrated.characters ?? {})]) {
+      if (!subject) continue
+      for (const mark of subject.psyche?.marks ?? []) {
+        mark.cures = Object.fromEntries(
+          Object.entries(mark.cures ?? {}).map(([cureId, count]) => [
+            cureId,
+            typeof count === 'number'
+              ? { sessionsDone: count, lastSessionTick: mark.updatedAtTick ?? 0 }
+              : count,
+          ])
+        )
+      }
+    }
+    migrated.version = 10
   }
   return migrated
 }

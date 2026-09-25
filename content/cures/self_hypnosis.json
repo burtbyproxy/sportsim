@@ -20,5 +20,14 @@
     "took": "cure.self_hypnosis.took",
     "slipped": "cure.self_hypnosis.slipped",
     "cured": "cure.self_hypnosis.cured"
+  },
+  "cadence": null,
+  "lapse": null,
+  "risk": {
+    "save": {
+      "stat": "wits",
+      "dc": 12
+    },
+    "tableId": "insanity"
   }
 }

@@ -7,6 +7,7 @@ import { CONTENT_ROOT, loadJsonFiles, validateCure } from '../helpers/contentCon
 
 const cureFiles = loadJsonFiles(join(CONTENT_ROOT, 'cures'))
 const sober = loadJsonFiles(join(CONTENT_ROOT, 'voices')).find(({ data }) => data.id === 'sober')
+const tableIds = new Set(loadJsonFiles(join(CONTENT_ROOT, 'psyche')).map(({ data }) => data.id))
 
 describe('content/cures — how a mark ends', () => {
   it('content/cures/ directory exists, and there are cures', () => {
@@ -28,6 +29,14 @@ describe('content/cures — how a mark ends', () => {
     it(`${file} — valid cure`, () => {
       validateCure({ data, file })
       expect(file.endsWith(`${data.id}.json`), `${file}: file name must match id`).toBe(true)
+    })
+
+    it(`${file} — a risk rolls down a table that exists`, () => {
+      if (!data.risk) return
+      expect(
+        tableIds.has(data.risk.tableId),
+        `${file}: no psyche table '${data.risk.tableId}'`
+      ).toBe(true)
     })
 
     it(`${file} — says how a session went in words the sober voice has`, () => {

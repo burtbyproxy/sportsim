@@ -1156,6 +1156,9 @@ export const CURE_REQUIRED_FIELDS = [
   'sessions',
   'setbackOnFailure',
   'session',
+  'cadence',
+  'lapse',
+  'risk',
   'lineCodes',
 ]
 
@@ -1193,6 +1196,34 @@ export function validateCure({ data, file }) {
     expect(typeof data.lineCodes[line], `${file}: lineCodes.${line} must be a string`).toBe(
       'string'
     )
+  }
+  if (data.cadence !== null) {
+    expect(data.cadence.everyHours, `${file}: cadence.everyHours must be > 0`).toBeGreaterThan(0)
+  }
+  if (data.lapse !== null) {
+    expect(data.lapse.afterHours, `${file}: lapse.afterHours must be > 0`).toBeGreaterThan(0)
+    if (data.cadence !== null) {
+      expect(
+        data.lapse.afterHours,
+        `${file}: a lapse shorter than the cadence is a session that cannot be kept`
+      ).toBeGreaterThanOrEqual(data.cadence.everyHours)
+    }
+    expect(Number.isInteger(data.lapse.setback), `${file}: lapse.setback must be whole`).toBe(true)
+    expect(data.lapse.setback, `${file}: lapse.setback must be >= 1`).toBeGreaterThanOrEqual(1)
+  }
+  if (data.risk !== null) {
+    expect(VALID_STATS, `${file}: risk.save.stat '${data.risk.save?.stat}'`).toContain(
+      data.risk.save?.stat
+    )
+    expect(data.risk.save.dc, `${file}: risk.save.dc must be > 0`).toBeGreaterThan(0)
+    expect(typeof data.risk.tableId, `${file}: risk.tableId must be a string`).toBe('string')
+  }
+  // Nothing happens in one sitting: a cure without a cadence is a shortcut, and a shortcut has a price.
+  if (data.cadence === null) {
+    expect(
+      data.risk,
+      `${file}: a cure with no cadence is a shortcut, and a shortcut carries a risk`
+    ).not.toBeNull()
   }
 }
 

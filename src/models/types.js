@@ -54,7 +54,7 @@
  * @property {{ kind: string, id: string }} source - what left it
  * @property {string} status - 'active', or 'cured' (engine/curing.js)
  * @property {number} fitTicksRemaining - 0 when not in a fit
- * @property {Object<string, number>} cures - sessions done, by cure id
+ * @property {Object<string, { sessionsDone: number, lastSessionTick: number }>} cures - where it stands with each cure tried, by cure id
  * @property {number} acquiredAtTick
  * @property {number} updatedAtTick
  */
