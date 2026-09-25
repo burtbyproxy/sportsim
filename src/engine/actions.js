@@ -7,6 +7,7 @@ import { checkRoll, checkContestedRoll, CONTEST_WINNERS } from './dice.js'
 import { inspirationActive } from './inspiration.js'
 import { inventoryHas } from './items.js'
 import { MARK_STATUSES, psycheDraw } from './psyche.js'
+import { cureCandidates } from './curing.js'
 import { moneyFormat } from '../utils/money.js'
 import { listSortBy } from '../utils/list.js'
 
@@ -30,6 +31,7 @@ export const REQUIREMENT_CODES = Object.freeze({
   time: 'requirement.time',
   busy: 'requirement.busy',
   closed: 'requirement.closed',
+  cureNone: 'requirement.cure.none',
 })
 
 const MET = Object.freeze({ meets: true, reasonCode: null, reasonParams: {} })
@@ -40,12 +42,27 @@ function refuse({ reasonCode, reasonParams = {} }) {
 
 /**
  * Checks whether a player meets the requirements for an action.
- * @param {{ player: Object, action: Object, gameTime: Object, location?: Object|null }} input
+ * @param {{ player: Object, action: Object, gameTime: Object, location?: Object|null, marks?: Object<string, Object>, cures?: Object<string, Object> }} input
  *   location — where the player is; its visitCount is what minVisits reads.
+ *   marks, cures — the definitions; a cure action needs a mark it can work on.
  * @returns {{ meets: boolean, reasonCode: string|null, reasonParams: Object<string, string> }}
  *   reasonCode — a voice code (content/voices) for why not; the words are content, never this module's.
  */
-export function requirementsMeet({ player, action, gameTime, location = null }) {
+export function requirementsMeet({
+  player,
+  action,
+  gameTime,
+  location = null,
+  marks = {},
+  cures = {},
+}) {
+  // A cure with nothing to work on is a door to nowhere.
+  if (action.kind === ACTION_KINDS.cure) {
+    const cure = cures[action.cureId]
+    if (!cure || cureCandidates({ subject: player, marks, cure }).length === 0) {
+      return refuse({ reasonCode: REQUIREMENT_CODES.cureNone })
+    }
+  }
   const req = action.requirements
   if (!req) return MET
 
@@ -144,6 +161,8 @@ export const ACTION_KINDS = Object.freeze({
   make: 'make',
   look: 'look',
   investigate: 'investigate',
+  // The door to a cure (content/cures): the menu becomes the marks it can work on.
+  cure: 'cure',
 })
 
 /**
@@ -186,6 +205,7 @@ export function actionsAvailable({
   gameTime,
   actionRegistry,
   marks,
+  cures = {},
 }) {
   // Actions that live here or anywhere, that the place and the company support
   const eligible = actionRegistry.filter((action) =>
@@ -194,7 +214,7 @@ export function actionsAvailable({
 
   // Filter by requirements
   const available = eligible.filter((action) => {
-    const { meets } = requirementsMeet({ player, action, gameTime, location })
+    const { meets } = requirementsMeet({ player, action, gameTime, location, marks, cures })
     return meets
   })
 
@@ -229,8 +249,9 @@ function outcomeSelect({ action, diceResult }) {
  * Resolves a player action. Does NOT mutate player state.
  * Returns the outcome and any changes to be applied by the store.
  *
- * @param {{ player: Object, action: Object, gameTime: Object, location?: Object|null, characters?: Object[], rng?: (() => number) }} input
- *   characters — those present at the location; rng defaults to Math.random.
+ * @param {{ player: Object, action: Object, gameTime: Object, location?: Object|null, characters?: Object[], marks?: Object<string, Object>, cures?: Object<string, Object>, rng?: (() => number) }} input
+ *   characters — those present at the location; marks and cures — the
+ *   definitions a cure action is checked against; rng defaults to Math.random.
  * @returns {{ success: boolean, outcome: Object, diceResult: Object|null, requirementFailure: { code: string, params: Object }|null }}
  */
 export function actionResolve({
@@ -239,6 +260,8 @@ export function actionResolve({
   gameTime,
   location = null,
   characters = [],
+  marks = {},
+  cures = {},
   rng = Math.random,
   tuning,
 }) {
@@ -248,6 +271,8 @@ export function actionResolve({
     action,
     gameTime,
     location,
+    marks,
+    cures,
   })
   if (!meets) {
     return {

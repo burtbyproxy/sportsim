@@ -34,6 +34,7 @@ import {
   psycheTrauma,
 } from '../engine/psyche.js'
 import { SUBJECT_KINDS } from '../engine/acts.js'
+import { cureSessionApply } from '../engine/curing.js'
 import { scavengeSearch, scavengedCounterName } from '../engine/scavenge.js'
 import {
   MAKING_SURFACE_KINDS,
@@ -132,6 +133,9 @@ export const useGameStore = defineStore('game', {
     /** What people start on their own, keyed by id. Loaded once at init from content/acts. */
     acts: {},
 
+    /** How a mark ends, keyed by id. Loaded once at init from content/cures. */
+    cures: {},
+
     /** Condition definitions, keyed by id. Loaded once at init from content/conditions. */
     conditions: {},
 
@@ -171,6 +175,12 @@ export const useGameStore = defineStore('game', {
      * lands on the ordinary menu.
      */
     makingPicker: null,
+
+    /**
+     * The cure menu while the player is choosing which mark to work on, or
+     * null: { actionId }. Not saved: a load lands on the ordinary menu.
+     */
+    curePicker: null,
 
     /** Actions currently available at this location */
     availableActions: [],
@@ -427,6 +437,7 @@ export const useGameStore = defineStore('game', {
       this.availableExits = []
       this.characterSelectedId = null
       this.makingPicker = null
+      this.curePicker = null
       this.perception = { locationId: null, band: 0, distortions: [] }
       this.isRunning = true
       this.blendRefresh()
@@ -885,6 +896,14 @@ export const useGameStore = defineStore('game', {
      */
     actRegister({ act }) {
       this.acts[act.id] = act
+    },
+
+    /**
+     * Register a cure definition. Called at boot.
+     * @param {{ cure: Object }} input
+     */
+    cureRegister({ cure }) {
+      this.cures[cure.id] = cure
     },
 
     /**
@@ -1458,6 +1477,40 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
+     * Open or close the cure menu.
+     * @param {{ picker: { actionId: string }|null }} input
+     */
+    curePickerSet({ picker }) {
+      this.curePicker = picker
+    },
+
+    /**
+     * A session of a cure on one of the player's marks: it counts, or it
+     * sets back, and the count reached is the cure (engine/curing.js).
+     * @param {{ cureId: string, markInstanceId: string, succeeded: boolean }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the curing engine's result
+     */
+    cureSessionApply({ cureId, markInstanceId, succeeded }) {
+      if (!this.player) {
+        return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
+      }
+      const result = cureSessionApply({
+        subject: this.player,
+        marks: this.marks,
+        cure: this.cures[cureId] ?? null,
+        markInstanceId,
+        succeeded,
+        gameTime: this.time,
+      })
+      if (!result.ok) {
+        return result
+      }
+      this.player.psyche.marks = result.data.marks
+      this.blendRefresh()
+      return result
+    },
+
+    /**
      * Begin a piece of work here: the medium's game is dealt, and what the
      * work uses up leaves the inventory.
      * @param {{ plan: Object, rng?: () => number }} input
@@ -1679,6 +1732,7 @@ export const useGameStore = defineStore('game', {
       this.firedEventIds = save.firedEventIds
       this.activeEvent = save.activeEvent ?? null
       this.makingPicker = null
+      this.curePicker = null
       this.perception = { locationId: null, band: 0, distortions: [] }
       this.isRunning = true
       this.blendRefresh()
@@ -1697,6 +1751,7 @@ export const useGameStore = defineStore('game', {
       this.availableExits = []
       this.characterSelectedId = null
       this.makingPicker = null
+      this.curePicker = null
       this.perception = { locationId: null, band: 0, distortions: [] }
       this.isRunning = false
       this.time = null

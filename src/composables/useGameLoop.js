@@ -49,6 +49,8 @@ import { eventsRandomCheck, eventsTriggeredCheck, eventResolve } from '../engine
 import { actionMisperceived, locationKnown } from '../engine/perception.js'
 import { MARK_TARGET_KINDS, psycheAvoids } from '../engine/psyche.js'
 import { SUBJECT_KINDS, actsRoll, actResolve } from '../engine/acts.js'
+import { cureCandidates } from '../engine/curing.js'
+import { checkRoll } from '../engine/dice.js'
 import { narrativeAction, narrativeEvent, narrativeLocation } from './useNarrative.js'
 import { narrativeTextCreate, textFill } from '../utils/text.js'
 import { sim } from '../workers/simulation-api.js'
@@ -757,6 +759,112 @@ export function useGameLoop({
    * is still there when the work is done, the piece is made.
    * @param {{ choiceId: string }} input
    */
+  // ── Curing ─────────────────────────────────────────────────────────────────
+
+  /**
+   * The menu while the player is choosing which mark to work on, or null
+   * when the ordinary menu applies: one entry per mark the cure can reach,
+   * each priced at the session, and a way out.
+   * @returns {Object[]|null}
+   */
+  function cureMenuBuild() {
+    const picker = game.curePicker
+    if (!picker) return null
+    const action = actionRegistry.find((a) => a.id === picker.actionId)
+    const cure = game.cures[action?.cureId]
+    if (!cure) {
+      game.curePickerSet({ picker: null })
+      return null
+    }
+    const candidates = cureCandidates({ subject: game.player, marks: game.marks, cure })
+    if (candidates.length === 0) {
+      game.curePickerSet({ picker: null })
+      return null
+    }
+    const broke = cure.session.money > game.playerMoney
+    const reason = broke
+      ? game.requirementReason({
+          code: REQUIREMENT_CODES.money,
+          params: {
+            cost: moneyFormat({ amount: cure.session.money }),
+            money: moneyFormat({ amount: game.playerMoney }),
+          },
+        })
+      : null
+    return [
+      ...candidates.map(({ mark, definition }) =>
+        makingEntry({
+          id: `cure_mark_${mark.id}`,
+          label: game.voiceLine({
+            code: mark.target ? 'menu.cure.mark' : 'menu.cure.mark.bare',
+            params: { mark: definition.display, target: game.targetName({ target: mark.target }) },
+          }),
+          kind: 'cure_mark',
+          timeCost: cure.session.ticks,
+          available: !broke,
+          reason,
+          data: { cureId: cure.id, markInstanceId: mark.id },
+        })
+      ),
+      makingEntry({
+        id: 'cure_cancel',
+        label: game.voiceLine({ code: 'menu.cure.cancel' }),
+        kind: 'cure_cancel',
+      }),
+    ]
+  }
+
+  /**
+   * An entry on the cure menu: out, or a session on the mark picked.
+   * @param {Object} entry
+   */
+  async function cureEntryResolve(entry) {
+    if (entry.kind === 'cure_cancel') {
+      game.curePickerSet({ picker: null })
+    } else if (entry.kind === 'cure_mark') {
+      await cureSession({ cureId: entry.cureId, markInstanceId: entry.markInstanceId })
+    }
+    refreshActions()
+  }
+
+  /**
+   * A session: the check is rolled and trains its stat, the session takes
+   * its price and its toll, the count moves, and the cure says how it went
+   * about what the mark is about. One session a visit; the menu closes.
+   * @param {{ cureId: string, markInstanceId: string }} input
+   */
+  async function cureSession({ cureId, markInstanceId }) {
+    const cure = game.cures[cureId]
+    const roll = checkRoll({
+      tuning: game.tuning,
+      player: game.player,
+      statName: cure.session.check.stat,
+      modifiers: [],
+      dc: cure.session.check.dc,
+      rng,
+    })
+    checkTrain(roll)
+    if (cure.session.money > 0) game.playerMoneyAdjust({ delta: -cure.session.money })
+    if (cure.session.statusChanges) game.playerStatusApply({ changes: cure.session.statusChanges })
+    const result = game.cureSessionApply({ cureId, markInstanceId, succeeded: roll.success })
+    game.curePickerSet({ picker: null })
+    if (!result.ok) return failureShow(result)
+    const { mark, cured } = result.data
+    const code = cured
+      ? cure.lineCodes.cured
+      : roll.success
+        ? cure.lineCodes.took
+        : cure.lineCodes.slipped
+    voiceEnqueue({
+      code,
+      params: {
+        mark: game.marks[mark.markId].display,
+        target: game.targetName({ target: mark.target }),
+      },
+    })
+    await tick({ ticks: cure.session.ticks })
+  }
+
   async function makingSitting({ choiceId }) {
     const before = game.makingActive
     const played = game.makingRoundApply({ choiceId, rng })
@@ -859,6 +967,10 @@ export function useGameLoop({
       await makingEntryResolve(action)
       return
     }
+    if (action.kind?.startsWith('cure_')) {
+      await cureEntryResolve(action)
+      return
+    }
 
     // The player took the place, or the face, for something it isn't. What
     // they reached for is not here; the act runs into what is, and reality
@@ -882,6 +994,8 @@ export function useGameLoop({
       gameTime: game.time,
       location: game.currentLocation,
       characters,
+      marks: game.marks,
+      cures: game.cures,
       rng,
     })
 
@@ -904,6 +1018,13 @@ export function useGameLoop({
     // Taking stock costs no time: the menu becomes the making menu.
     if (action.kind === ACTION_KINDS.make) {
       makingPickerOpen()
+      refreshActions()
+      return
+    }
+
+    // Walking in costs no time: the menu becomes what the cure can work on.
+    if (action.kind === ACTION_KINDS.cure) {
+      game.curePickerSet({ picker: { actionId: action.id } })
       refreshActions()
       return
     }
@@ -1058,6 +1179,11 @@ export function useGameLoop({
       game.menuActionsSet({ actions: makingMenu })
       return
     }
+    const cureMenu = cureMenuBuild()
+    if (cureMenu) {
+      game.menuActionsSet({ actions: cureMenu })
+      return
+    }
 
     // The menu offers the business of the place the player takes this to be,
     // with the people they take to be here.
@@ -1073,6 +1199,7 @@ export function useGameLoop({
       gameTime: game.time,
       actionRegistry,
       marks: game.marks,
+      cures: game.cures,
     })
 
     // What can be done, in the engine's order (weight, and whatever the
@@ -1099,6 +1226,8 @@ export function useGameLoop({
         action: a,
         gameTime: game.time,
         location,
+        marks: game.marks,
+        cures: game.cures,
       })
       return {
         ...a,

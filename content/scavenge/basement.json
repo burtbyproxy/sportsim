@@ -68,6 +68,12 @@
       "weight": 6,
       "rare": true,
       "unique": false
+    },
+    {
+      "itemId": "self_hypnosis_tape",
+      "weight": 8,
+      "rare": true,
+      "unique": true
     }
   ]
 }

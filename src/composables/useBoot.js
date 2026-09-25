@@ -67,6 +67,7 @@ export function useBoot({ load = contentLoad } = {}) {
         CONTENT_KINDS.actions,
         CONTENT_KINDS.events,
         CONTENT_KINDS.acts,
+        CONTENT_KINDS.cures,
       ],
     })
     if (!loaded.ok) return loaded
@@ -112,6 +113,9 @@ export function useBoot({ load = contentLoad } = {}) {
     }
     for (const act of Object.values(content[CONTENT_KINDS.acts])) {
       game.actRegister({ act })
+    }
+    for (const cure of Object.values(content[CONTENT_KINDS.cures])) {
+      game.cureRegister({ cure })
     }
     return resultOk({ mapId: config.data.mapId })
   }

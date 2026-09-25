@@ -463,7 +463,14 @@ export function validateAction({ data, file }) {
     ).toBe(true)
     return
   }
-  if (data.kind === 'look') {
+  if (data.kind === 'cure') {
+    // Walking in is free; the sessions are what cost, and the cure says how much.
+    expect(data.timeCost, `${file} '${data.id}': a 'cure' action costs no time itself`).toBe(0)
+    expect(typeof data.cureId, `${file} '${data.id}': a 'cure' action names its cureId`).toBe(
+      'string'
+    )
+    expect(data.check, `${file} '${data.id}': the session has the check, not the door`).toBeNull()
+  } else if (data.kind === 'look') {
     // A closer look is free; finding out what the place is costs the time.
     expect(data.timeCost, `${file} '${data.id}': a 'look' action costs no time`).toBe(0)
   } else {
@@ -1135,6 +1142,57 @@ export function validateAct({ data, file }) {
     validateActBranch({ act: data, branch: data.failure, label: `${file} failure` })
   } else {
     expect(data.failure, `${file}: without a check nothing can fail`).toBeNull()
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Cures — how a mark ends
+// ---------------------------------------------------------------------------
+
+export const CURE_REQUIRED_FIELDS = [
+  'id',
+  'display',
+  'markKinds',
+  'sessions',
+  'setbackOnFailure',
+  'session',
+  'lineCodes',
+]
+
+export function validateCure({ data, file }) {
+  for (const field of CURE_REQUIRED_FIELDS) {
+    expect(data, `${file}: missing field '${field}'`).toHaveProperty(field)
+  }
+  expect(typeof data.id, `${file}: id must be a string`).toBe('string')
+  expect(typeof data.display, `${file}: display must be a string`).toBe('string')
+  expect(Array.isArray(data.markKinds), `${file}: markKinds must be an array`).toBe(true)
+  for (const kind of data.markKinds) {
+    expect(VALID_MARK_KINDS, `${file}: markKinds '${kind}'`).toContain(kind)
+  }
+  expect(Number.isInteger(data.sessions), `${file}: sessions must be a whole number`).toBe(true)
+  expect(data.sessions, `${file}: sessions must be >= 1`).toBeGreaterThanOrEqual(1)
+  expect(
+    Number.isInteger(data.setbackOnFailure),
+    `${file}: setbackOnFailure must be a whole number`
+  ).toBe(true)
+  expect(data.setbackOnFailure, `${file}: setbackOnFailure must be >= 0`).toBeGreaterThanOrEqual(0)
+  const { session } = data
+  expect(Number.isInteger(session.ticks), `${file}: session.ticks must be a whole number`).toBe(
+    true
+  )
+  expect(session.ticks, `${file}: session.ticks must be >= 1`).toBeGreaterThanOrEqual(1)
+  expect(VALID_STATS, `${file}: session.check.stat '${session.check?.stat}'`).toContain(
+    session.check?.stat
+  )
+  expect(session.check.dc, `${file}: session.check.dc must be > 0`).toBeGreaterThan(0)
+  expect(session.money, `${file}: session.money must be >= 0`).toBeGreaterThanOrEqual(0)
+  for (const key of Object.keys(session.statusChanges ?? {})) {
+    expect(VALID_STATUS_KEYS, `${file}: session.statusChanges.${key}`).toContain(key)
+  }
+  for (const line of ['took', 'slipped', 'cured']) {
+    expect(typeof data.lineCodes[line], `${file}: lineCodes.${line} must be a string`).toBe(
+      'string'
+    )
   }
 }
 

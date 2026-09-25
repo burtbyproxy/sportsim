@@ -5,14 +5,25 @@ a framework that takes content over time: each item below lands as a generic
 mechanism plus content, never a one-off. What already shipped is in the git
 history and the release tags.
 
-## Next: 0.21.0 — curing
+## Next: the fight
 
-Marks (0.18.0) never wear off on their own. Curing is how one ends.
+The fight engine, step 2 of the battle plan below.
 
-- Therapy is work: long, effortful and repeated.
-- Shortcuts (self-hypnosis, brainwashing yourself) open up only once you
-  find the right information.
-- A cured mark changes status. It isn't deleted.
+## Shipped: 0.21.0 — curing
+
+Marks never wear off on their own. A cure (`content/cures`) is how one
+ends: which kinds of mark it reaches, how many sessions it takes, and what
+a session is (its time, its check, its price, what it takes out of you).
+A cure is a door on the menu (an action of kind `cure`); through it, the
+marks it can reach. Progress is on the mark, per cure, and a session that
+slips can set it back. The count reached changes the mark's status to
+cured: it stays, as what happened, and stops doing anything.
+
+- Therapy is a word with the pastor: six sessions, an hour each, and it
+  takes something out of you every time.
+- The shortcut is a self-hypnosis tape found in mom's basement: two
+  sessions, but a slip costs one, and it only reaches fears, obsessions
+  and neuroses.
 
 ## Shipped: 0.20.0 — NPC is PC lite
 

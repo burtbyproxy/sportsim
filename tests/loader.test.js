@@ -60,6 +60,7 @@ describe('contentLoad — the real content', () => {
       [CONTENT_KINDS.voices, 'content/voices'],
       [CONTENT_KINDS.scavengeTables, 'content/scavenge'],
       [CONTENT_KINDS.acts, 'content/acts'],
+      [CONTENT_KINDS.cures, 'content/cures'],
     ]) {
       const loaded = contentLoad({ kind })
       expect(loaded.ok, kind).toBe(true)

@@ -1,0 +1,24 @@
+{
+  "id": "therapy",
+  "display": "A word with the pastor",
+  "markKinds": [],
+  "sessions": 6,
+  "setbackOnFailure": 0,
+  "session": {
+    "ticks": 4,
+    "check": {
+      "stat": "toughness",
+      "dc": 12
+    },
+    "money": 0,
+    "statusChanges": {
+      "energy": -10,
+      "mood": -3
+    }
+  },
+  "lineCodes": {
+    "took": "cure.therapy.took",
+    "slipped": "cure.therapy.slipped",
+    "cured": "cure.therapy.cured"
+  }
+}
