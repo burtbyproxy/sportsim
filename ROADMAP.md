@@ -5,10 +5,22 @@ a framework that takes content over time: each item below lands as a generic
 mechanism plus content, never a one-off. What already shipped is in the git
 history and the release tags.
 
-## Next: the battle plan's content
+## Next: whatever Steve says
 
-Step 4 below: who fights, how each persona squares off, and the lines.
-Then whatever Steve says next.
+The battle plan is built and shipped, all four steps. NPCs getting
+themselves help is parked with its design (a lot of friction, like
+losing weight). The art system's parked items stand.
+
+## Shipped: 0.25.0 — who fights, and how each persona squares off
+
+Who would, and who would not: a trigger can read a stat, so the grudge
+only swings in somebody tough enough. Whoever is in charge sets your
+options: a fight's compulsions grey a choice with the persona's reason,
+the way the making games do. The priest will not let you walk, and will
+not let you needle; mr. cool will not swing first; the yeller finds a
+needle too subtle; the telepath cannot get closer; the host will not
+swing with a drink in hand. Seven persona catalogs gained their own
+fight lines.
 
 ## Shipped: 0.24.0 — instigating
 
@@ -105,7 +117,8 @@ In order:
 3. **Instigating.** Shipped in 0.24.0. Topics and fits are the levers; an
    act's branch can start a fight (`fight: { fightId }`); watching is an
    outcome on the fight (`watched`).
-4. **Content.** Who fights, how each persona squares off, and the lines.
+4. **Content.** Shipped in 0.25.0: a stat trigger for who fights, fight
+   compulsions for how each persona squares off, and the lines.
 
 Answered: knocked out, you always wake up at mom's, hours later; a bar
 86's you for a while; never cops. Nothing goes missing from your pockets
