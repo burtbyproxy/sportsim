@@ -181,6 +181,27 @@ describe('two other people', () => {
   })
 })
 
+describe('who fights', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  it('a grudge in someone soft never swings; the same grudge in someone tough does', async () => {
+    const soft = startGame()
+    const tina = arrives({ game: soft.game, id: 'tina', marks: [hatesDale] })
+    arrives({ game: soft.game, id: 'dale' })
+    soft.loop.onLocationEntered()
+    await soft.loop.tick({ ticks: 1 })
+    expect(tina.fights).toEqual([])
+
+    const tough = startGame()
+    const dennis = arrives({ game: tough.game, id: 'dennis', marks: [hatesDale] })
+    arrives({ game: tough.game, id: 'dale' })
+    tough.loop.onLocationEntered()
+    await tough.loop.tick({ ticks: 1 })
+    expect(dennis.fights).toHaveLength(1)
+  })
+})
+
 describe('the world comes at the player', () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
