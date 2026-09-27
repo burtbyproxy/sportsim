@@ -23,7 +23,8 @@
       }
     },
     "lineCode": "act.dennis_holds_forth",
-    "lineCodeOthers": null
+    "lineCodeOthers": null,
+    "fight": null
   },
   "failure": null
 }

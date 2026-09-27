@@ -23,7 +23,8 @@
       }
     },
     "lineCode": "act.hollow_asks",
-    "lineCodeOthers": null
+    "lineCodeOthers": null,
+    "fight": null
   },
   "failure": null
 }

@@ -1063,8 +1063,14 @@ function expectOutcomeSubject({ outcome, label }) {
  */
 function validateActBranch({ act, branch, label }) {
   expect(branch, `${label}: needs an outcome, an outcomeAuthor, a lineCode and a lineCodeOthers`)
-  for (const field of ['outcome', 'outcomeAuthor', 'lineCode', 'lineCodeOthers']) {
+  for (const field of ['outcome', 'outcomeAuthor', 'fight', 'lineCode', 'lineCodeOthers']) {
     expect(branch, `${label}: missing field '${field}'`).toHaveProperty(field)
+  }
+  if (branch.fight !== null) {
+    expect(typeof branch.fight.fightId, `${label}: fight.fightId must be a string`).toBe('string')
+    expect(act.to, `${label}: a fight is with somebody; done to nobody there is none`).not.toBe(
+      ACT_RECIPIENT_KINDS.none
+    )
   }
   const { to } = act
   const toPlayerOrNone = [ACT_RECIPIENT_KINDS.player, ACT_RECIPIENT_KINDS.none].includes(to)
@@ -1239,20 +1245,6 @@ export function validateCure({ data, file }) {
 // Fights — how a fight goes
 // ---------------------------------------------------------------------------
 
-export const FIGHT_LINE_KEYS = [
-  'started',
-  'crackedYou',
-  'crackedThem',
-  'landedYou',
-  'landedThem',
-  'onTopYou',
-  'onTopThem',
-  'pulledApart',
-  'knockoutYou',
-  'knockoutThem',
-  'barred',
-]
-
 export function validateFight({ data, file }) {
   for (const field of ['id', 'display', 'jabs', 'swing', 'walk', 'lines']) {
     expect(data, `${file}: missing field '${field}'`).toHaveProperty(field)
@@ -1272,15 +1264,48 @@ export function validateFight({ data, file }) {
     expect(typeof jab.lineLost, `${file}: jab '${jab.id}' lineLost`).toBe('string')
   }
   expect(typeof data.swing.label, `${file}: swing.label`).toBe('string')
-  expect(typeof data.swing.lineCode, `${file}: swing.lineCode`).toBe('string')
+  for (const view of ['you', 'them', 'others']) {
+    expect(typeof data.swing.lines?.[view], `${file}: swing.lines.${view}`).toBe('string')
+  }
   expect(typeof data.walk.label, `${file}: walk.label`).toBe('string')
   expect(typeof data.walk.lineCode, `${file}: walk.lineCode`).toBe('string')
   for (const key of Object.keys(data.walk.statusChanges ?? {})) {
     expect(VALID_STATUS_KEYS, `${file}: walk.statusChanges.${key}`).toContain(key)
   }
-  for (const key of FIGHT_LINE_KEYS) {
-    expect(typeof data.lines[key], `${file}: lines.${key} must be a string`).toBe('string')
+  expect(typeof data.lines.started, `${file}: lines.started`).toBe('string')
+  expect(typeof data.lines.barred, `${file}: lines.barred`).toBe('string')
+  // What happens is told from whichever side the player is on, or from the bar stool.
+  for (const kind of ['cracked', 'landed', 'onTop', 'knockout']) {
+    for (const view of ['you', 'them', 'others']) {
+      expect(typeof data.lines[kind]?.[view], `${file}: lines.${kind}.${view}`).toBe('string')
+    }
   }
+  for (const view of ['you', 'others']) {
+    expect(typeof data.lines.pulledApart?.[view], `${file}: lines.pulledApart.${view}`).toBe(
+      'string'
+    )
+  }
+  // Watching is a show: what it does to the player is an outcome.
+  expect(data, `${file}: missing field 'watched'`).toHaveProperty('watched')
+  if (data.watched !== null) {
+    validateOutcome({ outcome: data.watched, label: `${file} watched` })
+    expect(typeof data.watched.lineCode, `${file}: watched.lineCode`).toBe('string')
+  }
+}
+
+/** Every voice code a fight can say. */
+export function fightLineCodes({ data }) {
+  return [
+    ...data.jabs.flatMap((jab) => [jab.lineWon, jab.lineLost]),
+    ...Object.values(data.swing.lines),
+    data.walk.lineCode,
+    data.lines.started,
+    data.lines.barred,
+    ...['cracked', 'landed', 'onTop', 'knockout', 'pulledApart'].flatMap((kind) =>
+      Object.values(data.lines[kind])
+    ),
+    ...(data.watched?.lineCode ? [data.watched.lineCode] : []),
+  ]
 }
 
 // ---------------------------------------------------------------------------

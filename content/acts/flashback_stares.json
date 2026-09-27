@@ -17,7 +17,8 @@
       }
     },
     "lineCode": "act.flashback_stares",
-    "lineCodeOthers": null
+    "lineCodeOthers": null,
+    "fight": null
   },
   "failure": null
 }

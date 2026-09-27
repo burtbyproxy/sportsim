@@ -18,7 +18,8 @@
       }
     },
     "lineCode": "act.panic_shakes",
-    "lineCodeOthers": null
+    "lineCodeOthers": null,
+    "fight": null
   },
   "failure": null
 }

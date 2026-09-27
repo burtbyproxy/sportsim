@@ -19,6 +19,7 @@ const marks = Object.fromEntries(markFiles.map(({ data }) => [data.id, data]))
 const characterIds = idsOf(loadJsonFiles(join(CONTENT_ROOT, 'characters')))
 const sober = loadJsonFiles(join(CONTENT_ROOT, 'voices')).find(({ data }) => data.id === 'sober')
 const conditionIds = idsOf(loadJsonFiles(join(CONTENT_ROOT, 'conditions')))
+const fightIds = idsOf(loadJsonFiles(join(CONTENT_ROOT, 'fights')))
 
 /** Every persona anything can put in charge: the same list the voices are held to. */
 const personaIds = new Set(['sober'])
@@ -83,6 +84,16 @@ describe('content/acts — what people start on their own', () => {
           mark.targetKinds,
           `${file}: mark '${mark.id}' is never about a person to do it to`
         ).toContain(MARK_TARGET_KINDS.character)
+      }
+    })
+
+    it(`${file} — a fight it starts is a fight that exists`, () => {
+      for (const branch of [data.success, data.failure].filter(Boolean)) {
+        if (!branch.fight) continue
+        expect(
+          fightIds.has(branch.fight.fightId),
+          `${file}: no fight '${branch.fight.fightId}'`
+        ).toBe(true)
       }
     })
 

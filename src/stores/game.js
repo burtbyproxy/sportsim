@@ -35,7 +35,14 @@ import {
 } from '../engine/psyche.js'
 import { SUBJECT_KINDS } from '../engine/acts.js'
 import { cureSessionApply } from '../engine/curing.js'
-import { fightActive, fightStart, fightSquareRound, fightResolve } from '../engine/fight.js'
+import {
+  FIGHT_EVENTS,
+  FIGHT_SIDES,
+  fightActive,
+  fightStart,
+  fightSquareRound,
+  fightResolve,
+} from '../engine/fight.js'
 import { CHARACTER_ANY } from '../engine/actions.js'
 import { scavengeSearch, scavengedCounterName } from '../engine/scavenge.js'
 import {
@@ -1008,7 +1015,6 @@ export const useGameStore = defineStore('game', {
       ).length
       const result = fightResolve({
         tuning: this.tuning,
-        fightDef: this.fights[fight.fightId],
         fight,
         first: this.player,
         second: opponent,
@@ -1030,6 +1036,82 @@ export const useGameStore = defineStore('game', {
         })
       }
       return result
+    },
+
+    /**
+     * Somebody comes at somebody: a fight with no squaring off, started
+     * and finished here. The record goes on the one who started it; the
+     * knocks land on both. Anyone else at the place, the player included,
+     * is there to pull them apart.
+     * @param {{ fightId: string, firstWho: { kind: string, id: string }, secondWho: { kind: string, id: string }, rng?: () => number }} input
+     * @returns {{ ok: boolean, data: { fight: Object, events: Object[], dazed: Object, loser: string|null, first: Object, second: Object }|null, error: Object|null }}
+     */
+    fightBetweenApply({ fightId, firstWho, secondWho, rng = Math.random }) {
+      const first = this.subjectFind({ who: firstWho })
+      const second = this.subjectFind({ who: secondWho })
+      if (!first || !second) {
+        return resultFail({
+          code: STORE_ERROR_CODES.subjectUnknown,
+          message: 'Nobody to fight',
+          params: { first: firstWho?.id ?? '', second: secondWho?.id ?? '' },
+        })
+      }
+      const locationId =
+        firstWho.kind === SUBJECT_KINDS.player ? this.currentLocationId : first.currentLocationId
+      const started = fightStart({
+        fightDef: this.fights[fightId] ?? null,
+        first,
+        second,
+        locationId,
+        gameTime: this.time,
+        swinging: true,
+      })
+      if (!started.ok) {
+        return started
+      }
+      first.fights = started.data.fights
+      const sides = [first.id, second.id]
+      const there = [
+        ...Object.values(this.characters).filter((c) => c.currentLocationId === locationId),
+        ...(this.currentLocationId === locationId ? [this.player] : []),
+      ]
+      const bystanders = there.filter((s) => !sides.includes(s.id)).length
+      const result = fightResolve({
+        tuning: this.tuning,
+        fight: started.data.fight,
+        first,
+        second,
+        bystanders,
+        gameTime: this.time,
+        rng,
+      })
+      if (!result.ok) {
+        return result
+      }
+      first.fights = first.fights.map((f) =>
+        f.id === result.data.fight.id ? result.data.fight : f
+      )
+      if (result.data.dazed.first > 0)
+        this.subjectDazedApply({ who: firstWho, amount: result.data.dazed.first })
+      if (result.data.dazed.second > 0)
+        this.subjectDazedApply({ who: secondWho, amount: result.data.dazed.second })
+      // Coming in swinging is the first thing that happened.
+      const events = [
+        { kind: FIGHT_EVENTS.swungFirst, side: FIGHT_SIDES.first },
+        ...result.data.events,
+      ]
+      return resultOk({ ...result.data, events, first, second })
+    },
+
+    /**
+     * Somebody is off the map until a tick: carried home, sleeping it off.
+     * @param {{ characterId: string, untilTick: number }} input
+     */
+    characterAwayApply({ characterId, untilTick }) {
+      const character = this.characters[characterId]
+      if (!character) return
+      character.awayUntilTick = untilTick
+      character.currentLocationId = null
     },
 
     /**

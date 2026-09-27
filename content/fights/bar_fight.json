@@ -32,7 +32,11 @@
   ],
   "swing": {
     "label": "Swing first",
-    "lineCode": "fight.swing.first"
+    "lines": {
+      "you": "fight.swing.first",
+      "them": "fight.swing.them",
+      "others": "fight.swing.others"
+    }
   },
   "walk": {
     "label": "Walk away",
@@ -43,15 +47,41 @@
   },
   "lines": {
     "started": "fight.started",
-    "crackedYou": "fight.cracked.you",
-    "crackedThem": "fight.cracked.them",
-    "landedYou": "fight.landed.you",
-    "landedThem": "fight.landed.them",
-    "onTopYou": "fight.ontop.you",
-    "onTopThem": "fight.ontop.them",
-    "pulledApart": "fight.pulled",
-    "knockoutYou": "fight.knockout.you",
-    "knockoutThem": "fight.knockout.them",
+    "cracked": {
+      "you": "fight.cracked.you",
+      "them": "fight.cracked.them",
+      "others": "fight.cracked.others"
+    },
+    "landed": {
+      "you": "fight.landed.you",
+      "them": "fight.landed.them",
+      "others": "fight.landed.others"
+    },
+    "onTop": {
+      "you": "fight.ontop.you",
+      "them": "fight.ontop.them",
+      "others": "fight.ontop.others"
+    },
+    "pulledApart": {
+      "you": "fight.pulled",
+      "others": "fight.pulled.others"
+    },
+    "knockout": {
+      "you": "fight.knockout.you",
+      "them": "fight.knockout.them",
+      "others": "fight.knockout.others"
+    },
     "barred": "fight.barred"
+  },
+  "watched": {
+    "statusChanges": {
+      "mood": 4
+    },
+    "inspiration": {
+      "mediumId": null,
+      "strength": 40,
+      "ticksTotal": 8
+    },
+    "lineCode": "fight.watched"
   }
 }

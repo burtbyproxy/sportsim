@@ -50,7 +50,13 @@ import { actionMisperceived, locationKnown } from '../engine/perception.js'
 import { MARK_TARGET_KINDS, psycheAvoids } from '../engine/psyche.js'
 import { SUBJECT_KINDS, actsRoll, actResolve } from '../engine/acts.js'
 import { cureCandidates, cureSessionAllowed } from '../engine/curing.js'
-import { FIGHT_ENDINGS, FIGHT_PHASES, FIGHT_SIDES, fightOffer } from '../engine/fight.js'
+import {
+  FIGHT_ENDINGS,
+  FIGHT_EVENTS,
+  FIGHT_PHASES,
+  FIGHT_SIDES,
+  fightOffer,
+} from '../engine/fight.js'
 import { locationBarred } from '../models/location.js'
 import { randomPickWeighted } from '../utils/random.js'
 import { checkRoll } from '../engine/dice.js'
@@ -100,6 +106,8 @@ export function useGameLoop({
   simulation = sim,
 } = {}) {
   const game = useGameStore()
+  /** What a fight the world started left to do to the player once the tick ends, or null. */
+  let carriedAfterTick = null
 
   /**
    * Advance game time by N ticks, applying decay and expiring modifiers.
@@ -153,9 +161,11 @@ export function useGameLoop({
                 target: { kind: MARK_TARGET_KINDS.location, id: update.locationId },
               })
             : null
+          // Somebody carried home is not back until they are.
+          const away = (game.characters[update.id].awayUntilTick ?? 0) > game.time.tick
           game.characterLocationSet({
             characterId: update.id,
-            locationId: kept ? null : update.locationId,
+            locationId: kept || away ? null : update.locationId,
           })
         }
         game.charactersUpdatesApply({ updates: simResult.characters, rng })
@@ -226,6 +236,13 @@ export function useGameLoop({
 
     // 8. Re-evaluate available actions
     refreshActions()
+
+    // 9. If the world knocked the player out, or put them out, they go now.
+    if (carriedAfterTick) {
+      const after = carriedAfterTick
+      carriedAfterTick = null
+      await fightCarry({ after })
+    }
   }
 
   /**
@@ -398,6 +415,21 @@ export function useGameLoop({
         rng,
       })
       if (!landed.ok) failureShow(landed)
+    }
+    // Somebody comes at somebody: no squaring off, the author swings first.
+    if (branch.fight && recipient) {
+      const fought = game.fightBetweenApply({
+        fightId: branch.fight.fightId,
+        firstWho: authorWho,
+        secondWho: recipient,
+        rng,
+      })
+      if (!fought.ok) return failureShow(fought)
+      if (seen)
+        for (const event of fought.data.events) fightSpeak({ event, fight: fought.data.fight })
+      const after = fightAftermath({ fight: fought.data.fight, loser: fought.data.loser })
+      // The world is mid-tick; what is left to do to the player waits for the tick to end.
+      if (after.knockedOut || after.thrownOut) carriedAfterTick = after
     }
   }
 
@@ -768,10 +800,59 @@ export function useGameLoop({
    */
   // ── Fighting ───────────────────────────────────────────────────────────────
 
-  /** The other side of the player's fight. */
-  function fightOpponent() {
-    const fight = game.fightActive
-    return fight ? game.characters[fight.secondId] : null
+  /**
+   * Who is on which side of a fight, and which side the player is on, if any.
+   * @param {{ fight: Object }} input
+   * @returns {{ first: Object, second: Object, who: string|null }}
+   */
+  function fightSides({ fight }) {
+    const of = (id) => (id === game.player.id ? game.player : game.characters[id])
+    const first = of(fight.firstId)
+    const second = of(fight.secondId)
+    const who =
+      fight.firstId === game.player.id
+        ? FIGHT_SIDES.first
+        : fight.secondId === game.player.id
+          ? FIGHT_SIDES.second
+          : null
+    return { first, second, who }
+  }
+
+  /**
+   * What happened, said from where the player stands: to them, to the one
+   * they are fighting, or, from the bar stool, between two other people.
+   * @param {{ event: { kind: string, side: string|null, jabId?: string }, fight: Object }} input
+   */
+  function fightSpeak({ event, fight }) {
+    const fightDef = game.fights[fight.fightId]
+    const { first, second, who } = fightSides({ fight })
+    const other = who === FIGHT_SIDES.first ? second : first
+    // From the bar stool: the one it happened for, then the other.
+    const actor = event.side === FIGHT_SIDES.second ? second : first
+    const acted = event.side === FIGHT_SIDES.second ? first : second
+    const params = { name: other?.name ?? '', first: actor?.name ?? '', second: acted?.name ?? '' }
+    const view = (lines) =>
+      who === null ? lines.others : event.side === who ? lines.you : lines.them
+    let code = null
+    if (event.kind === FIGHT_EVENTS.jab) {
+      const jab = fightDef.jabs.find((j) => j.id === event.jabId)
+      code = event.side === who ? jab.lineWon : jab.lineLost
+    } else if (event.kind === FIGHT_EVENTS.walked) {
+      code = fightDef.walk.lineCode
+    } else if (event.kind === FIGHT_EVENTS.swungFirst) {
+      code = view(fightDef.swing.lines)
+    } else if (event.kind === FIGHT_EVENTS.pulledApart) {
+      code = who === null ? fightDef.lines.pulledApart.others : fightDef.lines.pulledApart.you
+    } else if (event.kind === FIGHT_EVENTS.cracked) {
+      code = view(fightDef.lines.cracked)
+    } else if (event.kind === FIGHT_EVENTS.landed) {
+      code = view(fightDef.lines.landed)
+    } else if (event.kind === FIGHT_EVENTS.onTop) {
+      code = view(fightDef.lines.onTop)
+    } else if (event.kind === FIGHT_EVENTS.knockout) {
+      code = view(fightDef.lines.knockout)
+    }
+    if (code) voiceEnqueue({ code, params })
   }
 
   /**
@@ -802,7 +883,7 @@ export function useGameLoop({
       failureShow(offer)
       return null
     }
-    const name = fightOpponent()?.name ?? ''
+    const name = fightSides({ fight }).second?.name ?? ''
     return offer.data.choices.map((choice) =>
       makingEntry({
         id: `fight_choice_${choice.id}`,
@@ -821,83 +902,96 @@ export function useGameLoop({
    */
   async function fightEntryResolve(entry) {
     if (entry.kind !== 'fight_choice') return
-    const opponent = fightOpponent()
-    const name = opponent?.name ?? ''
     const round = game.fightSquareRoundApply({ choiceId: entry.choiceId, rng })
     if (!round.ok) return failureShow(round)
-    for (const line of round.data.lines) voiceEnqueue({ code: line.code, params: { name } })
-    const fightDef = game.fights[round.data.fight.fightId]
-    if (round.data.fight.ending === FIGHT_ENDINGS.walked && fightDef.walk.statusChanges) {
+    const { fight, events } = round.data
+    for (const event of events) fightSpeak({ event, fight })
+    const fightDef = game.fights[fight.fightId]
+    if (fight.ending === FIGHT_ENDINGS.walked && fightDef.walk.statusChanges) {
       game.playerStatusApply({ changes: fightDef.walk.statusChanges })
     }
-    if (round.data.fight.phase === FIGHT_PHASES.swinging) {
-      await fightFinish({ opponent })
+    if (fight.phase === FIGHT_PHASES.swinging) {
+      const resolved = game.fightResolveApply({ rng })
+      if (!resolved.ok) return failureShow(resolved)
+      for (const event of resolved.data.events) fightSpeak({ event, fight: resolved.data.fight })
+      const after = fightAftermath({ fight: resolved.data.fight, loser: resolved.data.loser })
+      await fightCarry({ after })
       return
     }
     await tick({ ticks: game.tuning.fight.roundTicks })
   }
 
   /**
-   * The frantic moment, the ground, and what comes of it. The loser takes
-   * the loser's toll and a save against it, about the other side (or, for
-   * the other side, about the place); the winner takes the winner's. A
-   * fight where the place is that kind of place gets the player 86'd. A
-   * player knocked out wakes up somewhere, hours later.
-   * @param {{ opponent: Object }} input
+   * What comes of a fight, whoever was in it. The loser takes the loser's
+   * toll and a save about the winner (a character's, about the place when
+   * the winner was the player); the winner takes the winner's. The player
+   * in a fight at that kind of place is 86'd. The player watching takes
+   * what watching does. A character knocked out is carried home for the
+   * knockout's hours. What is left to do to the player (put out, carried
+   * home) is returned for the caller to do when it can.
+   * @param {{ fight: Object, loser: string|null }} input
+   * @returns {{ thrownOut: boolean, knockedOut: boolean }}
    */
-  async function fightFinish({ opponent }) {
-    const resolved = game.fightResolveApply({ rng })
-    if (!resolved.ok) return failureShow(resolved)
-    const { fight, lines, loser } = resolved.data
+  function fightAftermath({ fight, loser }) {
     const fightDef = game.fights[fight.fightId]
-    const name = opponent.name
-    for (const line of lines) voiceEnqueue({ code: line.code, params: { name } })
-    const { winner: winnerToll, loser: loserToll, trauma } = game.tuning.fight
+    const { first, second, who } = fightSides({ fight })
+    const { winner: winnerToll, loser: loserToll, trauma, barred, knockout } = game.tuning.fight
     const source = { kind: 'fight', id: fight.id }
-    if (loser === FIGHT_SIDES.first) {
-      game.playerStatusApply({ changes: loserToll.statusChanges })
-      game.subjectStatusApply({
-        who: { kind: SUBJECT_KINDS.character, id: opponent.id },
-        changes: winnerToll.statusChanges,
-      })
-      const marked = game.psycheTraumaApply({
-        trauma,
-        target: { kind: MARK_TARGET_KINDS.character, id: opponent.id },
-        source,
-        rng,
-      })
-      if (!marked.ok) failureShow(marked)
-      else traumaSpeak({ result: marked.data, quietOnSave: true })
-    } else if (loser === FIGHT_SIDES.second) {
-      game.playerStatusApply({ changes: winnerToll.statusChanges })
-      game.subjectStatusApply({
-        who: { kind: SUBJECT_KINDS.character, id: opponent.id },
-        changes: loserToll.statusChanges,
-      })
+    const whoOf = (subject) =>
+      subject === game.player ? game.playerWho : { kind: SUBJECT_KINDS.character, id: subject.id }
+    const place = game.locations[fight.locationId]
+    if (loser) {
+      const lost = loser === FIGHT_SIDES.first ? first : second
+      const won = loser === FIGHT_SIDES.first ? second : first
+      game.subjectStatusApply({ who: whoOf(lost), changes: loserToll.statusChanges })
+      game.subjectStatusApply({ who: whoOf(won), changes: winnerToll.statusChanges })
+      const about =
+        won === game.player
+          ? { kind: MARK_TARGET_KINDS.location, id: fight.locationId }
+          : { kind: MARK_TARGET_KINDS.character, id: won.id }
       const marked = game.subjectTraumaApply({
-        who: { kind: SUBJECT_KINDS.character, id: opponent.id },
+        who: whoOf(lost),
         trauma,
-        target: { kind: MARK_TARGET_KINDS.location, id: game.currentLocationId },
+        target: about,
         source,
         rng,
       })
       if (!marked.ok) failureShow(marked)
+      else if (lost === game.player) traumaSpeak({ result: marked.data, quietOnSave: true })
+      if (fight.ending === FIGHT_ENDINGS.knockout && lost !== game.player) {
+        game.characterAwayApply({
+          characterId: lost.id,
+          untilTick: game.time.tick + knockout.hours * game.tuning.clock.ticksPerHour,
+        })
+      }
+    }
+    // The player watched: something about watching gets in.
+    const watching = who === null && fight.locationId === game.currentLocationId
+    if (watching && fightDef.watched) {
+      voiceEnqueue({ code: fightDef.watched.lineCode })
+      outcomeApply({ outcome: fightDef.watched, source })
     }
     // 86'd: that kind of place does not want you back for a while.
-    const here = game.currentLocation
-    const { barred, knockout } = game.tuning.fight
-    const thrownOut = barred.locationTypes.includes(here.type)
+    const thrownOut = who !== null && place && barred.locationTypes.includes(place.type)
     if (thrownOut) {
       game.locationBarApply({
-        locationId: here.id,
+        locationId: place.id,
         untilTick: game.time.tick + barred.hours * game.tuning.clock.ticksPerHour,
       })
-      voiceEnqueue({
-        code: fightDef.lines.barred,
-        params: { place: game.scenePlace.displayInline },
-      })
+      voiceEnqueue({ code: fightDef.lines.barred, params: { place: place.displayInline } })
     }
-    if (fight.ending === FIGHT_ENDINGS.knockout && loser === FIGHT_SIDES.first) {
+    const knockedOut = fight.ending === FIGHT_ENDINGS.knockout && who !== null && loser === who
+    return { thrownOut, knockedOut }
+  }
+
+  /**
+   * The player is carried: home, hours later, after a knockout; out the
+   * door, when 86'd. Nothing to do otherwise but let the round's time pass.
+   * @param {{ after: { thrownOut: boolean, knockedOut: boolean } }} input
+   */
+  async function fightCarry({ after }) {
+    const { knockout, roundTicks } = game.tuning.fight
+    if (after.knockedOut) {
       // And then nothing: hours later, somewhere, you always make it back.
       const spot = randomPickWeighted({
         items: game.config.knockout.spots,
@@ -912,17 +1006,13 @@ export function useGameLoop({
       voiceEnqueue({ code: spot.lineCode })
       return
     }
-    if (thrownOut) {
+    if (after.thrownOut) {
       // Out the door, whichever door is first.
-      const way = here.exits[0]
-      await tick({
-        ticks: game.tuning.fight.roundTicks,
-        locationId: way ? way.locationId : null,
-        keepLog: true,
-      })
+      const way = game.currentLocation.exits[0]
+      await tick({ ticks: roundTicks, locationId: way ? way.locationId : null, keepLog: true })
       return
     }
-    await tick({ ticks: game.tuning.fight.roundTicks })
+    await tick({ ticks: roundTicks })
   }
 
   // ── Curing ─────────────────────────────────────────────────────────────────

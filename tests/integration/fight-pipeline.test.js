@@ -37,7 +37,12 @@ const characterOf = (id) => characters.find((c) => c.id === id)
 // One roll for everything: contests fall to the stats, and no chance under it lands.
 const EVEN = rngForNatural({ natural: 10 })
 
-const stillWorld = { tick: ({ characters: here }) => ({ characters: here }) }
+// Nobody wanders off mid-test.
+const stillWorld = {
+  tick: ({ characters: here }) => ({
+    characters: here.map((c) => ({ id: c.id, locationId: c.currentLocationId })),
+  }),
+}
 
 function startGame({ at = 'mocks_crest', rng = () => EVEN, opponents = ['dennis'] } = {}) {
   setActivePinia(createPinia())
@@ -158,7 +163,7 @@ describe('squaring off', () => {
     expect(fight.swungFirst).toBe('second')
     expect(rounds).toBe(Math.ceil(tuning.fight.crackAt / (needle.heat + tuning.fight.heatPerRound)))
     expect(entries).toContain(
-      textFill({ text: sober(barFight.lines.crackedThem), params: { name: 'Dennis' } })
+      textFill({ text: sober(barFight.lines.cracked.them), params: { name: 'Dennis' } })
     )
     // He swung first, at a penalty, into somebody tougher: he lost.
     expect(fight.winner).toBe('first')
@@ -183,10 +188,10 @@ describe('what comes of it', () => {
     expect(fight).toMatchObject({ phase: FIGHT_PHASES.over, winner: 'second' })
     expect(fight.ending).toBe(FIGHT_ENDINGS.onTop)
     expect(entries).toContain(
-      textFill({ text: sober(barFight.lines.landedThem), params: { name: 'Dennis' } })
+      textFill({ text: sober(barFight.lines.landed.them), params: { name: 'Dennis' } })
     )
     expect(entries).toContain(
-      textFill({ text: sober(barFight.lines.onTopThem), params: { name: 'Dennis' } })
+      textFill({ text: sober(barFight.lines.onTop.them), params: { name: 'Dennis' } })
     )
     // The knocks are on the player, wearing off since.
     expect(game.player.dazed).toBeGreaterThan(0)

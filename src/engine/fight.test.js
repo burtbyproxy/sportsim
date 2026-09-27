@@ -3,6 +3,7 @@ import {
   FIGHT_CHOICES,
   FIGHT_ENDINGS,
   FIGHT_ERROR_CODES,
+  FIGHT_EVENTS,
   FIGHT_PHASES,
   FIGHT_SIDES,
   fightActive,
@@ -50,21 +51,10 @@ const fightDef = {
       lineLost: 'l',
     },
   ],
-  swing: { label: 'Swing', lineCode: 's' },
+  swing: { label: 'Swing', lines: { you: 's', them: 's2', others: 's3' } },
   walk: { label: 'Walk', lineCode: 'k', statusChanges: { mood: -5 } },
-  lines: {
-    started: 'st',
-    crackedYou: 'cy',
-    crackedThem: 'ct',
-    landedYou: 'ly',
-    landedThem: 'lt',
-    onTopYou: 'oy',
-    onTopThem: 'ot',
-    pulledApart: 'pa',
-    knockoutYou: 'ky',
-    knockoutThem: 'kt',
-    barred: 'b',
-  },
+  lines: {},
+  watched: null,
 }
 
 const at = (tick = 5) => ({ tick })
@@ -118,6 +108,22 @@ describe('fightStart — somebody starts something', () => {
     })
     expect(fightActive({ subject: { ...me, fights } })).toBe(fight)
     expect(fightActive({ subject: me })).toBeNull()
+  })
+
+  it('started swinging, it skips the squaring off: the starter has already cracked', () => {
+    const me = person({ id: 'me' })
+    const result = fightStart({
+      fightDef,
+      first: me,
+      second: person({ id: 'd' }),
+      locationId: 'bar',
+      gameTime: at(),
+      swinging: true,
+    })
+    expect(result.data.fight).toMatchObject({
+      phase: FIGHT_PHASES.swinging,
+      swungFirst: FIGHT_SIDES.first,
+    })
   })
 
   it('one at a time', () => {
@@ -177,14 +183,18 @@ describe('fightSquareRound — insults, antagonizing', () => {
     })
     expect(result.data.fight.round).toBe(2)
     expect(result.data.fight.phase).toBe(FIGHT_PHASES.squaring)
-    expect(result.data.lines).toEqual([{ code: 'w' }])
+    expect(result.data.events).toEqual([
+      { kind: FIGHT_EVENTS.jab, side: FIGHT_SIDES.first, jabId: 'needle' },
+    ])
     expect(result.data.cracked).toBeNull()
     expect(result.data.fight.updatedAtTick).toBe(9)
     // The other way round.
     const lost = round({ fight, first: dennis, second: me })
     expect(lost.data.jabWon).toBe(false)
     expect(lost.data.fight.heat.first).toBe(40 + tuning.fight.heatPerRound)
-    expect(lost.data.lines).toEqual([{ code: 'l' }])
+    expect(lost.data.events).toEqual([
+      { kind: FIGHT_EVENTS.jab, side: FIGHT_SIDES.second, jabId: 'needle' },
+    ])
   })
 
   it('the side whose heat reaches the line cracks and swings first; the hotter side, at a dead heat the starter', () => {
@@ -196,13 +206,16 @@ describe('fightSquareRound — insults, antagonizing', () => {
       phase: FIGHT_PHASES.swinging,
       swungFirst: FIGHT_SIDES.second,
     })
-    expect(them.data.lines).toEqual([{ code: 'w' }, { code: 'ct' }])
+    expect(them.data.events.at(-1)).toEqual({
+      kind: FIGHT_EVENTS.cracked,
+      side: FIGHT_SIDES.second,
+    })
 
     const both = round({
       fight: { ...fight, heat: { first: tuning.fight.crackAt, second: tuning.fight.crackAt - 50 } },
     })
     expect(both.data.cracked).toBe(FIGHT_SIDES.first)
-    expect(both.data.lines).toEqual([{ code: 'w' }, { code: 'cy' }])
+    expect(both.data.events.at(-1)).toEqual({ kind: FIGHT_EVENTS.cracked, side: FIGHT_SIDES.first })
   })
 
   it('walking ends it with nobody winning; swinging first is the swinging, on the starter', () => {
@@ -213,13 +226,13 @@ describe('fightSquareRound — insults, antagonizing', () => {
       ending: FIGHT_ENDINGS.walked,
       winner: null,
     })
-    expect(walked.data.lines).toEqual([{ code: 'k' }])
+    expect(walked.data.events).toEqual([{ kind: FIGHT_EVENTS.walked, side: FIGHT_SIDES.first }])
     const swung = round({ fight, choiceId: FIGHT_CHOICES.swing })
     expect(swung.data.fight).toMatchObject({
       phase: FIGHT_PHASES.swinging,
       swungFirst: FIGHT_SIDES.first,
     })
-    expect(swung.data.lines).toEqual([{ code: 's' }])
+    expect(swung.data.events).toEqual([{ kind: FIGHT_EVENTS.swungFirst, side: FIGHT_SIDES.first }])
   })
 
   it('needs the stats it contests', () => {
@@ -239,7 +252,7 @@ describe('fightResolve — the frantic moment, and the ground', () => {
     swungFirst,
   })
   const resolve = ({ fight, first, second, bystanders = 0, rng = () => EVEN }) =>
-    fightResolve({ tuning, fightDef, fight, first, second, bystanders, gameTime: at(12), rng })
+    fightResolve({ tuning, fight, first, second, bystanders, gameTime: at(12), rng })
 
   it('refuses a fight nobody has swung in', () => {
     const me = person({ id: 'me' })
@@ -259,7 +272,10 @@ describe('fightResolve — the frantic moment, and the ground', () => {
       second: dennis,
     })
     expect(result.ok).toBe(true)
-    expect(result.data.lines).toEqual([{ code: 'ly' }, { code: 'oy' }])
+    expect(result.data.events).toEqual([
+      { kind: FIGHT_EVENTS.landed, side: FIGHT_SIDES.first },
+      { kind: FIGHT_EVENTS.onTop, side: FIGHT_SIDES.first },
+    ])
     // The swing's knock, then the ground's: the stronger side stays on top.
     expect(result.data.dazed).toEqual({
       first: 0,
@@ -289,7 +305,10 @@ describe('fightResolve — the frantic moment, and the ground', () => {
       winner: FIGHT_SIDES.first,
     })
     expect(result.data.loser).toBe(FIGHT_SIDES.second)
-    expect(result.data.lines).toEqual([{ code: 'ly' }, { code: 'kt' }])
+    expect(result.data.events).toEqual([
+      { kind: FIGHT_EVENTS.landed, side: FIGHT_SIDES.first },
+      { kind: FIGHT_EVENTS.knockout, side: FIGHT_SIDES.second },
+    ])
     expect(result.data.dazed).toEqual({ first: 0, second: tuning.fight.swing.dazedOnHit })
   })
 
@@ -307,7 +326,10 @@ describe('fightResolve — the frantic moment, and the ground', () => {
     })
     expect(result.data.fight.ground.second).toBe(tuning.fight.ground.onTopAt)
     expect(result.data.loser).toBe(FIGHT_SIDES.first)
-    expect(result.data.lines).toEqual([{ code: 'ly' }, { code: 'ot' }])
+    expect(result.data.events).toEqual([
+      { kind: FIGHT_EVENTS.landed, side: FIGHT_SIDES.first },
+      { kind: FIGHT_EVENTS.onTop, side: FIGHT_SIDES.second },
+    ])
     expect(result.data.dazed).toEqual({
       first: tuning.fight.ground.dazedOnTop,
       second: tuning.fight.swing.dazedOnHit,
@@ -328,7 +350,7 @@ describe('fightResolve — the frantic moment, and the ground', () => {
     })
     expect(result.data.fight).toMatchObject({ ending: FIGHT_ENDINGS.pulledApart, winner: null })
     expect(result.data.loser).toBeNull()
-    expect(result.data.lines.at(-1)).toEqual({ code: 'pa' })
+    expect(result.data.events.at(-1)).toEqual({ kind: FIGHT_EVENTS.pulledApart, side: null })
     const nobody = resolve({
       fight: swinging({ first: me, second: dennis, swungFirst: FIGHT_SIDES.first }),
       first: me,
