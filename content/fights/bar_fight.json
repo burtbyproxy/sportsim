@@ -83,5 +83,77 @@
       "ticksTotal": 8
     },
     "lineCode": "fight.watched"
-  }
+  },
+  "compulsions": [
+    {
+      "personaId": "priest",
+      "choiceId": "walk",
+      "reason": "Walk? He hasn't hit you yet."
+    },
+    {
+      "personaId": "priest",
+      "choiceId": "needle",
+      "reason": "Be kind. Be big. Be hit."
+    },
+    {
+      "personaId": "suburban_gangster",
+      "choiceId": "walk",
+      "reason": "Nah. Nah nah nah. Not in front of everybody."
+    },
+    {
+      "personaId": "one_of_the_guys",
+      "choiceId": "laugh",
+      "reason": "You don't laugh at a guy. You're a guy."
+    },
+    {
+      "personaId": "mr_cool",
+      "choiceId": "swing",
+      "reason": "Swing first? You? Please."
+    },
+    {
+      "personaId": "mr_cool",
+      "choiceId": "loom",
+      "reason": "Getting in a face is a lot of effort for a face."
+    },
+    {
+      "personaId": "yeller",
+      "choiceId": "needle",
+      "reason": "TOO SUBTLE. TOO SLOW."
+    },
+    {
+      "personaId": "telepath",
+      "choiceId": "loom",
+      "reason": "Closer? You can already hear what's in there."
+    },
+    {
+      "personaId": "telepath",
+      "choiceId": "swing",
+      "reason": "Everyone in here would know before it landed."
+    },
+    {
+      "personaId": "host",
+      "choiceId": "swing",
+      "reason": "Not with a drink in your hand. Pour first."
+    },
+    {
+      "personaId": "golden",
+      "choiceId": "swing",
+      "reason": "This is your friend. This is everyone's friend."
+    },
+    {
+      "personaId": "grudge",
+      "choiceId": "walk",
+      "reason": "It did this. It's right there."
+    },
+    {
+      "personaId": "panic",
+      "choiceId": "swing",
+      "reason": "Your arms aren't taking calls."
+    },
+    {
+      "personaId": "panic",
+      "choiceId": "loom",
+      "reason": "Closer? You can't feel your legs."
+    }
+  ]
 }

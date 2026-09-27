@@ -14,6 +14,14 @@
     "piece.artist.solid": "Done: {work}. That's real. That's the realest thing anyone from your mom's neighbourhood has ever made.",
     "requirement.money": "That's {cost}. You have {money}. You're rich in other ways. You can't name one.",
     "location.return": "Back at {place}. Your block. You run this. Nobody here has been told.",
-    "perception.misfire": "You come in hard for business that doesn't exist here. This is {place}. Everybody saw."
+    "perception.misfire": "You come in hard for business that doesn't exist here. This is {place}. Everybody saw.",
+    "fight.started": "You square up on {name}. You say a thing about your set. You do not have a set.",
+    "fight.cracked.you": "Your hand goes. You yell something about where you're from. You're from Beaverton.",
+    "fight.landed.you": "It lands. You point at the ground. Twice. Nobody knows why you do that.",
+    "fight.landed.them": "It lands on you and the whole set goes down with you, all one of it.",
+    "fight.ontop.you": "You're on top of {name}. You say something about respect. It's hard to hear over how badly it's going.",
+    "fight.ontop.them": "{name}'s on top. You're still talking. It's mostly the word 'nah'.",
+    "fight.knockout.you": "and the lights go out over the whole cul-de-sac.",
+    "fight.swing.first": "You go first. It's what your set would do. Your set is a Honda Civic."
   }
 }

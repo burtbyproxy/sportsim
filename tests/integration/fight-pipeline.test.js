@@ -141,6 +141,23 @@ describe('squaring off', () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
 
+  it('whoever is in charge sets your options: on whiskey, the priest will not let you walk', async () => {
+    const { game, loop } = startGame()
+    const whiskey = contentDir({ dir: 'content/substances' }).find((s) => s.id === 'whiskey')
+    game.playerDosesApply({ doses: [{ substanceId: 'whiskey', value: 80 }] })
+    expect(game.personaInCharge).toBe(whiskey.persona.id)
+    await squareUp({ game, loop })
+    const walk = entry({ game, id: 'fight_choice_walk' })
+    const rule = barFight.compulsions.find(
+      (c) => c.personaId === whiskey.persona.id && c.choiceId === 'walk'
+    )
+    expect(walk.available).toBe(false)
+    expect(walk.unavailableReason).toBe(rule.reason)
+    // Greyed is greyed: taking it does nothing but say why.
+    await loop.resolvePlayerAction(walk)
+    expect(game.fightActive).not.toBeNull()
+  })
+
   it('a jab won puts its heat on the other side; kept up, the other side cracks and swings first', async () => {
     const { game, narrative, loop } = startGame()
     // Sharper than Dennis (wits 35): every needle lands.

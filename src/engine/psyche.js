@@ -75,6 +75,8 @@ export const FIT_TRIGGER_KINDS = Object.freeze({
   alone: 'alone',
   // Somebody else here.
   company: 'company',
+  // Somebody with enough (or little enough) of a stat: who would, and who would not.
+  stat: 'stat',
 })
 
 // ---------------------------------------------------------------------------
@@ -160,6 +162,11 @@ export function triggerHolds({ mark, trigger, scene }) {
   }
   if (trigger.kind === FIT_TRIGGER_KINDS.alone) return scene.characterIds.length === 0
   if (trigger.kind === FIT_TRIGGER_KINDS.company) return scene.characterIds.length > 0
+  if (trigger.kind === FIT_TRIGGER_KINDS.stat) {
+    const base = scene.stats?.[trigger.stat]?.base
+    if (base === undefined || base === null) return false
+    return typeof trigger.atLeast === 'number' ? base >= trigger.atLeast : base <= trigger.atMost
+  }
   return false
 }
 

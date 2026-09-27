@@ -12,6 +12,14 @@
     "piece.artist.solid": "Done: {work}. It's for everybody. You'd like that understood. It's for the whole room.",
     "piece.artist.rough": "Done: {work}. It's a bit heavy on one side, like a drink you poured yourself. You'd still offer it to a guest.",
     "location.return": "{place}! Again! Everybody, look who's back! ...Nobody looks.",
-    "perception.misfire": "You go to pour one for everybody and there's nothing to pour and nobody asked. This is {place}."
+    "perception.misfire": "You go to pour one for everybody and there's nothing to pour and nobody asked. This is {place}.",
+    "fight.started": "You square up on {name}. You offer {name} a drink first. You're not an animal.",
+    "fight.cracked.you": "Your hand goes. There's a drink in it. There's a drink in everything tonight.",
+    "fight.landed.you": "It lands. You apologise to the room and pour {name} one for the road, which is the floor.",
+    "fight.landed.them": "It lands on you. Your glass goes one way and you go the other. You watch the glass.",
+    "fight.ontop.you": "You're on top of {name}. You ask if {name}'s alright for a drink down there.",
+    "fight.ontop.them": "{name}'s on top. You'd get up and pour, but.",
+    "fight.knockout.you": "and, hm, soup.",
+    "fight.walked": "You walk. You take the bottle. Somebody's got to keep the party moving."
   }
 }
