@@ -1,0 +1,22 @@
+{
+  "id": "grudge_swings",
+  "display": "The grudge swings",
+  "author": {
+    "kind": "mark",
+    "id": "obsession_hate"
+  },
+  "trigger": null,
+  "to": "anyone",
+  "chancePerTick": 0.15,
+  "check": null,
+  "success": {
+    "outcome": null,
+    "outcomeAuthor": null,
+    "fight": {
+      "fightId": "bar_fight"
+    },
+    "lineCode": "act.grudge_swings.you",
+    "lineCodeOthers": "act.grudge_swings.them"
+  },
+  "failure": null
+}

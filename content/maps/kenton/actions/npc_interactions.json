@@ -763,5 +763,98 @@
     "criticalSuccess": null,
     "criticalFailure": null,
     "weight": 40
+  },
+  {
+    "id": "ask_dennis_about_kiss",
+    "label": "Ask Dennis if Kiss sucks",
+    "locationId": "mocks_crest",
+    "characterId": "dennis",
+    "timeCost": 1,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": null,
+      "maxHour": null,
+      "minVisits": null,
+      "minMoney": null,
+      "requiredAbilities": null,
+      "requiredMarkIds": null
+    },
+    "check": {
+      "stat": "charm",
+      "dc": 10,
+      "opposedStat": null,
+      "opposedNpcId": null
+    },
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You say it like you're just asking. Dennis puts his beer down, which he never does, and looks at you the way a man looks at a dog that has just spoken. ",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          },
+          {
+            "text": "'I'll tell you what,' he says, and then he doesn't tell you what. He's somewhere else. Somewhere with a smoke porch.",
+            "style": "normal",
+            "color": null,
+            "speed": "slow",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": 2
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": {
+        "social": 1
+      },
+      "counterChanges": {
+        "kiss_brought_up": 1
+      }
+    },
+    "failure": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "It comes out wrong, too eager, and Dennis hears the eagerness before he hears the word. He looks at you for a long time. 'Who's asking,' he says. It isn't a question.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": {
+        "mood": -3
+      },
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": {
+        "kiss_brought_up": 1
+      }
+    },
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 30,
+    "topicIds": ["kiss"]
   }
 ]

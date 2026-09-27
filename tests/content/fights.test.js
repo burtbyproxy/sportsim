@@ -7,7 +7,7 @@ import {
   CONTENT_ROOT,
   loadJsonFiles,
   validateFight,
-  FIGHT_LINE_KEYS,
+  fightLineCodes,
 } from '../helpers/contentContracts.js'
 
 const fightFiles = loadJsonFiles(join(CONTENT_ROOT, 'fights'))
@@ -26,13 +26,7 @@ describe('content/fights — how a fight goes', () => {
     })
 
     it(`${file} — says how every round went in words the sober voice has`, () => {
-      const codes = [
-        ...data.jabs.flatMap((jab) => [jab.lineWon, jab.lineLost]),
-        data.swing.lineCode,
-        data.walk.lineCode,
-        ...FIGHT_LINE_KEYS.map((key) => data.lines[key]),
-      ]
-      for (const code of codes) {
+      for (const code of fightLineCodes({ data })) {
         expect(sober.data.lines, `${file}: no sober line for '${code}'`).toHaveProperty([code])
       }
     })

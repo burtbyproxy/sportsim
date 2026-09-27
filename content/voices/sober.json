@@ -151,6 +151,16 @@
     "fight.barred": "You're 86'd from {place}. For a while. They don't say how long. They never do.",
     "fight.wake.basement": "You wake up in the basement. You don't remember the stairs. You never do. You always make it back. You're a raccoon.",
     "fight.wake.bush": "You wake up in a bush outside Mom's. There's a sprinkler. It's been going a while. You always make it back. You're a raccoon.",
-    "fight.wake.yard": "You wake up in the front yard, face down in the one patch of grass Mom still waters. You always make it back. You're a raccoon."
+    "fight.wake.yard": "You wake up in the front yard, face down in the one patch of grass Mom still waters. You always make it back. You're a raccoon.",
+    "fight.swing.them": "{name} comes at you. No squaring off, no speech. Just the distance closing.",
+    "fight.swing.others": "{first} goes at {second}. No warning. The room finds out at the same time {second} does.",
+    "fight.cracked.others": "{first} cracks. Everybody sees it before {second} does.",
+    "fight.landed.others": "{first} lands it and {second} folds, and it's over faster than the telling of it.",
+    "fight.ontop.others": "The floor, and {first} on top of {second}, and everybody suddenly very interested in their drink.",
+    "fight.pulled.others": "Hands. Everybody's hands. {first} and {second} get pulled apart still swinging at the air between them.",
+    "fight.knockout.others": "{first} goes down and stays down. The room goes quiet the way it does when it's just got a story.",
+    "fight.watched": "You didn't do anything. You watched. Something about watching gets in.",
+    "act.grudge_swings.you": "{author} has stopped talking about {target}. {author} is coming over.",
+    "act.grudge_swings.them": "{author} has stopped talking about {target} and started walking at {recipient}."
   }
 }
