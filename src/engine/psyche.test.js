@@ -10,6 +10,7 @@ import {
   psycheGrooveTick,
   psycheTableRoll,
   psycheTrauma,
+  triggerHolds,
 } from './psyche.js'
 import { blendCompute, PERSONA_SOURCES } from './blend.js'
 import { tuningContent } from '../../tests/helpers/content.js'
@@ -553,5 +554,41 @@ describe('psycheBlendSources', () => {
   it('a mark that is not active puts nothing in', () => {
     const who = subject({ marks: [carrying({ markId: 'voices', status: 'cured' })] })
     expect(psycheBlendSources({ subject: who, marks })).toEqual([])
+  })
+})
+
+describe('triggerHolds — who would, and who would not', () => {
+  const scene = ({ toughness }) => ({
+    locationId: 'bar',
+    characterIds: [],
+    inventory: [],
+    intoxications: {},
+    conditionIds: [],
+    topicIds: [],
+    status: null,
+    stats: toughness === null ? {} : { toughness: { base: toughness, modifiers: [], xp: 0 } },
+  })
+  const atLeast = { kind: FIT_TRIGGER_KINDS.stat, stat: 'toughness', atLeast: 30 }
+  const atMost = { kind: FIT_TRIGGER_KINDS.stat, stat: 'toughness', atMost: 20 }
+
+  it("a stat trigger reads the subject's stat against its line", () => {
+    expect(triggerHolds({ mark: null, trigger: atLeast, scene: scene({ toughness: 30 }) })).toBe(
+      true
+    )
+    expect(triggerHolds({ mark: null, trigger: atLeast, scene: scene({ toughness: 29 }) })).toBe(
+      false
+    )
+    expect(triggerHolds({ mark: null, trigger: atMost, scene: scene({ toughness: 20 }) })).toBe(
+      true
+    )
+    expect(triggerHolds({ mark: null, trigger: atMost, scene: scene({ toughness: 21 }) })).toBe(
+      false
+    )
+  })
+
+  it('no such stat, no trigger', () => {
+    expect(triggerHolds({ mark: null, trigger: atLeast, scene: scene({ toughness: null }) })).toBe(
+      false
+    )
   })
 })

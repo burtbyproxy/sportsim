@@ -878,7 +878,11 @@ export function useGameLoop({
   function fightMenuBuild() {
     const fight = game.fightActive
     if (!fight || fight.phase !== FIGHT_PHASES.squaring) return null
-    const offer = fightOffer({ fightDef: game.fights[fight.fightId], fight })
+    const offer = fightOffer({
+      fightDef: game.fights[fight.fightId],
+      fight,
+      personaId: game.personaInCharge,
+    })
     if (!offer.ok) {
       failureShow(offer)
       return null
@@ -890,6 +894,8 @@ export function useGameLoop({
         label: textFill({ text: choice.label, params: { name } }),
         kind: 'fight_choice',
         timeCost: game.tuning.fight.roundTicks,
+        available: choice.available,
+        reason: choice.reason,
         data: { choiceId: choice.id },
       })
     )

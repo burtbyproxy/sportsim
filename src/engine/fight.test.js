@@ -144,10 +144,26 @@ describe('fightOffer — what there is to do while squaring off', () => {
   it('every jab, the swing, and the walk, with the name left to fill', () => {
     const fight = started({ first: person({ id: 'me' }), second: person({ id: 'd' }) })
     expect(fightOffer({ fightDef, fight }).data.choices).toEqual([
-      { id: 'needle', label: 'Needle {name}', kind: 'jab' },
-      { id: FIGHT_CHOICES.swing, label: 'Swing', kind: 'swing' },
-      { id: FIGHT_CHOICES.walk, label: 'Walk', kind: 'walk' },
+      { id: 'needle', label: 'Needle {name}', kind: 'jab', available: true, reason: null },
+      { id: FIGHT_CHOICES.swing, label: 'Swing', kind: 'swing', available: true, reason: null },
+      { id: FIGHT_CHOICES.walk, label: 'Walk', kind: 'walk', available: true, reason: null },
     ])
+  })
+
+  it('whoever is in charge sets your options: a compulsion greys a choice, with its reason', () => {
+    const fight = started({ first: person({ id: 'me' }), second: person({ id: 'd' }) })
+    const stubborn = {
+      ...fightDef,
+      compulsions: [{ personaId: 'priest', choiceId: 'walk', reason: 'Not yet.' }],
+    }
+    const forPriest = fightOffer({ fightDef: stubborn, fight, personaId: 'priest' }).data.choices
+    expect(forPriest.find((c) => c.id === 'walk')).toMatchObject({
+      available: false,
+      reason: 'Not yet.',
+    })
+    expect(forPriest.find((c) => c.id === 'needle').available).toBe(true)
+    const forSober = fightOffer({ fightDef: stubborn, fight, personaId: 'sober' }).data.choices
+    expect(forSober.every((c) => c.available)).toBe(true)
   })
 
   it('nothing to choose once somebody has swung', () => {
@@ -164,6 +180,30 @@ describe('fightSquareRound — insults, antagonizing', () => {
   const dennis = person({ id: 'd', wits: 10 })
   const round = ({ fight, first = me, second = dennis, choiceId = 'needle', rng = () => EVEN }) =>
     fightSquareRound({ tuning, fightDef, fight, first, second, choiceId, gameTime: at(9), rng })
+
+  it('refuses a choice the persona in charge forbids, with the reason', () => {
+    const fight = started({ first: me, second: dennis })
+    const stubborn = {
+      ...fightDef,
+      compulsions: [{ personaId: 'priest', choiceId: 'walk', reason: 'Not yet.' }],
+    }
+    const refused = fightSquareRound({
+      tuning,
+      fightDef: stubborn,
+      fight,
+      first: me,
+      second: dennis,
+      choiceId: 'walk',
+      personaId: 'priest',
+      gameTime: at(9),
+      rng: () => EVEN,
+    })
+    expect(refused.error).toMatchObject({
+      code: FIGHT_ERROR_CODES.choiceForbidden,
+      message: 'Not yet.',
+      params: { choiceId: 'walk', personaId: 'priest' },
+    })
+  })
 
   it('refuses a choice that is not on offer, and a fight not squaring off', () => {
     const fight = started({ first: me, second: dennis })

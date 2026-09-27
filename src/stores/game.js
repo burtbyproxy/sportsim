@@ -986,6 +986,7 @@ export const useGameStore = defineStore('game', {
         first: this.player,
         second: this.characters[fight.secondId],
         choiceId,
+        personaId: this.personaInCharge,
         gameTime: this.time,
         rng,
       })
@@ -1401,6 +1402,7 @@ export const useGameStore = defineStore('game', {
           .map((w) => w.sourceId),
         topicIds: isPlayer || withPlayer ? topicIds : [],
         status: subject.status,
+        stats: subject.stats ?? {},
       })
     },
 

@@ -42,6 +42,7 @@ export const FIGHT_ERROR_CODES = Object.freeze({
   noneInProgress: 'NONE_IN_PROGRESS',
   phaseWrong: 'PHASE_WRONG',
   choiceUnknown: 'CHOICE_UNKNOWN',
+  choiceForbidden: 'CHOICE_FORBIDDEN',
   statUnknown: 'STAT_UNKNOWN',
 })
 
@@ -101,6 +102,20 @@ export const FIGHT_EVENTS = Object.freeze({
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * What the persona in charge will not let the first side do: the fight's
+ * compulsion for this persona and choice, or null.
+ * @param {{ fightDef: Object, personaId: string, choiceId: string }} input
+ * @returns {{ personaId: string, choiceId: string, reason: string }|null}
+ */
+function compulsionOf({ fightDef, personaId, choiceId }) {
+  return (
+    (fightDef.compulsions ?? []).find(
+      (c) => c.personaId === personaId && c.choiceId === choiceId
+    ) ?? null
+  )
+}
 
 /**
  * The other side.
@@ -214,23 +229,28 @@ export function fightStart({ fightDef, first, second, locationId, gameTime, swin
 
 /**
  * What the first side may do this squaring round: every jab, the swing,
- * and the walk. Labels carry `{name}` for the loop to fill with the other
- * side's name.
- * @param {{ fightDef: Object, fight: Object }} input
- * @returns {{ ok: boolean, data: { choices: Array<{ id: string, label: string, kind: string }> }|null, error: Object|null }}
+ * and the walk, minus what the persona in charge will not allow, which
+ * is offered greyed with its reason. Labels carry `{name}` for the loop
+ * to fill with the other side's name.
+ * @param {{ fightDef: Object, fight: Object, personaId?: string }} input
+ * @returns {{ ok: boolean, data: { choices: Array<{ id: string, label: string, kind: string, available: boolean, reason: string|null }> }|null, error: Object|null }}
  */
-export function fightOffer({ fightDef, fight }) {
+export function fightOffer({ fightDef, fight, personaId = 'sober' }) {
   if (!fight || fight.phase !== FIGHT_PHASES.squaring) {
     return resultFail({
       code: FIGHT_ERROR_CODES.phaseWrong,
       message: 'Nothing to choose: nobody is squaring off',
     })
   }
+  const offered = ({ id, label, kind }) => {
+    const compulsion = compulsionOf({ fightDef, personaId, choiceId: id })
+    return { id, label, kind, available: !compulsion, reason: compulsion?.reason ?? null }
+  }
   return resultOk({
     choices: [
-      ...fightDef.jabs.map((jab) => ({ id: jab.id, label: jab.label, kind: 'jab' })),
-      { id: FIGHT_CHOICES.swing, label: fightDef.swing.label, kind: FIGHT_CHOICES.swing },
-      { id: FIGHT_CHOICES.walk, label: fightDef.walk.label, kind: FIGHT_CHOICES.walk },
+      ...fightDef.jabs.map((jab) => offered({ id: jab.id, label: jab.label, kind: 'jab' })),
+      offered({ id: FIGHT_CHOICES.swing, label: fightDef.swing.label, kind: FIGHT_CHOICES.swing }),
+      offered({ id: FIGHT_CHOICES.walk, label: fightDef.walk.label, kind: FIGHT_CHOICES.walk }),
     ],
   })
 }
@@ -248,9 +268,11 @@ export function fightOffer({ fightDef, fight }) {
  *   first: Object,
  *   second: Object,
  *   choiceId: string,
+ *   personaId?: string,
  *   gameTime: { tick: number },
  *   rng: () => number,
  * }} input
+ *   personaId — who is in charge of the first side; their compulsions hold
  * @returns {{ ok: boolean, data: {
  *   fight: Object,
  *   events: Array<{ kind: string, side: string|null, jabId?: string }>,
@@ -266,6 +288,7 @@ export function fightSquareRound({
   first,
   second,
   choiceId,
+  personaId = 'sober',
   gameTime,
   rng,
 }) {
@@ -273,6 +296,14 @@ export function fightSquareRound({
     return resultFail({
       code: FIGHT_ERROR_CODES.phaseWrong,
       message: 'Nobody is squaring off',
+    })
+  }
+  const forbidden = compulsionOf({ fightDef, personaId, choiceId })
+  if (forbidden) {
+    return resultFail({
+      code: FIGHT_ERROR_CODES.choiceForbidden,
+      message: forbidden.reason,
+      params: { choiceId, personaId },
     })
   }
   const stamp = (next) => ({ ...fight, ...next, updatedAtTick: gameTime.tick })
