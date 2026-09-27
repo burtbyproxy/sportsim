@@ -5,10 +5,22 @@ a framework that takes content over time: each item below lands as a generic
 mechanism plus content, never a one-off. What already shipped is in the git
 history and the release tags.
 
-## Next: instigating
+## Next: the battle plan's content
 
-Step 3 of the battle plan below: feeding the heat between two other
-people, and watching.
+Step 4 below: who fights, how each persona squares off, and the lines.
+Then whatever Steve says next.
+
+## Shipped: 0.24.0 — instigating
+
+The player's real skill. The talk in the room is the lever: with Kiss on
+the menu at Mock's, Dennis's grudge goes off, and a grudge in a fit can
+swing at whoever is nearest (an act whose branch starts a fight). Two
+other people fighting is told from the bar stool, and watching gets in:
+a mood, and an idea. When the world comes at the player there is no
+squaring off, and if somebody comes at you, you're probably getting
+knocked out. The world's fights carry the player home, or out the door,
+once the tick that started them ends. A character knocked out is carried
+home for the knockout's hours, whatever the schedule says.
 
 ## Shipped: 0.23.0 — the fight
 
@@ -90,9 +102,9 @@ In order:
    choices; the swing and the ground follow at once. Knocked out is
    `dazed` past a line; a bad fight is a trauma save.
 
-3. **Instigating.** Feeding the heat between two other people. Topics and
-   fits are the levers (bring up Kiss to Dennis mid-grudge). Watching is a
-   show, and a fight can be an inspiration.
+3. **Instigating.** Shipped in 0.24.0. Topics and fits are the levers; an
+   act's branch can start a fight (`fight: { fightId }`); watching is an
+   outcome on the fight (`watched`).
 4. **Content.** Who fights, how each persona squares off, and the lines.
 
 Answered: knocked out, you always wake up at mom's, hours later; a bar
