@@ -1140,6 +1140,15 @@ export function validateAct({ data, file }) {
         'string'
       )
     }
+    if (data.trigger.kind === FIT_TRIGGER_KINDS.stat) {
+      expect(VALID_STATS, `${file}: trigger.stat '${data.trigger.stat}'`).toContain(
+        data.trigger.stat
+      )
+      const bounds = [data.trigger.atLeast, data.trigger.atMost].filter(
+        (n) => typeof n === 'number'
+      )
+      expect(bounds, `${file}: a stat trigger is atLeast or atMost, not both`).toHaveLength(1)
+    }
   }
   if (data.check !== null) {
     expect(
@@ -1284,6 +1293,20 @@ export function validateFight({ data, file }) {
     expect(typeof data.lines.pulledApart?.[view], `${file}: lines.pulledApart.${view}`).toBe(
       'string'
     )
+  }
+  // Whoever is in charge sets your options: a compulsion greys a choice, with a reason.
+  expect(Array.isArray(data.compulsions), `${file}: compulsions must be an array`).toBe(true)
+  const choiceIds = [...data.jabs.map((jab) => jab.id), 'swing', 'walk']
+  for (const compulsion of data.compulsions) {
+    expect(typeof compulsion.personaId, `${file}: compulsion.personaId`).toBe('string')
+    expect(choiceIds, `${file}: compulsion choice '${compulsion.choiceId}'`).toContain(
+      compulsion.choiceId
+    )
+    expect(typeof compulsion.reason, `${file}: compulsion.reason`).toBe('string')
+    expect(
+      compulsion.reason.length,
+      `${file}: compulsion.reason must not be empty`
+    ).toBeGreaterThan(0)
   }
   // Watching is a show: what it does to the player is an outcome.
   expect(data, `${file}: missing field 'watched'`).toHaveProperty('watched')

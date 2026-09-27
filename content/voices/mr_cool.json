@@ -10,6 +10,15 @@
     "piece.artist.solid": "Done: {work}. You glance at it once, the way you'd glance at a car you own.",
     "piece.artist.rough": "Done: {work}. It's off. You decide it's off on purpose, and stand next to it like that's true.",
     "location.return": "{place}. You lean on something like coming back was the plan.",
-    "perception.misfire": "You play it off. You're at {place}. You meant to be at {place}. Nobody believes you, including you."
+    "perception.misfire": "You play it off. You're at {place}. You meant to be at {place}. Nobody believes you, including you.",
+    "fight.started": "You square up on {name}, sort of. You're leaning on something while you do it.",
+    "fight.cracked.you": "You swing. It's uncool. You know it's uncool while it's happening, which is the uncoolest part.",
+    "fight.landed.you": "It lands. You act like it didn't. That's the move.",
+    "fight.landed.them": "It lands on you. You go down slow, like you meant to. You didn't.",
+    "fight.ontop.you": "You're on top of {name}. You'd rather not be. It looks like effort.",
+    "fight.ontop.them": "{name}'s on top. You look bored about it. It's the only thing you've got.",
+    "fight.knockout.you": "and, whatever.",
+    "fight.walked": "You walk. Slowly. Like you'd been planning to leave anyway. You had not.",
+    "fight.barred": "86'd from {place}. Fine. It was getting crowded. You light one outside and say that to nobody."
   }
 }

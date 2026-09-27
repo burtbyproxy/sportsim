@@ -19,6 +19,14 @@
     "game.rhymes.picked": "{word}. It rhymes with everything. Everything rhymes, if you think about it, and you are thinking about it.",
     "making.encore": "It isn't finished. It was never going to be finished. It's a cycle. You are inside the cycle.",
     "location.return": "{place} again. The walls remember you. They're being polite about it.",
-    "perception.misfire": "The room hears what you were about to do and gets embarrassed for you. This is {place}. It has been {place} the whole time."
+    "perception.misfire": "The room hears what you were about to do and gets embarrassed for you. This is {place}. It has been {place} the whole time.",
+    "fight.started": "You square up on {name}. You can hear what {name} thinks of you. It's fair.",
+    "fight.cracked.you": "Your hand goes, and the whole room heard it coming before it left. You could hear them hearing it.",
+    "fight.landed.you": "It lands. You hear the thought stop. That's the worst sound you know.",
+    "fight.landed.them": "It lands on you. For one second the room goes quiet inside, all of it, and it's almost worth it.",
+    "fight.ontop.you": "You're on top of {name}, and you can hear every thought under you, and none of them are about you.",
+    "fight.ontop.them": "{name}'s on top. You know exactly what {name} is thinking. So does the dog outside.",
+    "fight.knockout.you": "and everyone stops, all at once, and it's so quiet.",
+    "fight.walked": "You walk. Everybody in here thinks you're a coward. You know that for a fact. You can hear it."
   }
 }

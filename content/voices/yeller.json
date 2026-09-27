@@ -12,6 +12,15 @@
     "piece.artist.solid": "Done: {work}. IT'S GOOD. You've told it so several times.",
     "piece.artist.rough": "Done: {work}. You did it very fast. You can tell. Anyone could tell. IT'S FINE.",
     "location.return": "BACK AT {place}! AGAIN! NOBODY TOLD YOU IT WOULD BE THE SAME!",
-    "perception.misfire": "THAT'S NOT HERE! THIS IS {place}! WHO MOVED IT!"
+    "perception.misfire": "THAT'S NOT HERE! THIS IS {place}! WHO MOVED IT!",
+    "fight.started": "YOU SQUARE UP ON {name}. YOU TELL THE WHOLE BAR ABOUT IT. TWICE.",
+    "fight.cracked.you": "YOU'RE SWINGING. YOU WERE ALWAYS GOING TO BE SWINGING. THIS WAS THE PLAN THE WHOLE TIME.",
+    "fight.landed.you": "IT LANDS. IT LANDS. YOU NARRATE THAT IT LANDED.",
+    "fight.landed.them": "IT LANDS ON YOU AND IT'S QUIET FOR A SECOND, WHICH IS WORSE.",
+    "fight.ontop.you": "YOU'RE ON TOP. YOU'RE SHOUTING INTO {name}'S EAR ABOUT BEING ON TOP.",
+    "fight.ontop.them": "{name}'S ON TOP. YOU'RE STILL TALKING. YOU'RE TALKING INTO THE FLOOR.",
+    "fight.knockout.you": "and then, finally, quiet.",
+    "fight.walked": "YOU WALK. YOU ANNOUNCE IT. YOU KEEP ANNOUNCING IT ALL THE WAY OUT.",
+    "fight.swing.first": "YOU GO FIRST BECAUSE WAITING IS FOR PEOPLE WHO AREN'T DOING SHITLOADS."
   }
 }

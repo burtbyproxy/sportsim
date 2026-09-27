@@ -5,7 +5,11 @@
     "kind": "mark",
     "id": "obsession_hate"
   },
-  "trigger": null,
+  "trigger": {
+    "kind": "stat",
+    "stat": "toughness",
+    "atLeast": 30
+  },
   "to": "anyone",
   "chancePerTick": 0.15,
   "check": null,

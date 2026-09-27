@@ -12,6 +12,16 @@
     "piece.artist.solid": "Done: {work}. Nailed it. You go for a high five and there's nobody there, so you get the wall.",
     "piece.artist.rough": "Done: {work}. You did it the way you do everything, which is hard and slightly to the left.",
     "location.return": "Back at {place}, bud. Hit the door frame on the way in, same as last time. The door frame remembers.",
-    "perception.misfire": "You go for it with your whole body and hit {place} instead. It was {place} all along, bud."
+    "perception.misfire": "You go for it with your whole body and hit {place} instead. It was {place} all along, bud.",
+    "fight.started": "You square up on {name}. Dude. DUDE. This is happening. Everybody, this is happening.",
+    "fight.cracked.you": "Your fist is already going, and you're kind of proud of it, and that's the whole problem with you tonight.",
+    "fight.landed.you": "It lands. DUDE. You look around for someone to high-five and there's nobody, because you're in a fight.",
+    "fight.landed.them": "It lands, on you, and the floor comes up like it wants to be friends.",
+    "fight.ontop.you": "You're on top of {name}. This is the most either of you has hugged anyone in years.",
+    "fight.ontop.them": "{name}'s on top of you. Heavy. Dude, you think, this guy is heavy. That's the whole thought.",
+    "fight.knockout.you": "And then it's like when the tape runs out.",
+    "fight.walked": "You walk. Dude. You walked. You're going to be hearing about it from yourself all week.",
+    "fight.barred": "86'd from {place}. From {place}! You were a regular. You were THE regular. You say this to the door.",
+    "fight.swing.first": "You swing first because somebody had to, and you're the guy. You're always the guy. That's the problem with being the guy."
   }
 }
