@@ -17,8 +17,12 @@
  * them apart.
  *
  * A fight is a record on the one who started it (never deleted, like a
- * making), with a status in `ending`. The engine returns codes and what
- * to apply (a knock here, a knock there); the loop applies and speaks.
+ * making), with a status in `ending`. The engine returns what happened
+ * (events, by kind and side) and what to apply (a knock here, a knock
+ * there); the loop applies, and says it in the voice of whoever is in
+ * charge, from whichever side the player is on, or from the bar stool.
+ * Either side can be anyone: two people can go at it with the player
+ * watching, or the world can come at the player.
  *
  * Pure functions. No side effects. No Vue. No DOM. Every public function
  * takes a single input struct; the ones that can fail return a result
@@ -71,6 +75,29 @@ export const FIGHT_CHOICES = Object.freeze({
 /** Which side of a fight somebody is on. */
 export const FIGHT_SIDES = Object.freeze({ first: 'first', second: 'second' })
 
+/**
+ * What happens in a fight, as the engine tells it: a kind and the side it
+ * happened to (or for). Whose voice says it, and how, is the loop's.
+ */
+export const FIGHT_EVENTS = Object.freeze({
+  // A jab landed for `side`.
+  jab: 'jab',
+  // `side` walked away.
+  walked: 'walked',
+  // `side` swung first, on purpose.
+  swungFirst: 'swung_first',
+  // `side` cracked, and swings first.
+  cracked: 'cracked',
+  // `side` landed the swing.
+  landed: 'landed',
+  // `side` ended up on top.
+  onTop: 'on_top',
+  // Pulled apart; no side.
+  pulledApart: 'pulled_apart',
+  // `side` is out.
+  knockout: 'knockout',
+})
+
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
@@ -109,19 +136,16 @@ function statsMissing({ first, second, statName }) {
  * @returns {string} a FIGHT_SIDES value
  */
 function contest({ tuning, first, second, statName, modifiers = { first: [], second: [] }, rng }) {
-  for (;;) {
-    const rolled = checkContestedRoll({
-      tuning,
-      first: { player: first, statName, modifiers: modifiers.first },
-      second: { player: second, statName, modifiers: modifiers.second },
-      rng,
-    })
-    if (rolled.winner === CONTEST_WINNERS.first) return FIGHT_SIDES.first
-    if (rolled.winner === CONTEST_WINNERS.second) return FIGHT_SIDES.second
-    // Nobody got the better of it: again, until somebody does.
-    if (rng() < 0.5) return FIGHT_SIDES.first
-    return FIGHT_SIDES.second
-  }
+  const rolled = checkContestedRoll({
+    tuning,
+    first: { player: first, statName, modifiers: modifiers.first },
+    second: { player: second, statName, modifiers: modifiers.second },
+    rng,
+  })
+  if (rolled.winner === CONTEST_WINNERS.first) return FIGHT_SIDES.first
+  if (rolled.winner === CONTEST_WINNERS.second) return FIGHT_SIDES.second
+  // Nobody got the better of it: a coin, so it ends.
+  return rng() < 0.5 ? FIGHT_SIDES.first : FIGHT_SIDES.second
 }
 
 // ---------------------------------------------------------------------------
@@ -139,7 +163,8 @@ export function fightActive({ subject }) {
 
 /**
  * Somebody starts something with somebody. The one who starts it is the
- * first side, and the fight is on their record.
+ * first side, and the fight is on their record. Started with a swing, it
+ * skips the squaring off: the first side has already cracked.
  *
  * @param {{
  *   fightDef: Object,
@@ -147,10 +172,12 @@ export function fightActive({ subject }) {
  *   second: Object,
  *   locationId: string|null,
  *   gameTime: { tick: number },
+ *   swinging?: boolean,
  * }} input
+ *   swinging — the first side comes in swinging, no squaring off
  * @returns {{ ok: boolean, data: { fights: Object[], fight: Object }|null, error: Object|null }}
  */
-export function fightStart({ fightDef, first, second, locationId, gameTime }) {
+export function fightStart({ fightDef, first, second, locationId, gameTime, swinging = false }) {
   if (!first || !second) {
     return resultFail({
       code: FIGHT_ERROR_CODES.subjectMissing,
@@ -172,10 +199,10 @@ export function fightStart({ fightDef, first, second, locationId, gameTime }) {
     firstId: first.id,
     secondId: second.id,
     locationId,
-    phase: FIGHT_PHASES.squaring,
+    phase: swinging ? FIGHT_PHASES.swinging : FIGHT_PHASES.squaring,
     round: 1,
     heat: { first: 0, second: 0 },
-    swungFirst: null,
+    swungFirst: swinging ? FIGHT_SIDES.first : null,
     ground: { first: 0, second: 0 },
     ending: null,
     winner: null,
@@ -226,7 +253,7 @@ export function fightOffer({ fightDef, fight }) {
  * }} input
  * @returns {{ ok: boolean, data: {
  *   fight: Object,
- *   lines: Array<{ code: string }>,
+ *   events: Array<{ kind: string, side: string|null, jabId?: string }>,
  *   cracked: string|null,
  *   jabWon: boolean|null,
  * }|null, error: Object|null }}
@@ -252,7 +279,7 @@ export function fightSquareRound({
   if (choiceId === FIGHT_CHOICES.walk) {
     return resultOk({
       fight: stamp({ phase: FIGHT_PHASES.over, ending: FIGHT_ENDINGS.walked, winner: null }),
-      lines: [{ code: fightDef.walk.lineCode }],
+      events: [{ kind: FIGHT_EVENTS.walked, side: FIGHT_SIDES.first }],
       cracked: null,
       jabWon: null,
     })
@@ -260,7 +287,7 @@ export function fightSquareRound({
   if (choiceId === FIGHT_CHOICES.swing) {
     return resultOk({
       fight: stamp({ phase: FIGHT_PHASES.swinging, swungFirst: FIGHT_SIDES.first }),
-      lines: [{ code: fightDef.swing.lineCode }],
+      events: [{ kind: FIGHT_EVENTS.swungFirst, side: FIGHT_SIDES.first }],
       cracked: null,
       jabWon: null,
     })
@@ -291,14 +318,18 @@ export function fightSquareRound({
   if (rolled.winner === CONTEST_WINNERS.second) heat.first += jab.heat
   heat.first += heatPerRound
   heat.second += heatPerRound
-  const lines = [{ code: jabWon ? jab.lineWon : jab.lineLost }]
+  const events = [
+    {
+      kind: FIGHT_EVENTS.jab,
+      side: jabWon ? FIGHT_SIDES.first : FIGHT_SIDES.second,
+      jabId: jab.id,
+    },
+  ]
   // The hotter side cracks; at a dead heat, the one who started it.
   let cracked = null
   if (heat.second >= crackAt || heat.first >= crackAt) {
     cracked = heat.second > heat.first ? FIGHT_SIDES.second : FIGHT_SIDES.first
-    lines.push({
-      code: cracked === FIGHT_SIDES.first ? fightDef.lines.crackedYou : fightDef.lines.crackedThem,
-    })
+    events.push({ kind: FIGHT_EVENTS.cracked, side: cracked })
   }
   return resultOk({
     fight: stamp({
@@ -307,7 +338,7 @@ export function fightSquareRound({
       phase: cracked ? FIGHT_PHASES.swinging : FIGHT_PHASES.squaring,
       swungFirst: cracked,
     }),
-    lines,
+    events,
     cracked,
     jabWon,
   })
@@ -322,7 +353,6 @@ export function fightSquareRound({
  *
  * @param {{
  *   tuning: Object,
- *   fightDef: Object,
  *   fight: Object,
  *   first: Object,
  *   second: Object,
@@ -333,22 +363,13 @@ export function fightSquareRound({
  *   bystanders — how many others are there to pull them apart
  * @returns {{ ok: boolean, data: {
  *   fight: Object,
- *   lines: Array<{ code: string }>,
+ *   events: Array<{ kind: string, side: string|null }>,
  *   dazed: { first: number, second: number },
  *   loser: string|null,
  * }|null, error: Object|null }}
  *   loser — the side that lost, or null when they were pulled apart
  */
-export function fightResolve({
-  tuning,
-  fightDef,
-  fight,
-  first,
-  second,
-  bystanders,
-  gameTime,
-  rng,
-}) {
+export function fightResolve({ tuning, fight, first, second, bystanders, gameTime, rng }) {
   if (!fight || fight.phase !== FIGHT_PHASES.swinging || !fight.swungFirst) {
     return resultFail({
       code: FIGHT_ERROR_CODES.phaseWrong,
@@ -361,14 +382,25 @@ export function fightResolve({
     statsMissing({ first, second, statName: ground.stat })
   if (missing) return missing
   const dazed = { first: 0, second: 0 }
-  const lines = []
-  const stamp = (next) => ({ ...fight, ...next, updatedAtTick: gameTime.tick })
+  const events = []
   const knockedOut = (side) => {
     const subject = side === FIGHT_SIDES.first ? first : second
     return (subject.dazed ?? 0) + dazed[side] >= knockoutAt
   }
-  const over = ({ ending, winner, loser }) =>
-    resultOk({ fight: stamp({ phase: FIGHT_PHASES.over, ending, winner }), lines, dazed, loser })
+  const over = ({ ending, winner, loser, wins = fight.ground }) =>
+    resultOk({
+      fight: {
+        ...fight,
+        phase: FIGHT_PHASES.over,
+        ending,
+        winner,
+        ground: wins,
+        updatedAtTick: gameTime.tick,
+      },
+      events,
+      dazed,
+      loser,
+    })
 
   // The swing: the one who swung first is reactive, and it shows.
   const swinger = fight.swungFirst
@@ -377,13 +409,9 @@ export function fightResolve({
   const landed = contest({ tuning, first, second, statName: swing.stat, modifiers, rng })
   const hit = opposite({ side: landed })
   dazed[hit] += swing.dazedOnHit
-  lines.push({
-    code: landed === FIGHT_SIDES.first ? fightDef.lines.landedYou : fightDef.lines.landedThem,
-  })
+  events.push({ kind: FIGHT_EVENTS.landed, side: landed })
   if (knockedOut(hit)) {
-    lines.push({
-      code: hit === FIGHT_SIDES.first ? fightDef.lines.knockoutYou : fightDef.lines.knockoutThem,
-    })
+    events.push({ kind: FIGHT_EVENTS.knockout, side: hit })
     return over({ ending: FIGHT_ENDINGS.knockout, winner: landed, loser: hit })
   }
 
@@ -391,55 +419,20 @@ export function fightResolve({
   const wins = { ...fight.ground }
   for (;;) {
     if (randomChance({ probability: bystanders * ground.pulledApartChancePerBystander, rng })) {
-      lines.push({ code: fightDef.lines.pulledApart })
-      return resultOk({
-        fight: stamp({
-          phase: FIGHT_PHASES.over,
-          ending: FIGHT_ENDINGS.pulledApart,
-          winner: null,
-          ground: wins,
-        }),
-        lines,
-        dazed,
-        loser: null,
-      })
+      events.push({ kind: FIGHT_EVENTS.pulledApart, side: null })
+      return over({ ending: FIGHT_ENDINGS.pulledApart, winner: null, loser: null, wins })
     }
     const top = contest({ tuning, first, second, statName: ground.stat, rng })
     wins[top] += 1
     if (wins[top] >= ground.onTopAt) {
       const bottom = opposite({ side: top })
       dazed[bottom] += ground.dazedOnTop
-      lines.push({
-        code: top === FIGHT_SIDES.first ? fightDef.lines.onTopYou : fightDef.lines.onTopThem,
-      })
+      events.push({ kind: FIGHT_EVENTS.onTop, side: top })
       if (knockedOut(bottom)) {
-        lines.push({
-          code:
-            bottom === FIGHT_SIDES.first ? fightDef.lines.knockoutYou : fightDef.lines.knockoutThem,
-        })
-        return resultOk({
-          fight: stamp({
-            phase: FIGHT_PHASES.over,
-            ending: FIGHT_ENDINGS.knockout,
-            winner: top,
-            ground: wins,
-          }),
-          lines,
-          dazed,
-          loser: bottom,
-        })
+        events.push({ kind: FIGHT_EVENTS.knockout, side: bottom })
+        return over({ ending: FIGHT_ENDINGS.knockout, winner: top, loser: bottom, wins })
       }
-      return resultOk({
-        fight: stamp({
-          phase: FIGHT_PHASES.over,
-          ending: FIGHT_ENDINGS.onTop,
-          winner: top,
-          ground: wins,
-        }),
-        lines,
-        dazed,
-        loser: bottom,
-      })
+      return over({ ending: FIGHT_ENDINGS.onTop, winner: top, loser: bottom, wins })
     }
   }
 }

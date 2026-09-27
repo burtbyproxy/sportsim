@@ -113,6 +113,10 @@ export function characterCreate(data) {
         : [],
     },
     relationshipScore: data.relationshipScore ?? 0,
+    // Every fight they ever started. See engine/fight.js.
+    fights: Array.isArray(data.fights) ? data.fights.map((f) => ({ ...f })) : [],
+    // Off the map until this tick: knocked out, sleeping it off. 0 is nowhere to be.
+    awayUntilTick: data.awayUntilTick ?? 0,
     currentLocationId: data.currentLocationId ?? null,
     want: data.want ?? '',
     fear: data.fear ?? '',
