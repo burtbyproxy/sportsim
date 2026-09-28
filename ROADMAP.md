@@ -7,14 +7,34 @@ history and the release tags.
 
 ## Next: story and legend
 
-Art is the whole point. Display and reveal shipped (below); the next art
-unit is story and legend: ingredients that add story, techniques known
+Art is the whole point. Display, reveal and community shipped (below);
+the next art unit is story and legend: ingredients that add story, techniques known
 per persona, pieces that sell on story times legend, and telling the
 story as an action where the story changes. Then the real-time games
 for painting and drawing, which need a new UI component.
 
 NPCs getting themselves help is parked with its design (a lot of
 friction, like losing weight).
+
+## Shipped: 0.28.0 — art is community
+
+Other artists are going around making pieces and performing. Anyone
+with skill in a medium is an artist in it (`skills` on a character), and
+an act can make (`make: { mediumId }` on a branch): a check on their
+skill, a tier, a piece on a surface where they are with their name on
+it, or nothing but the doing, in the words of whoever is in charge of
+them. The world judges it there and then, like yours. You find their
+pieces up on walls and see them go up, and hear them done, when you are
+in the room.
+
+And the nemesis. Seeing another artist's piece in your medium that
+beats your best is a save (`tuning.community.rivalry`); fail it and it
+is an obsession about that person, love or hate. It does not matter
+what other people said about it: it is what you see. The same from the
+other side: an artist in the room who sees yours shown and beaten may
+come away with an obsession about you. Marks can be about the player
+now. The fan and the rival are the same machinery as everything else
+that stays with a person.
 
 ## Shipped: 0.27.0 — judged live, and the world helps itself
 
