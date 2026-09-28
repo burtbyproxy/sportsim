@@ -20,6 +20,7 @@ const characterIds = idsOf(loadJsonFiles(join(CONTENT_ROOT, 'characters')))
 const sober = loadJsonFiles(join(CONTENT_ROOT, 'voices')).find(({ data }) => data.id === 'sober')
 const conditionIds = idsOf(loadJsonFiles(join(CONTENT_ROOT, 'conditions')))
 const fightIds = idsOf(loadJsonFiles(join(CONTENT_ROOT, 'fights')))
+const mediumIds = idsOf(loadJsonFiles(join(CONTENT_ROOT, 'mediums')))
 
 /** Every persona anything can put in charge: the same list the voices are held to. */
 const personaIds = new Set(['sober'])
@@ -39,6 +40,7 @@ const authors = {
   [ACT_AUTHOR_KINDS.character]: characterIds,
   [ACT_AUTHOR_KINDS.persona]: personaIds,
   [ACT_AUTHOR_KINDS.mark]: new Set(Object.keys(marks)),
+  [ACT_AUTHOR_KINDS.skill]: mediumIds,
 }
 
 describe('content/acts — what people start on their own', () => {
@@ -84,6 +86,21 @@ describe('content/acts — what people start on their own', () => {
           mark.targetKinds,
           `${file}: mark '${mark.id}' is never about a person to do it to`
         ).toContain(MARK_TARGET_KINDS.character)
+      }
+    })
+
+    it(`${file} — what it makes is a medium that exists, and its author is an artist in it`, () => {
+      for (const branch of [data.success, data.failure].filter(Boolean)) {
+        if (!branch.make) continue
+        expect(
+          mediumIds.has(branch.make.mediumId),
+          `${file}: no medium '${branch.make.mediumId}'`
+        ).toBe(true)
+        if (data.author.kind === ACT_AUTHOR_KINDS.skill) {
+          expect(data.author.id, `${file}: makes in the medium it is skilled in`).toBe(
+            branch.make.mediumId
+          )
+        }
       }
     })
 

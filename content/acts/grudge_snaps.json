@@ -25,7 +25,8 @@
     },
     "lineCode": "act.grudge_snaps.you",
     "lineCodeOthers": "act.grudge_snaps.them",
-    "fight": null
+    "fight": null,
+    "make": null
   },
   "failure": {
     "outcome": null,
@@ -36,6 +37,7 @@
     },
     "lineCode": "act.grudge_snaps.you.held",
     "lineCodeOthers": "act.grudge_snaps.them.held",
-    "fight": null
+    "fight": null,
+    "make": null
   }
 }

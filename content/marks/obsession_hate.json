@@ -2,7 +2,7 @@
   "id": "obsession_hate",
   "kind": "obsession",
   "display": "Can't let it go",
-  "targetKinds": ["location", "character", "item", "substance", "topic"],
+  "targetKinds": ["location", "character", "item", "substance", "topic", "player"],
   "polarity": "hate",
   "confusion": 0,
   "avoids": false,

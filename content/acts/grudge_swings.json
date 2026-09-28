@@ -20,7 +20,8 @@
       "fightId": "bar_fight"
     },
     "lineCode": "act.grudge_swings.you",
-    "lineCodeOthers": "act.grudge_swings.them"
+    "lineCodeOthers": "act.grudge_swings.them",
+    "make": null
   },
   "failure": null
 }

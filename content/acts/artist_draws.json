@@ -1,0 +1,23 @@
+{
+  "id": "artist_draws",
+  "display": "Somebody draws",
+  "author": {
+    "kind": "skill",
+    "id": "drawing"
+  },
+  "trigger": null,
+  "to": "none",
+  "chancePerTick": 0.03,
+  "check": null,
+  "success": {
+    "outcome": null,
+    "outcomeAuthor": null,
+    "fight": null,
+    "make": {
+      "mediumId": "drawing"
+    },
+    "lineCode": "act.artist_draws",
+    "lineCodeOthers": null
+  },
+  "failure": null
+}

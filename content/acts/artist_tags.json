@@ -1,0 +1,25 @@
+{
+  "id": "artist_tags",
+  "display": "A tagger tags",
+  "author": {
+    "kind": "skill",
+    "id": "tagging"
+  },
+  "trigger": {
+    "kind": "alone"
+  },
+  "to": "none",
+  "chancePerTick": 0.05,
+  "check": null,
+  "success": {
+    "outcome": null,
+    "outcomeAuthor": null,
+    "fight": null,
+    "make": {
+      "mediumId": "tagging"
+    },
+    "lineCode": "act.artist_tags",
+    "lineCodeOthers": null
+  },
+  "failure": null
+}

@@ -188,6 +188,15 @@
     "mark.stolen": "Yours is gone. {work}, gone off the wall. Not covered. Taken. Somebody wanted it enough to take it home, which is the best thing anyone has ever said about you, and you can't sell it now.",
     "mark.defaced": "Yours is still up. {work}, with somebody else's opinion written across it in a different hand. They stood in front of it long enough to do that. That's something. It isn't nothing.",
     "work.whereabouts.stolen": "stolen off the wall. A compliment.",
-    "work.whereabouts.defaced": "still up, with somebody's opinion on it"
+    "work.whereabouts.defaced": "still up, with somebody's opinion on it",
+    "act.artist_tags": "{author} has a marker out. {author} is doing something to the wall, quick, like it's already been decided.",
+    "act.artist_performs": "{author} has started something. Not for you. For the room, which is worse.",
+    "act.artist_draws": "{author} is drawing. Not looking up. Somebody who doesn't need to look up.",
+    "community.made": "{name} puts up {work}. Just like that. Just puts it up.",
+    "community.performed": "{name} does {work}. You watch, which is all you were going to do anyway.",
+    "mark.others": "{name}'s is up here: {work}. It was here before you walked in and it'll be here after.",
+    "verdict.others.praised": "The room goes for it. {name} doesn't even seem surprised, which is the part that gets you.",
+    "verdict.others.ignored": "The room doesn't notice. {name} doesn't seem to need it to. You'd need it to.",
+    "verdict.others.mocked": "The room laughs at {name}. {name} laughs too. It's a better laugh than yours would be."
   }
 }

@@ -164,6 +164,27 @@ export function validateCharacter({ data, file }) {
     ).toBeUndefined()
   }
 
+  // Skills: the same grid as the player's, skills[mediumId][personaId] = { base, modifiers, xp }
+  for (const [mediumId, cells] of Object.entries(data.skills ?? {})) {
+    expect(typeof mediumId, `${file}: skills key`).toBe('string')
+    for (const [personaId, cell] of Object.entries(cells ?? {})) {
+      expect(typeof cell?.base, `${file}: skills.${mediumId}.${personaId}.base`).toBe('number')
+      expect(
+        cell.base,
+        `${file}: skills.${mediumId}.${personaId}.base must be 0-100`
+      ).toBeGreaterThanOrEqual(0)
+      expect(
+        cell.base,
+        `${file}: skills.${mediumId}.${personaId}.base must be 0-100`
+      ).toBeLessThanOrEqual(100)
+      expect(
+        Array.isArray(cell.modifiers),
+        `${file}: skills.${mediumId}.${personaId}.modifiers`
+      ).toBe(true)
+      expect(typeof cell.xp, `${file}: skills.${mediumId}.${personaId}.xp`).toBe('number')
+    }
+  }
+
   // Intoxications / habituations: per-substance levels 0-100 (ids cross-checked below)
   for (const field of ['intoxications', 'habituations']) {
     if (data[field] === undefined) continue
@@ -1077,8 +1098,11 @@ function expectOutcomeSubject({ outcome, label }) {
  */
 function validateActBranch({ act, branch, label }) {
   expect(branch, `${label}: needs an outcome, an outcomeAuthor, a lineCode and a lineCodeOthers`)
-  for (const field of ['outcome', 'outcomeAuthor', 'fight', 'lineCode', 'lineCodeOthers']) {
+  for (const field of ['outcome', 'outcomeAuthor', 'fight', 'make', 'lineCode', 'lineCodeOthers']) {
     expect(branch, `${label}: missing field '${field}'`).toHaveProperty(field)
+  }
+  if (branch.make !== null) {
+    expect(typeof branch.make.mediumId, `${label}: make.mediumId must be a string`).toBe('string')
   }
   if (branch.fight !== null) {
     expect(typeof branch.fight.fightId, `${label}: fight.fightId must be a string`).toBe('string')

@@ -27,6 +27,20 @@ describe('cross-reference validation', () => {
   const substanceFiles = loadJsonFiles(join(CONTENT_ROOT, 'substances'))
   const knownSubstanceIds = new Set(substanceFiles.map(({ data }) => data.id).filter(Boolean))
 
+  // A character's skills name real media
+  const mediumIdsKnown = new Set(
+    loadJsonFiles(join(CONTENT_ROOT, 'mediums'))
+      .map(({ data }) => data.id)
+      .filter(Boolean)
+  )
+  for (const { file, data: character } of characterFiles) {
+    for (const mediumId of Object.keys(character.skills ?? {})) {
+      it(`${file}: skill '${mediumId}' is a medium that exists`, () => {
+        expect(mediumIdsKnown.has(mediumId)).toBe(true)
+      })
+    }
+  }
+
   // Character intoxications / habituations name real substances
   for (const { file, data: character } of characterFiles) {
     for (const field of ['intoxications', 'habituations']) {

@@ -2,7 +2,7 @@
   "id": "obsession_love",
   "kind": "obsession",
   "display": "Can't stop thinking about it",
-  "targetKinds": ["location", "character", "item", "substance", "topic"],
+  "targetKinds": ["location", "character", "item", "substance", "topic", "player"],
   "polarity": "love",
   "confusion": 0,
   "avoids": false,

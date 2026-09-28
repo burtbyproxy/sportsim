@@ -20,6 +20,14 @@ describe('content/voices/*.json — Voice catalog contract', () => {
     }
   })
 
+  it("the sober voice has the world's verdict on somebody else's piece, every way it can go", () => {
+    for (const reception of ['praised', 'ignored', 'mocked']) {
+      expect(sober.data.lines, `verdict.others.${reception}`).toHaveProperty([
+        `verdict.others.${reception}`,
+      ])
+    }
+  })
+
   it('content/voices/ directory exists and has a sober catalog', () => {
     expect(existsSync(dir)).toBe(true)
     expect(sober, 'content/voices/sober.json is the fallback for every line').toBeTruthy()
