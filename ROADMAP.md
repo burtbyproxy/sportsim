@@ -16,6 +16,22 @@ for painting and drawing, which need a new UI component.
 NPCs getting themselves help is parked with its design (a lot of
 friction, like losing weight).
 
+## Shipped: 0.27.0 — judged live, and the world helps itself
+
+Art is as much performance as painting. A performance leaves no object,
+so its verdict lands live, at the finish, from the room: karaoke,
+freestyle, singing, a performance in the corner by the jukebox. And the
+world acts on what is left in it: a shown piece with legend on a wall in
+front of strangers can meet a fate (`tuning.display.fates`, a table:
+stolen, defaced, whatever content names), each at its legend's chance
+per tick. Stolen is the best compliment there is, and it still sucks
+when you're broke. Defaced is still up, with somebody's opinion on it.
+You find out when you look.
+
+Parked with its design: permission and opportunity. Walls come from
+people; showing a piece to a person is its own act, and the sanctioned
+wall is what you earn. The fuck-it hanging stays.
+
 ## Shipped: 0.26.0 — display and reveal
 
 Making produces only the artist's text. What anybody else sees is

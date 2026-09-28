@@ -175,6 +175,19 @@
     "verdict.ignored.rough": "{work} goes up {place}. A man looks at it for one second on the way to the bathroom. That second is the whole review.",
     "verdict.mocked.inspired": "{work} goes up {place} and somebody laughs, and then explains it to the person next to them, wrong, and the wrong version is what everyone hears. That's what it is now.",
     "verdict.mocked.solid": "{work} goes up {place} and a stranger does a voice about it. A voice. It's a good voice. It's yours now, forever, the thing people do when you come in.",
-    "verdict.mocked.rough": "{work} goes up {place} and the room decides, fast, together, the way rooms do. You hear your own name in it. Not said to you. Said about you."
+    "verdict.mocked.rough": "{work} goes up {place} and the room decides, fast, together, the way rooms do. You hear your own name in it. Not said to you. Said about you.",
+    "verdict.live.praised.inspired": "You do {work} {place} and for once the room is with you the whole way, and when it ends there's a second of nothing, and then the noise. You'll chase that second for years.",
+    "verdict.live.praised.solid": "You do {work} {place} and it lands. Somebody buys you a drink about it. That's the review, and it's a good one.",
+    "verdict.live.praised.rough": "You do {work} {place} and it's a mess, and the room likes the mess. They'd have hated it done right.",
+    "verdict.live.ignored.inspired": "You do {work} {place} and you were somewhere, really somewhere, and when you look up the room never left where it was.",
+    "verdict.live.ignored.solid": "You do {work} {place}. The room talks through it. It's fine. It's background. You were background.",
+    "verdict.live.ignored.rough": "You do {work} {place} and it ends, and the ending is the part that gets the most attention.",
+    "verdict.live.mocked.inspired": "You do {work} {place} and somebody films it. Not for the reason you'd want. You can see the phone. You keep going, which is the part they'll remember.",
+    "verdict.live.mocked.solid": "You do {work} {place} and the room does it back at you before you're done. Louder. Better.",
+    "verdict.live.mocked.rough": "You do {work} {place} and the laugh starts early and never really stops, and you finish anyway, into it, which is either brave or the other thing.",
+    "mark.stolen": "Yours is gone. {work}, gone off the wall. Not covered. Taken. Somebody wanted it enough to take it home, which is the best thing anyone has ever said about you, and you can't sell it now.",
+    "mark.defaced": "Yours is still up. {work}, with somebody else's opinion written across it in a different hand. They stood in front of it long enough to do that. That's something. It isn't nothing.",
+    "work.whereabouts.stolen": "stolen off the wall. A compliment.",
+    "work.whereabouts.defaced": "still up, with somebody's opinion on it"
   }
 }

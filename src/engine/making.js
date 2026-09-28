@@ -99,6 +99,10 @@ export const ARTIFACT_STATUSES = Object.freeze({
   shown: 'shown',
   fresh: 'fresh',
   covered: 'covered',
+  // What the world did to it on the wall (engine/display.js fateTick): the
+  // statuses tuning's fates name. Stolen is gone; defaced is still up, ruined.
+  stolen: 'stolen',
+  defaced: 'defaced',
 })
 
 /** The one state an experience has until somebody starts telling it. */
@@ -658,6 +662,12 @@ export function makingFinish({
     artifactId: artifact ? artifact.id : null,
     workText: '',
     artistText: '',
+    // A performance leaves no object, so the world's verdict lands here, live.
+    reception: null,
+    legend: 0,
+    ideaText: null,
+    shownAtTick: null,
+    shownAtLocationId: null,
     createdAtTick: tick,
     updatedAtTick: tick,
   }
@@ -670,7 +680,11 @@ export function makingFinish({
   const markIdsCovered =
     artifact && fixed
       ? (location.marks ?? [])
-          .filter((m) => m.surfaceId === making.surfaceId && m.status === ARTIFACT_STATUSES.fresh)
+          .filter(
+            (m) =>
+              m.surfaceId === making.surfaceId &&
+              [ARTIFACT_STATUSES.fresh, ARTIFACT_STATUSES.defaced].includes(m.status)
+          )
           .map((m) => m.id)
       : []
 

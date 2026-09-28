@@ -46,6 +46,7 @@ import {
 } from '../models/player.js'
 import {
   MAKING_SURFACE_KINDS,
+  MAKING_TIERS,
   ARTIFACT_KINDS,
   ARTIFACT_STATUSES,
   makingOptions,
@@ -228,6 +229,10 @@ export function useGameLoop({
     // player is, and after the scene text so it lands beneath it.
     actsCheck({ ticksElapsed: ticks })
 
+    // 6a. The world acts on what was left in it: a piece with legend on a wall somewhere may go.
+    const fates = game.fateTickApply({ ticksElapsed: ticks, rng })
+    if (!fates.ok) failureShow(fates)
+
     // 6b. The world happens to the player: at most one event per tick.
     // After decay and after the move, so thresholds and the new place are
     // visible, and after the scene text so the event lands beneath it.
@@ -266,6 +271,10 @@ export function useGameLoop({
         if (mark.status === ARTIFACT_STATUSES.fresh) {
           voiceEnqueue({ code: 'mark.still_here', params: { work: mark.workText } })
         }
+      }
+      // What the world did to yours while you were gone: you find out when you look.
+      for (const { mark, fate } of game.fatesNotice()) {
+        voiceEnqueue({ code: fate.lineCode, params: { work: mark.workText } })
       }
       if (game.activeEvent) {
         narrativeEnqueue(narrativeEvent({ event: game.activeEvent, player: game.player }))
@@ -1051,7 +1060,7 @@ export function useGameLoop({
           }),
           kind: 'display_piece',
           timeCost: game.tuning.display.ticks,
-          data: { artifactId: artifact.id },
+          data: { pieceId: artifact.id },
         })
       ),
       makingEntry({
@@ -1069,7 +1078,7 @@ export function useGameLoop({
   async function displayEntryResolve(entry) {
     game.displayPickerSet({ picker: null })
     if (entry.kind === 'display_piece') {
-      displayReveal({ artifactId: entry.artifactId })
+      displayReveal({ pieceId: entry.pieceId })
       await tick({ ticks: game.tuning.display.ticks })
       return
     }
@@ -1081,16 +1090,16 @@ export function useGameLoop({
    * trains the stat it was judged on, and what the reception does to the
    * player lands like any outcome. Mocked in front of strangers is the
    * kind of thing that stays with you.
-   * @param {{ artifactId: string }} input
+   * @param {{ pieceId: string }} input
    */
-  function displayReveal({ artifactId }) {
-    const result = game.displayRevealApply({ artifactId, rng })
+  function displayReveal({ pieceId }) {
+    const result = game.displayRevealApply({ pieceId, rng })
     if (!result.ok) return failureShow(result)
     const { reception, check, verdictText } = result.data
     checkTrain(check)
     voiceLiteralEnqueue(verdictText)
     const toll = game.tuning.display.receptions[reception]?.outcome
-    if (toll) outcomeApply({ outcome: toll, source: { kind: 'display', id: artifactId } })
+    if (toll) outcomeApply({ outcome: toll, source: { kind: 'display', id: pieceId } })
   }
 
   // ── Curing ─────────────────────────────────────────────────────────────────
@@ -1235,13 +1244,14 @@ export function useGameLoop({
     voiceLiteralEnqueue(finished.data.experience.artistText)
     if (finished.data.markIdsCovered.length > 0) voiceEnqueue({ code: 'making.covered' })
     if (finished.data.encore) voiceEnqueue({ code: 'making.encore' })
-    // A wall in front of the world is a showing: the room sees it go up.
-    const wall = finished.data.artifact
-    if (
-      wall?.kind === ARTIFACT_KINDS.fixed &&
-      displayVenue({ location: game.currentLocation }).ok
-    ) {
-      displayReveal({ artifactId: wall.id })
+    // A wall in front of the world is a showing: the room sees it go up. A
+    // performance that leaves nothing is judged as it happened: live.
+    const { artifact, experience, tier } = finished.data
+    const theWorld = displayVenue({ location: game.currentLocation }).ok
+    if (theWorld && artifact?.kind === ARTIFACT_KINDS.fixed) {
+      displayReveal({ pieceId: artifact.id })
+    } else if (theWorld && !artifact && tier !== MAKING_TIERS.botched) {
+      displayReveal({ pieceId: experience.id })
     }
     refreshActions()
   }

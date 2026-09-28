@@ -10,7 +10,7 @@ const SAVE_INDEX_KEY = 'sportsim_saves'
  * Current save format version.
  * Bump this whenever the save shape changes in a breaking way.
  */
-export const SAVE_VERSION = 12
+export const SAVE_VERSION = 13
 
 /**
  * Maximum number of save slots.
@@ -247,6 +247,17 @@ export function saveMigrate({ save }) {
       piece.shownAtLocationId = piece.shownAtLocationId ?? null
     }
     migrated.version = 12
+  }
+  if (migrated.version < 13) {
+    // A performance is judged live now; none had been.
+    for (const experience of migrated.player?.experiences ?? []) {
+      experience.reception = experience.reception ?? null
+      experience.legend = experience.legend ?? 0
+      experience.ideaText = experience.ideaText ?? null
+      experience.shownAtTick = experience.shownAtTick ?? null
+      experience.shownAtLocationId = experience.shownAtLocationId ?? null
+    }
+    migrated.version = 13
   }
   return migrated
 }

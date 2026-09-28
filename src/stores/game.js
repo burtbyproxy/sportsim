@@ -35,7 +35,7 @@ import {
 } from '../engine/psyche.js'
 import { SUBJECT_KINDS } from '../engine/acts.js'
 import { cureSessionApply } from '../engine/curing.js'
-import { displayReveal } from '../engine/display.js'
+import { displayReveal, fateOf, fateTick } from '../engine/display.js'
 import {
   FIGHT_EVENTS,
   FIGHT_SIDES,
@@ -414,8 +414,10 @@ export const useGameStore = defineStore('game', {
               ? 'work.whereabouts.carried.shown'
               : 'work.whereabouts.carried'
         } else if (mark) {
-          code =
-            mark.status === ARTIFACT_STATUSES.fresh
+          const fate = fateOf({ tuning: state.tuning, mark })
+          code = fate
+            ? fate.whereaboutsCode
+            : mark.status === ARTIFACT_STATUSES.fresh
               ? 'work.whereabouts.fresh'
               : 'work.whereabouts.covered'
         }
@@ -1727,24 +1729,27 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
-     * A piece goes up in front of the world here: carried, or on this
-     * place's wall (engine/display.js). The verdict is written onto the
-     * piece in the voice of whoever is in charge, and the artist's text
-     * gives way to it; the idea survives as story.
-     * @param {{ artifactId: string, rng?: () => number }} input
+     * A piece goes up in front of the world here: carried, on this place's
+     * wall, or, for a performance, the experience itself, judged live
+     * (engine/display.js). The verdict is written onto the piece in the
+     * voice of whoever is in charge, and the artist's text gives way to
+     * it; the idea survives as story.
+     * @param {{ pieceId: string, rng?: () => number }} input
      * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the display engine's result, with the verdict's words
      */
-    displayRevealApply({ artifactId, rng = Math.random }) {
+    displayRevealApply({ pieceId, rng = Math.random }) {
       if (!this.player) {
         return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
       }
       const location = this.currentLocation
-      const carried = (this.player.portfolio ?? []).find((a) => a.id === artifactId) ?? null
-      const onWall = (location?.marks ?? []).find((a) => a.id === artifactId) ?? null
+      const carried = (this.player.portfolio ?? []).find((a) => a.id === pieceId) ?? null
+      const onWall = (location?.marks ?? []).find((a) => a.id === pieceId) ?? null
+      const lived = (this.player.experiences ?? []).find((e) => e.id === pieceId) ?? null
+      const live = !carried && !onWall && lived !== null
       const result = displayReveal({
         tuning: this.tuning,
         player: this.player,
-        artifact: carried ?? onWall,
+        piece: carried ?? onWall ?? lived,
         location,
         gameTime: this.time,
         rng,
@@ -1754,22 +1759,70 @@ export const useGameStore = defineStore('game', {
       }
       const words = pieceVerdict({
         reception: result.data.reception,
-        tier: result.data.artifact.tier,
-        workText: result.data.artifact.workText,
+        tier: result.data.piece.tier,
+        workText: result.data.piece.workText,
         place: location.displayInline,
+        live,
         personaId: this.personaInCharge,
         voices: this.voices,
       })
       if (!words.ok) {
         return words
       }
-      const shown = { ...result.data.artifact, artistText: words.data.verdictText }
+      const shown = { ...result.data.piece, artistText: words.data.verdictText }
       if (carried) {
-        this.player.portfolio = this.player.portfolio.map((a) => (a.id === artifactId ? shown : a))
+        this.player.portfolio = this.player.portfolio.map((a) => (a.id === pieceId ? shown : a))
+      } else if (onWall) {
+        location.marks = location.marks.map((a) => (a.id === pieceId ? shown : a))
       } else {
-        location.marks = location.marks.map((a) => (a.id === artifactId ? shown : a))
+        this.player.experiences = this.player.experiences.map((e) => (e.id === pieceId ? shown : e))
       }
-      return resultOk({ ...result.data, artifact: shown, verdictText: words.data.verdictText })
+      return resultOk({ ...result.data, piece: shown, live, verdictText: words.data.verdictText })
+    },
+
+    /**
+     * The world acts on what is left in it, everywhere, over the ticks
+     * that passed (engine/display.js fateTick).
+     * @param {{ ticksElapsed: number, rng?: () => number }} input
+     * @returns {{ ok: boolean, data: { fated: Array<{ locationId: string, markId: string, status: string }> }|null, error: Object|null }}
+     */
+    fateTickApply({ ticksElapsed, rng = Math.random }) {
+      const fated = []
+      for (const location of Object.values(this.locations)) {
+        if ((location.marks ?? []).length === 0) continue
+        const result = fateTick({
+          tuning: this.tuning,
+          location,
+          ticksElapsed,
+          gameTime: this.time,
+          rng,
+        })
+        if (!result.ok) return result
+        location.marks = result.data.marks
+        for (const { markId, status } of result.data.fated) {
+          fated.push({ locationId: location.id, markId, status })
+        }
+      }
+      return resultOk({ fated })
+    },
+
+    /**
+     * The one who made it finds out: every piece here that met a fate and
+     * has not been noticed is noticed now.
+     * @returns {Array<{ mark: Object, fate: Object }>} what was noticed, with its fate
+     */
+    fatesNotice() {
+      const noticed = []
+      const location = this.currentLocation
+      if (!location) return noticed
+      location.marks = (location.marks ?? []).map((mark) => {
+        const fate = fateOf({ tuning: this.tuning, mark })
+        if (!fate || mark.noticedAtTick !== null) return mark
+        const seen = { ...mark, noticedAtTick: this.time.tick, updatedAtTick: this.time.tick }
+        noticed.push({ mark: seen, fate })
+        return seen
+      })
+      return noticed
     },
 
     /**

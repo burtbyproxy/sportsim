@@ -13,9 +13,9 @@ describe('content/voices/*.json — Voice catalog contract', () => {
   it('the sober voice has a verdict for every reception at every tier a piece can come out', () => {
     for (const reception of ['praised', 'ignored', 'mocked']) {
       for (const tier of ['inspired', 'solid', 'rough']) {
-        expect(sober.data.lines, `verdict.${reception}.${tier}`).toHaveProperty([
-          `verdict.${reception}.${tier}`,
-        ])
+        for (const code of [`verdict.${reception}.${tier}`, `verdict.live.${reception}.${tier}`]) {
+          expect(sober.data.lines, code).toHaveProperty([code])
+        }
       }
     }
   })
