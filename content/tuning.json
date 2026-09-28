@@ -331,6 +331,22 @@
           }
         }
       }
-    }
+    },
+    "fates": [
+      {
+        "status": "stolen",
+        "chancePerTickPerLegend": 0.002,
+        "legendBonus": 1,
+        "lineCode": "mark.stolen",
+        "whereaboutsCode": "work.whereabouts.stolen"
+      },
+      {
+        "status": "defaced",
+        "chancePerTickPerLegend": 0.003,
+        "legendBonus": 0,
+        "lineCode": "mark.defaced",
+        "whereaboutsCode": "work.whereabouts.defaced"
+      }
+    ]
   }
 }

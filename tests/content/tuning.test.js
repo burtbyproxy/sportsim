@@ -5,6 +5,9 @@ import { contentFile, contentIds, tuningContent } from '../helpers/content.js'
 import { validateDoses } from '../helpers/contentContracts.js'
 import { listSortBy } from '../../src/utils/list.js'
 import { DISTORTION_KINDS } from '../../src/engine/perception.js'
+import { ARTIFACT_STATUSES } from '../../src/engine/making.js'
+import { loadJsonFiles, CONTENT_ROOT } from '../helpers/contentContracts.js'
+import { join } from 'path'
 
 const tuning = tuningContent()
 const vocabulary = contentFile({ path: 'content/vocabulary.json' })
@@ -164,6 +167,30 @@ describe('content/tuning.json — the game numbers', () => {
       }
     }
     expect(display.legend.praised).toBeGreaterThan(display.legend.mocked)
+  })
+
+  it('the fates the world can hand a piece on a wall: a status the piece can be in, a chance, a bonus, and its lines', () => {
+    const sober = loadJsonFiles(join(CONTENT_ROOT, 'voices')).find(
+      ({ data }) => data.id === 'sober'
+    )
+    const { fates } = tuning.display
+    expect(fates.length).toBeGreaterThan(0)
+    const statuses = fates.map((f) => f.status)
+    expect(new Set(statuses).size).toBe(statuses.length)
+    for (const fate of fates) {
+      expect(Object.values(ARTIFACT_STATUSES), fate.status).toContain(fate.status)
+      expect(
+        [ARTIFACT_STATUSES.fresh, ARTIFACT_STATUSES.covered, 'unshown', 'shown'],
+        `${fate.status} is a fate, not a life`
+      ).not.toContain(fate.status)
+      expect(fate.chancePerTickPerLegend, fate.status).toBeGreaterThan(0)
+      expect(fate.chancePerTickPerLegend, fate.status).toBeLessThan(1)
+      expect(isNumber(fate.legendBonus), fate.status).toBe(true)
+      expect(sober.data.lines, `${fate.status}: lineCode`).toHaveProperty([fate.lineCode])
+      expect(sober.data.lines, `${fate.status}: whereaboutsCode`).toHaveProperty([
+        fate.whereaboutsCode,
+      ])
+    }
   })
 
   it('typing speeds and pauses are ranges, and every pause is one character', () => {
