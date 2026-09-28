@@ -132,12 +132,22 @@ export function pieceDescribe({
  *   tier: string,
  *   workText: string,
  *   place: string,
+ *   live?: boolean,
  *   personaId: string,
  *   voices: Object<string, Object>,
  * }} input
+ *   live — a performance, judged as it happened, not a thing that went up
  * @returns {{ ok: boolean, data: { verdictText: string, personaId: string }|null, error: Object|null }}
  */
-export function pieceVerdict({ reception, tier, workText, place, personaId, voices }) {
+export function pieceVerdict({
+  reception,
+  tier,
+  workText,
+  place,
+  live = false,
+  personaId,
+  voices,
+}) {
   if (!Object.values(MAKING_TIERS).includes(tier)) {
     return resultFail({
       code: DESCRIBER_ERROR_CODES.tierUnknown,
@@ -145,17 +155,13 @@ export function pieceVerdict({ reception, tier, workText, place, personaId, voic
       params: { tier },
     })
   }
-  const line = voiceLine({
-    code: `verdict.${reception}.${tier}`,
-    personaId,
-    voices,
-    params: { work: workText, place },
-  })
+  const code = live ? `verdict.live.${reception}.${tier}` : `verdict.${reception}.${tier}`
+  const line = voiceLine({ code, personaId, voices, params: { work: workText, place } })
   if (!line.ok) {
     return resultFail({
       code: DESCRIBER_ERROR_CODES.lineMissing,
-      message: `No line for verdict.${reception}.${tier}`,
-      params: { code: `verdict.${reception}.${tier}` },
+      message: `No line for ${code}`,
+      params: { code },
     })
   }
   return resultOk({ verdictText: line.data.text, personaId: line.data.personaId })

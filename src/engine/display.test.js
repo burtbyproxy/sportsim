@@ -3,10 +3,12 @@ import {
   DISPLAY_ERROR_CODES,
   RECEPTIONS,
   VENUE_AUDIENCES,
-  artifactShown,
+  pieceShown,
   displayCandidates,
   displayReveal,
   displayVenue,
+  fateTick,
+  fateOf,
 } from './display.js'
 import { ARTIFACT_KINDS, ARTIFACT_STATUSES, MAKING_TIERS } from './making.js'
 import { tuningContent } from '../../tests/helpers/content.js'
@@ -74,22 +76,22 @@ describe('who is here to see it', () => {
     expect(displayCandidates({ player: player({ portfolio: carried }) }).map((a) => a.id)).toEqual([
       'new',
     ])
-    expect(artifactShown({ artifact: carried[1] })).toBe(true)
-    expect(artifactShown({ artifact: carried[0] })).toBe(false)
+    expect(pieceShown({ piece: carried[1] })).toBe(true)
+    expect(pieceShown({ piece: carried[0] })).toBe(false)
   })
 })
 
 describe('displayReveal — the verdict, once', () => {
   const reveal = ({ artifact = piece(), who = player(), location = bar, rng }) =>
-    displayReveal({ tuning, player: who, artifact, location, gameTime: at, rng })
+    displayReveal({ tuning, player: who, piece: artifact, location, gameTime: at, rng })
 
   it('refuses no piece, a piece already shown, friends, nobody, and a standing that does not exist', () => {
     expect(reveal({ artifact: null, rng: () => PASS }).error.code).toBe(
-      DISPLAY_ERROR_CODES.artifactMissing
+      DISPLAY_ERROR_CODES.pieceMissing
     )
     expect(
       reveal({ artifact: piece({ reception: RECEPTIONS.ignored }), rng: () => PASS }).error.code
-    ).toBe(DISPLAY_ERROR_CODES.artifactShown)
+    ).toBe(DISPLAY_ERROR_CODES.pieceShown)
     expect(reveal({ location: home, rng: () => PASS }).error.code).toBe(
       DISPLAY_ERROR_CODES.venueFriends
     )
@@ -106,7 +108,7 @@ describe('displayReveal — the verdict, once', () => {
     expect(result.ok).toBe(true)
     expect(result.data.reception).toBe(RECEPTIONS.praised)
     expect(result.data.legendGained).toBe(tuning.display.legend.praised)
-    expect(result.data.artifact).toMatchObject({
+    expect(result.data.piece).toMatchObject({
       status: ARTIFACT_STATUSES.shown,
       reception: RECEPTIONS.praised,
       legend: tuning.display.legend.praised,
@@ -126,7 +128,7 @@ describe('displayReveal — the verdict, once', () => {
     const mocked = reveal({ rng: () => FAIL })
     expect(mocked.data.reception).toBe(RECEPTIONS.mocked)
     expect(mocked.data.legendGained).toBe(tuning.display.legend.mocked)
-    expect(mocked.data.artifact.legend).toBe(0)
+    expect(mocked.data.piece.legend).toBe(0)
   })
 
   it('how the piece came out bends the verdict', () => {
@@ -149,7 +151,99 @@ describe('displayReveal — the verdict, once', () => {
 
   it('a wall keeps its own status; only the verdict changes', () => {
     const result = reveal({ artifact: piece({ kind: ARTIFACT_KINDS.fixed }), rng: () => PASS })
-    expect(result.data.artifact.status).toBe(ARTIFACT_STATUSES.fresh)
-    expect(result.data.artifact.reception).toBe(RECEPTIONS.praised)
+    expect(result.data.piece.status).toBe(ARTIFACT_STATUSES.fresh)
+    expect(result.data.piece.reception).toBe(RECEPTIONS.praised)
+  })
+})
+
+describe('a performance, judged live', () => {
+  it('the experience takes the verdict, and its status is its own business', () => {
+    const lived = {
+      id: 'e1',
+      kind: 'making',
+      status: 'remembered',
+      tier: MAKING_TIERS.solid,
+      workText: 'a freestyle outside the 7-11',
+      artistText: 'the idea',
+      reception: null,
+      legend: 0,
+    }
+    const result = displayReveal({
+      tuning,
+      player: player(),
+      piece: lived,
+      location: bar,
+      gameTime: at,
+      rng: () => PASS,
+    })
+    expect(result.data.piece).toMatchObject({
+      status: 'remembered',
+      reception: RECEPTIONS.praised,
+      ideaText: 'the idea',
+    })
+  })
+})
+
+describe('fateTick — the world acts on what was left in it', () => {
+  const stolen = tuning.display.fates.find((f) => f.status === ARTIFACT_STATUSES.stolen)
+  const defaced = tuning.display.fates.find((f) => f.status === ARTIFACT_STATUSES.defaced)
+  const onWall = ({
+    id = 'w1',
+    reception = RECEPTIONS.praised,
+    legend = 2,
+    status = ARTIFACT_STATUSES.fresh,
+  } = {}) => ({ ...piece({ id, kind: ARTIFACT_KINDS.fixed, reception, legend }), status })
+  const fate = ({ marks, location = bar, ticksElapsed = 1, rng }) =>
+    fateTick({ tuning, location: { ...location, marks }, ticksElapsed, gameTime: at, rng })
+
+  it('refuses time running backwards', () => {
+    expect(fate({ marks: [], ticksElapsed: -1, rng: () => 0 }).error.code).toBe(
+      DISPLAY_ERROR_CODES.ticksInvalid
+    )
+  })
+
+  it('the first fate whose chance lands takes the piece: stolen is gone and worth more, unnoticed', () => {
+    const result = fate({ marks: [onWall()], rng: () => 0 })
+    expect(result.data.fated).toEqual([{ markId: 'w1', status: ARTIFACT_STATUSES.stolen }])
+    expect(result.data.marks[0]).toMatchObject({
+      status: ARTIFACT_STATUSES.stolen,
+      legend: 2 + stolen.legendBonus,
+      endedBy: { kind: 'fate', id: ARTIFACT_STATUSES.stolen },
+      noticedAtTick: null,
+      updatedAtTick: 9,
+    })
+    expect(fateOf({ tuning, mark: result.data.marks[0] })).toBe(stolen)
+  })
+
+  it('a chance that misses the first fate can land the next: defaced is still up', () => {
+    // A roll past stealing's chance for one tick, under defacing's.
+    const legend = 2
+    const roll = legend * stolen.chancePerTickPerLegend + 0.0001
+    expect(roll).toBeLessThan(legend * defaced.chancePerTickPerLegend)
+    const result = fate({ marks: [onWall({ legend })], rng: () => roll })
+    expect(result.data.fated).toEqual([{ markId: 'w1', status: ARTIFACT_STATUSES.defaced }])
+    expect(result.data.marks[0].legend).toBe(legend + defaced.legendBonus)
+  })
+
+  it('nobody wants what the world has not seen, what has no legend, what is covered, or what hangs where nobody is', () => {
+    const unseen = onWall({ id: 'a', reception: null })
+    const nothing = onWall({ id: 'b', legend: 0 })
+    const covered = onWall({ id: 'c', status: ARTIFACT_STATUSES.covered })
+    expect(fate({ marks: [unseen, nothing, covered], rng: () => 0 }).data.fated).toEqual([])
+    expect(fate({ marks: [onWall()], location: home, rng: () => 0 }).data.fated).toEqual([])
+    expect(fate({ marks: [onWall()], location: nowhere, rng: () => 0 }).data.fated).toEqual([])
+    expect(fateOf({ tuning, mark: onWall() })).toBeNull()
+  })
+
+  it('the chance is per tick per legend, and adds up over ticks', () => {
+    const legend = 2
+    // Past every fate's chance for one tick; over a day, stealing lands.
+    const roll = legend * defaced.chancePerTickPerLegend + 0.0001
+    expect(
+      fate({ marks: [onWall({ legend })], ticksElapsed: 1, rng: () => roll }).data.fated
+    ).toEqual([])
+    expect(
+      fate({ marks: [onWall({ legend })], ticksElapsed: 96, rng: () => roll }).data.fated
+    ).toEqual([{ markId: 'w1', status: ARTIFACT_STATUSES.stolen }])
   })
 })
