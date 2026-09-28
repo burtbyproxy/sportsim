@@ -42,6 +42,8 @@ export const ACT_AUTHOR_KINDS = Object.freeze({
   persona: 'persona',
   // Anyone with this mark, while it is in a fit.
   mark: 'mark',
+  // Anyone with any skill in this medium: an artist in it.
+  skill: 'skill',
 })
 
 /** Whom an act is done to. */
@@ -88,6 +90,8 @@ function authorIs({ act, author }) {
     [ACT_AUTHOR_KINDS.character]: () => author.id === act.author.id,
     [ACT_AUTHOR_KINDS.persona]: () => author.blend?.dominantPersonaId === act.author.id,
     [ACT_AUTHOR_KINDS.mark]: () => markInFit({ act, author }) !== null,
+    [ACT_AUTHOR_KINDS.skill]: () =>
+      Object.values(author.skills?.[act.author.id] ?? {}).some((cell) => (cell?.base ?? 0) > 0),
   }
   return is[act.author.kind]?.() ?? false
 }

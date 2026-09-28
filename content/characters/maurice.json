@@ -133,5 +133,14 @@
       "bias": "park",
       "weight": 0.5
     }
+  },
+  "skills": {
+    "performance": {
+      "sober": {
+        "base": 30,
+        "modifiers": [],
+        "xp": 0
+      }
+    }
   }
 }

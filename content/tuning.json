@@ -348,5 +348,14 @@
         "whereaboutsCode": "work.whereabouts.defaced"
       }
     ]
+  },
+  "community": {
+    "rivalry": {
+      "save": {
+        "stat": "creativity",
+        "dc": 12
+      },
+      "tableId": "obsession"
+    }
   }
 }

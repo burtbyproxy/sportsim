@@ -89,6 +89,8 @@ export function characterCreate(data) {
     dazed: data.dazed ?? 0,
     blend: data.blend ?? blendSober(),
     skills: data.skills ? JSON.parse(JSON.stringify(data.skills)) : {},
+    // What they made, and what came of it: the same records as the player's.
+    experiences: Array.isArray(data.experiences) ? data.experiences.map((e) => ({ ...e })) : [],
     inspirations: data.inspirations ? JSON.parse(JSON.stringify(data.inspirations)) : [],
     // The same psyche as the player's. Content writes a mark as { markId,
     // target }: something that happened to them before the game began.

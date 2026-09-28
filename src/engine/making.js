@@ -182,7 +182,13 @@ function refusalBuild({ player, medium }) {
   return refusal ? refusal.reason : null
 }
 
-function tierFrom(check) {
+/**
+ * How a piece came out, read off its check: the die decides the ends, the
+ * result the middle.
+ * @param {{ check: { success: boolean, criticalSuccess: boolean, criticalFailure: boolean } }} input
+ * @returns {string} a MAKING_TIERS value
+ */
+export function makingTierFrom({ check }) {
   if (check.criticalFailure) return MAKING_TIERS.botched
   if (check.criticalSuccess) return MAKING_TIERS.inspired
   return check.success ? MAKING_TIERS.solid : MAKING_TIERS.rough
@@ -600,7 +606,7 @@ export function makingFinish({
   })
   if (!rolled.ok) return rolled
   const check = rolled.data
-  const tier = tierFrom(check)
+  const tier = makingTierFrom({ check })
 
   const tick = gameTime?.tick ?? 0
   const blend = player.blend ?? blendSober()
@@ -624,6 +630,7 @@ export function makingFinish({
         id: uuidv4(),
         status: fixed ? ARTIFACT_STATUSES.fresh : ARTIFACT_STATUSES.unshown,
         kind: fixed ? ARTIFACT_KINDS.fixed : ARTIFACT_KINDS.portable,
+        makerId: player.id,
         experienceId,
         makingId: making.id,
         mediumId: medium.id,
@@ -651,6 +658,7 @@ export function makingFinish({
     id: experienceId,
     status: EXPERIENCE_STATUS_REMEMBERED,
     kind: 'making',
+    makerId: player.id,
     makingId: making.id,
     inspirationId: inspiration.id,
     mediumId: medium.id,

@@ -35,7 +35,8 @@ import {
 } from '../engine/psyche.js'
 import { SUBJECT_KINDS } from '../engine/acts.js'
 import { cureSessionApply } from '../engine/curing.js'
-import { displayReveal, fateOf, fateTick } from '../engine/display.js'
+import { displayReveal, displayVenue, fateOf, fateTick } from '../engine/display.js'
+import { pieceBeats, pieceMakeByCharacter } from '../engine/community.js'
 import {
   FIGHT_EVENTS,
   FIGHT_SIDES,
@@ -45,6 +46,8 @@ import {
   fightResolve,
 } from '../engine/fight.js'
 import { CHARACTER_ANY } from '../engine/actions.js'
+import { MAKING_TIERS } from '../engine/making.js'
+import { MARK_TARGET_KINDS } from '../engine/psyche.js'
 import { scavengeSearch, scavengedCounterName } from '../engine/scavenge.js'
 import {
   MAKING_SURFACE_KINDS,
@@ -1283,6 +1286,7 @@ export const useGameStore = defineStore('game', {
             known: locationKnown({ player: this.player, locationId: target.id }),
           }).displayInline,
         character: () => this.characters[target.id]?.name,
+        player: () => this.player?.name,
         item: () => this.items[target.id]?.name,
         substance: () => this.substances[target.id]?.display,
         condition: () => this.conditions[target.id]?.display,
@@ -1436,9 +1440,9 @@ export const useGameStore = defineStore('game', {
       if (!this.player) {
         return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
       }
-      const subjects = [this.player, ...Object.values(this.characters)].filter(
-        (subject) => subject && subject.status
-      )
+      // Marks stay with anyone who carries them, a post included: a fixed
+      // character's fits go off too, though with no vitals nothing lurches.
+      const subjects = [this.player, ...Object.values(this.characters)].filter(Boolean)
       const report = { fitsStarted: [], grooves: [] }
       for (const subject of subjects) {
         const isPlayer = subject === this.player
@@ -1778,6 +1782,100 @@ export const useGameStore = defineStore('game', {
         this.player.experiences = this.player.experiences.map((e) => (e.id === pieceId ? shown : e))
       }
       return resultOk({ ...result.data, piece: shown, live, verdictText: words.data.verdictText })
+    },
+
+    /**
+     * Somebody makes something where they are (engine/community.js), and
+     * the world judges it there and then when the world is there. The
+     * piece goes on the place; the experience on them.
+     * @param {{ characterId: string, mediumId: string, rng?: () => number }} input
+     * @returns {{ ok: boolean, data: { artifact: Object|null, experience: Object, tier: string, verdict: { reception: string, text: string }|null }|null, error: Object|null }}
+     */
+    communityMakeApply({ characterId, mediumId, rng = Math.random }) {
+      const character = this.characters[characterId] ?? null
+      const location = this.locations[character?.currentLocationId] ?? null
+      const made = pieceMakeByCharacter({
+        tuning: this.tuning,
+        character,
+        mediumId,
+        mediums: this.mediums,
+        location,
+        voices: this.voices,
+        gameTime: this.time,
+        rng,
+      })
+      if (!made.ok) {
+        return made
+      }
+      let { artifact, experience } = made.data
+      let verdict = null
+      const theWorld = displayVenue({ location }).ok
+      if (theWorld && experience.tier !== MAKING_TIERS.botched) {
+        const judged = displayReveal({
+          tuning: this.tuning,
+          player: character,
+          piece: artifact ?? experience,
+          location,
+          gameTime: this.time,
+          rng,
+        })
+        if (!judged.ok) return judged
+        const text = this.voiceLine({
+          code: `verdict.others.${judged.data.reception}`,
+          params: {
+            name: character.name,
+            work: experience.workText,
+            place: location.displayInline,
+          },
+        })
+        verdict = { reception: judged.data.reception, text }
+        const shown = { ...judged.data.piece, artistText: text }
+        if (artifact) artifact = shown
+        else experience = shown
+      }
+      location.marks = artifact
+        ? made.data.marks.map((m) => (m.id === artifact.id ? artifact : m))
+        : made.data.marks
+      character.experiences = [...(character.experiences ?? []), experience]
+      return resultOk({ artifact, experience, tier: made.data.tier, verdict })
+    },
+
+    /**
+     * Somebody sees somebody else's piece. If it is in their medium and
+     * beats their best, it is a save, once per piece; fail it and the
+     * tables come down to an obsession about the one who made it.
+     * @param {{ who: { kind: string, id: string }, piece: Object, rng?: () => number }} input
+     * @returns {{ ok: boolean, data: { beats: boolean, rolled: boolean, trauma: Object|null }|null, error: Object|null }}
+     */
+    rivalryApply({ who, piece, rng = Math.random }) {
+      const viewer = this.subjectFind({ who })
+      if (!viewer) {
+        return resultFail({
+          code: STORE_ERROR_CODES.subjectUnknown,
+          message: `Nobody to see it: ${who?.kind} '${who?.id}'`,
+          params: { kind: who?.kind ?? '', id: who?.id ?? '' },
+        })
+      }
+      const { beats } = pieceBeats({ viewer, piece })
+      if (!beats) return resultOk({ beats: false, rolled: false, trauma: null })
+      const counterName = `rivalry_${piece.id}`
+      viewer.counters ??= {}
+      if ((viewer.counters[counterName] ?? 0) > 0)
+        return resultOk({ beats: true, rolled: false, trauma: null })
+      counterAdd({ player: viewer, counterName })
+      const makerIsPlayer = piece.makerId === this.player?.id
+      const target = makerIsPlayer
+        ? { kind: MARK_TARGET_KINDS.player, id: this.player.id }
+        : { kind: MARK_TARGET_KINDS.character, id: piece.makerId }
+      const marked = this.subjectTraumaApply({
+        who,
+        trauma: this.tuning.community.rivalry,
+        target,
+        source: { kind: 'piece', id: piece.id },
+        rng,
+      })
+      if (!marked.ok) return marked
+      return resultOk({ beats: true, rolled: true, trauma: marked.data })
     },
 
     /**

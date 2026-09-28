@@ -65,6 +65,7 @@ import {
 } from '../engine/fight.js'
 import { locationBarred } from '../models/location.js'
 import { displayCandidates, displayVenue } from '../engine/display.js'
+import { artistMediumIds } from '../engine/community.js'
 import { randomPickWeighted } from '../utils/random.js'
 import { checkRoll } from '../engine/dice.js'
 import { narrativeAction, narrativeEvent, narrativeLocation } from './useNarrative.js'
@@ -268,8 +269,16 @@ export function useGameLoop({
       if (!keepLog) narrative.clearLog()
       sceneDescribe({ closer: false })
       for (const mark of game.currentLocation.marks ?? []) {
-        if (mark.status === ARTIFACT_STATUSES.fresh) {
+        if (mark.status !== ARTIFACT_STATUSES.fresh) continue
+        if (mark.makerId === game.player.id) {
           voiceEnqueue({ code: 'mark.still_here', params: { work: mark.workText } })
+        } else {
+          // Somebody else's, up on the wall: the scene, and something to chase.
+          voiceEnqueue({
+            code: 'mark.others',
+            params: { name: game.characters[mark.makerId]?.name ?? '', work: mark.workText },
+          })
+          rivalrySee({ piece: mark })
         }
       }
       // What the world did to yours while you were gone: you find out when you look.
@@ -430,6 +439,10 @@ export function useGameLoop({
         rng,
       })
       if (!landed.ok) failureShow(landed)
+    }
+    // Somebody makes something where they are.
+    if (branch.make) {
+      communityMake({ author, mediumId: branch.make.mediumId, seen })
     }
     // Somebody comes at somebody: no squaring off, the author swings first.
     if (branch.fight && recipient) {
@@ -1036,6 +1049,58 @@ export function useGameLoop({
     await tick({ ticks: roundTicks })
   }
 
+  // ── Community ──────────────────────────────────────────────────────────────
+
+  /**
+   * Somebody else makes something. In the room, the player sees it go up
+   * or hears it done, and the world's verdict on it, and may see something
+   * to chase.
+   * @param {{ author: Object, mediumId: string, seen: boolean }} input
+   */
+  function communityMake({ author, mediumId, seen }) {
+    const made = game.communityMakeApply({ characterId: author.id, mediumId, rng })
+    if (!made.ok) return failureShow(made)
+    if (!seen) return
+    const { artifact, experience, verdict } = made.data
+    voiceEnqueue({
+      code: artifact ? 'community.made' : 'community.performed',
+      params: { name: author.name, work: experience.workText },
+    })
+    if (verdict) voiceLiteralEnqueue(verdict.text)
+    rivalrySee({ piece: artifact ?? experience })
+  }
+
+  /**
+   * The player sees somebody else's piece. In their medium, and better
+   * than their best, it is a save, once; what it leaves is said.
+   * @param {{ piece: Object }} input
+   */
+  function rivalrySee({ piece }) {
+    if (!piece || piece.makerId === game.player.id) return
+    const seen = game.rivalryApply({ who: game.playerWho, piece, rng })
+    if (!seen.ok) return failureShow(seen)
+    if (seen.data.trauma) traumaSpeak({ result: seen.data.trauma, quietOnSave: true })
+  }
+
+  /**
+   * Somebody else sees the player's piece: every artist in the room in
+   * that medium. Beaten, they may come away with an obsession about the
+   * player: the fan, or the rival. Nothing is said; the player finds out
+   * from what they do.
+   * @param {{ piece: Object }} input
+   */
+  function rivalrySeen({ piece }) {
+    for (const character of game.charactersAtCurrentLocation) {
+      if (!artistMediumIds({ subject: character }).includes(piece.mediumId)) continue
+      const seen = game.rivalryApply({
+        who: { kind: SUBJECT_KINDS.character, id: character.id },
+        piece,
+        rng,
+      })
+      if (!seen.ok) failureShow(seen)
+    }
+  }
+
   // ── Showing ────────────────────────────────────────────────────────────────
 
   /**
@@ -1100,6 +1165,7 @@ export function useGameLoop({
     voiceLiteralEnqueue(verdictText)
     const toll = game.tuning.display.receptions[reception]?.outcome
     if (toll) outcomeApply({ outcome: toll, source: { kind: 'display', id: pieceId } })
+    rivalrySeen({ piece: result.data.piece })
   }
 
   // ── Curing ─────────────────────────────────────────────────────────────────

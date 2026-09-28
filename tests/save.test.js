@@ -729,6 +729,23 @@ describe('saveMigrate', () => {
     }
   })
 
+  it("a v13 save's pieces were all the player's", () => {
+    const v13 = makeValidSave({ version: 13 })
+    v13.player.id = 'me'
+    v13.player.portfolio = [{ id: 'p1', kind: 'portable', status: 'unshown' }]
+    v13.player.experiences = [{ id: 'e1', kind: 'making', status: 'remembered' }]
+    v13.locations = { bar: { id: 'bar', marks: [{ id: 'm1', kind: 'fixed', status: 'fresh' }] } }
+    const migrated = saveMigrate({ save: v13 })
+    expect(migrated.version).toBe(SAVE_VERSION)
+    for (const piece of [
+      migrated.player.portfolio[0],
+      migrated.player.experiences[0],
+      migrated.locations.bar.marks[0],
+    ]) {
+      expect(piece.makerId).toBe('me')
+    }
+  })
+
   it("a v12 save's performances have had no live verdict", () => {
     const v12 = makeValidSave({ version: 12 })
     v12.player.experiences = [{ id: 'e1', kind: 'making', status: 'remembered', artistText: 'a' }]

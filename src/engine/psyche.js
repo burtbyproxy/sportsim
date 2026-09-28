@@ -57,6 +57,8 @@ export const MARK_STATUSES = Object.freeze({
 export const MARK_TARGET_KINDS = Object.freeze({
   location: 'location',
   character: 'character',
+  // Somebody else's mark about the player: the fan, the rival.
+  player: 'player',
   item: 'item',
   substance: 'substance',
   condition: 'condition',
@@ -134,6 +136,7 @@ function targetPresent({ target, scene }) {
   const present = {
     [MARK_TARGET_KINDS.location]: () => scene.locationId === target.id,
     [MARK_TARGET_KINDS.character]: () => scene.characterIds.includes(target.id),
+    [MARK_TARGET_KINDS.player]: () => scene.playerId === target.id,
     [MARK_TARGET_KINDS.item]: () => inventoryHas({ inventory: scene.inventory, itemId: target.id }),
     [MARK_TARGET_KINDS.substance]: () => (scene.intoxications[target.id] ?? 0) > 0,
     [MARK_TARGET_KINDS.condition]: () => scene.conditionIds.includes(target.id),

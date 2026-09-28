@@ -10,7 +10,7 @@ const SAVE_INDEX_KEY = 'sportsim_saves'
  * Current save format version.
  * Bump this whenever the save shape changes in a breaking way.
  */
-export const SAVE_VERSION = 13
+export const SAVE_VERSION = 14
 
 /**
  * Maximum number of save slots.
@@ -258,6 +258,18 @@ export function saveMigrate({ save }) {
       experience.shownAtLocationId = experience.shownAtLocationId ?? null
     }
     migrated.version = 13
+  }
+  if (migrated.version < 14) {
+    // Every piece so far was the player's; nobody else had made anything.
+    // (A character's experiences start empty on read; nothing to migrate.)
+    const playerId = migrated.player?.id ?? null
+    const pieces = [
+      ...(migrated.player?.portfolio ?? []),
+      ...(migrated.player?.experiences ?? []),
+      ...Object.values(migrated.locations ?? {}).flatMap((location) => location?.marks ?? []),
+    ]
+    for (const piece of pieces) piece.makerId = piece.makerId ?? playerId
+    migrated.version = 14
   }
   return migrated
 }

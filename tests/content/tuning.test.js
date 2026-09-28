@@ -29,6 +29,7 @@ describe('content/tuning.json — the game numbers', () => {
       'narrative',
       'fight',
       'display',
+      'community',
     ]) {
       expect(tuning, section).toHaveProperty(section)
     }
@@ -191,6 +192,15 @@ describe('content/tuning.json — the game numbers', () => {
         fate.whereaboutsCode,
       ])
     }
+  })
+
+  it('the nemesis: a save on a stat that exists, down a table that exists', () => {
+    const { rivalry } = tuning.community
+    const stats = vocabulary.stats.map((s) => s.id)
+    const tableIds = new Set(loadJsonFiles(join(CONTENT_ROOT, 'psyche')).map(({ data }) => data.id))
+    expect(stats).toContain(rivalry.save.stat)
+    expect(rivalry.save.dc).toBeGreaterThan(0)
+    expect(tableIds.has(rivalry.tableId), rivalry.tableId).toBe(true)
   })
 
   it('typing speeds and pauses are ranges, and every pause is one character', () => {

@@ -1,0 +1,25 @@
+{
+  "id": "artist_performs",
+  "display": "A performer performs",
+  "author": {
+    "kind": "skill",
+    "id": "performance"
+  },
+  "trigger": {
+    "kind": "company"
+  },
+  "to": "none",
+  "chancePerTick": 0.05,
+  "check": null,
+  "success": {
+    "outcome": null,
+    "outcomeAuthor": null,
+    "fight": null,
+    "make": {
+      "mediumId": "performance"
+    },
+    "lineCode": "act.artist_performs",
+    "lineCodeOthers": null
+  },
+  "failure": null
+}
