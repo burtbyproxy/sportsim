@@ -712,6 +712,23 @@ describe('saveMigrate', () => {
     expect(migrated.player.psyche.marks[0].status).toBe('active')
   })
 
+  it("a v11 save's pieces, carried or on a wall, have had no verdict", () => {
+    const v11 = makeValidSave({ version: 11 })
+    v11.player.portfolio = [{ id: 'p1', kind: 'portable', status: 'unshown', artistText: 'a' }]
+    v11.locations = { bar: { id: 'bar', marks: [{ id: 'm1', kind: 'fixed', status: 'fresh' }] } }
+    const migrated = saveMigrate({ save: v11 })
+    expect(migrated.version).toBe(SAVE_VERSION)
+    for (const piece of [migrated.player.portfolio[0], migrated.locations.bar.marks[0]]) {
+      expect(piece).toMatchObject({
+        reception: null,
+        legend: 0,
+        ideaText: null,
+        shownAtTick: null,
+        shownAtLocationId: null,
+      })
+    }
+  })
+
   it('a v10 save gives the player a fight record with nothing in it', () => {
     const v10 = makeValidSave({ version: 10 })
     delete v10.player.fights
