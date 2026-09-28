@@ -44,7 +44,12 @@ import {
   archetypeScoreAdd,
   counterAdd,
 } from '../models/player.js'
-import { MAKING_SURFACE_KINDS, ARTIFACT_STATUSES, makingOptions } from '../engine/making.js'
+import {
+  MAKING_SURFACE_KINDS,
+  ARTIFACT_KINDS,
+  ARTIFACT_STATUSES,
+  makingOptions,
+} from '../engine/making.js'
 import { eventsRandomCheck, eventsTriggeredCheck, eventResolve } from '../engine/events.js'
 import { actionMisperceived, locationKnown } from '../engine/perception.js'
 import { MARK_TARGET_KINDS, psycheAvoids } from '../engine/psyche.js'
@@ -58,6 +63,7 @@ import {
   fightOffer,
 } from '../engine/fight.js'
 import { locationBarred } from '../models/location.js'
+import { displayCandidates, displayVenue } from '../engine/display.js'
 import { randomPickWeighted } from '../utils/random.js'
 import { checkRoll } from '../engine/dice.js'
 import { narrativeAction, narrativeEvent, narrativeLocation } from './useNarrative.js'
@@ -1021,6 +1027,72 @@ export function useGameLoop({
     await tick({ ticks: roundTicks })
   }
 
+  // ── Showing ────────────────────────────────────────────────────────────────
+
+  /**
+   * The menu while the player is choosing which piece to put up, or null:
+   * every carried piece the world has not seen, and a way out.
+   * @returns {Object[]|null}
+   */
+  function displayMenuBuild() {
+    if (!game.displayPicker) return null
+    const candidates = displayCandidates({ player: game.player })
+    if (candidates.length === 0 || !displayVenue({ location: game.currentLocation }).ok) {
+      game.displayPickerSet({ picker: null })
+      return null
+    }
+    return [
+      ...candidates.map((artifact) =>
+        makingEntry({
+          id: `display_piece_${artifact.id}`,
+          label: game.voiceLine({
+            code: 'menu.display.piece',
+            params: { work: artifact.workText },
+          }),
+          kind: 'display_piece',
+          timeCost: game.tuning.display.ticks,
+          data: { artifactId: artifact.id },
+        })
+      ),
+      makingEntry({
+        id: 'display_cancel',
+        label: game.voiceLine({ code: 'menu.display.cancel' }),
+        kind: 'display_cancel',
+      }),
+    ]
+  }
+
+  /**
+   * An entry on the showing menu: out, or the piece picked goes up.
+   * @param {Object} entry
+   */
+  async function displayEntryResolve(entry) {
+    game.displayPickerSet({ picker: null })
+    if (entry.kind === 'display_piece') {
+      displayReveal({ artifactId: entry.artifactId })
+      await tick({ ticks: game.tuning.display.ticks })
+      return
+    }
+    refreshActions()
+  }
+
+  /**
+   * The verdict, once: the world's words replace the artist's, the check
+   * trains the stat it was judged on, and what the reception does to the
+   * player lands like any outcome. Mocked in front of strangers is the
+   * kind of thing that stays with you.
+   * @param {{ artifactId: string }} input
+   */
+  function displayReveal({ artifactId }) {
+    const result = game.displayRevealApply({ artifactId, rng })
+    if (!result.ok) return failureShow(result)
+    const { reception, check, verdictText } = result.data
+    checkTrain(check)
+    voiceLiteralEnqueue(verdictText)
+    const toll = game.tuning.display.receptions[reception]?.outcome
+    if (toll) outcomeApply({ outcome: toll, source: { kind: 'display', id: artifactId } })
+  }
+
   // ── Curing ─────────────────────────────────────────────────────────────────
 
   /**
@@ -1163,6 +1235,14 @@ export function useGameLoop({
     voiceLiteralEnqueue(finished.data.experience.artistText)
     if (finished.data.markIdsCovered.length > 0) voiceEnqueue({ code: 'making.covered' })
     if (finished.data.encore) voiceEnqueue({ code: 'making.encore' })
+    // A wall in front of the world is a showing: the room sees it go up.
+    const wall = finished.data.artifact
+    if (
+      wall?.kind === ARTIFACT_KINDS.fixed &&
+      displayVenue({ location: game.currentLocation }).ok
+    ) {
+      displayReveal({ artifactId: wall.id })
+    }
     refreshActions()
   }
 
@@ -1252,6 +1332,10 @@ export function useGameLoop({
       await fightEntryResolve(action)
       return
     }
+    if (action.kind?.startsWith('display_')) {
+      await displayEntryResolve(action)
+      return
+    }
 
     // The player took the place, or the face, for something it isn't. What
     // they reached for is not here; the act runs into what is, and reality
@@ -1306,6 +1390,13 @@ export function useGameLoop({
     // Walking in costs no time: the menu becomes what the cure can work on.
     if (action.kind === ACTION_KINDS.cure) {
       game.curePickerSet({ picker: { actionId: action.id } })
+      refreshActions()
+      return
+    }
+
+    // Looking for a spot costs no time: the menu becomes what could go up.
+    if (action.kind === ACTION_KINDS.display) {
+      game.displayPickerSet({ picker: { actionId: action.id } })
       refreshActions()
       return
     }
@@ -1475,6 +1566,11 @@ export function useGameLoop({
     const cureMenu = cureMenuBuild()
     if (cureMenu) {
       game.menuActionsSet({ actions: cureMenu })
+      return
+    }
+    const displayMenu = displayMenuBuild()
+    if (displayMenu) {
+      game.menuActionsSet({ actions: displayMenu })
       return
     }
 

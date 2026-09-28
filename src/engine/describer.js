@@ -121,3 +121,42 @@ export function pieceDescribe({
     personaId: artist.data.personaId,
   })
 }
+
+/**
+ * What the world saw, in the voice of whoever is in charge of the one who
+ * made it: the verdict on a piece, by how it was received and how it came
+ * out. Written once.
+ *
+ * @param {{
+ *   reception: string,
+ *   tier: string,
+ *   workText: string,
+ *   place: string,
+ *   personaId: string,
+ *   voices: Object<string, Object>,
+ * }} input
+ * @returns {{ ok: boolean, data: { verdictText: string, personaId: string }|null, error: Object|null }}
+ */
+export function pieceVerdict({ reception, tier, workText, place, personaId, voices }) {
+  if (!Object.values(MAKING_TIERS).includes(tier)) {
+    return resultFail({
+      code: DESCRIBER_ERROR_CODES.tierUnknown,
+      message: `No tier '${tier}'`,
+      params: { tier },
+    })
+  }
+  const line = voiceLine({
+    code: `verdict.${reception}.${tier}`,
+    personaId,
+    voices,
+    params: { work: workText, place },
+  })
+  if (!line.ok) {
+    return resultFail({
+      code: DESCRIBER_ERROR_CODES.lineMissing,
+      message: `No line for verdict.${reception}.${tier}`,
+      params: { code: `verdict.${reception}.${tier}` },
+    })
+  }
+  return resultOk({ verdictText: line.data.text, personaId: line.data.personaId })
+}

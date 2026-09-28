@@ -89,9 +89,14 @@ export const ARTIFACT_KINDS = Object.freeze({
   fixed: 'fixed',
 })
 
-/** Every state an artifact can be in so far. Showing and the weather come later. */
+/**
+ * Every state an artifact can be in. A carried piece is unshown until it
+ * has had its verdict (engine/display.js), then shown; a piece on a wall
+ * is fresh until something goes over it. The weather comes later.
+ */
 export const ARTIFACT_STATUSES = Object.freeze({
   unshown: 'unshown',
+  shown: 'shown',
   fresh: 'fresh',
   covered: 'covered',
 })
@@ -626,6 +631,12 @@ export function makingFinish({
         madeAtLocationId: location.id,
         workText: '',
         artistText: '',
+        // The world's verdict (engine/display.js): written once, when shown.
+        reception: null,
+        legend: 0,
+        ideaText: null,
+        shownAtTick: null,
+        shownAtLocationId: null,
         endedBy: null,
         createdAtTick: tick,
         updatedAtTick: tick,

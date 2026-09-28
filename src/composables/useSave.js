@@ -10,7 +10,7 @@ const SAVE_INDEX_KEY = 'sportsim_saves'
  * Current save format version.
  * Bump this whenever the save shape changes in a breaking way.
  */
-export const SAVE_VERSION = 11
+export const SAVE_VERSION = 12
 
 /**
  * Maximum number of save slots.
@@ -232,6 +232,21 @@ export function saveMigrate({ save }) {
     // is rebuilt from content on load, so that needs no migrating.)
     if (migrated.player) migrated.player.fights = migrated.player.fights ?? []
     migrated.version = 11
+  }
+  if (migrated.version < 12) {
+    // No piece had had its verdict yet: carried or on a wall, all unshown.
+    const pieces = [
+      ...(migrated.player?.portfolio ?? []),
+      ...Object.values(migrated.locations ?? {}).flatMap((location) => location?.marks ?? []),
+    ]
+    for (const piece of pieces) {
+      piece.reception = piece.reception ?? null
+      piece.legend = piece.legend ?? 0
+      piece.ideaText = piece.ideaText ?? null
+      piece.shownAtTick = piece.shownAtTick ?? null
+      piece.shownAtLocationId = piece.shownAtLocationId ?? null
+    }
+    migrated.version = 12
   }
   return migrated
 }

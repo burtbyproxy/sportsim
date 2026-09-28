@@ -35,6 +35,7 @@ import {
 } from '../engine/psyche.js'
 import { SUBJECT_KINDS } from '../engine/acts.js'
 import { cureSessionApply } from '../engine/curing.js'
+import { displayReveal } from '../engine/display.js'
 import {
   FIGHT_EVENTS,
   FIGHT_SIDES,
@@ -56,7 +57,7 @@ import {
   makingAbandon,
   marksCover,
 } from '../engine/making.js'
-import { pieceDescribe } from '../engine/describer.js'
+import { pieceDescribe, pieceVerdict } from '../engine/describer.js'
 import { gameStart, gameRoundResolve, gameScore } from '../engine/minigame.js'
 import { skillEffective } from '../engine/skills.js'
 import { inventoryAdd, inventoryRemove, modifierAdd, counterAdd } from '../models/player.js'
@@ -193,6 +194,12 @@ export const useGameStore = defineStore('game', {
      * null: { actionId }. Not saved: a load lands on the ordinary menu.
      */
     curePicker: null,
+
+    /**
+     * The showing menu while the player is choosing which piece to put up,
+     * or null: { actionId }. Not saved: a load lands on the ordinary menu.
+     */
+    displayPicker: null,
 
     /** Actions currently available at this location */
     availableActions: [],
@@ -400,8 +407,12 @@ export const useGameStore = defineStore('game', {
         const place = state.locations[experience.locationId]
         const mark = (place?.marks ?? []).find((m) => m.id === experience.artifactId)
         let code = 'work.whereabouts.none'
-        if (portfolio.some((a) => a.id === experience.artifactId)) {
-          code = 'work.whereabouts.carried'
+        const carried = portfolio.find((a) => a.id === experience.artifactId)
+        if (carried) {
+          code =
+            carried.status === ARTIFACT_STATUSES.shown
+              ? 'work.whereabouts.carried.shown'
+              : 'work.whereabouts.carried'
         } else if (mark) {
           code =
             mark.status === ARTIFACT_STATUSES.fresh
@@ -414,10 +425,12 @@ export const useGameStore = defineStore('game', {
           voices: state.voices,
           params: { place: place?.display ?? '' },
         })
+        // Once shown, the piece reads as the world read it; the idea is story.
+        const piece = carried ?? mark
         return {
           id: experience.id,
           workText: experience.workText,
-          artistText: experience.artistText,
+          artistText: piece?.artistText ?? experience.artistText,
           whereabouts: line.ok ? line.data.text : `[${code}]`,
         }
       })
@@ -465,6 +478,7 @@ export const useGameStore = defineStore('game', {
       this.characterSelectedId = null
       this.makingPicker = null
       this.curePicker = null
+      this.displayPicker = null
       this.perception = { locationId: null, band: 0, distortions: [] }
       this.isRunning = true
       this.blendRefresh()
@@ -1705,6 +1719,60 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
+     * Open or close the showing menu.
+     * @param {{ picker: { actionId: string }|null }} input
+     */
+    displayPickerSet({ picker }) {
+      this.displayPicker = picker
+    },
+
+    /**
+     * A piece goes up in front of the world here: carried, or on this
+     * place's wall (engine/display.js). The verdict is written onto the
+     * piece in the voice of whoever is in charge, and the artist's text
+     * gives way to it; the idea survives as story.
+     * @param {{ artifactId: string, rng?: () => number }} input
+     * @returns {{ ok: boolean, data: Object|null, error: Object|null }} the display engine's result, with the verdict's words
+     */
+    displayRevealApply({ artifactId, rng = Math.random }) {
+      if (!this.player) {
+        return resultFail({ code: STORE_ERROR_CODES.playerMissing, message: 'No player' })
+      }
+      const location = this.currentLocation
+      const carried = (this.player.portfolio ?? []).find((a) => a.id === artifactId) ?? null
+      const onWall = (location?.marks ?? []).find((a) => a.id === artifactId) ?? null
+      const result = displayReveal({
+        tuning: this.tuning,
+        player: this.player,
+        artifact: carried ?? onWall,
+        location,
+        gameTime: this.time,
+        rng,
+      })
+      if (!result.ok) {
+        return result
+      }
+      const words = pieceVerdict({
+        reception: result.data.reception,
+        tier: result.data.artifact.tier,
+        workText: result.data.artifact.workText,
+        place: location.displayInline,
+        personaId: this.personaInCharge,
+        voices: this.voices,
+      })
+      if (!words.ok) {
+        return words
+      }
+      const shown = { ...result.data.artifact, artistText: words.data.verdictText }
+      if (carried) {
+        this.player.portfolio = this.player.portfolio.map((a) => (a.id === artifactId ? shown : a))
+      } else {
+        location.marks = location.marks.map((a) => (a.id === artifactId ? shown : a))
+      }
+      return resultOk({ ...result.data, artifact: shown, verdictText: words.data.verdictText })
+    },
+
+    /**
      * A session of a cure on one of the player's marks: it counts, or it
      * sets back, and the count reached is the cure (engine/curing.js).
      * @param {{ cureId: string, markInstanceId: string, succeeded: boolean }} input
@@ -1954,6 +2022,7 @@ export const useGameStore = defineStore('game', {
       this.activeEvent = save.activeEvent ?? null
       this.makingPicker = null
       this.curePicker = null
+      this.displayPicker = null
       this.perception = { locationId: null, band: 0, distortions: [] }
       this.isRunning = true
       this.blendRefresh()
@@ -1973,6 +2042,7 @@ export const useGameStore = defineStore('game', {
       this.characterSelectedId = null
       this.makingPicker = null
       this.curePicker = null
+      this.displayPicker = null
       this.perception = { locationId: null, band: 0, distortions: [] }
       this.isRunning = false
       this.time = null
