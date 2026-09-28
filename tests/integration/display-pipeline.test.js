@@ -185,6 +185,82 @@ describe('a wall in front of the world', () => {
   })
 })
 
+describe('a performance, judged live', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  async function pick({ text, game, loop }) {
+    const found = game.availableActions.find((a) => a.label.includes(text))
+    expect(found, `no menu entry containing '${text}'`).toBeTruthy()
+    await loop.resolvePlayerAction(found)
+  }
+
+  it('leaves nothing but the doing, and the doing gets its verdict at the finish, from the room', async () => {
+    const { game, narrative, loop } = startGame({ at: 'blue_parrot', values: [PASS] })
+    game.player.stats.reputation.base = 30
+    game.inspirationStrikeApply({
+      source: { kind: 'event', id: 'test' },
+      mediumId: 'performance',
+      strength: 60,
+      ticksTotal: 6,
+    })
+    loop.onLocationEntered()
+    await pick({ text: 'Make something', game, loop })
+    await pick({ text: 'Performance: the corner by the jukebox', game, loop })
+    await pick({ text: 'Bow', game, loop })
+    const entries = await narrativeSettle({ narrative })
+
+    const lived = game.player.experiences[0]
+    expect(game.player.portfolio).toHaveLength(0)
+    expect(lived.reception).toBe(RECEPTIONS.praised)
+    expect(lived.legend).toBe(tuning.display.legend.praised)
+    const verdict = textFill({
+      text: sober(`verdict.live.${RECEPTIONS.praised}.${lived.tier}`),
+      params: {
+        work: lived.workText,
+        place: locations.find((l) => l.id === 'blue_parrot').displayInline,
+      },
+    })
+    expect(lived.artistText).toBe(verdict)
+    expect(entries).toContain(verdict)
+  })
+})
+
+describe('the world acts on what was left in it', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  it('a shown piece with legend on a wall goes while you are away, and you find out when you look', async () => {
+    // Every chance lands, so the first fate takes it: stolen. The park never closes.
+    const { game, narrative, loop } = startGame({ at: 'columbia_park', values: [0] })
+    const onWall = {
+      ...carried({ game, id: 'wall1' }),
+      kind: ARTIFACT_KINDS.fixed,
+      status: ARTIFACT_STATUSES.fresh,
+      reception: RECEPTIONS.praised,
+      legend: 2,
+      surfaceKind: 'location',
+      surfaceId: 'under_the_firs',
+    }
+    game.player.portfolio = []
+    game.player.experiences[0].locationId = 'columbia_park'
+    const park = () => game.locations.columbia_park.marks[0]
+    game.locations.columbia_park.marks = [onWall]
+    await loop.travel({ locationId: 'moms_house' })
+    await loop.tick({ ticks: 1 })
+    expect(park().status).toBe(ARTIFACT_STATUSES.stolen)
+    expect(park().noticedAtTick).toBeNull()
+
+    await loop.travel({ locationId: 'columbia_park' })
+    const entries = await narrativeSettle({ narrative })
+    expect(entries).toContain(
+      textFill({ text: sober('mark.stolen'), params: { work: onWall.workText } })
+    )
+    expect(park().noticedAtTick).not.toBeNull()
+    expect(game.playerWorks[0].whereabouts).toBe(sober('work.whereabouts.stolen'))
+  })
+})
+
 describe('the verdict', () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())

@@ -729,6 +729,18 @@ describe('saveMigrate', () => {
     }
   })
 
+  it("a v12 save's performances have had no live verdict", () => {
+    const v12 = makeValidSave({ version: 12 })
+    v12.player.experiences = [{ id: 'e1', kind: 'making', status: 'remembered', artistText: 'a' }]
+    const migrated = saveMigrate({ save: v12 })
+    expect(migrated.version).toBe(SAVE_VERSION)
+    expect(migrated.player.experiences[0]).toMatchObject({
+      reception: null,
+      legend: 0,
+      ideaText: null,
+    })
+  })
+
   it('a v10 save gives the player a fight record with nothing in it', () => {
     const v10 = makeValidSave({ version: 10 })
     delete v10.player.fights
