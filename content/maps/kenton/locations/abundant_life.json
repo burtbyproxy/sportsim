@@ -61,5 +61,9 @@
     "closeHour": 20,
     "closedMessage": "The church doors are closed. The light in the pastor's office is on."
   },
-  "visitCount": 0
+  "visitCount": 0,
+  "venue": {
+    "audience": "strangers",
+    "dc": 9
+  }
 }

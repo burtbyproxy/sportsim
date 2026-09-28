@@ -61,5 +61,9 @@
     "closeHour": 17,
     "closedMessage": "Lombard Dental is closed. Your tooth will keep until morning."
   },
-  "visitCount": 0
+  "visitCount": 0,
+  "venue": {
+    "audience": "strangers",
+    "dc": 11
+  }
 }

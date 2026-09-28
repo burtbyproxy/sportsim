@@ -67,5 +67,9 @@
     "closeHour": 23,
     "closedMessage": null
   },
-  "visitCount": 0
+  "visitCount": 0,
+  "venue": {
+    "audience": "friends",
+    "dc": 5
+  }
 }

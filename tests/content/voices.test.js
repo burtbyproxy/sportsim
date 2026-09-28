@@ -10,6 +10,16 @@ describe('content/voices/*.json — Voice catalog contract', () => {
   const files = loadJsonFiles(dir)
   const sober = files.find(({ data }) => data.id === 'sober')
 
+  it('the sober voice has a verdict for every reception at every tier a piece can come out', () => {
+    for (const reception of ['praised', 'ignored', 'mocked']) {
+      for (const tier of ['inspired', 'solid', 'rough']) {
+        expect(sober.data.lines, `verdict.${reception}.${tier}`).toHaveProperty([
+          `verdict.${reception}.${tier}`,
+        ])
+      }
+    }
+  })
+
   it('content/voices/ directory exists and has a sober catalog', () => {
     expect(existsSync(dir)).toBe(true)
     expect(sober, 'content/voices/sober.json is the fallback for every line').toBeTruthy()

@@ -61,5 +61,9 @@
     "closeHour": 18,
     "closedMessage": "All That Glitters is closed. The mannequin remains."
   },
-  "visitCount": 0
+  "visitCount": 0,
+  "venue": {
+    "audience": "strangers",
+    "dc": 14
+  }
 }

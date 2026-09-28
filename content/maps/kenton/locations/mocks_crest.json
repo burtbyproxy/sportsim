@@ -73,5 +73,9 @@
     "closeHour": 2,
     "closedMessage": "Mock's Crest is closed. The elk is unavailable."
   },
-  "visitCount": 0
+  "visitCount": 0,
+  "venue": {
+    "audience": "strangers",
+    "dc": 12
+  }
 }

@@ -90,5 +90,9 @@
     "closeHour": 2,
     "closedMessage": "The Blue Parrot is dark. Even parrots sleep."
   },
-  "visitCount": 0
+  "visitCount": 0,
+  "venue": {
+    "audience": "strangers",
+    "dc": 12
+  }
 }

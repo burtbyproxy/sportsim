@@ -25,6 +25,7 @@ describe('content/tuning.json — the game numbers', () => {
       'simulation',
       'narrative',
       'fight',
+      'display',
     ]) {
       expect(tuning, section).toHaveProperty(section)
     }
@@ -140,6 +141,29 @@ describe('content/tuning.json — the game numbers', () => {
     expect(fight.knockout.hours).toBeGreaterThan(0)
     expect(Array.isArray(fight.barred.locationTypes)).toBe(true)
     expect(fight.barred.hours).toBeGreaterThan(0)
+  })
+
+  it('the verdict: judged on a stat that exists, bent by how the piece came out, with every reception an outcome', () => {
+    const { display } = tuning
+    const stats = vocabulary.stats.map((s) => s.id)
+    const writable = vocabulary.statuses.filter((s) => s.writable).map((s) => s.id)
+    expect(stats).toContain(display.stat)
+    expect(display.ticks).toBeGreaterThanOrEqual(1)
+    for (const tier of ['inspired', 'solid', 'rough']) {
+      expect(isNumber(display.tierModifiers[tier]), `tierModifiers.${tier}`).toBe(true)
+    }
+    for (const reception of ['praised', 'ignored', 'mocked']) {
+      expect(isNumber(display.legend[reception]), `legend.${reception}`).toBe(true)
+      const outcome = display.receptions[reception]?.outcome
+      expect(outcome, `receptions.${reception}.outcome`).toBeTruthy()
+      for (const key of Object.keys(outcome.statusChanges ?? {})) {
+        expect(writable, `${reception}.statusChanges.${key}`).toContain(key)
+      }
+      for (const key of Object.keys(outcome.statChanges ?? {})) {
+        expect(stats, `${reception}.statChanges.${key}`).toContain(key)
+      }
+    }
+    expect(display.legend.praised).toBeGreaterThan(display.legend.mocked)
   })
 
   it('typing speeds and pauses are ranges, and every pause is one character', () => {

@@ -61,5 +61,9 @@
     "closeHour": 21,
     "closedMessage": "The Oregon Liquor Control Commission has closed this location for the night."
   },
-  "visitCount": 0
+  "visitCount": 0,
+  "venue": {
+    "audience": "strangers",
+    "dc": 15
+  }
 }

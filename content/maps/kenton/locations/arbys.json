@@ -67,5 +67,9 @@
     "closeHour": 23,
     "closedMessage": "Arby's is closed. The curly fries will have to wait."
   },
-  "visitCount": 0
+  "visitCount": 0,
+  "venue": {
+    "audience": "strangers",
+    "dc": 13
+  }
 }
