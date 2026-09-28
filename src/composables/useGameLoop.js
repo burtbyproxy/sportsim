@@ -1728,7 +1728,7 @@ export function useGameLoop({
       label: textFill({ text: way.label, params: { place: place.displayInline } }),
     }
     const blocked = (unavailableReason) => ({ ...exit, available: false, unavailableReason })
-    if (game.makingActive) {
+    if (game.makingActive || game.fightActive) {
       return blocked(game.requirementReason({ code: REQUIREMENT_CODES.busy }))
     }
     // 86'd: they can see the way, and the door is not theirs for a while, open or not.

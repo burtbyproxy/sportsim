@@ -119,6 +119,18 @@ describe('starting something', () => {
     )
   })
 
+  it('squaring off holds you where you are: the ways out are greyed, and walking away is the choice', async () => {
+    const { game, loop } = startGame()
+    await squareUp({ game, loop })
+    for (const exit of game.availableExits) {
+      expect(exit.available, exit.label).toBe(false)
+      expect(exit.unavailableReason).toBe(sober('requirement.busy'))
+    }
+    await loop.travel({ locationId: game.availableExits[0].locationId })
+    expect(game.currentLocationId).toBe('mocks_crest')
+    expect(game.fightActive).not.toBeNull()
+  })
+
   it('walking away ends it with nobody winning, costs what the fight says, and no bar minds', async () => {
     const { game, narrative, loop } = startGame()
     await squareUp({ game, loop })
