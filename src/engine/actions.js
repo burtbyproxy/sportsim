@@ -8,6 +8,7 @@ import { inspirationActive } from './inspiration.js'
 import { inventoryHas } from './items.js'
 import { MARK_STATUSES, psycheDraw } from './psyche.js'
 import { cureCandidates } from './curing.js'
+import { displayCandidates, displayVenue } from './display.js'
 import { moneyFormat } from '../utils/money.js'
 import { listSortBy } from '../utils/list.js'
 
@@ -33,6 +34,8 @@ export const REQUIREMENT_CODES = Object.freeze({
   closed: 'requirement.closed',
   cureNone: 'requirement.cure.none',
   barred: 'requirement.barred',
+  displayNone: 'requirement.display.none',
+  displayVenue: 'requirement.display.venue',
 })
 
 const MET = Object.freeze({ meets: true, reasonCode: null, reasonParams: {} })
@@ -57,6 +60,15 @@ export function requirementsMeet({
   marks = {},
   cures = {},
 }) {
+  // Nothing to show, or nobody here to show it to, is a door to nowhere.
+  if (action.kind === ACTION_KINDS.display) {
+    if (displayCandidates({ player }).length === 0) {
+      return refuse({ reasonCode: REQUIREMENT_CODES.displayNone })
+    }
+    if (!displayVenue({ location }).ok) {
+      return refuse({ reasonCode: REQUIREMENT_CODES.displayVenue })
+    }
+  }
   // A cure with nothing to work on is a door to nowhere.
   if (action.kind === ACTION_KINDS.cure) {
     const cure = cures[action.cureId]
@@ -166,6 +178,8 @@ export const ACTION_KINDS = Object.freeze({
   cure: 'cure',
   // Starting something with somebody (content/fights): the menu becomes the squaring off.
   fight: 'fight',
+  // Putting a piece up in front of the world (engine/display.js): the menu becomes what could be shown.
+  display: 'display',
 })
 
 /** An action about whoever the player has picked out, not a named person. */

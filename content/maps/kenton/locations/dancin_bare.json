@@ -61,5 +61,9 @@
     "closeHour": 2,
     "closedMessage": "The Dancin' Bare is dark. No steak bites tonight."
   },
-  "visitCount": 0
+  "visitCount": 0,
+  "venue": {
+    "audience": "strangers",
+    "dc": 13
+  }
 }

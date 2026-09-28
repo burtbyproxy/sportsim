@@ -61,5 +61,9 @@
     "closeHour": 2,
     "closedMessage": "The Mouse Trap is closed. Or the bartender is in jail again. Same thing."
   },
-  "visitCount": 0
+  "visitCount": 0,
+  "venue": {
+    "audience": "strangers",
+    "dc": 11
+  }
 }

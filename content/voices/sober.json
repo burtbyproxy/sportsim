@@ -161,6 +161,20 @@
     "fight.knockout.others": "{first} goes down and stays down. The room goes quiet the way it does when it's just got a story.",
     "fight.watched": "You didn't do anything. You watched. Something about watching gets in.",
     "act.grudge_swings.you": "{author} has stopped talking about {target}. {author} is coming over.",
-    "act.grudge_swings.them": "{author} has stopped talking about {target} and started walking at {recipient}."
+    "act.grudge_swings.them": "{author} has stopped talking about {target} and started walking at {recipient}.",
+    "requirement.display.none": "You've got nothing to put up that the world hasn't already seen.",
+    "requirement.display.venue": "Not here. These people would say it's great. That's how you know they don't count.",
+    "menu.display.piece": "{work}",
+    "menu.display.cancel": "Keep it to yourself",
+    "work.whereabouts.carried.shown": "with you, and seen",
+    "verdict.praised.inspired": "{work} goes up {place} and the room actually stops. Somebody says a word you'll be trying to hear again for the rest of your life. It's not yours anymore. It's better than yours.",
+    "verdict.praised.solid": "{work} goes up {place} and somebody nods. A real nod, the slow kind. You'd forgotten those existed. It's theirs now, and it's fine.",
+    "verdict.praised.rough": "{work} goes up {place} and somebody likes it, for a reason you didn't put in it. You take the reason. It's a better piece than you made.",
+    "verdict.ignored.inspired": "{work} goes up {place} and the room goes on. Nobody sees what you saw. You can see it, still, but now you can also see them not seeing it, and that's the version that sticks.",
+    "verdict.ignored.solid": "{work} goes up {place} and stays up, and nobody says anything, and it becomes part of the wall, which is what most things become.",
+    "verdict.ignored.rough": "{work} goes up {place}. A man looks at it for one second on the way to the bathroom. That second is the whole review.",
+    "verdict.mocked.inspired": "{work} goes up {place} and somebody laughs, and then explains it to the person next to them, wrong, and the wrong version is what everyone hears. That's what it is now.",
+    "verdict.mocked.solid": "{work} goes up {place} and a stranger does a voice about it. A voice. It's a good voice. It's yours now, forever, the thing people do when you come in.",
+    "verdict.mocked.rough": "{work} goes up {place} and the room decides, fast, together, the way rooms do. You hear your own name in it. Not said to you. Said about you."
   }
 }

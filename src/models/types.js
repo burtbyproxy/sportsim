@@ -80,6 +80,7 @@
  * @property {Object[]} surfaces
  * @property {Object[]} marks
  * @property {number} barredUntilTick - 86'd until this tick; 0 is welcome
+ * @property {{ audience: string, dc: number }|null} venue - who sees a piece shown here, and how hard they are to impress
  */
 
 /**

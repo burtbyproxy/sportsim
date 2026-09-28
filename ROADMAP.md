@@ -5,11 +5,31 @@ a framework that takes content over time: each item below lands as a generic
 mechanism plus content, never a one-off. What already shipped is in the git
 history and the release tags.
 
-## Next: whatever Steve says
+## Next: story and legend
 
-The battle plan is built and shipped, all four steps. NPCs getting
-themselves help is parked with its design (a lot of friction, like
-losing weight). The art system's parked items stand.
+Art is the whole point. Display and reveal shipped (below); the next art
+unit is story and legend: ingredients that add story, techniques known
+per persona, pieces that sell on story times legend, and telling the
+story as an action where the story changes. Then the real-time games
+for painting and drawing, which need a new UI component.
+
+NPCs getting themselves help is parked with its design (a lot of
+friction, like losing weight).
+
+## Shipped: 0.26.0 — display and reveal
+
+Making produces only the artist's text. What anybody else sees is
+written once, when the piece goes up in front of strangers, and never
+again. Every place says who is there to see it (`venue`): strangers are
+the world, friends are not, so a piece shown at mom's is not shown. Put
+something up and the menu becomes what could go up; the verdict is a
+check of your standing against the venue, bent by how the piece came
+out, and reads praised, ignored or mocked, in the voice of whoever is in
+charge. Showing transforms the piece: the world's words replace the
+artist's and the idea survives only as story. Legend lands on the piece,
+which is what it will one day sell on. Mocked in front of strangers is
+the kind of thing that stays with you. A wall in front of the world
+shows itself the moment it goes up.
 
 ## Shipped: 0.25.0 — who fights, and how each persona squares off
 
@@ -130,8 +150,6 @@ Agreed direction, not scheduled:
 
 - Real-time games for painting and drawing (a timing bar, flash recall).
   They need a new UI component.
-- Display and reveal: the world's verdict on a piece is written once, the
-  first time it goes up in front of strangers.
 - Story and legend: techniques known per persona, ingredients that add
   story, pieces that sell on story × legend, and telling the story as an
   action where the story changes.

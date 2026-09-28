@@ -49,6 +49,9 @@ export function locationCreate(data) {
     marks: Array.isArray(data.marks) ? data.marks.map((m) => ({ ...m })) : [],
     // 86'd: the tick until which the player is not welcome back. 0 is welcome.
     barredUntilTick: data.barredUntilTick ?? 0,
+    // Who is here to see a piece go up, and how hard they are to impress
+    // (engine/display.js): { audience, dc }, or null for nobody at all.
+    venue: data.venue ? { ...data.venue } : null,
   }
 }
 

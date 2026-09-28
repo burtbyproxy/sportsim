@@ -1,0 +1,50 @@
+[
+  {
+    "id": "show_something",
+    "label": "Put something up",
+    "locationId": "any",
+    "kind": "display",
+    "displayId": null,
+    "timeCost": 0,
+    "requirements": {
+      "minStats": null,
+      "requiredItems": null,
+      "minSobriety": null,
+      "maxSobriety": null,
+      "minHour": null,
+      "maxHour": null,
+      "minVisits": null,
+      "minMoney": null,
+      "requiredAbilities": null,
+      "requiredMarkIds": null
+    },
+    "check": null,
+    "success": {
+      "narrative": {
+        "tokens": [
+          {
+            "text": "You look for a spot. There's always a spot. The question was never the spot.",
+            "style": "normal",
+            "color": null,
+            "speed": "normal",
+            "pauseAfter": 0,
+            "effect": "none"
+          }
+        ]
+      },
+      "statusChanges": null,
+      "statChanges": null,
+      "moneyChange": null,
+      "itemsGained": null,
+      "itemsLost": null,
+      "eventTriggered": null,
+      "locationDiscovered": null,
+      "archetypeChanges": null,
+      "counterChanges": null
+    },
+    "failure": null,
+    "criticalSuccess": null,
+    "criticalFailure": null,
+    "weight": 35
+  }
+]

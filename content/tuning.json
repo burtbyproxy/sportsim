@@ -282,5 +282,55 @@
       "locationTypes": ["bar"],
       "hours": 72
     }
+  },
+  "display": {
+    "stat": "reputation",
+    "ticks": 1,
+    "tierModifiers": {
+      "inspired": 4,
+      "solid": 2,
+      "rough": -2
+    },
+    "legend": {
+      "praised": 2,
+      "ignored": 0,
+      "mocked": -1
+    },
+    "receptions": {
+      "praised": {
+        "outcome": {
+          "statusChanges": {
+            "mood": 10
+          },
+          "statChanges": {
+            "reputation": 1
+          }
+        }
+      },
+      "ignored": {
+        "outcome": {
+          "statusChanges": {
+            "mood": -3
+          }
+        }
+      },
+      "mocked": {
+        "outcome": {
+          "statusChanges": {
+            "mood": -10
+          },
+          "statChanges": {
+            "reputation": -1
+          },
+          "trauma": {
+            "save": {
+              "stat": "toughness",
+              "dc": 12
+            },
+            "tableId": "trauma"
+          }
+        }
+      }
+    }
   }
 }

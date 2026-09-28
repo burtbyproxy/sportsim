@@ -9,6 +9,7 @@ import { readdirSync, readFileSync, existsSync } from 'fs'
 import { join, resolve } from 'path'
 import { FIT_TRIGGER_KINDS, MARK_KINDS, MARK_TARGET_KINDS } from '../../src/engine/psyche.js'
 import { ACT_AUTHOR_KINDS, ACT_RECIPIENT_KINDS } from '../../src/engine/acts.js'
+import { VENUE_AUDIENCES } from '../../src/engine/display.js'
 
 export const CONTENT_ROOT = resolve('content')
 // The game's words are content. This file reads them; it does not keep its own copy.
@@ -210,6 +211,7 @@ export const LOCATION_REQUIRED_FIELDS = [
   'surfaces',
   'pieceAs',
   'outdoors',
+  'venue',
 ]
 
 export function validateLocation({ data, file }) {
@@ -249,6 +251,14 @@ export function validateLocation({ data, file }) {
     `${file}: actions are placed by their own locationId, not listed here`
   ).not.toHaveProperty('actionIds')
 
+  // Who sees a piece shown here: strangers or friends, and how hard to impress; or nobody.
+  if (data.venue !== null) {
+    expect(
+      Object.values(VENUE_AUDIENCES),
+      `${file}: venue.audience '${data.venue.audience}'`
+    ).toContain(data.venue.audience)
+    expect(data.venue.dc, `${file}: venue.dc must be > 0`).toBeGreaterThan(0)
+  }
   // descriptions must have a 'default' key
   expect(data.descriptions, `${file}: descriptions must be an object`).toBeTruthy()
   expect(
@@ -463,7 +473,11 @@ export function validateAction({ data, file }) {
     ).toBe(true)
     return
   }
-  if (data.kind === 'fight') {
+  if (data.kind === 'display') {
+    // Looking for a spot is free; the showing is what costs, and tuning says how much.
+    expect(data.timeCost, `${file} '${data.id}': a 'display' action costs no time itself`).toBe(0)
+    expect(data.check, `${file} '${data.id}': the verdict is the check, not the door`).toBeNull()
+  } else if (data.kind === 'fight') {
     // Squaring up is free; the rounds are what cost, and tuning says how much.
     expect(data.timeCost, `${file} '${data.id}': a 'fight' action costs no time itself`).toBe(0)
     expect(typeof data.fightId, `${file} '${data.id}': a 'fight' action names its fightId`).toBe(
